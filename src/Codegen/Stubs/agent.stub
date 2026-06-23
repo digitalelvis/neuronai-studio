@@ -17,4 +17,6 @@ class {{ className }} extends Agent
     {
         return '{{ instructions }}';
     }
+
+{{ toolsMethod }}
 }

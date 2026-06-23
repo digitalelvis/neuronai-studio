@@ -4,6 +4,8 @@ namespace ElvisLopesDigital\NeuronAIStudio\Tests;
 
 use ElvisLopesDigital\NeuronAIStudio\Registry\ProviderRegistry;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\AgentRunner;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\ToolEventExtractor;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\ToolResolver;
 use NeuronAI\Chat\Messages\AssistantMessage;
 use NeuronAI\Testing\FakeAIProvider;
 
@@ -19,14 +21,17 @@ class AgentRunnerTest extends TestCase
             ->with('openai', 'gpt-4o-mini')
             ->willReturn($provider);
 
-        $runner = new AgentRunner($registry);
+        $toolResolver = $this->createMock(ToolResolver::class);
+        $toolResolver->method('resolveMany')->willReturn([]);
 
-        $response = $runner->runInline([
+        $runner = new AgentRunner($registry, $toolResolver, new ToolEventExtractor);
+
+        $result = $runner->runInline([
             'provider' => 'openai',
             'model' => 'gpt-4o-mini',
             'instructions' => 'You are helpful.',
         ], 'Hi');
 
-        $this->assertSame('Hello back', $response);
+        $this->assertSame('Hello back', $result->content);
     }
 }

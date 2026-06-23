@@ -20,6 +20,7 @@
             <nav class="ab-nav">
                 <a href="{{ route('neuronai-studio.dashboard') }}" class="ab-nav-link {{ request()->routeIs('neuronai-studio.dashboard') ? 'active' : '' }}">Dashboard</a>
                 <a href="{{ route('neuronai-studio.agents.index') }}" class="ab-nav-link {{ request()->routeIs('neuronai-studio.agents.*') ? 'active' : '' }}">Agents</a>
+                <a href="{{ route('neuronai-studio.tools.index') }}" class="ab-nav-link {{ request()->routeIs('neuronai-studio.tools.*') ? 'active' : '' }}">Tools</a>
                 <a href="{{ route('neuronai-studio.workflows.index') }}" class="ab-nav-link {{ request()->routeIs('neuronai-studio.workflows.*') ? 'active' : '' }}">Workflows</a>
             </nav>
         </aside>

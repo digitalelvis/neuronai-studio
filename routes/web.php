@@ -5,6 +5,10 @@ use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Edit;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Index as AgentsIndex;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Playground;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Dashboard;
+use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Tools\Edit as ToolsEdit;
+use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Tools\Index as ToolsIndex;
+use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Tools\RegistryShow;
+use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Tools\Show as ToolsShow;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Workflows\Editor;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Workflows\Index as WorkflowsIndex;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Workflows\RunDetail;
@@ -22,6 +26,14 @@ Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
             Route::get('/create', Edit::class)->name('create');
             Route::get('/{agent}/edit', Edit::class)->name('edit');
             Route::get('/{agent}/playground', Playground::class)->name('playground');
+        });
+
+        Route::prefix('tools')->name('tools.')->group(function () {
+            Route::get('/', ToolsIndex::class)->name('index');
+            Route::get('/registry', RegistryShow::class)->name('registry');
+            Route::get('/create', ToolsEdit::class)->name('create');
+            Route::get('/{tool}/edit', ToolsEdit::class)->name('edit');
+            Route::get('/{tool}', ToolsShow::class)->name('show');
         });
 
         Route::prefix('workflows')->name('workflows.')->group(function () {

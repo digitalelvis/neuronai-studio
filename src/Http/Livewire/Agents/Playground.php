@@ -14,6 +14,9 @@ class Playground extends Component
 
     public string $response = '';
 
+    /** @var array<int, array{name: string, inputs: array, result: string|null, type: string}> */
+    public array $toolEvents = [];
+
     public bool $loading = false;
 
     public function mount(AgentDefinition $agent): void
@@ -28,12 +31,22 @@ class Playground extends Component
         $this->loading = true;
 
         try {
-            $this->response = $runner->run($this->agent, $this->message);
+            $result = $runner->run($this->agent, $this->message);
+            $this->response = $result->content;
+            $this->toolEvents = $result->toolEvents;
         } catch (\Throwable $exception) {
             $this->response = 'Error: '.$exception->getMessage();
+            $this->toolEvents = [];
         } finally {
             $this->loading = false;
         }
+    }
+
+    public function clear(): void
+    {
+        $this->message = '';
+        $this->response = '';
+        $this->toolEvents = [];
     }
 
     public function render()

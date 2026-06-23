@@ -5,13 +5,18 @@
             <div class="ab-stat-value">{{ $agentCount }}</div>
         </div>
         <div class="ab-card">
+            <div class="ab-stat-label">Tools</div>
+            <div class="ab-stat-value">{{ $toolCount }}</div>
+        </div>
+        <div class="ab-card">
             <div class="ab-stat-label">Workflows</div>
             <div class="ab-stat-value">{{ $workflowCount }}</div>
         </div>
-        <div class="ab-card">
-            <div class="ab-stat-label">Recent Runs</div>
-            <div class="ab-stat-value">{{ $recentRuns->count() }}</div>
-        </div>
+    </div>
+
+    <div class="ab-card ab-mt">
+        <div class="ab-stat-label">Recent Runs</div>
+        <div class="ab-stat-value">{{ $recentRuns->count() }}</div>
     </div>
 
     <div class="ab-card ab-mt">

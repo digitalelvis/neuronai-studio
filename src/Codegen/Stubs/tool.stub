@@ -1,0 +1,30 @@
+<?php
+
+namespace {{ namespace }};
+
+use NeuronAI\Tools\PropertyType;
+use NeuronAI\Tools\Tool;
+use NeuronAI\Tools\ToolProperty;
+
+class {{ className }} extends Tool
+{
+    public function __construct()
+    {
+        parent::__construct(
+            '{{ toolName }}',
+            '{{ description }}',
+        );
+    }
+
+    protected function properties(): array
+    {
+        return [
+{{ properties }}
+        ];
+    }
+
+    public function __invoke({{ invokeParams }}): string
+    {
+{{ invokeBody }}
+    }
+}

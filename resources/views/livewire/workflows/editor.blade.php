@@ -42,6 +42,7 @@
             wireId: @json($this->getId()),
             workflowId: @json($workflow?->id),
             streamUrl: @json($workflow?->exists ? route('neuronai-studio.workflows.run.stream', $workflow) : null),
+            tools: @json($toolsForCanvas),
         };
     </script>
 
@@ -64,7 +65,7 @@
         </div>
         <aside
             class="ab-inspector"
-            x-data="workflowInspector(@js($agentsForCanvas))"
+            x-data="workflowInspector(@js($agentsForCanvas), @js($toolsForCanvas))"
             x-init="init()"
             x-show="selectedNode"
             x-cloak
@@ -102,6 +103,21 @@
                         <div class="ab-form-group">
                             <label>State Key</label>
                             <input class="ab-input" x-model="selectedNode.data.state_key" @change="syncNode()">
+                        </div>
+                    </template>
+                    <template x-if="selectedNode.type === 'tool'">
+                        <div class="ab-form-group">
+                            <label>Tool</label>
+                            <select class="ab-input" x-model="selectedNode.data.tool_ref" @change="syncNode()">
+                                <option value="">Select tool</option>
+                                <template x-for="tool in tools" :key="tool.ref">
+                                    <option :value="tool.ref" x-text="tool.label"></option>
+                                </template>
+                            </select>
+                            <label class="ab-mt">Output Key</label>
+                            <input class="ab-input" x-model="selectedNode.data.output_key" @change="syncNode()" placeholder="tool_result">
+                            <label class="ab-mt">Parameters JSON</label>
+                            <textarea class="ab-input" rows="3" x-model="selectedNode.data.parameters_json" @change="syncParameters()" placeholder='{"query": "$input"}'></textarea>
                         </div>
                     </template>
                     <button type="button" class="ab-btn ab-danger ab-mt" @click="removeSelected()">Remove Node</button>

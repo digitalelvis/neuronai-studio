@@ -85,6 +85,66 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Tools & Toolkits
+    |--------------------------------------------------------------------------
+    |
+    | Built-in toolkits available in the studio UI. Credentials use env:KEY syntax.
+    |
+    */
+
+    'tools' => [
+        'calculator' => [
+            'type' => 'toolkit',
+            'class' => \NeuronAI\Tools\Toolkits\Calculator\CalculatorToolkit::class,
+            'label' => 'Calculator',
+            'category' => 'builtin',
+            'description' => 'Mathematical operations: sum, subtract, multiply, divide, statistics, etc.',
+        ],
+        'calendar' => [
+            'type' => 'toolkit',
+            'class' => \NeuronAI\Tools\Toolkits\Calendar\CalendarToolkit::class,
+            'label' => 'Calendar',
+            'category' => 'builtin',
+            'description' => 'Date and time operations, formatting, timezone conversions.',
+        ],
+    ],
+
+    'tool_scan_paths' => [
+        app_path('Neuron/Tools'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | MCP Servers
+    |--------------------------------------------------------------------------
+    |
+    | MCP connectors exposed in the studio. Credentials must use env: references.
+    |
+    */
+
+    'mcp_servers' => [
+        // 'example' => [
+        //     'label' => 'Example MCP',
+        //     'description' => 'Example MCP server',
+        //     'connector' => [
+        //         'command' => 'npx',
+        //         'args' => ['-y', '@modelcontextprotocol/server-example'],
+        //     ],
+        // ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Webhook Tool Security
+    |--------------------------------------------------------------------------
+    */
+
+    'webhook_allowed_hosts' => env('NEURONAI_STUDIO_WEBHOOK_ALLOWED_HOSTS', '*'),
+
+    'webhook_timeout' => (int) env('NEURONAI_STUDIO_WEBHOOK_TIMEOUT', 15),
+
+    /*
+    |--------------------------------------------------------------------------
     | Node Types
     |--------------------------------------------------------------------------
     */

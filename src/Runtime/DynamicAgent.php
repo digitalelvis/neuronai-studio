@@ -2,23 +2,31 @@
 
 namespace ElvisLopesDigital\NeuronAIStudio\Runtime;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Registry\ProviderRegistry;
 use NeuronAI\Agent\Agent;
-use NeuronAI\Chat\Messages\UserMessage;
 use NeuronAI\Providers\AIProviderInterface;
+use NeuronAI\Tools\ProviderToolInterface;
+use NeuronAI\Tools\ToolInterface;
+use NeuronAI\Tools\Toolkits\ToolkitInterface;
 
 class DynamicAgent extends Agent
 {
+    /**
+     * @param  array<int, ToolInterface|ToolkitInterface|ProviderToolInterface>  $tools
+     */
     public function __construct(
         protected AIProviderInterface $aiProvider,
         string $instructions = '',
+        array $tools = [],
     ) {
         parent::__construct();
         $this->setAiProvider($aiProvider);
 
         if ($instructions !== '') {
             $this->setInstructions($instructions);
+        }
+
+        if ($tools !== []) {
+            $this->addTool($tools);
         }
     }
 

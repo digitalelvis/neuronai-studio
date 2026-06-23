@@ -1,11 +1,22 @@
-window.workflowInspector = function (agents) {
+window.workflowInspector = function (agents, tools) {
     return {
         selectedNode: null,
         agents: agents || [],
+        tools: tools || [],
 
         init() {
             window.addEventListener('canvas-node-selected', (e) => {
                 this.selectedNode = e.detail ? { ...e.detail, data: { ...(e.detail.data || {}) } } : null;
+
+                if (this.selectedNode?.type === 'tool') {
+                    if (!this.selectedNode.data.output_key) {
+                        this.selectedNode.data.output_key = 'tool_result';
+                    }
+
+                    if (this.selectedNode.data.parameters && !this.selectedNode.data.parameters_json) {
+                        this.selectedNode.data.parameters_json = JSON.stringify(this.selectedNode.data.parameters, null, 2);
+                    }
+                }
             });
         },
 
@@ -19,6 +30,18 @@ window.workflowInspector = function (agents) {
                     },
                 }),
             );
+        },
+
+        syncParameters() {
+            if (!this.selectedNode) return;
+
+            try {
+                this.selectedNode.data.parameters = JSON.parse(this.selectedNode.data.parameters_json || '{}');
+            } catch (error) {
+                return;
+            }
+
+            this.syncNode();
         },
 
         removeSelected() {

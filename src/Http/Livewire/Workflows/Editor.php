@@ -6,6 +6,7 @@ use ElvisLopesDigital\NeuronAIStudio\Codegen\WorkflowExporter;
 use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
 use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
 use ElvisLopesDigital\NeuronAIStudio\Registry\NodeTypeRegistry;
+use ElvisLopesDigital\NeuronAIStudio\Registry\ToolRegistry;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\GraphValidator;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\WorkflowRunner;
 use Illuminate\Support\Str;
@@ -103,6 +104,10 @@ class Editor extends Component
             'nodeTypes' => app(NodeTypeRegistry::class)->forCanvas(),
             'agents' => AgentDefinition::orderBy('name')->get(),
             'agentsForCanvas' => AgentDefinition::orderBy('name')->get(['id', 'name'])->values()->all(),
+            'toolsForCanvas' => collect(app(ToolRegistry::class)->all())
+                ->map(fn (array $tool) => ['ref' => $tool['ref'], 'label' => $tool['label']])
+                ->values()
+                ->all(),
         ])->layout('neuronai-studio::layouts.app', [
             'title' => $this->workflow?->exists ? 'Edit Workflow' : 'Create Workflow',
         ]);

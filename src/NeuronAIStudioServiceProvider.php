@@ -4,9 +4,11 @@ namespace ElvisLopesDigital\NeuronAIStudio;
 
 use ElvisLopesDigital\NeuronAIStudio\Commands\ExportCommand;
 use ElvisLopesDigital\NeuronAIStudio\Commands\InstallCommand;
+use ElvisLopesDigital\NeuronAIStudio\Commands\MakeToolCommand;
 use ElvisLopesDigital\NeuronAIStudio\Http\Middleware\EnsureNeuronAIStudioAuthorized;
 use ElvisLopesDigital\NeuronAIStudio\Registry\NodeTypeRegistry;
 use ElvisLopesDigital\NeuronAIStudio\Registry\ProviderRegistry;
+use ElvisLopesDigital\NeuronAIStudio\Registry\ToolRegistry;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\AgentNodeExecutor;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\ConditionNodeExecutor;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\DelayNodeExecutor;
@@ -35,6 +37,10 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
 
         $this->app->singleton(ProviderRegistry::class, function () {
             return new ProviderRegistry;
+        });
+
+        $this->app->singleton(ToolRegistry::class, function () {
+            return new ToolRegistry;
         });
 
         $this->app->singleton(NodeExecutorRegistry::class, function ($app) {
@@ -140,6 +146,10 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
         Livewire::component('neuronai-studio.agents.index', Http\Livewire\Agents\Index::class);
         Livewire::component('neuronai-studio.agents.edit', Http\Livewire\Agents\Edit::class);
         Livewire::component('neuronai-studio.agents.playground', Http\Livewire\Agents\Playground::class);
+        Livewire::component('neuronai-studio.tools.index', Http\Livewire\Tools\Index::class);
+        Livewire::component('neuronai-studio.tools.edit', Http\Livewire\Tools\Edit::class);
+        Livewire::component('neuronai-studio.tools.show', Http\Livewire\Tools\Show::class);
+        Livewire::component('neuronai-studio.tools.registry', Http\Livewire\Tools\RegistryShow::class);
         Livewire::component('neuronai-studio.workflows.index', Http\Livewire\Workflows\Index::class);
         Livewire::component('neuronai-studio.workflows.editor', Http\Livewire\Workflows\Editor::class);
         Livewire::component('neuronai-studio.workflows.runs', Http\Livewire\Workflows\Runs::class);
@@ -152,6 +162,7 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
             $this->commands([
                 InstallCommand::class,
                 ExportCommand::class,
+                MakeToolCommand::class,
             ]);
         }
     }
