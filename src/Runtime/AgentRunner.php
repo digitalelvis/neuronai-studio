@@ -4,6 +4,7 @@ namespace ElvisLopesDigital\NeuronAIStudio\Runtime;
 
 use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
 use ElvisLopesDigital\NeuronAIStudio\Registry\ProviderRegistry;
+use NeuronAI\Chat\Messages\UserMessage;
 
 class AgentRunner
 {
