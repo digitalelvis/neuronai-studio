@@ -13,7 +13,7 @@ class WorkflowRunner
         protected GraphValidator $validator,
     ) {}
 
-    public function run(WorkflowDefinition $workflow, array $input = []): WorkflowRun
+    public function run(WorkflowDefinition $workflow, array $input = [], ?callable $emitter = null): WorkflowRun
     {
         $this->validator->assertValid($workflow->graph);
 
@@ -34,6 +34,12 @@ class WorkflowRunner
                 'input' => $input['message'] ?? $input['input'] ?? '',
                 '__workflow_run_id' => $run->id,
             ]);
+
+            if ($emitter !== null) {
+                $state->stepEmitter = fn (string $event, array $data) => $emitter($event, array_merge($data, [
+                    'run_id' => $run->id,
+                ]));
+            }
 
             $interpreter = new GraphInterpreterWorkflow($graphContext, $state);
             $interpreter->bootstrap();

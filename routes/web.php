@@ -1,5 +1,6 @@
 <?php
 
+use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\WorkflowStreamController;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Edit;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Index as AgentsIndex;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Playground;
@@ -27,6 +28,7 @@ Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
             Route::get('/', WorkflowsIndex::class)->name('index');
             Route::get('/create', Editor::class)->name('create');
             Route::get('/{workflow}/edit', Editor::class)->name('edit');
+            Route::get('/{workflow}/run/stream', WorkflowStreamController::class)->name('run.stream');
             Route::get('/{workflow}/runs', Runs::class)->name('runs');
             Route::get('/runs/{run}', RunDetail::class)->name('runs.show');
         });

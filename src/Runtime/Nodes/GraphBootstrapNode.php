@@ -2,6 +2,7 @@
 
 namespace ElvisLopesDigital\NeuronAIStudio\Runtime\Nodes;
 
+use ElvisLopesDigital\NeuronAIStudio\Runtime\BuilderWorkflowState;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\GraphContext;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\Events\GraphStepEvent;
 use NeuronAI\Workflow\Events\StartEvent;
@@ -36,6 +37,14 @@ class GraphBootstrapNode extends Node
         }
 
         $state->set('__current_node_id', $firstTarget);
+
+        if ($state instanceof BuilderWorkflowState) {
+            $firstConfig = $this->graphContext->nodeConfig($firstTarget);
+            $state->emitStep('step_started', [
+                'node_id' => $firstTarget,
+                'node_type' => $firstConfig['type'] ?? 'unknown',
+            ]);
+        }
 
         return new GraphStepEvent($firstTarget);
     }

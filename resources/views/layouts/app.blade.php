@@ -6,6 +6,9 @@
     <title>{{ $title ?? 'NeuronAI Studio' }}</title>
     @livewireStyles
     <link rel="stylesheet" href="{{ asset('vendor/neuronai-studio/css/neuronai-studio.css') }}">
+    @if (request()->routeIs('neuronai-studio.workflows.*'))
+        <link rel="stylesheet" href="{{ asset('vendor/neuronai-studio/js/canvas/dist/workflow-canvas.css') }}">
+    @endif
 </head>
 <body class="ab-body">
     <div class="ab-layout">
@@ -30,7 +33,10 @@
             {{ $slot }}
         </main>
     </div>
+    @if (request()->routeIs('neuronai-studio.workflows.create', 'neuronai-studio.workflows.edit'))
+        <script src="{{ asset('vendor/neuronai-studio/js/canvas/workflow-inspector.js') }}"></script>
+        <script src="{{ asset('vendor/neuronai-studio/js/canvas/dist/workflow-canvas.bundle.js') }}"></script>
+    @endif
     @livewireScripts
-    <script src="{{ asset('vendor/neuronai-studio/js/canvas/workflow-canvas.js') }}" defer></script>
 </body>
 </html>

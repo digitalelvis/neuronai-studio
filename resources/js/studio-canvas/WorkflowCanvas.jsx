@@ -1,0 +1,324 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+    Background,
+    Controls,
+    MiniMap,
+    Panel,
+    ReactFlow,
+    ReactFlowProvider,
+    addEdge,
+    useEdgesState,
+    useNodesState,
+    useReactFlow,
+} from '@xyflow/react';
+import '@xyflow/react/dist/style.css';
+
+import WorkflowEdge from './edges/WorkflowEdge';
+import WorkflowNode from './nodes/WorkflowNode';
+import { useUndoRedo } from './hooks/useUndoRedo';
+import { layoutWithDagre } from './layout';
+import {
+    buildFlowEdge,
+    buildFlowNode,
+    dropFlowPosition,
+    toFlowEdges,
+    toFlowNodes,
+    toPackageGraph,
+} from './graph';
+import './canvas.css';
+
+const nodeTypes = { workflowNode: WorkflowNode };
+const edgeTypes = { workflowEdge: WorkflowEdge };
+
+function WorkflowCanvasInner({ graph, nodeTypesMeta, onGraphChange }) {
+    const initialNodes = useMemo(() => toFlowNodes(graph?.nodes, nodeTypesMeta), []);
+    const initialEdges = useMemo(() => toFlowEdges(graph?.edges), []);
+    const initialViewport = graph?.viewport || { x: 0, y: 0, zoom: 1 };
+
+    const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
+    const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+    const [runStatus, setRunStatus] = useState(null);
+    const { getViewport, setViewport, deleteElements, screenToFlowPosition, fitView } = useReactFlow();
+    const selectedNodeIdRef = useRef(null);
+    const historySeededRef = useRef(false);
+    const didFitViewRef = useRef(false);
+
+    const { seedHistory, takeSnapshot, undo, redo, canUndo, canRedo } = useUndoRedo(setNodes, setEdges);
+
+    const exportGraph = useCallback(() => {
+        const viewport = getViewport();
+        return toPackageGraph(nodes, edges, viewport);
+    }, [nodes, edges, getViewport]);
+
+    useEffect(() => {
+        window.__workflowGraphExport = exportGraph;
+        onGraphChange?.(exportGraph());
+    }, [exportGraph, onGraphChange]);
+
+    useEffect(() => {
+        if (!historySeededRef.current) {
+            seedHistory(initialNodes, initialEdges);
+            historySeededRef.current = true;
+        }
+    }, [initialEdges, initialNodes, seedHistory]);
+
+    useEffect(() => {
+        takeSnapshot(nodes, edges);
+    }, [nodes, edges, takeSnapshot]);
+
+    useEffect(() => {
+        if (initialViewport.x || initialViewport.y || initialViewport.zoom !== 1) {
+            setViewport(initialViewport, { duration: 0 });
+            didFitViewRef.current = true;
+            return;
+        }
+
+        if (!didFitViewRef.current && nodes.length > 0) {
+            fitView({ padding: 0.2, duration: 0 });
+            didFitViewRef.current = true;
+        }
+    }, [initialViewport, nodes.length, setViewport, fitView]);
+
+    const setExecutionStatus = useCallback(
+        (nodeId, status) => {
+            if (!nodeId) {
+                return;
+            }
+
+            setNodes((current) =>
+                current.map((node) =>
+                    node.id === nodeId
+                        ? { ...node, data: { ...node.data, executionStatus: status } }
+                        : node,
+                ),
+            );
+        },
+        [setNodes],
+    );
+
+    const clearExecutionStatus = useCallback(() => {
+        setNodes((current) =>
+            current.map((node) => ({
+                ...node,
+                data: { ...node.data, executionStatus: null },
+            })),
+        );
+        setRunStatus(null);
+    }, [setNodes]);
+
+    const syncSelection = useCallback(
+        (nodeId) => {
+            selectedNodeIdRef.current = nodeId;
+            const node = nodeId ? nodes.find((n) => n.id === nodeId) : null;
+            const payload = node
+                ? {
+                      id: node.id,
+                      type: node.data.nodeType,
+                      position: node.position,
+                      data: node.data.config || {},
+                  }
+                : null;
+
+            window.dispatchEvent(new CustomEvent('canvas-node-selected', { detail: payload }));
+        },
+        [nodes],
+    );
+
+    const onConnect = useCallback(
+        (connection) => {
+            setEdges((current) => addEdge(buildFlowEdge(connection), current));
+        },
+        [setEdges],
+    );
+
+    const onSelectionChange = useCallback(
+        ({ nodes: selectedNodes }) => {
+            syncSelection(selectedNodes[0]?.id ?? null);
+        },
+        [syncSelection],
+    );
+
+    const addNodeAt = useCallback(
+        (type, position) => {
+            if (!position) {
+                return;
+            }
+
+            const node = buildFlowNode(type, position, nodeTypesMeta);
+            setNodes((current) => [...current, node]);
+            syncSelection(node.id);
+        },
+        [nodeTypesMeta, setNodes, syncSelection],
+    );
+
+    const updateNodeData = useCallback(
+        (nodeId, data) => {
+            setNodes((current) =>
+                current.map((node) =>
+                    node.id === nodeId
+                        ? { ...node, data: { ...node.data, config: { ...data } } }
+                        : node,
+                ),
+            );
+        },
+        [setNodes],
+    );
+
+    const removeSelectedNode = useCallback(() => {
+        const id = selectedNodeIdRef.current;
+        if (!id) {
+            return;
+        }
+
+        deleteElements({ nodes: [{ id }] });
+        syncSelection(null);
+    }, [deleteElements, syncSelection]);
+
+    const autoLayout = useCallback(() => {
+        setNodes((current) => {
+            const layouted = layoutWithDagre(current, edges);
+            window.requestAnimationFrame(() => fitView({ padding: 0.2, duration: 300 }));
+            return layouted;
+        });
+    }, [edges, fitView, setNodes]);
+
+    const onDragOver = useCallback((event) => {
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'copy';
+    }, []);
+
+    const onDrop = useCallback(
+        (event) => {
+            event.preventDefault();
+
+            const type =
+                event.dataTransfer.getData('application/x-neuronai-node') ||
+                event.dataTransfer.getData('text/plain');
+
+            if (!type) {
+                return;
+            }
+
+            const position = dropFlowPosition(screenToFlowPosition, event.clientX, event.clientY);
+            addNodeAt(type, position);
+        },
+        [addNodeAt, screenToFlowPosition],
+    );
+
+    useEffect(() => {
+        const onNodeUpdated = (event) => {
+            if (event.detail?.id) {
+                updateNodeData(event.detail.id, event.detail.data || {});
+            }
+        };
+        const onRemoveNode = () => removeSelectedNode();
+        const onAutoLayout = () => autoLayout();
+        const onRunStart = () => {
+            clearExecutionStatus();
+            setRunStatus('running');
+        };
+        const onExecutionEvent = (event) => {
+            const detail = event.detail || {};
+
+            if (detail.event === 'step_started') {
+                setExecutionStatus(detail.node_id, 'running');
+                return;
+            }
+
+            if (detail.event === 'step_completed') {
+                setExecutionStatus(detail.node_id, 'completed');
+                return;
+            }
+
+            if (detail.event === 'run_completed') {
+                setRunStatus('completed');
+                return;
+            }
+
+            if (detail.event === 'run_failed') {
+                setRunStatus('failed');
+            }
+        };
+
+        window.addEventListener('canvas-node-updated', onNodeUpdated);
+        window.addEventListener('canvas-remove-node', onRemoveNode);
+        window.addEventListener('canvas-auto-layout', onAutoLayout);
+        window.addEventListener('canvas-run-start', onRunStart);
+        window.addEventListener('canvas-execution-event', onExecutionEvent);
+
+        return () => {
+            window.removeEventListener('canvas-node-updated', onNodeUpdated);
+            window.removeEventListener('canvas-remove-node', onRemoveNode);
+            window.removeEventListener('canvas-auto-layout', onAutoLayout);
+            window.removeEventListener('canvas-run-start', onRunStart);
+            window.removeEventListener('canvas-execution-event', onExecutionEvent);
+        };
+    }, [
+        autoLayout,
+        clearExecutionStatus,
+        removeSelectedNode,
+        setExecutionStatus,
+        updateNodeData,
+    ]);
+
+    return (
+        <ReactFlow
+            nodes={nodes}
+            edges={edges}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onSelectionChange={onSelectionChange}
+            onPaneClick={() => syncSelection(null)}
+            onDragOver={onDragOver}
+            onDrop={onDrop}
+            minZoom={0.25}
+            maxZoom={2}
+            snapToGrid
+            snapGrid={[16, 16]}
+            deleteKeyCode={['Backspace', 'Delete']}
+            className="ab-react-flow"
+        >
+            <Background gap={16} size={1} color="#334155" />
+            <Controls className="ab-flow-controls" showInteractive={false} />
+            <MiniMap
+                className="ab-flow-minimap"
+                nodeColor={(node) => {
+                    const colors = { flow: '#6366f1', ai: '#8b5cf6', logic: '#f59e0b' };
+                    return colors[node.data?.category] || '#6366f1';
+                }}
+                maskColor="rgba(15, 23, 42, 0.75)"
+            />
+            <Panel position="top-center" className="ab-flow-toolbar">
+                <button type="button" className="ab-flow-toolbar-btn" onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)">
+                    Undo
+                </button>
+                <button type="button" className="ab-flow-toolbar-btn" onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)">
+                    Redo
+                </button>
+                <button type="button" className="ab-flow-toolbar-btn" onClick={autoLayout} title="Auto layout">
+                    Layout
+                </button>
+                {runStatus && (
+                    <span className={`ab-flow-run-status ab-flow-run-status--${runStatus}`}>
+                        {runStatus === 'running' && 'Running…'}
+                        {runStatus === 'completed' && 'Completed'}
+                        {runStatus === 'failed' && 'Failed'}
+                    </span>
+                )}
+            </Panel>
+        </ReactFlow>
+    );
+}
+
+function WorkflowCanvas(props) {
+    return (
+        <ReactFlowProvider>
+            <WorkflowCanvasInner {...props} />
+        </ReactFlowProvider>
+    );
+}
+
+export default WorkflowCanvas;

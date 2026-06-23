@@ -41,6 +41,7 @@ class InstallCommand extends Command
         $this->newLine();
         $this->components->info('NeuronAI Studio installed successfully!');
         $this->line('Visit /'.config('neuronai-studio.route_prefix', 'neuronai-studio').' to open the dashboard.');
+        $this->line('Canvas assets are pre-built. To rebuild after editing resources/js/studio-canvas/, run: npm install && npm run build');
 
         return self::SUCCESS;
     }
