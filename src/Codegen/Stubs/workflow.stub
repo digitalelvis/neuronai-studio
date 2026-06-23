@@ -1,0 +1,15 @@
+<?php
+
+namespace {{ namespace }};
+
+use NeuronAI\Workflow\Workflow;
+
+class {{ className }} extends Workflow
+{
+    protected function nodes(): array
+    {
+        return [
+{{ nodes }}
+        ];
+    }
+}

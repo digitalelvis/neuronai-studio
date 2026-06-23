@@ -1,0 +1,66 @@
+{
+    "name": "elvislopesdigital/neuronai-studio",
+    "description": "NeuronAI Studio — visual AI agent builder for Laravel powered by Neuron AI",
+    "keywords": [
+        "ai",
+        "ai-agent",
+        "laravel",
+        "neuron",
+        "workflow",
+        "neuronai-studio"
+    ],
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Elvis Lopes",
+            "email": "elvis@example.com"
+        }
+    ],
+    "require": {
+        "php": "^8.2",
+        "illuminate/console": "^11.0|^12.0",
+        "illuminate/contracts": "^11.0|^12.0",
+        "illuminate/database": "^11.0|^12.0",
+        "illuminate/http": "^11.0|^12.0",
+        "illuminate/routing": "^11.0|^12.0",
+        "illuminate/support": "^11.0|^12.0",
+        "illuminate/view": "^11.0|^12.0",
+        "livewire/livewire": "^3.5",
+        "neuron-core/neuron-laravel": "^1.0"
+    },
+    "require-dev": {
+        "orchestra/testbench": "^9.0|^10.0",
+        "phpunit/phpunit": "^11.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "ElvisLopesDigital\\NeuronAIStudio\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ElvisLopesDigital\\NeuronAIStudio\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "ElvisLopesDigital\\NeuronAIStudio\\NeuronAIStudioServiceProvider"
+            ],
+            "aliases": {
+                "NeuronAIStudio": "ElvisLopesDigital\\NeuronAIStudio\\Facades\\NeuronAIStudio"
+            }
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "config": {
+        "sort-packages": true,
+        "allow-plugins": {
+            "php-http/discovery": true
+        }
+    },
+    "scripts": {
+        "test": "phpunit --colors=always"
+    }
+}

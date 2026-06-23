@@ -1,0 +1,167 @@
+<?php
+
+namespace ElvisLopesDigital\NeuronAIStudio;
+
+use ElvisLopesDigital\NeuronAIStudio\Commands\ExportCommand;
+use ElvisLopesDigital\NeuronAIStudio\Commands\InstallCommand;
+use ElvisLopesDigital\NeuronAIStudio\Http\Middleware\EnsureNeuronAIStudioAuthorized;
+use ElvisLopesDigital\NeuronAIStudio\Registry\NodeTypeRegistry;
+use ElvisLopesDigital\NeuronAIStudio\Registry\ProviderRegistry;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\AgentNodeExecutor;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\ConditionNodeExecutor;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\DelayNodeExecutor;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\LlmNodeExecutor;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorRegistry;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\RagNodeExecutor;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\SetStateNodeExecutor;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\StartNodeExecutor;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\StopNodeExecutor;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\ToolNodeExecutor;
+use Illuminate\Contracts\Auth\Access\Gate;
+use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Blade;
+use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
+
+class NeuronAIStudioServiceProvider extends ServiceProvider
+{
+    public function register(): void
+    {
+        $this->mergeConfigFrom(__DIR__.'/../config/neuronai-studio.php', 'neuronai-studio');
+
+        $this->app->singleton(NodeTypeRegistry::class, function () {
+            return new NodeTypeRegistry;
+        });
+
+        $this->app->singleton(ProviderRegistry::class, function () {
+            return new ProviderRegistry;
+        });
+
+        $this->app->singleton(NodeExecutorRegistry::class, function ($app) {
+            return new NodeExecutorRegistry;
+        });
+
+        $this->app->singleton('neuronai-studio', function ($app) {
+            return new NeuronAIStudioManager(
+                $app->make(NodeTypeRegistry::class),
+                $app->make(ProviderRegistry::class),
+            );
+        });
+    }
+
+    public function boot(): void
+    {
+        $this->registerPublishing();
+        $this->registerRoutes();
+        $this->registerMiddleware();
+        $this->registerGate();
+        $this->registerNodeTypes();
+        $this->registerLivewireComponents();
+        $this->registerCommands();
+        $this->registerViews();
+    }
+
+    protected function registerPublishing(): void
+    {
+        if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__.'/../config/neuronai-studio.php' => config_path('neuronai-studio.php'),
+            ], 'neuronai-studio-config');
+
+            $this->publishes([
+                __DIR__.'/../database/migrations' => database_path('migrations'),
+            ], 'neuronai-studio-migrations');
+
+            $this->publishes([
+                __DIR__.'/../resources/views' => resource_path('views/vendor/neuronai-studio'),
+            ], 'neuronai-studio-views');
+
+            $this->publishes([
+                __DIR__.'/../resources/css' => public_path('vendor/neuronai-studio/css'),
+                __DIR__.'/../resources/js/canvas' => public_path('vendor/neuronai-studio/js/canvas'),
+            ], 'neuronai-studio-assets');
+        }
+
+        $this->loadMigrationsFrom(__DIR__.'/../database/migrations');
+    }
+
+    protected function registerRoutes(): void
+    {
+        $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
+    }
+
+    protected function registerMiddleware(): void
+    {
+        $router = $this->app->make(Router::class);
+        $router->aliasMiddleware('neuronai-studio.auth', EnsureNeuronAIStudioAuthorized::class);
+    }
+
+    protected function registerGate(): void
+    {
+        $gateName = config('neuronai-studio.gate', 'viewNeuronAIStudio');
+
+        $this->app->afterResolving(Gate::class, function (Gate $gate) use ($gateName) {
+            $gate->define($gateName, function ($user = null) {
+                if (app()->environment('local')) {
+                    return true;
+                }
+
+                return $user !== null;
+            });
+        });
+    }
+
+    protected function registerNodeTypes(): void
+    {
+        $registry = $this->app->make(NodeTypeRegistry::class);
+        $executors = $this->app->make(NodeExecutorRegistry::class);
+
+        $types = [
+            'start' => StartNodeExecutor::class,
+            'stop' => StopNodeExecutor::class,
+            'agent' => AgentNodeExecutor::class,
+            'llm' => LlmNodeExecutor::class,
+            'condition' => ConditionNodeExecutor::class,
+            'set_state' => SetStateNodeExecutor::class,
+            'tool' => ToolNodeExecutor::class,
+            'rag' => RagNodeExecutor::class,
+            'delay' => DelayNodeExecutor::class,
+        ];
+
+        foreach ($types as $type => $executorClass) {
+            $registry->register($type, $executorClass);
+            $executors->register($type, $this->app->make($executorClass));
+        }
+    }
+
+    protected function registerLivewireComponents(): void
+    {
+        Livewire::component('neuronai-studio.dashboard', Http\Livewire\Dashboard::class);
+        Livewire::component('neuronai-studio.agents.index', Http\Livewire\Agents\Index::class);
+        Livewire::component('neuronai-studio.agents.edit', Http\Livewire\Agents\Edit::class);
+        Livewire::component('neuronai-studio.agents.playground', Http\Livewire\Agents\Playground::class);
+        Livewire::component('neuronai-studio.workflows.index', Http\Livewire\Workflows\Index::class);
+        Livewire::component('neuronai-studio.workflows.editor', Http\Livewire\Workflows\Editor::class);
+        Livewire::component('neuronai-studio.workflows.runs', Http\Livewire\Workflows\Runs::class);
+        Livewire::component('neuronai-studio.workflows.run-detail', Http\Livewire\Workflows\RunDetail::class);
+    }
+
+    protected function registerCommands(): void
+    {
+        if ($this->app->runningInConsole()) {
+            $this->commands([
+                InstallCommand::class,
+                ExportCommand::class,
+            ]);
+        }
+    }
+
+    protected function registerViews(): void
+    {
+        $this->loadViewsFrom(__DIR__.'/../resources/views', 'neuronai-studio');
+
+        Blade::directive('neuronAIStudioStyles', function () {
+            return "<?php echo '<link rel=\"stylesheet\" href=\"'.asset('vendor/neuronai-studio/css/neuronai-studio.css').'\">'; ?>";
+        });
+    }
+}

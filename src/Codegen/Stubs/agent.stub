@@ -1,0 +1,20 @@
+<?php
+
+namespace {{ namespace }};
+
+use NeuronAI\Agent\Agent;
+use NeuronAI\Laravel\Facades\AIProvider;
+use NeuronAI\Providers\AIProviderInterface;
+
+class {{ className }} extends Agent
+{
+    protected function provider(): AIProviderInterface
+    {
+        return AIProvider::driver('{{ provider }}');
+    }
+
+    protected function instructions(): string
+    {
+        return '{{ instructions }}';
+    }
+}
