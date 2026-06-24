@@ -44,7 +44,7 @@ _None._
 
 | Feature              | Date       | Commit | Status  |
 | -------------------- | ---------- | ------ | ------- |
-| studio-test-harness  | 2026-06-24 | —      | ✅ Done |
+| studio-test-harness  | 2026-06-24 | f8a29d2 | ✅ Done |
 
 ---
 
