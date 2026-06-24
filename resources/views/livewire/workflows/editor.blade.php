@@ -83,7 +83,7 @@
                             <select class="ab-input" x-model="selectedNode.data.agent_id" @change="syncNode()">
                                 <option value="">Select agent</option>
                                 <template x-for="agent in agents" :key="agent.id">
-                                    <option :value="Number(agent.id)" x-text="agent.name"></option>
+                                    <option :value="String(agent.id)" x-text="agent.name"></option>
                                 </template>
                             </select>
                         </div>

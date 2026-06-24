@@ -9,6 +9,10 @@ window.workflowInspector = function (agents, tools, mcpServers) {
             window.addEventListener('canvas-node-selected', (e) => {
                 this.selectedNode = e.detail ? { ...e.detail, data: { ...(e.detail.data || {}) } } : null;
 
+                if (this.selectedNode?.type === 'agent' && this.selectedNode.data.agent_id != null && this.selectedNode.data.agent_id !== '') {
+                    this.selectedNode.data.agent_id = String(this.selectedNode.data.agent_id);
+                }
+
                 if (this.selectedNode?.type === 'tool' || this.selectedNode?.type === 'mcp') {
                     if (!this.selectedNode.data.output_key) {
                         this.selectedNode.data.output_key = this.selectedNode.type === 'mcp' ? 'mcp_result' : 'tool_result';

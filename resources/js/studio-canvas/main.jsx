@@ -50,8 +50,37 @@ function exportGraphForSave() {
     return window.__workflowGraphExport?.() ?? window.__workflowGraph;
 }
 
-function saveGraphToLivewire() {
-    const graph = exportGraphForSave();
+function mergePendingNodeUpdate(graph, pendingUpdate) {
+    if (!graph?.nodes || !pendingUpdate?.id) {
+        return graph;
+    }
+
+    return {
+        ...graph,
+        nodes: graph.nodes.map((node) =>
+            node.id === pendingUpdate.id
+                ? { ...node, data: { ...(node.data || {}), ...pendingUpdate.data } }
+                : node,
+        ),
+    };
+}
+
+function captureInspectorFlushUpdate() {
+    let pendingUpdate = null;
+
+    const captureHandler = (event) => {
+        pendingUpdate = event.detail;
+    };
+
+    window.addEventListener('canvas-node-updated', captureHandler);
+    window.dispatchEvent(new CustomEvent('canvas-inspector-flush'));
+    window.removeEventListener('canvas-node-updated', captureHandler);
+
+    return pendingUpdate;
+}
+
+function saveGraphToLivewire(graphOverride = null) {
+    const graph = graphOverride ?? exportGraphForSave();
     if (!graph) return;
 
     const wireId = window.__NEURONAI_CANVAS_CONFIG?.wireId;
@@ -64,11 +93,12 @@ function saveGraphToLivewire() {
 }
 
 function flushInspectorAndSave() {
-    window.dispatchEvent(new CustomEvent('canvas-inspector-flush'));
+    const pendingUpdate = captureInspectorFlushUpdate();
 
     window.requestAnimationFrame(() => {
         window.requestAnimationFrame(() => {
-            saveGraphToLivewire();
+            const graph = mergePendingNodeUpdate(exportGraphForSave(), pendingUpdate);
+            saveGraphToLivewire(graph);
         });
     });
 }
@@ -83,7 +113,7 @@ function bindSaveHandler() {
 }
 
 async function saveGraphBeforeRun() {
-    window.dispatchEvent(new CustomEvent('canvas-inspector-flush'));
+    const pendingUpdate = captureInspectorFlushUpdate();
 
     await new Promise((resolve) => {
         window.requestAnimationFrame(() => {
@@ -91,7 +121,7 @@ async function saveGraphBeforeRun() {
         });
     });
 
-    const graph = exportGraphForSave();
+    const graph = mergePendingNodeUpdate(exportGraphForSave(), pendingUpdate);
     const wireId = window.__NEURONAI_CANVAS_CONFIG?.wireId;
 
     if (!graph || !wireId || !window.Livewire) {
