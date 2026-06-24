@@ -5,6 +5,8 @@ use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Edit;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Index as AgentsIndex;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Playground;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Dashboard;
+use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\McpServers\Edit as McpServersEdit;
+use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\McpServers\Index as McpServersIndex;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Tools\Edit as ToolsEdit;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Tools\Index as ToolsIndex;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Tools\RegistryShow;
@@ -34,6 +36,12 @@ Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
             Route::get('/create', ToolsEdit::class)->name('create');
             Route::get('/{tool}/edit', ToolsEdit::class)->name('edit');
             Route::get('/{tool}', ToolsShow::class)->name('show');
+        });
+
+        Route::prefix('mcp-servers')->name('mcp-servers.')->group(function () {
+            Route::get('/', McpServersIndex::class)->name('index');
+            Route::get('/create', McpServersEdit::class)->name('create');
+            Route::get('/{server}/edit', McpServersEdit::class)->name('edit');
         });
 
         Route::prefix('workflows')->name('workflows.')->group(function () {

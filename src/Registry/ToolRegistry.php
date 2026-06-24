@@ -2,6 +2,7 @@
 
 namespace ElvisLopesDigital\NeuronAIStudio\Registry;
 
+use ElvisLopesDigital\NeuronAIStudio\Models\McpServer;
 use ElvisLopesDigital\NeuronAIStudio\Models\ToolDefinition;
 use Illuminate\Support\Str;
 use NeuronAI\Tools\Tool;
@@ -121,6 +122,30 @@ class ToolRegistry
     /** @return array<int, array{ref: string, label: string, type: string, category: string, description: string|null}> */
     protected function mcpEntries(): array
     {
+        if (! class_exists(McpRegistry::class)) {
+            return $this->legacyMcpEntries();
+        }
+
+        try {
+            return collect(app(McpRegistry::class)->all())
+                ->filter(fn (array $entry) => $entry['enabled'] ?? true)
+                ->map(fn (array $entry, string $slug) => [
+                    'ref' => "mcp:{$slug}",
+                    'label' => $entry['label'] ?? Str::headline($slug),
+                    'type' => 'mcp',
+                    'category' => 'mcp',
+                    'description' => $entry['description'] ?? null,
+                ])
+                ->values()
+                ->all();
+        } catch (\Throwable) {
+            return $this->legacyMcpEntries();
+        }
+    }
+
+    /** @return array<int, array{ref: string, label: string, type: string, category: string, description: string|null}> */
+    protected function legacyMcpEntries(): array
+    {
         $entries = [];
 
         foreach (config('neuronai-studio.mcp_servers', []) as $key => $server) {
@@ -223,6 +248,10 @@ class ToolRegistry
 
         if (str_starts_with($ref, 'mcp:')) {
             $key = Str::after($ref, 'mcp:');
+
+            if (class_exists(McpRegistry::class)) {
+                return app(McpRegistry::class)->configFor($key);
+            }
 
             return config("neuronai-studio.mcp_servers.{$key}", []);
         }

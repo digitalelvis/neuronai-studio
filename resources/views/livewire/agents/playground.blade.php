@@ -10,6 +10,16 @@
             </p>
         @endif
 
+        @if ($agent->mcpBindings->isNotEmpty())
+            <p class="ab-muted ab-mt">
+                <strong>MCP Servers:</strong>
+                {{ $agent->mcpBindings->pluck('mcp_server_slug')->implode(', ') }}
+                @if ($mcpToolCount > 0)
+                    ({{ $mcpToolCount }} MCP tool{{ $mcpToolCount === 1 ? '' : 's' }} available)
+                @endif
+            </p>
+        @endif
+
         <form wire:submit="send" class="ab-mt">
             <div class="ab-form-group">
                 <label>Message</label>

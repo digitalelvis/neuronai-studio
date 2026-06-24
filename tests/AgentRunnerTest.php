@@ -4,6 +4,7 @@ namespace ElvisLopesDigital\NeuronAIStudio\Tests;
 
 use ElvisLopesDigital\NeuronAIStudio\Registry\ProviderRegistry;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\AgentRunner;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\McpToolResolver;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\ToolEventExtractor;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\ToolResolver;
 use NeuronAI\Chat\Messages\AssistantMessage;
@@ -24,7 +25,9 @@ class AgentRunnerTest extends TestCase
         $toolResolver = $this->createMock(ToolResolver::class);
         $toolResolver->method('resolveMany')->willReturn([]);
 
-        $runner = new AgentRunner($registry, $toolResolver, new ToolEventExtractor);
+        $mcpToolResolver = $this->createMock(McpToolResolver::class);
+
+        $runner = new AgentRunner($registry, $toolResolver, $mcpToolResolver, new ToolEventExtractor);
 
         $result = $runner->runInline([
             'provider' => 'openai',

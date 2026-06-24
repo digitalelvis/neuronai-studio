@@ -123,14 +123,38 @@ return [
     */
 
     'mcp_servers' => [
-        // 'example' => [
-        //     'label' => 'Example MCP',
-        //     'description' => 'Example MCP server',
-        //     'connector' => [
-        //         'command' => 'npx',
-        //         'args' => ['-y', '@modelcontextprotocol/server-example'],
-        //     ],
-        // ],
+        'filesystem' => [
+            'label' => 'Filesystem',
+            'description' => 'Read and write files via MCP stdio server.',
+            'transport' => 'stdio',
+            'command' => 'npx',
+            'args' => ['-y', '@modelcontextprotocol/server-filesystem', storage_path('app')],
+        ],
+        'telescope' => [
+            'label' => 'Telescope',
+            'description' => 'Query Laravel Telescope monitoring data via HTTP MCP.',
+            'transport' => 'http',
+            'url' => env('TELESCOPE_MCP_URL', 'http://127.0.0.1:8000/telescope/mcp'),
+            'token_env' => 'TELESCOPE_MCP_TOKEN',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | MCP Stdio Allowlist
+    |--------------------------------------------------------------------------
+    |
+    | Allowed stdio commands for DB-managed MCP servers. Empty = allow all.
+    |
+    */
+
+    'mcp_stdio_allowlist' => [
+        'npx',
+        'node',
+        'python',
+        'python3',
+        'uv',
+        'uvx',
     ],
 
     /*
@@ -194,6 +218,11 @@ return [
             'label' => 'Delay',
             'icon' => 'clock',
             'category' => 'flow',
+        ],
+        'mcp' => [
+            'label' => 'MCP',
+            'icon' => 'plug',
+            'category' => 'ai',
         ],
     ],
 

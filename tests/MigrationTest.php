@@ -14,6 +14,8 @@ class MigrationTest extends TestCase
         $this->assertTrue(\Schema::hasTable('workflow_definitions'));
         $this->assertTrue(\Schema::hasTable('workflow_runs'));
         $this->assertTrue(\Schema::hasTable('workflow_run_steps'));
+        $this->assertTrue(\Schema::hasTable('mcp_servers'));
+        $this->assertTrue(\Schema::hasTable('agent_mcp_server'));
     }
 
     public function test_models_can_persist_records(): void

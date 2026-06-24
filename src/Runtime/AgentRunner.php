@@ -11,20 +11,23 @@ class AgentRunner
     public function __construct(
         protected ProviderRegistry $providers,
         protected ToolResolver $toolResolver,
+        protected McpToolResolver $mcpToolResolver,
         protected ToolEventExtractor $toolEvents,
     ) {}
 
     public function run(AgentDefinition $definition, string $message): AgentRunResult
     {
+        $definition->loadMissing('mcpBindings');
+
         return $this->runInline([
             'provider' => $definition->provider,
             'model' => $definition->model,
             'instructions' => $definition->instructions,
             'tools' => $definition->tools ?? [],
-        ], $message);
+        ], $message, $definition);
     }
 
-    public function runInline(array $config, string $message): AgentRunResult
+    public function runInline(array $config, string $message, ?AgentDefinition $definition = null): AgentRunResult
     {
         $provider = $this->providers->resolve(
             $config['provider'] ?? config('neuronai-studio.default_provider'),
@@ -35,8 +38,10 @@ class AgentRunner
 
         $agent = new DynamicAgent(
             $provider,
+            $definition,
             (string) ($config['instructions'] ?? 'You are a helpful AI assistant.'),
             $tools,
+            $this->mcpToolResolver,
         );
 
         $handler = $agent->chat(new UserMessage($message));

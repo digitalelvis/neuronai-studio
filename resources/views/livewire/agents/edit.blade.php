@@ -95,6 +95,56 @@
         @endif
     </div>
 
+    <div class="ab-form-group">
+        <label>MCP Servers</label>
+        <p class="ab-muted ab-mb">Connect external MCP servers. Credentials are resolved from environment variables at runtime.</p>
+
+        @if ($mcpServers === [])
+            <p class="ab-muted">No MCP servers available. Configure system servers in config or create one under MCP Servers.</p>
+        @else
+            <div class="ab-tool-list">
+                @foreach ($mcpServers as $slug => $label)
+                    <label class="ab-tool-item">
+                        <input
+                            type="checkbox"
+                            wire:model="selectedMcpSlugs"
+                            value="{{ $slug }}"
+                        >
+                        <span>
+                            <strong>{{ $label }}</strong>
+                            <code class="ab-tool-ref">{{ $slug }}</code>
+                        </span>
+                    </label>
+
+                    @if (in_array($slug, $selectedMcpSlugs))
+                        <div class="ab-tool-advanced" wire:key="mcp-advanced-{{ $slug }}">
+                            <div class="ab-form-row">
+                                <div class="ab-form-group">
+                                    <label>Only (comma-separated)</label>
+                                    <input
+                                        type="text"
+                                        class="ab-input"
+                                        wire:model="mcpAdvanced.{{ $slug }}.only"
+                                        placeholder="tool_name_1, tool_name_2"
+                                    >
+                                </div>
+                                <div class="ab-form-group">
+                                    <label>Exclude (comma-separated)</label>
+                                    <input
+                                        type="text"
+                                        class="ab-input"
+                                        wire:model="mcpAdvanced.{{ $slug }}.exclude"
+                                        placeholder="tool_name_1, tool_name_2"
+                                    >
+                                </div>
+                            </div>
+                        </div>
+                    @endif
+                @endforeach
+            </div>
+        @endif
+    </div>
+
     <div class="ab-form-actions">
         <a href="{{ route('neuronai-studio.agents.index') }}" class="ab-btn">Cancel</a>
         <button type="submit" class="ab-btn ab-btn-primary">Save Agent</button>

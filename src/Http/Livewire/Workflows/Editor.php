@@ -5,6 +5,7 @@ namespace ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Workflows;
 use ElvisLopesDigital\NeuronAIStudio\Codegen\WorkflowExporter;
 use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
 use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
+use ElvisLopesDigital\NeuronAIStudio\Registry\McpRegistry;
 use ElvisLopesDigital\NeuronAIStudio\Registry\NodeTypeRegistry;
 use ElvisLopesDigital\NeuronAIStudio\Registry\ToolRegistry;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\GraphValidator;
@@ -106,6 +107,10 @@ class Editor extends Component
             'agentsForCanvas' => AgentDefinition::orderBy('name')->get(['id', 'name'])->values()->all(),
             'toolsForCanvas' => collect(app(ToolRegistry::class)->all())
                 ->map(fn (array $tool) => ['ref' => $tool['ref'], 'label' => $tool['label']])
+                ->values()
+                ->all(),
+            'mcpServersForCanvas' => collect(app(McpRegistry::class)->labels(includeDisabled: false))
+                ->map(fn (string $label, string $slug) => ['slug' => $slug, 'label' => $label])
                 ->values()
                 ->all(),
         ])->layout('neuronai-studio::layouts.app', [

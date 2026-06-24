@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
+/** @property-read \Illuminate\Database\Eloquent\Collection<int, AgentMcpServer> $mcpBindings */
+
 class AgentDefinition extends Model
 {
     protected $fillable = [
@@ -41,5 +43,10 @@ class AgentDefinition extends Model
     public function workflowRuns(): HasMany
     {
         return $this->hasMany(WorkflowRun::class);
+    }
+
+    public function mcpBindings(): HasMany
+    {
+        return $this->hasMany(AgentMcpServer::class);
     }
 }

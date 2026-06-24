@@ -3,6 +3,8 @@
 namespace ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents;
 
 use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
+use ElvisLopesDigital\NeuronAIStudio\Models\AgentMcpServer;
+use ElvisLopesDigital\NeuronAIStudio\Registry\McpRegistry;
 use ElvisLopesDigital\NeuronAIStudio\Registry\ProviderRegistry;
 use ElvisLopesDigital\NeuronAIStudio\Registry\ToolRegistry;
 use Illuminate\Support\Str;
@@ -28,6 +30,12 @@ class Edit extends Component
     /** @var array<string, array{only: string, exclude: string}> */
     public array $toolAdvanced = [];
 
+    /** @var array<int, string> */
+    public array $selectedMcpSlugs = [];
+
+    /** @var array<string, array{only: string, exclude: string}> */
+    public array $mcpAdvanced = [];
+
     public function mount(?AgentDefinition $agent = null): void
     {
         $this->agent = $agent;
@@ -40,6 +48,7 @@ class Edit extends Component
             $this->model = $agent->model;
             $this->instructions = (string) $agent->instructions;
             $this->loadToolsFromAgent($agent->tools ?? []);
+            $this->loadMcpFromAgent($agent);
         } else {
             $models = config('neuronai-studio.providers.'.$this->provider.'.models', []);
             $this->model = $models[0] ?? config('neuronai-studio.default_model', 'gpt-4o-mini');
@@ -62,6 +71,19 @@ class Edit extends Component
         }
     }
 
+    protected function loadMcpFromAgent(AgentDefinition $agent): void
+    {
+        $agent->loadMissing('mcpBindings');
+
+        foreach ($agent->mcpBindings as $binding) {
+            $this->selectedMcpSlugs[] = $binding->mcp_server_slug;
+            $this->mcpAdvanced[$binding->mcp_server_slug] = [
+                'only' => (string) $binding->only_tools,
+                'exclude' => implode(', ', $binding->exclude_tools ?? []),
+            ];
+        }
+    }
+
     public function updatedProvider(string $value): void
     {
         $models = config('neuronai-studio.providers.'.$value.'.models', []);
@@ -78,6 +100,8 @@ class Edit extends Component
             'instructions' => 'nullable|string',
             'selectedToolRefs' => 'array',
             'selectedToolRefs.*' => 'string',
+            'selectedMcpSlugs' => 'array',
+            'selectedMcpSlugs.*' => 'string',
         ]);
 
         $payload = array_merge($validated, [
@@ -92,6 +116,8 @@ class Edit extends Component
         } else {
             $this->agent = AgentDefinition::create($payload);
         }
+
+        $this->syncMcpBindings($this->agent);
 
         session()->flash('success', 'Agent saved successfully.');
 
@@ -122,6 +148,31 @@ class Edit extends Component
         return $tools;
     }
 
+    protected function syncMcpBindings(AgentDefinition $agent): void
+    {
+        $registry = app(McpRegistry::class);
+        $agent->mcpBindings()->delete();
+
+        foreach ($this->selectedMcpSlugs as $slug) {
+            if ($registry->find($slug) === null) {
+                continue;
+            }
+
+            $advanced = $this->mcpAdvanced[$slug] ?? [];
+            $entry = $registry->find($slug);
+
+            AgentMcpServer::create([
+                'agent_definition_id' => $agent->id,
+                'mcp_server_slug' => $slug,
+                'mcp_server_id' => $entry['source'] === 'database' ? ($entry['id'] ?? null) : null,
+                'only_tools' => ($advanced['only'] ?? '') !== '' ? $advanced['only'] : null,
+                'exclude_tools' => ($advanced['exclude'] ?? '') !== ''
+                    ? array_values(array_filter(array_map('trim', explode(',', $advanced['exclude']))))
+                    : null,
+            ]);
+        }
+    }
+
     public function render()
     {
         $registry = app(ToolRegistry::class);
@@ -137,6 +188,7 @@ class Edit extends Component
                 'studio' => 'Studio Tools',
                 'mcp' => 'MCP Servers',
             ],
+            'mcpServers' => app(McpRegistry::class)->labels(includeDisabled: false),
         ])->layout('neuronai-studio::layouts.app', [
             'title' => $this->agent?->exists ? 'Edit Agent' : 'Create Agent',
         ]);

@@ -1,16 +1,17 @@
-window.workflowInspector = function (agents, tools) {
+window.workflowInspector = function (agents, tools, mcpServers) {
     return {
         selectedNode: null,
         agents: agents || [],
         tools: tools || [],
+        mcpServers: mcpServers || [],
 
         init() {
             window.addEventListener('canvas-node-selected', (e) => {
                 this.selectedNode = e.detail ? { ...e.detail, data: { ...(e.detail.data || {}) } } : null;
 
-                if (this.selectedNode?.type === 'tool') {
+                if (this.selectedNode?.type === 'tool' || this.selectedNode?.type === 'mcp') {
                     if (!this.selectedNode.data.output_key) {
-                        this.selectedNode.data.output_key = 'tool_result';
+                        this.selectedNode.data.output_key = this.selectedNode.type === 'mcp' ? 'mcp_result' : 'tool_result';
                     }
 
                     if (this.selectedNode.data.parameters && !this.selectedNode.data.parameters_json) {

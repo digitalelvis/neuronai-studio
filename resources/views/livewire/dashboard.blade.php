@@ -9,6 +9,13 @@
             <div class="ab-stat-value">{{ $toolCount }}</div>
         </div>
         <div class="ab-card">
+            <div class="ab-stat-label">MCP Servers</div>
+            <div class="ab-stat-value">{{ $mcpServerCount }}</div>
+        </div>
+    </div>
+
+    <div class="ab-grid ab-grid-3 ab-mt">
+        <div class="ab-card">
             <div class="ab-stat-label">Workflows</div>
             <div class="ab-stat-value">{{ $workflowCount }}</div>
         </div>

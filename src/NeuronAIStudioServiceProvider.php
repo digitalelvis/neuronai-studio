@@ -6,14 +6,17 @@ use ElvisLopesDigital\NeuronAIStudio\Commands\ExportCommand;
 use ElvisLopesDigital\NeuronAIStudio\Commands\InstallCommand;
 use ElvisLopesDigital\NeuronAIStudio\Commands\MakeToolCommand;
 use ElvisLopesDigital\NeuronAIStudio\Http\Middleware\EnsureNeuronAIStudioAuthorized;
+use ElvisLopesDigital\NeuronAIStudio\Registry\McpRegistry;
 use ElvisLopesDigital\NeuronAIStudio\Registry\NodeTypeRegistry;
 use ElvisLopesDigital\NeuronAIStudio\Registry\ProviderRegistry;
 use ElvisLopesDigital\NeuronAIStudio\Registry\ToolRegistry;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\McpToolResolver;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\AgentNodeExecutor;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\ConditionNodeExecutor;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\DelayNodeExecutor;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\LlmNodeExecutor;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorRegistry;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\McpNodeExecutor;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\RagNodeExecutor;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\SetStateNodeExecutor;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\StartNodeExecutor;
@@ -41,6 +44,14 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
 
         $this->app->singleton(ToolRegistry::class, function () {
             return new ToolRegistry;
+        });
+
+        $this->app->singleton(McpRegistry::class, function () {
+            return new McpRegistry;
+        });
+
+        $this->app->singleton(McpToolResolver::class, function ($app) {
+            return new McpToolResolver($app->make(McpRegistry::class));
         });
 
         $this->app->singleton(NodeExecutorRegistry::class, function ($app) {
@@ -132,6 +143,7 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
             'tool' => ToolNodeExecutor::class,
             'rag' => RagNodeExecutor::class,
             'delay' => DelayNodeExecutor::class,
+            'mcp' => McpNodeExecutor::class,
         ];
 
         foreach ($types as $type => $executorClass) {
@@ -150,6 +162,8 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
         Livewire::component('neuronai-studio.tools.edit', Http\Livewire\Tools\Edit::class);
         Livewire::component('neuronai-studio.tools.show', Http\Livewire\Tools\Show::class);
         Livewire::component('neuronai-studio.tools.registry', Http\Livewire\Tools\RegistryShow::class);
+        Livewire::component('neuronai-studio.mcp-servers.index', Http\Livewire\McpServers\Index::class);
+        Livewire::component('neuronai-studio.mcp-servers.edit', Http\Livewire\McpServers\Edit::class);
         Livewire::component('neuronai-studio.workflows.index', Http\Livewire\Workflows\Index::class);
         Livewire::component('neuronai-studio.workflows.editor', Http\Livewire\Workflows\Editor::class);
         Livewire::component('neuronai-studio.workflows.runs', Http\Livewire\Workflows\Runs::class);

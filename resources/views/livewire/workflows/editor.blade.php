@@ -43,6 +43,7 @@
             workflowId: @json($workflow?->id),
             streamUrl: @json($workflow?->exists ? route('neuronai-studio.workflows.run.stream', $workflow) : null),
             tools: @json($toolsForCanvas),
+            mcpServers: @json($mcpServersForCanvas),
         };
     </script>
 
@@ -65,7 +66,7 @@
         </div>
         <aside
             class="ab-inspector"
-            x-data="workflowInspector(@js($agentsForCanvas), @js($toolsForCanvas))"
+            x-data="workflowInspector(@js($agentsForCanvas), @js($toolsForCanvas), @js($mcpServersForCanvas))"
             x-init="init()"
             x-show="selectedNode"
             x-cloak
@@ -116,6 +117,23 @@
                             </select>
                             <label class="ab-mt">Output Key</label>
                             <input class="ab-input" x-model="selectedNode.data.output_key" @change="syncNode()" placeholder="tool_result">
+                            <label class="ab-mt">Parameters JSON</label>
+                            <textarea class="ab-input" rows="3" x-model="selectedNode.data.parameters_json" @change="syncParameters()" placeholder='{"query": "$input"}'></textarea>
+                        </div>
+                    </template>
+                    <template x-if="selectedNode.type === 'mcp'">
+                        <div class="ab-form-group">
+                            <label>MCP Server</label>
+                            <select class="ab-input" x-model="selectedNode.data.mcp_server" @change="syncNode()">
+                                <option value="">Select server</option>
+                                <template x-for="server in mcpServers" :key="server.slug">
+                                    <option :value="server.slug" x-text="server.label"></option>
+                                </template>
+                            </select>
+                            <label class="ab-mt">Tool Name</label>
+                            <input class="ab-input" x-model="selectedNode.data.tool_name" @change="syncNode()" placeholder="tool_name">
+                            <label class="ab-mt">Output Key</label>
+                            <input class="ab-input" x-model="selectedNode.data.output_key" @change="syncNode()" placeholder="mcp_result">
                             <label class="ab-mt">Parameters JSON</label>
                             <textarea class="ab-input" rows="3" x-model="selectedNode.data.parameters_json" @change="syncParameters()" placeholder='{"query": "$input"}'></textarea>
                         </div>
