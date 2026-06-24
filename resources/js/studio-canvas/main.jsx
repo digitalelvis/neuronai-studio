@@ -2,6 +2,7 @@ import { createRoot } from 'react-dom/client';
 import WorkflowCanvas from './WorkflowCanvas';
 
 const roots = new WeakMap();
+let workflowChatMounted = false;
 
 export function mountWorkflowCanvas(rootEl, config = {}) {
     if (!rootEl) return null;
@@ -137,76 +138,42 @@ async function saveGraphBeforeRun() {
     return true;
 }
 
-function bindRunTestHandler() {
-    if (window.__neuronaiCanvasRunBound) return;
-    window.__neuronaiCanvasRunBound = true;
+function bindOpenTestHandler() {
+    if (window.__neuronaiCanvasOpenTestBound) return;
+    window.__neuronaiCanvasOpenTestBound = true;
 
-    document.addEventListener('click', async (event) => {
-        const button = event.target.closest('[data-workflow-run-test]');
+    document.addEventListener('click', (event) => {
+        const button = event.target.closest('[data-workflow-open-test]');
         if (!button || button.disabled) return;
 
-        const config = window.__NEURONAI_CANVAS_CONFIG;
-        if (!config?.streamUrl) {
-            window.alert('Save the workflow before running a test.');
-            return;
-        }
-
-        button.disabled = true;
-
-        try {
-            await saveGraphBeforeRun();
-            window.dispatchEvent(new CustomEvent('canvas-run-start'));
-
-            const url = new URL(config.streamUrl, window.location.origin);
-            url.searchParams.set('input', 'Hello from workflow test');
-
-            const source = new EventSource(url.toString());
-
-            source.addEventListener('step_started', (message) => {
-                window.dispatchEvent(
-                    new CustomEvent('canvas-execution-event', {
-                        detail: { event: 'step_started', ...JSON.parse(message.data) },
-                    }),
-                );
-            });
-
-            source.addEventListener('step_completed', (message) => {
-                window.dispatchEvent(
-                    new CustomEvent('canvas-execution-event', {
-                        detail: { event: 'step_completed', ...JSON.parse(message.data) },
-                    }),
-                );
-            });
-
-            source.addEventListener('run_completed', (message) => {
-                window.dispatchEvent(
-                    new CustomEvent('canvas-execution-event', {
-                        detail: { event: 'run_completed', ...JSON.parse(message.data) },
-                    }),
-                );
-                source.close();
-                button.disabled = false;
-            });
-
-            source.addEventListener('run_failed', (message) => {
-                window.dispatchEvent(
-                    new CustomEvent('canvas-execution-event', {
-                        detail: { event: 'run_failed', ...JSON.parse(message.data) },
-                    }),
-                );
-                source.close();
-                button.disabled = false;
-            });
-
-            source.onerror = () => {
-                source.close();
-                button.disabled = false;
-            };
-        } catch (error) {
-            console.error('[NeuronAI Studio] Workflow run failed:', error);
-            button.disabled = false;
-        }
+        window.dispatchEvent(new CustomEvent('workflow-open-test'));
     });
+}
+
+function bootstrapWorkflowChat() {
+    const config = window.__NEURONAI_CANVAS_CONFIG;
+    const root = document.getElementById('studio-chat-workflow-root');
+
+    if (!config?.streamUrl || !root || !window.mountStudioChat) {
+        return;
+    }
+
+    if (workflowChatMounted && root.dataset.mounted === '1') {
+        return;
+    }
+
+    window.mountStudioChat(root, {
+        mode: 'workflow',
+        entityId: config.workflowId,
+        streamUrl: config.streamUrl,
+        resumeUrlTemplate: config.resumeUrlTemplate,
+        uploadUrl: config.uploadUrl,
+        onBeforeRun: saveGraphBeforeRun,
+        syncCanvas: true,
+    });
+
+    root.dataset.mounted = '1';
+    workflowChatMounted = true;
 }
 
 function bootstrapWorkflowCanvas() {
@@ -227,7 +194,7 @@ function bootstrapWorkflowCanvas() {
         root.dataset.mounted = '1';
         bindPaletteDrag();
         bindSaveHandler();
-        bindRunTestHandler();
+        bindOpenTestHandler();
     } catch (error) {
         console.error('[NeuronAI Studio] Failed to mount workflow canvas:', error);
     }
@@ -235,5 +202,11 @@ function bootstrapWorkflowCanvas() {
 
 window.mountWorkflowCanvas = mountWorkflowCanvas;
 window.bootstrapWorkflowCanvas = bootstrapWorkflowCanvas;
+window.bootstrapWorkflowChat = bootstrapWorkflowChat;
+window.saveGraphBeforeRun = saveGraphBeforeRun;
+
+window.addEventListener('workflow-open-test', () => {
+    bootstrapWorkflowChat();
+});
 
 bootstrapWorkflowCanvas();

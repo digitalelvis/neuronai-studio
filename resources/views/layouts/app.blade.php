@@ -3,11 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>{{ $title ?? 'NeuronAI Studio' }}</title>
     @livewireStyles
     <link rel="stylesheet" href="{{ asset('vendor/neuronai-studio/css/neuronai-studio.css') }}">
     @if (request()->routeIs('neuronai-studio.workflows.*'))
-        <link rel="stylesheet" href="{{ asset('vendor/neuronai-studio/js/canvas/dist/workflow-canvas.css') }}">
+        <link rel="stylesheet" href="{{ asset('vendor/neuronai-studio/js/dist/workflow-canvas.css') }}">
+    @endif
+    @if (request()->routeIs('neuronai-studio.agents.playground', 'neuronai-studio.workflows.create', 'neuronai-studio.workflows.edit'))
+        <link rel="stylesheet" href="{{ asset('vendor/neuronai-studio/js/dist/studio-chat.css') }}">
     @endif
 </head>
 <body class="ab-body">
@@ -37,7 +41,10 @@
     </div>
     @if (request()->routeIs('neuronai-studio.workflows.create', 'neuronai-studio.workflows.edit'))
         <script src="{{ asset('vendor/neuronai-studio/js/canvas/workflow-inspector.js') }}"></script>
-        <script src="{{ asset('vendor/neuronai-studio/js/canvas/dist/workflow-canvas.bundle.js') }}"></script>
+        <script src="{{ asset('vendor/neuronai-studio/js/dist/workflow-canvas.bundle.js') }}"></script>
+        <script src="{{ asset('vendor/neuronai-studio/js/dist/studio-chat.bundle.js') }}"></script>
+    @elseif (request()->routeIs('neuronai-studio.agents.playground'))
+        <script src="{{ asset('vendor/neuronai-studio/js/dist/studio-chat.bundle.js') }}"></script>
     @endif
     @livewireScripts
 </body>

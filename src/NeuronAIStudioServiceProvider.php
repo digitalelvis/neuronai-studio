@@ -14,6 +14,7 @@ use ElvisLopesDigital\NeuronAIStudio\Runtime\McpToolResolver;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\AgentNodeExecutor;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\ConditionNodeExecutor;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\DelayNodeExecutor;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\HumanNodeExecutor;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\LlmNodeExecutor;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorRegistry;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\McpNodeExecutor;
@@ -96,6 +97,7 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__.'/../resources/css' => public_path('vendor/neuronai-studio/css'),
                 __DIR__.'/../resources/js/canvas' => public_path('vendor/neuronai-studio/js/canvas'),
+                __DIR__.'/../resources/js/dist' => public_path('vendor/neuronai-studio/js/dist'),
             ], 'neuronai-studio-assets');
         }
 
@@ -144,6 +146,7 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
             'rag' => RagNodeExecutor::class,
             'delay' => DelayNodeExecutor::class,
             'mcp' => McpNodeExecutor::class,
+            'human' => HumanNodeExecutor::class,
         ];
 
         foreach ($types as $type => $executorClass) {

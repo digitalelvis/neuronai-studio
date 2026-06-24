@@ -1,6 +1,7 @@
 window.workflowInspector = function (agents, tools, mcpServers) {
     return {
         selectedNode: null,
+        inspectorTab: 'node',
         agents: agents || [],
         tools: tools || [],
         mcpServers: mcpServers || [],
@@ -8,6 +9,7 @@ window.workflowInspector = function (agents, tools, mcpServers) {
         init() {
             window.addEventListener('canvas-node-selected', (e) => {
                 this.selectedNode = e.detail ? { ...e.detail, data: { ...(e.detail.data || {}) } } : null;
+                this.inspectorTab = 'node';
 
                 if (this.selectedNode?.type === 'agent' && this.selectedNode.data.agent_id != null && this.selectedNode.data.agent_id !== '') {
                     this.selectedNode.data.agent_id = String(this.selectedNode.data.agent_id);
@@ -22,10 +24,25 @@ window.workflowInspector = function (agents, tools, mcpServers) {
                         this.selectedNode.data.parameters_json = JSON.stringify(this.selectedNode.data.parameters, null, 2);
                     }
                 }
+
+                if (this.selectedNode?.type === 'human' && !this.selectedNode.data.output_key) {
+                    this.selectedNode.data.output_key = 'human_response';
+                }
             });
 
             window.addEventListener('canvas-inspector-flush', () => {
                 this.flushBeforeSave();
+            });
+
+            window.addEventListener('workflow-open-test', () => {
+                this.openTestTab();
+            });
+        },
+
+        openTestTab() {
+            this.inspectorTab = 'test';
+            window.requestAnimationFrame(() => {
+                window.bootstrapWorkflowChat?.();
             });
         },
 

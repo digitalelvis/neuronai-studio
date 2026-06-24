@@ -12,8 +12,32 @@ class WorkflowStreamController
 {
     public function __invoke(Request $request, WorkflowDefinition $workflow, WorkflowRunner $runner): StreamedResponse
     {
-        $input = ['input' => $request->string('input', 'Hello from workflow test')->toString()];
+        if ($request->isMethod('GET')) {
+            return $this->stream($workflow, $runner, [
+                'message' => $request->string('input', 'Hello from workflow test')->toString(),
+                'input' => $request->string('input', 'Hello from workflow test')->toString(),
+            ]);
+        }
 
+        $validated = $request->validate([
+            'message' => 'nullable|string',
+            'state' => 'nullable|array',
+            'attachments' => 'nullable|array',
+        ]);
+
+        $payload = [
+            'message' => (string) ($validated['message'] ?? ''),
+            'input' => (string) ($validated['message'] ?? ''),
+            'state' => $validated['state'] ?? [],
+            'attachments' => $validated['attachments'] ?? [],
+        ];
+
+        return $this->stream($workflow, $runner, $payload);
+    }
+
+    /** @param  array<string, mixed>  $input */
+    protected function stream(WorkflowDefinition $workflow, WorkflowRunner $runner, array $input): StreamedResponse
+    {
         return response()->stream(function () use ($workflow, $runner, $input) {
             $send = function (string $event, array $data): void {
                 echo "event: {$event}\n";
@@ -32,6 +56,10 @@ class WorkflowStreamController
 
             try {
                 $run = $runner->run($workflow, $input, $send);
+
+                if ($run->status === 'awaiting_input') {
+                    return;
+                }
 
                 $send('run_completed', [
                     'run_id' => $run->id,

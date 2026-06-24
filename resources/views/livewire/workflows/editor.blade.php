@@ -23,9 +23,9 @@
                 <button
                     type="button"
                     class="ab-btn"
-                    data-workflow-run-test
+                    data-workflow-open-test
                     @if (! $workflow?->exists) disabled title="Save the workflow first" @endif
-                >Run Test</button>
+                >Open Test</button>
                 <button type="button" wire:click="exportWorkflow" class="ab-btn">Export PHP</button>
                 <button type="button" onclick="window.dispatchEvent(new CustomEvent('workflow-canvas-save'))" class="ab-btn ab-btn-primary">Save</button>
             </div>
@@ -42,6 +42,8 @@
             wireId: @json($this->getId()),
             workflowId: @json($workflow?->id),
             streamUrl: @json($workflow?->exists ? route('neuronai-studio.workflows.run.stream', $workflow) : null),
+            resumeUrlTemplate: @json(route('neuronai-studio.workflows.runs.resume.stream', ['run' => '__RUN__'])),
+            uploadUrl: @json(route('neuronai-studio.attachments.store')),
             tools: @json($toolsForCanvas),
             mcpServers: @json($mcpServersForCanvas),
         };
@@ -70,84 +72,104 @@
             class="ab-inspector"
             x-data="workflowInspector(@js($agentsForCanvas), @js($toolsForCanvas), @js($mcpServersForCanvas))"
             x-init="init()"
-            x-show="selectedNode"
-            x-cloak
         >
-            <h3>Node Config</h3>
-            <template x-if="selectedNode">
-                <div>
-                    <p><strong x-text="selectedNode.type"></strong></p>
-                    <template x-if="selectedNode.type === 'agent'">
-                        <div class="ab-form-group">
-                            <label>Agent</label>
-                            <select class="ab-input" x-model="selectedNode.data.agent_id" @change="syncNode()">
-                                <option value="">Select agent</option>
-                                <template x-for="agent in agents" :key="agent.id">
-                                    <option :value="String(agent.id)" x-text="agent.name"></option>
-                                </template>
-                            </select>
-                        </div>
-                    </template>
-                    <template x-if="selectedNode.type === 'llm'">
-                        <div class="ab-form-group">
-                            <label>Prompt</label>
-                            <textarea class="ab-input" rows="3" x-model="selectedNode.data.prompt" @change="syncNode()"></textarea>
-                        </div>
-                    </template>
-                    <template x-if="selectedNode.type === 'set_state'">
-                        <div class="ab-form-group">
-                            <label>Key</label>
-                            <input class="ab-input" x-model="selectedNode.data.key" @change="syncNode()">
-                            <label class="ab-mt">Value</label>
-                            <input class="ab-input" x-model="selectedNode.data.value" @change="syncNode()">
-                        </div>
-                    </template>
-                    <template x-if="selectedNode.type === 'condition'">
-                        <div class="ab-form-group">
-                            <label>State Key</label>
-                            <input class="ab-input" x-model="selectedNode.data.state_key" @change="syncNode()">
-                        </div>
-                    </template>
-                    <template x-if="selectedNode.type === 'tool'">
-                        <div class="ab-form-group">
-                            <label>Tool</label>
-                            <select class="ab-input" x-model="selectedNode.data.tool_ref" @change="syncNode()">
-                                <option value="">Select tool</option>
-                                <template x-for="tool in tools" :key="tool.ref">
-                                    <option :value="tool.ref" x-text="tool.label"></option>
-                                </template>
-                            </select>
-                            <label class="ab-mt">Output Key</label>
-                            <input class="ab-input" x-model="selectedNode.data.output_key" @change="syncNode()" placeholder="tool_result">
-                            <label class="ab-mt">Parameters JSON</label>
-                            <textarea class="ab-input" rows="3" x-model="selectedNode.data.parameters_json" @change="syncParameters()" placeholder='{"query": "$input"}'></textarea>
-                        </div>
-                    </template>
-                    <template x-if="selectedNode.type === 'mcp'">
-                        <div class="ab-form-group">
-                            <label>MCP Server</label>
-                            <select class="ab-input" x-model="selectedNode.data.mcp_server" @change="syncNode()">
-                                <option value="">Select server</option>
-                                <template x-for="server in mcpServers" :key="server.slug">
-                                    <option :value="server.slug" x-text="server.label"></option>
-                                </template>
-                            </select>
-                            <label class="ab-mt">Tool Name</label>
-                            <input class="ab-input" x-model="selectedNode.data.tool_name" @change="syncNode()" placeholder="tool_name">
-                            <label class="ab-mt">Output Key</label>
-                            <input class="ab-input" x-model="selectedNode.data.output_key" @change="syncNode()" placeholder="mcp_result">
-                            <label class="ab-mt">Parameters JSON</label>
-                            <textarea class="ab-input" rows="3" x-model="selectedNode.data.parameters_json" @change="syncParameters()" placeholder='{"query": "$input"}'></textarea>
-                        </div>
-                    </template>
-                    <button
-                        type="button"
-                        class="ab-btn ab-danger ab-mt"
-                        x-show="selectedNode && !['start', 'stop'].includes(selectedNode.type)"
-                        @click="removeSelected()"
-                    >Remove Node</button>
-                </div>
-            </template>
+            <div class="ab-inspector-tabs">
+                <button type="button" class="ab-inspector-tab" :class="{ active: inspectorTab === 'node' }" @click="inspectorTab = 'node'">Node</button>
+                <button type="button" class="ab-inspector-tab" :class="{ active: inspectorTab === 'test' }" @click="openTestTab()">Test</button>
+            </div>
+
+            <div x-show="inspectorTab === 'node'">
+                <h3>Node Config</h3>
+                <template x-if="selectedNode">
+                    <div>
+                        <p><strong x-text="selectedNode.type"></strong></p>
+                        <template x-if="selectedNode.type === 'agent'">
+                            <div class="ab-form-group">
+                                <label>Agent</label>
+                                <select class="ab-input" x-model="selectedNode.data.agent_id" @change="syncNode()">
+                                    <option value="">Select agent</option>
+                                    <template x-for="agent in agents" :key="agent.id">
+                                        <option :value="String(agent.id)" x-text="agent.name"></option>
+                                    </template>
+                                </select>
+                                <label class="ab-mt">Message override</label>
+                                <input class="ab-input" x-model="selectedNode.data.message" @change="syncNode()" placeholder="$input">
+                            </div>
+                        </template>
+                        <template x-if="selectedNode.type === 'llm'">
+                            <div class="ab-form-group">
+                                <label>Prompt</label>
+                                <textarea class="ab-input" rows="3" x-model="selectedNode.data.prompt" @change="syncNode()"></textarea>
+                            </div>
+                        </template>
+                        <template x-if="selectedNode.type === 'human'">
+                            <div class="ab-form-group">
+                                <label>Prompt</label>
+                                <textarea class="ab-input" rows="3" x-model="selectedNode.data.prompt" @change="syncNode()" placeholder="Ask the user for input…"></textarea>
+                                <label class="ab-mt">Output Key</label>
+                                <input class="ab-input" x-model="selectedNode.data.output_key" @change="syncNode()" placeholder="human_response">
+                            </div>
+                        </template>
+                        <template x-if="selectedNode.type === 'set_state'">
+                            <div class="ab-form-group">
+                                <label>Key</label>
+                                <input class="ab-input" x-model="selectedNode.data.key" @change="syncNode()">
+                                <label class="ab-mt">Value</label>
+                                <input class="ab-input" x-model="selectedNode.data.value" @change="syncNode()">
+                            </div>
+                        </template>
+                        <template x-if="selectedNode.type === 'condition'">
+                            <div class="ab-form-group">
+                                <label>State Key</label>
+                                <input class="ab-input" x-model="selectedNode.data.state_key" @change="syncNode()">
+                            </div>
+                        </template>
+                        <template x-if="selectedNode.type === 'tool'">
+                            <div class="ab-form-group">
+                                <label>Tool</label>
+                                <select class="ab-input" x-model="selectedNode.data.tool_ref" @change="syncNode()">
+                                    <option value="">Select tool</option>
+                                    <template x-for="tool in tools" :key="tool.ref">
+                                        <option :value="tool.ref" x-text="tool.label"></option>
+                                    </template>
+                                </select>
+                                <label class="ab-mt">Output Key</label>
+                                <input class="ab-input" x-model="selectedNode.data.output_key" @change="syncNode()" placeholder="tool_result">
+                                <label class="ab-mt">Parameters JSON</label>
+                                <textarea class="ab-input" rows="3" x-model="selectedNode.data.parameters_json" @change="syncParameters()" placeholder='{"query": "$input"}'></textarea>
+                            </div>
+                        </template>
+                        <template x-if="selectedNode.type === 'mcp'">
+                            <div class="ab-form-group">
+                                <label>MCP Server</label>
+                                <select class="ab-input" x-model="selectedNode.data.mcp_server" @change="syncNode()">
+                                    <option value="">Select server</option>
+                                    <template x-for="server in mcpServers" :key="server.slug">
+                                        <option :value="server.slug" x-text="server.label"></option>
+                                    </template>
+                                </select>
+                                <label class="ab-mt">Tool Name</label>
+                                <input class="ab-input" x-model="selectedNode.data.tool_name" @change="syncNode()" placeholder="tool_name">
+                                <label class="ab-mt">Output Key</label>
+                                <input class="ab-input" x-model="selectedNode.data.output_key" @change="syncNode()" placeholder="mcp_result">
+                                <label class="ab-mt">Parameters JSON</label>
+                                <textarea class="ab-input" rows="3" x-model="selectedNode.data.parameters_json" @change="syncParameters()" placeholder='{"query": "$input"}'></textarea>
+                            </div>
+                        </template>
+                        <button
+                            type="button"
+                            class="ab-btn ab-danger ab-mt"
+                            x-show="selectedNode && !['start', 'stop'].includes(selectedNode.type)"
+                            @click="removeSelected()"
+                        >Remove Node</button>
+                    </div>
+                </template>
+                <p class="ab-muted" x-show="!selectedNode">Select a node to configure it.</p>
+            </div>
+
+            <div x-show="inspectorTab === 'test'" class="ab-inspector-test-root">
+                <div id="studio-chat-workflow-root"></div>
+            </div>
         </aside>
     </div>
 </div>

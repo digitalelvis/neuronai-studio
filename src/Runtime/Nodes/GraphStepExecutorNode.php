@@ -23,6 +23,7 @@ class GraphStepExecutorNode extends Node
     {
         $nodeId = $event->nodeId;
         $nodeConfig = $this->graphContext->nodeConfig($nodeId);
+        $nodeConfig['id'] = $nodeId;
         $nodeType = $nodeConfig['type'] ?? 'unknown';
 
         $startedAt = microtime(true);

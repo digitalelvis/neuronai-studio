@@ -1,6 +1,9 @@
 <?php
 
 use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\WorkflowStreamController;
+use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\AgentChatStreamController;
+use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\AttachmentController;
+use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\WorkflowRunResumeController;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Edit;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Index as AgentsIndex;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Playground;
@@ -28,6 +31,7 @@ Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
             Route::get('/create', Edit::class)->name('create');
             Route::get('/{agent}/edit', Edit::class)->name('edit');
             Route::get('/{agent}/playground', Playground::class)->name('playground');
+            Route::match(['GET', 'POST'], '/{agent}/chat/stream', AgentChatStreamController::class)->name('chat.stream');
         });
 
         Route::prefix('tools')->name('tools.')->group(function () {
@@ -48,8 +52,11 @@ Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
             Route::get('/', WorkflowsIndex::class)->name('index');
             Route::get('/create', Editor::class)->name('create');
             Route::get('/{workflow}/edit', Editor::class)->name('edit');
-            Route::get('/{workflow}/run/stream', WorkflowStreamController::class)->name('run.stream');
+            Route::match(['GET', 'POST'], '/{workflow}/run/stream', WorkflowStreamController::class)->name('run.stream');
+            Route::post('/runs/{run}/resume/stream', WorkflowRunResumeController::class)->name('runs.resume.stream');
             Route::get('/{workflow}/runs', Runs::class)->name('runs');
             Route::get('/runs/{run}', RunDetail::class)->name('runs.show');
         });
+
+        Route::post('/studio/attachments', AttachmentController::class)->name('attachments.store');
     });

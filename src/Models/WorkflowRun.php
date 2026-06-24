@@ -13,6 +13,8 @@ class WorkflowRun extends Model
         'status',
         'input',
         'output',
+        'checkpoint',
+        'awaiting_node_id',
         'error_message',
         'started_at',
         'finished_at',
@@ -23,6 +25,7 @@ class WorkflowRun extends Model
         return [
             'input' => 'array',
             'output' => 'array',
+            'checkpoint' => 'array',
             'started_at' => 'datetime',
             'finished_at' => 'datetime',
         ];

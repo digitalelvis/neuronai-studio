@@ -224,6 +224,36 @@ return [
             'icon' => 'plug',
             'category' => 'ai',
         ],
+        'human' => [
+            'label' => 'Human',
+            'icon' => 'message-square',
+            'category' => 'flow',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Attachments (Studio Chat)
+    |--------------------------------------------------------------------------
+    */
+
+    'attachments' => [
+        'disk' => env('NEURONAI_STUDIO_ATTACHMENTS_DISK', 'local'),
+        'path' => env('NEURONAI_STUDIO_ATTACHMENTS_PATH', 'neuronai-studio/attachments'),
+        'max_size_kb' => (int) env('NEURONAI_STUDIO_ATTACHMENTS_MAX_KB', 10240),
+        'allowed_mimes' => [
+            'image/jpeg',
+            'image/png',
+            'image/gif',
+            'image/webp',
+            'audio/mpeg',
+            'audio/wav',
+            'audio/ogg',
+            'video/mp4',
+            'video/webm',
+            'application/pdf',
+            'text/plain',
+        ],
     ],
 
 ];

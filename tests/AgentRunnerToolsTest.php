@@ -5,6 +5,7 @@ namespace ElvisLopesDigital\NeuronAIStudio\Tests;
 use ElvisLopesDigital\NeuronAIStudio\Registry\ProviderRegistry;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\AgentRunner;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\McpToolResolver;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\MessageFactory;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\ToolEventExtractor;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\ToolResolver;
 use NeuronAI\Chat\Messages\AssistantMessage;
@@ -35,6 +36,7 @@ class AgentRunnerToolsTest extends TestCase
             $toolResolver,
             $mcpToolResolver,
             new ToolEventExtractor,
+            new MessageFactory,
         );
 
         $result = $runner->runInline([
@@ -72,6 +74,7 @@ class AgentRunnerToolsTest extends TestCase
             $toolResolver,
             $mcpToolResolver,
             new ToolEventExtractor,
+            new MessageFactory,
         );
 
         $result = $runner->runInline([
