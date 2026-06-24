@@ -52,6 +52,7 @@
             <h3>Nodes</h3>
             <p class="ab-palette-hint">Drag to canvas</p>
             @foreach ($nodeTypes as $type => $meta)
+                @if (! in_array($type, ['start', 'stop'], true))
                 <div
                     class="ab-palette-item"
                     draggable="true"
@@ -59,6 +60,7 @@
                     role="button"
                     tabindex="0"
                 >{{ $meta['label'] ?? $type }}</div>
+                @endif
             @endforeach
         </aside>
         <div class="ab-canvas-wrap">
@@ -78,10 +80,10 @@
                     <template x-if="selectedNode.type === 'agent'">
                         <div class="ab-form-group">
                             <label>Agent</label>
-                            <select class="ab-input" x-model.number="selectedNode.data.agent_id" @change="syncNode()">
+                            <select class="ab-input" x-model="selectedNode.data.agent_id" @change="syncNode()">
                                 <option value="">Select agent</option>
                                 <template x-for="agent in agents" :key="agent.id">
-                                    <option :value="agent.id" x-text="agent.name"></option>
+                                    <option :value="Number(agent.id)" x-text="agent.name"></option>
                                 </template>
                             </select>
                         </div>
@@ -138,7 +140,12 @@
                             <textarea class="ab-input" rows="3" x-model="selectedNode.data.parameters_json" @change="syncParameters()" placeholder='{"query": "$input"}'></textarea>
                         </div>
                     </template>
-                    <button type="button" class="ab-btn ab-danger ab-mt" @click="removeSelected()">Remove Node</button>
+                    <button
+                        type="button"
+                        class="ab-btn ab-danger ab-mt"
+                        x-show="selectedNode && !['start', 'stop'].includes(selectedNode.type)"
+                        @click="removeSelected()"
+                    >Remove Node</button>
                 </div>
             </template>
         </aside>

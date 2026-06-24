@@ -26,7 +26,7 @@ export default function WorkflowEdge({
 
     return (
         <>
-            <BaseEdge id={id} path={edgePath} style={style} markerEnd={markerEnd} />
+            <BaseEdge id={id} path={edgePath} style={style} markerEnd={markerEnd} interactionWidth={20} />
             {edgeLabel && (
                 <EdgeLabelRenderer>
                     <div

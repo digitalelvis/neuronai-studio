@@ -116,7 +116,12 @@
 }
 
 .ab-react-flow .react-flow__edge.selected .react-flow__edge-path {
-    stroke: #818cf8;
+    stroke: #a5b4fc;
+    stroke-width: 3;
+}
+
+.ab-react-flow .react-flow__edge.selected .react-flow__edge-interaction {
+    stroke: #a5b4fc;
 }
 
 .ab-react-flow .react-flow__attribution {

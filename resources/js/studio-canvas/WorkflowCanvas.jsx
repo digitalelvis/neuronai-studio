@@ -20,7 +20,13 @@ import { layoutWithDagre } from './layout';
 import {
     buildFlowEdge,
     buildFlowNode,
+    canSpliceNodeType,
     dropFlowPosition,
+    edgeMidpoint,
+    findEdgeNearPoint,
+    FLOW_NODE_HEIGHT,
+    FLOW_NODE_WIDTH,
+    spliceNodeIntoEdge,
     toFlowEdges,
     toFlowNodes,
     toPackageGraph,
@@ -38,7 +44,8 @@ function WorkflowCanvasInner({ graph, nodeTypesMeta, onGraphChange }) {
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     const [runStatus, setRunStatus] = useState(null);
-    const { getViewport, setViewport, deleteElements, screenToFlowPosition, fitView } = useReactFlow();
+    const { getViewport, setViewport, deleteElements, screenToFlowPosition, fitView, getNodes, getEdges } =
+        useReactFlow();
     const selectedNodeIdRef = useRef(null);
     const historySeededRef = useRef(false);
     const didFitViewRef = useRef(false);
@@ -107,9 +114,9 @@ function WorkflowCanvasInner({ graph, nodeTypesMeta, onGraphChange }) {
     }, [setNodes]);
 
     const syncSelection = useCallback(
-        (nodeId) => {
+        (nodeId, nodeList = nodes) => {
             selectedNodeIdRef.current = nodeId;
-            const node = nodeId ? nodes.find((n) => n.id === nodeId) : null;
+            const node = nodeId ? nodeList.find((n) => n.id === nodeId) : null;
             const payload = node
                 ? {
                       id: node.id,
@@ -122,6 +129,17 @@ function WorkflowCanvasInner({ graph, nodeTypesMeta, onGraphChange }) {
             window.dispatchEvent(new CustomEvent('canvas-node-selected', { detail: payload }));
         },
         [nodes],
+    );
+
+    const onReconnect = useCallback(
+        (oldEdge, newConnection) => {
+            setEdges((current) =>
+                current.map((edge) =>
+                    edge.id === oldEdge.id ? buildFlowEdge({ ...edge, ...newConnection }) : edge,
+                ),
+            );
+        },
+        [setEdges],
     );
 
     const onConnect = useCallback(
@@ -144,24 +162,60 @@ function WorkflowCanvasInner({ graph, nodeTypesMeta, onGraphChange }) {
                 return;
             }
 
-            const node = buildFlowNode(type, position, nodeTypesMeta);
-            setNodes((current) => [...current, node]);
-            syncSelection(node.id);
+            const currentNodes = getNodes();
+            const currentEdges = getEdges();
+            const dropCenter = {
+                x: position.x + FLOW_NODE_WIDTH / 2,
+                y: position.y + FLOW_NODE_HEIGHT / 2,
+            };
+
+            const nearEdge = findEdgeNearPoint(currentNodes, currentEdges, dropCenter);
+            const shouldSplice = nearEdge && canSpliceNodeType(type);
+
+            let nodePosition = position;
+
+            if (shouldSplice) {
+                const mid = edgeMidpoint(currentNodes, nearEdge);
+                nodePosition = {
+                    x: mid.x - FLOW_NODE_WIDTH / 2,
+                    y: mid.y - FLOW_NODE_HEIGHT / 2,
+                };
+            }
+
+            const node = buildFlowNode(type, nodePosition, nodeTypesMeta);
+            const nextNodes = [...currentNodes, node];
+
+            setNodes(nextNodes);
+
+            if (shouldSplice) {
+                setEdges(spliceNodeIntoEdge(node.id, nearEdge, currentEdges));
+            }
+
+            syncSelection(node.id, nextNodes);
         },
-        [nodeTypesMeta, setNodes, syncSelection],
+        [getEdges, getNodes, nodeTypesMeta, setEdges, setNodes, syncSelection],
     );
 
     const updateNodeData = useCallback(
         (nodeId, data) => {
-            setNodes((current) =>
-                current.map((node) =>
+            setNodes((current) => {
+                const next = current.map((node) =>
                     node.id === nodeId
-                        ? { ...node, data: { ...node.data, config: { ...data } } }
+                        ? { ...node, data: { ...node.data, config: { ...node.data.config, ...data } } }
                         : node,
-                ),
-            );
+                );
+
+                const updated = next.find((node) => node.id === nodeId);
+                if (updated) {
+                    window.requestAnimationFrame(() => {
+                        syncSelection(nodeId, next);
+                    });
+                }
+
+                return next;
+            });
         },
-        [setNodes],
+        [setNodes, syncSelection],
     );
 
     const removeSelectedNode = useCallback(() => {
@@ -170,9 +224,14 @@ function WorkflowCanvasInner({ graph, nodeTypesMeta, onGraphChange }) {
             return;
         }
 
+        const node = getNodes().find((item) => item.id === id);
+        if (node && (node.data.nodeType === 'start' || node.data.nodeType === 'stop')) {
+            return;
+        }
+
         deleteElements({ nodes: [{ id }] });
         syncSelection(null);
-    }, [deleteElements, syncSelection]);
+    }, [deleteElements, getNodes, syncSelection]);
 
     const autoLayout = useCallback(() => {
         setNodes((current) => {
@@ -270,6 +329,8 @@ function WorkflowCanvasInner({ graph, nodeTypesMeta, onGraphChange }) {
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
             onConnect={onConnect}
+            onReconnect={onReconnect}
+            edgesReconnectable
             onSelectionChange={onSelectionChange}
             onPaneClick={() => syncSelection(null)}
             onDragOver={onDragOver}

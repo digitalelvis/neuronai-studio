@@ -46,26 +46,52 @@ function bindPaletteDrag() {
     });
 }
 
+function exportGraphForSave() {
+    return window.__workflowGraphExport?.() ?? window.__workflowGraph;
+}
+
+function saveGraphToLivewire() {
+    const graph = exportGraphForSave();
+    if (!graph) return;
+
+    const wireId = window.__NEURONAI_CANVAS_CONFIG?.wireId;
+    if (wireId && window.Livewire) {
+        const component = window.Livewire.find(wireId);
+        if (component) {
+            component.call('saveGraph', graph);
+        }
+    }
+}
+
+function flushInspectorAndSave() {
+    window.dispatchEvent(new CustomEvent('canvas-inspector-flush'));
+
+    window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+            saveGraphToLivewire();
+        });
+    });
+}
+
 function bindSaveHandler() {
     if (window.__neuronaiCanvasSaveBound) return;
     window.__neuronaiCanvasSaveBound = true;
 
     window.addEventListener('workflow-canvas-save', () => {
-        const graph = window.__workflowGraphExport?.() ?? window.__workflowGraph;
-        if (!graph) return;
-
-        const wireId = window.__NEURONAI_CANVAS_CONFIG?.wireId;
-        if (wireId && window.Livewire) {
-            const component = window.Livewire.find(wireId);
-            if (component) {
-                component.call('saveGraph', graph);
-            }
-        }
+        flushInspectorAndSave();
     });
 }
 
 async function saveGraphBeforeRun() {
-    const graph = window.__workflowGraphExport?.() ?? window.__workflowGraph;
+    window.dispatchEvent(new CustomEvent('canvas-inspector-flush'));
+
+    await new Promise((resolve) => {
+        window.requestAnimationFrame(() => {
+            window.requestAnimationFrame(resolve);
+        });
+    });
+
+    const graph = exportGraphForSave();
     const wireId = window.__NEURONAI_CANVAS_CONFIG?.wireId;
 
     if (!graph || !wireId || !window.Livewire) {

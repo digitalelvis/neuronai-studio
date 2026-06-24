@@ -19,15 +19,35 @@ window.workflowInspector = function (agents, tools, mcpServers) {
                     }
                 }
             });
+
+            window.addEventListener('canvas-inspector-flush', () => {
+                this.flushBeforeSave();
+            });
         },
 
         syncNode() {
             if (!this.selectedNode) return;
+
+            this.$nextTick(() => {
+                window.dispatchEvent(
+                    new CustomEvent('canvas-node-updated', {
+                        detail: {
+                            id: this.selectedNode.id,
+                            data: { ...this.selectedNode.data },
+                        },
+                    }),
+                );
+            });
+        },
+
+        flushBeforeSave() {
+            if (!this.selectedNode) return;
+
             window.dispatchEvent(
                 new CustomEvent('canvas-node-updated', {
                     detail: {
                         id: this.selectedNode.id,
-                        data: this.selectedNode.data,
+                        data: { ...this.selectedNode.data },
                     },
                 }),
             );
@@ -46,6 +66,10 @@ window.workflowInspector = function (agents, tools, mcpServers) {
         },
 
         removeSelected() {
+            if (!this.selectedNode || ['start', 'stop'].includes(this.selectedNode.type)) {
+                return;
+            }
+
             window.dispatchEvent(new CustomEvent('canvas-remove-node'));
             this.selectedNode = null;
         },
