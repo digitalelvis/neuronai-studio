@@ -31,6 +31,8 @@ class AgentNodeExecutor implements NodeExecutorInterface
         $message = StateTemplateInterpolator::interpolate($rawMessage, $state);
         $attachments = is_array($state->get('attachments')) ? $state->get('attachments') : [];
         $userMessage = $this->messages->userMessage($message, $attachments);
+        $threadKey = $state->get('__studio_thread_id');
+        $threadKey = is_string($threadKey) && $threadKey !== '' ? $threadKey : null;
 
         if (isset($data['agent_id'])) {
             $agent = AgentDefinition::findOrFail($data['agent_id']);
@@ -39,9 +41,9 @@ class AgentNodeExecutor implements NodeExecutorInterface
                 'model' => $agent->model,
                 'instructions' => $agent->instructions,
                 'tools' => $agent->tools ?? [],
-            ], $userMessage, $agent);
+            ], $userMessage, $agent, $threadKey);
         } else {
-            $response = $this->agentRunner->runInline($data, $userMessage);
+            $response = $this->agentRunner->runInline($data, $userMessage, null, $threadKey);
         }
 
         $state->set($outputKey, $response->content);

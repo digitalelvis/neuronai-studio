@@ -5,6 +5,7 @@ namespace ElvisLopesDigital\NeuronAIStudio\Http\Controllers;
 use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\WorkflowRunner;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
 
@@ -23,13 +24,17 @@ class WorkflowStreamController
             'message' => 'nullable|string',
             'state' => 'nullable|array',
             'attachments' => 'nullable|array',
+            'thread_id' => 'nullable|uuid',
         ]);
+
+        $validated['thread_id'] = $validated['thread_id'] ?? (string) Str::uuid();
 
         $payload = [
             'message' => (string) ($validated['message'] ?? ''),
             'input' => (string) ($validated['message'] ?? ''),
             'state' => $validated['state'] ?? [],
             'attachments' => $validated['attachments'] ?? [],
+            'thread_id' => $validated['thread_id'],
         ];
 
         return $this->stream($workflow, $runner, $payload);
@@ -49,6 +54,14 @@ class WorkflowStreamController
 
                 flush();
             };
+
+            $threadId = isset($input['thread_id']) && is_string($input['thread_id']) && $input['thread_id'] !== ''
+                ? $input['thread_id']
+                : (string) Str::uuid();
+
+            $input['thread_id'] = $threadId;
+
+            $send('thread', ['thread_id' => $threadId]);
 
             $send('trace_started', [
                 'workflow_id' => $workflow->id,

@@ -30,6 +30,7 @@ export default function StudioChat({
     const [sending, setSending] = useState(false);
     const [error, setError] = useState('');
     const [viewMode, setViewMode] = useState('pretty');
+    const supportsThreads = mode === 'agent' || mode === 'workflow';
 
     const effectiveContext = onContextChange ? initialContext : context;
     const setEffectiveContext = onContextChange ?? setContext;
@@ -68,12 +69,12 @@ export default function StudioChat({
     }, []);
 
     useEffect(() => {
-        if (mode !== 'agent') {
+        if (!supportsThreads) {
             return;
         }
 
         setThreadInUrl(threadId);
-    }, [mode, threadId]);
+    }, [supportsThreads, threadId]);
 
     useEffect(() => {
         if (mode !== 'agent' || !threadHistoryUrl || !threadId) {
@@ -156,10 +157,9 @@ export default function StudioChat({
         let traceFinished = false;
 
         try {
-            const sendContext =
-                mode === 'agent'
-                    ? { state: effectiveContext, threadId }
-                    : { state: effectiveContext };
+            const sendContext = supportsThreads
+                ? { state: effectiveContext, threadId }
+                : { state: effectiveContext };
 
             for await (const packet of adapter.send(text, attachments, sendContext)) {
                 if (packet.event === 'thread' && packet.data?.thread_id) {
@@ -313,7 +313,7 @@ export default function StudioChat({
     };
 
     const handleClear = () => {
-        if (mode === 'agent') {
+        if (supportsThreads) {
             handleNewThread();
             return;
         }
@@ -326,7 +326,7 @@ export default function StudioChat({
     return (
         <div className="flex h-full flex-col">
             <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2">
-                {mode === 'agent' ? (
+                {supportsThreads ? (
                     <ThreadBar threadId={threadId} onNewThread={handleNewThread} disabled={sending} />
                 ) : (
                     <span className="text-sm font-medium text-muted-foreground">Output</span>
@@ -355,7 +355,7 @@ export default function StudioChat({
                         </div>
                     )}
                     {error && <span className="text-xs text-destructive">{error}</span>}
-                    {mode !== 'agent' && (
+                    {!supportsThreads && (
                         <Button variant="ghost" size="sm" onClick={handleClear} disabled={sending}>
                             <Trash2 className="h-4 w-4" />
                             Clear

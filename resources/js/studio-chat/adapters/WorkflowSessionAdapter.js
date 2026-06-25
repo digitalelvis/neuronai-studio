@@ -20,13 +20,18 @@ export class WorkflowSessionAdapter {
         }
 
         const state = context?.state && typeof context.state === 'object' ? context.state : {};
+        const payload = {
+            message,
+            state,
+            attachments,
+        };
+
+        if (context?.threadId) {
+            payload.thread_id = context.threadId;
+        }
 
         yield* this.consumeStream(
-            fetchSse(this.streamUrl, jsonPostOptions({
-                message,
-                state,
-                attachments,
-            })),
+            fetchSse(this.streamUrl, jsonPostOptions(payload)),
         );
     }
 

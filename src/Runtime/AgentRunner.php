@@ -60,9 +60,9 @@ class AgentRunner
         }
     }
 
-    public function runInline(array $config, string|UserMessage $message, ?AgentDefinition $definition = null): AgentRunResult
+    public function runInline(array $config, string|UserMessage $message, ?AgentDefinition $definition = null, ?string $threadKey = null): AgentRunResult
     {
-        $agent = $this->makeAgent($definition, $config);
+        $agent = $this->makeAgent($definition, $config, $threadKey);
         $userMessage = $message instanceof UserMessage ? $message : new UserMessage($message);
         $handler = $agent->chat($userMessage);
         $content = $handler->getMessage()->getContent();

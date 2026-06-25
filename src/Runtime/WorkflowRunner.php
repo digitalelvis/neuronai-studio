@@ -6,6 +6,7 @@ use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
 use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowTrace;
 use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowTraceStep;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\Exceptions\HumanInputRequiredException;
+use ElvisLopesDigital\NeuronAIStudio\Support\ChatThreadKey;
 use Throwable;
 
 class WorkflowRunner
@@ -35,7 +36,7 @@ class WorkflowRunner
                 $workflow->graph['edges'] ?? [],
             );
 
-            $state = $this->buildInitialState($graphContext, $trace->id, $input, $emitter);
+            $state = $this->buildInitialState($graphContext, $trace->id, $workflow->id, $input, $emitter);
 
             $interpreter = new GraphInterpreterWorkflow($graphContext, $state);
             $interpreter->bootstrap();
@@ -122,7 +123,7 @@ class WorkflowRunner
     }
 
     /** @param  array<string, mixed>  $input */
-    protected function buildInitialState(GraphContext $graphContext, int $traceId, array $input, ?callable $emitter): BuilderWorkflowState
+    protected function buildInitialState(GraphContext $graphContext, int $traceId, int $workflowId, array $input, ?callable $emitter): BuilderWorkflowState
     {
         $message = (string) ($input['message'] ?? $input['input'] ?? '');
         $initialState = is_array($input['state'] ?? null) ? $input['state'] : [];
@@ -131,6 +132,10 @@ class WorkflowRunner
             'input' => $message,
             '__workflow_trace_id' => $traceId,
         ]);
+
+        if (isset($input['thread_id']) && is_string($input['thread_id']) && $input['thread_id'] !== '') {
+            $stateData['__studio_thread_id'] = ChatThreadKey::forWorkflow($workflowId, $input['thread_id']);
+        }
 
         if (! empty($input['attachments']) && is_array($input['attachments'])) {
             $stateData['attachments'] = $input['attachments'];
