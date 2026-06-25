@@ -1,102 +1,110 @@
-<form wire:submit="save" class="ab-form ab-card">
-    <div class="ab-form-group">
-        <label>Name</label>
-        <input type="text" wire:model="name" class="ab-input" required>
-        @error('name') <span class="ab-error">{{ $message }}</span> @enderror
-    </div>
+<x-neuronai-studio::ui.page>
+    <form wire:submit="save">
+        <x-neuronai-studio::ui.card>
+            <x-neuronai-studio::ui.card-content class="space-y-4 pt-4">
+                <x-neuronai-studio::ui.form-group>
+                    <x-neuronai-studio::ui.label>Name</x-neuronai-studio::ui.label>
+                    <x-neuronai-studio::ui.input type="text" wire:model="name" required />
+                    @error('name') <x-neuronai-studio::ui.form-error>{{ $message }}</x-neuronai-studio::ui.form-error> @enderror
+                </x-neuronai-studio::ui.form-group>
 
-    <div class="ab-form-group">
-        <label>Description</label>
-        <textarea wire:model="description" class="ab-input" rows="2"></textarea>
-    </div>
+                <x-neuronai-studio::ui.form-group>
+                    <x-neuronai-studio::ui.label>Description</x-neuronai-studio::ui.label>
+                    <x-neuronai-studio::ui.textarea wire:model="description" rows="2"></x-neuronai-studio::ui.textarea>
+                </x-neuronai-studio::ui.form-group>
 
-    <div class="ab-form-row">
-        <div class="ab-form-group">
-            <label>Transport</label>
-            <select wire:model.live="transport" class="ab-input">
-                <option value="stdio">Stdio</option>
-                <option value="http">HTTP</option>
-                <option value="sse">SSE</option>
-            </select>
-        </div>
-        <div class="ab-form-group">
-            <label>Timeout (seconds)</label>
-            <input type="number" wire:model="timeout" class="ab-input" min="1" max="300">
-            @error('timeout') <span class="ab-error">{{ $message }}</span> @enderror
-        </div>
-    </div>
+                <x-neuronai-studio::ui.form-row>
+                    <x-neuronai-studio::ui.form-group>
+                        <x-neuronai-studio::ui.label>Transport</x-neuronai-studio::ui.label>
+                        <x-neuronai-studio::ui.select wire:model.live="transport">
+                            <option value="stdio">Stdio</option>
+                            <option value="http">HTTP</option>
+                            <option value="sse">SSE</option>
+                        </x-neuronai-studio::ui.select>
+                    </x-neuronai-studio::ui.form-group>
+                    <x-neuronai-studio::ui.form-group>
+                        <x-neuronai-studio::ui.label>Timeout (seconds)</x-neuronai-studio::ui.label>
+                        <x-neuronai-studio::ui.input type="number" wire:model="timeout" min="1" max="300" />
+                        @error('timeout') <x-neuronai-studio::ui.form-error>{{ $message }}</x-neuronai-studio::ui.form-error> @enderror
+                    </x-neuronai-studio::ui.form-group>
+                </x-neuronai-studio::ui.form-row>
 
-    @if ($transport === 'stdio')
-        <div class="ab-form-group">
-            <label>Command</label>
-            <input type="text" wire:model="command" class="ab-input" placeholder="npx">
-            @error('command') <span class="ab-error">{{ $message }}</span> @enderror
-        </div>
-        <div class="ab-form-group">
-            <label>Args (JSON array)</label>
-            <textarea wire:model="argsJson" class="ab-input" rows="4" placeholder='["-y", "@modelcontextprotocol/server-filesystem", "/path"]'></textarea>
-        </div>
-        <div class="ab-form-group">
-            <label>Env (JSON object)</label>
-            <textarea wire:model="envJson" class="ab-input" rows="3" placeholder='{"API_KEY": "env:MY_API_KEY"}'></textarea>
-        </div>
-    @else
-        <div class="ab-form-group">
-            <label>URL</label>
-            <input type="url" wire:model="url" class="ab-input" placeholder="https://example.com/mcp">
-            @error('url') <span class="ab-error">{{ $message }}</span> @enderror
-        </div>
-        <div class="ab-form-group">
-            <label>Token Env Variable</label>
-            <input type="text" wire:model="tokenEnv" class="ab-input" placeholder="TELESCOPE_MCP_TOKEN">
-            <p class="ab-muted ab-mt">Reference an environment variable name. Raw tokens are never stored.</p>
-            @error('tokenEnv') <span class="ab-error">{{ $message }}</span> @enderror
-        </div>
-        <div class="ab-form-group">
-            <label>Headers (JSON object)</label>
-            <textarea wire:model="headersJson" class="ab-input" rows="3" placeholder='{"X-Custom": "value"}'></textarea>
-        </div>
-    @endif
+                @if ($transport === 'stdio')
+                    <x-neuronai-studio::ui.form-group>
+                        <x-neuronai-studio::ui.label>Command</x-neuronai-studio::ui.label>
+                        <x-neuronai-studio::ui.input type="text" wire:model="command" placeholder="npx" />
+                        @error('command') <x-neuronai-studio::ui.form-error>{{ $message }}</x-neuronai-studio::ui.form-error> @enderror
+                    </x-neuronai-studio::ui.form-group>
+                    <x-neuronai-studio::ui.form-group>
+                        <x-neuronai-studio::ui.label>Args (JSON array)</x-neuronai-studio::ui.label>
+                        <x-neuronai-studio::ui.textarea wire:model="argsJson" rows="4" placeholder='["-y", "@modelcontextprotocol/server-filesystem", "/path"]'></x-neuronai-studio::ui.textarea>
+                    </x-neuronai-studio::ui.form-group>
+                    <x-neuronai-studio::ui.form-group>
+                        <x-neuronai-studio::ui.label>Env (JSON object)</x-neuronai-studio::ui.label>
+                        <x-neuronai-studio::ui.textarea wire:model="envJson" rows="3" placeholder='{"API_KEY": "env:MY_API_KEY"}'></x-neuronai-studio::ui.textarea>
+                    </x-neuronai-studio::ui.form-group>
+                @else
+                    <x-neuronai-studio::ui.form-group>
+                        <x-neuronai-studio::ui.label>URL</x-neuronai-studio::ui.label>
+                        <x-neuronai-studio::ui.input type="url" wire:model="url" placeholder="https://example.com/mcp" />
+                        @error('url') <x-neuronai-studio::ui.form-error>{{ $message }}</x-neuronai-studio::ui.form-error> @enderror
+                    </x-neuronai-studio::ui.form-group>
+                    <x-neuronai-studio::ui.form-group>
+                        <x-neuronai-studio::ui.label>Token Env Variable</x-neuronai-studio::ui.label>
+                        <x-neuronai-studio::ui.input type="text" wire:model="tokenEnv" placeholder="TELESCOPE_MCP_TOKEN" />
+                        <p class="mt-1 text-xs text-muted-foreground">Reference an environment variable name. Raw tokens are never stored.</p>
+                        @error('tokenEnv') <x-neuronai-studio::ui.form-error>{{ $message }}</x-neuronai-studio::ui.form-error> @enderror
+                    </x-neuronai-studio::ui.form-group>
+                    <x-neuronai-studio::ui.form-group>
+                        <x-neuronai-studio::ui.label>Headers (JSON object)</x-neuronai-studio::ui.label>
+                        <x-neuronai-studio::ui.textarea wire:model="headersJson" rows="3" placeholder='{"X-Custom": "value"}'></x-neuronai-studio::ui.textarea>
+                    </x-neuronai-studio::ui.form-group>
+                @endif
 
-    <div class="ab-form-row">
-        <div class="ab-form-group">
-            <label>Only Tools (comma-separated)</label>
-            <input type="text" wire:model="onlyTools" class="ab-input" placeholder="tool_one, tool_two">
-        </div>
-        <div class="ab-form-group">
-            <label>Exclude Tools (JSON array)</label>
-            <textarea wire:model="excludeToolsJson" class="ab-input" rows="2" placeholder='["tool_to_skip"]'></textarea>
-        </div>
-    </div>
+                <x-neuronai-studio::ui.form-row>
+                    <x-neuronai-studio::ui.form-group>
+                        <x-neuronai-studio::ui.label>Only Tools (comma-separated)</x-neuronai-studio::ui.label>
+                        <x-neuronai-studio::ui.input type="text" wire:model="onlyTools" placeholder="tool_one, tool_two" />
+                    </x-neuronai-studio::ui.form-group>
+                    <x-neuronai-studio::ui.form-group>
+                        <x-neuronai-studio::ui.label>Exclude Tools (JSON array)</x-neuronai-studio::ui.label>
+                        <x-neuronai-studio::ui.textarea wire:model="excludeToolsJson" rows="2" placeholder='["tool_to_skip"]'></x-neuronai-studio::ui.textarea>
+                    </x-neuronai-studio::ui.form-group>
+                </x-neuronai-studio::ui.form-row>
 
-    <div class="ab-form-group">
-        <label class="ab-check">
-            <input type="checkbox" wire:model="enabled">
-            Enabled
-        </label>
-    </div>
+                <label class="flex items-center gap-2 text-sm">
+                    <input type="checkbox" wire:model="enabled" class="rounded border-input">
+                    Enabled
+                </label>
 
-    <div class="ab-form-actions">
-        <button type="button" wire:click="testConnection" class="ab-btn" wire:loading.attr="disabled" wire:target="testConnection">
-            <span wire:loading.remove wire:target="testConnection">Test Connection</span>
-            <span wire:loading wire:target="testConnection">Testing...</span>
-        </button>
-        <a href="{{ route('neuronai-studio.mcp-servers.index') }}" class="ab-btn">Cancel</a>
-        <button type="submit" class="ab-btn ab-btn-primary">Save MCP Server</button>
-    </div>
+                <div class="flex flex-wrap gap-2 pt-2">
+                    <x-neuronai-studio::ui.button type="button" variant="outline" wire:click="testConnection" wire:loading.attr="disabled" wire:target="testConnection">
+                        <span wire:loading.remove wire:target="testConnection">Test Connection</span>
+                        <span wire:loading wire:target="testConnection">Testing...</span>
+                    </x-neuronai-studio::ui.button>
+                    <x-neuronai-studio::ui.button variant="outline" :href="route('neuronai-studio.mcp-servers.index')">Cancel</x-neuronai-studio::ui.button>
+                    <x-neuronai-studio::ui.button type="submit">Save MCP Server</x-neuronai-studio::ui.button>
+                </div>
 
-    @if ($testError)
-        <div class="ab-alert ab-mt">{{ $testError }}</div>
-    @endif
+                @if ($testError)
+                    <x-neuronai-studio::ui.alert variant="error">{{ $testError }}</x-neuronai-studio::ui.alert>
+                @endif
+            </x-neuronai-studio::ui.card-content>
+        </x-neuronai-studio::ui.card>
 
-    @if ($testTools !== [])
-        <div class="ab-card ab-mt">
-            <h3>Available Tools ({{ count($testTools) }})</h3>
-            <ul>
-                @foreach ($testTools as $tool)
-                    <li><code>{{ $tool }}</code></li>
-                @endforeach
-            </ul>
-        </div>
-    @endif
-</form>
+        @if ($testTools !== [])
+            <x-neuronai-studio::ui.card class="mt-4">
+                <x-neuronai-studio::ui.card-header>
+                    <h3 class="font-semibold">Available Tools ({{ count($testTools) }})</h3>
+                </x-neuronai-studio::ui.card-header>
+                <x-neuronai-studio::ui.card-content>
+                    <ul class="space-y-1 font-mono text-xs">
+                        @foreach ($testTools as $tool)
+                            <li><code>{{ $tool }}</code></li>
+                        @endforeach
+                    </ul>
+                </x-neuronai-studio::ui.card-content>
+            </x-neuronai-studio::ui.card>
+        @endif
+    </form>
+</x-neuronai-studio::ui.page>

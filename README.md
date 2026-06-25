@@ -24,6 +24,28 @@ Publish assets for the dashboard UI:
 php artisan vendor:publish --tag=neuronai-studio-assets
 ```
 
+Blade views load from the package automatically. Only publish views if you need to customize templates:
+
+```bash
+php artisan vendor:publish --tag=neuronai-studio-views
+```
+
+If you previously published views and the UI looks outdated after a package update, remove the override directory and clear compiled views:
+
+```bash
+rm -rf resources/views/vendor/neuronai-studio
+php artisan view:clear
+```
+
+Build frontend assets (from the package root when developing):
+
+```bash
+npm install
+npm run build
+```
+
+`npm run build` produces four bundles: `studio-ui.css`, `workflow-canvas.bundle.js`, `studio-chat.bundle.js`, and `studio-forms.bundle.js`.
+
 ## Usage
 
 Open the dashboard at `/neuronai-studio` (configurable via `NEURONAI_STUDIO_ROUTE_PREFIX`).
@@ -32,7 +54,7 @@ Open the dashboard at `/neuronai-studio` (configurable via `NEURONAI_STUDIO_ROUT
 
 - **Agents** — CRUD with provider, model, and system prompt
 - **Playground** — Test agents in a chat UI
-- **Workflows** — Visual graph editor with drag-and-drop nodes
+- **Workflows** — Visual graph editor with drag-and-drop nodes ([workflow state & condition node](docs/workflow-state.md))
 - **Runtime execution** — Run workflows from the UI with step-by-step history
 - **PHP export** — Generate Neuron Agent/Workflow classes for production
 

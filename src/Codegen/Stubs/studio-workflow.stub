@@ -1,0 +1,18 @@
+<?php
+
+namespace {{ namespace }};
+
+use ElvisLopesDigital\NeuronAIStudio\Contracts\StudioWorkflow;
+
+class {{ className }} implements StudioWorkflow
+{
+    public static function studioMeta(): array
+    {
+        return {{ meta }};
+    }
+
+    public static function studioGraph(): array
+    {
+        return {{ graph }};
+    }
+}

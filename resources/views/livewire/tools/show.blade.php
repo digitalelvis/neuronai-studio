@@ -1,65 +1,64 @@
-<div class="ab-grid ab-grid-2">
-    <div class="ab-card">
-        <h2>{{ $tool->name }}</h2>
-        <p class="ab-muted">{{ $tool->description }}</p>
+<x-neuronai-studio::ui.page>
+    <div class="grid gap-4 lg:grid-cols-2">
+        <x-neuronai-studio::ui.card>
+            <x-neuronai-studio::ui.card-header>
+                <h2 class="text-lg font-semibold">{{ $tool->name }}</h2>
+                <p class="text-sm text-muted-foreground">{{ $tool->description }}</p>
+            </x-neuronai-studio::ui.card-header>
+            <x-neuronai-studio::ui.card-content>
+                <x-neuronai-studio::ui.description-list>
+                    <x-neuronai-studio::ui.description-item term="Reference"><code>{{ $tool->bindingRef() }}</code></x-neuronai-studio::ui.description-item>
+                    <x-neuronai-studio::ui.description-item term="Type">{{ $tool->type }}</x-neuronai-studio::ui.description-item>
+                    @if ($tool->type === 'builder')
+                        <x-neuronai-studio::ui.description-item term="Tool Name"><code>{{ $tool->config['tool_name'] ?? '' }}</code></x-neuronai-studio::ui.description-item>
+                        <x-neuronai-studio::ui.description-item term="Class"><code>{{ $tool->config['class_path'] ?? 'Not exported yet' }}</code></x-neuronai-studio::ui.description-item>
+                    @else
+                        <x-neuronai-studio::ui.description-item term="Method">{{ $tool->config['method'] ?? 'GET' }}</x-neuronai-studio::ui.description-item>
+                        <x-neuronai-studio::ui.description-item term="URL"><code>{{ $tool->config['url'] ?? '' }}</code></x-neuronai-studio::ui.description-item>
+                    @endif
+                </x-neuronai-studio::ui.description-list>
+                <div class="mt-4 flex gap-2">
+                    <x-neuronai-studio::ui.button :href="route('neuronai-studio.tools.edit', $tool)">Edit</x-neuronai-studio::ui.button>
+                    <x-neuronai-studio::ui.button variant="outline" :href="route('neuronai-studio.tools.index')">Back</x-neuronai-studio::ui.button>
+                </div>
+            </x-neuronai-studio::ui.card-content>
+        </x-neuronai-studio::ui.card>
 
-        <dl class="ab-dl ab-mt">
-            <dt>Reference</dt>
-            <dd><code>{{ $tool->bindingRef() }}</code></dd>
-            <dt>Type</dt>
-            <dd>{{ $tool->type }}</dd>
-            @if ($tool->type === 'builder')
-                <dt>Tool Name</dt>
-                <dd><code>{{ $tool->config['tool_name'] ?? '' }}</code></dd>
-                <dt>Class</dt>
-                <dd><code>{{ $tool->config['class_path'] ?? 'Not exported yet' }}</code></dd>
-            @else
-                <dt>Method</dt>
-                <dd>{{ $tool->config['method'] ?? 'GET' }}</dd>
-                <dt>URL</dt>
-                <dd><code>{{ $tool->config['url'] ?? '' }}</code></dd>
+        <div class="space-y-4">
+            <x-neuronai-studio::ui.card>
+                <x-neuronai-studio::ui.card-header><h3 class="font-semibold">Input Schema</h3></x-neuronai-studio::ui.card-header>
+                <x-neuronai-studio::ui.card-content>
+                    @if (empty($tool->input_schema))
+                        <p class="text-sm text-muted-foreground">No input properties defined.</p>
+                    @else
+                        <x-neuronai-studio::ui.code-block>{{ json_encode($tool->input_schema, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</x-neuronai-studio::ui.code-block>
+                    @endif
+                </x-neuronai-studio::ui.card-content>
+            </x-neuronai-studio::ui.card>
+
+            @if ($tool->type === 'builder' && $this->generatedPreview)
+                <x-neuronai-studio::ui.card>
+                    <x-neuronai-studio::ui.card-header><h3 class="font-semibold">Generated Class</h3></x-neuronai-studio::ui.card-header>
+                    <x-neuronai-studio::ui.card-content>
+                        <x-neuronai-studio::ui.code-block>{{ $this->generatedPreview }}</x-neuronai-studio::ui.code-block>
+                    </x-neuronai-studio::ui.card-content>
+                </x-neuronai-studio::ui.card>
             @endif
-        </dl>
 
-        <div class="ab-form-actions ab-mt">
-            <a href="{{ route('neuronai-studio.tools.edit', $tool) }}" class="ab-btn ab-btn-primary">Edit</a>
-            <a href="{{ route('neuronai-studio.tools.index') }}" class="ab-btn">Back</a>
+            <x-neuronai-studio::ui.card>
+                <x-neuronai-studio::ui.card-header><h3 class="font-semibold">Agents Using This Tool</h3></x-neuronai-studio::ui.card-header>
+                <x-neuronai-studio::ui.card-content>
+                    @if ($agentsUsing->isEmpty())
+                        <p class="text-sm text-muted-foreground">No agents attached yet.</p>
+                    @else
+                        <ul class="space-y-1 text-sm">
+                            @foreach ($agentsUsing as $agent)
+                                <li><a href="{{ route('neuronai-studio.agents.edit', $agent) }}" class="text-primary hover:underline">{{ $agent->name }}</a></li>
+                            @endforeach
+                        </ul>
+                    @endif
+                </x-neuronai-studio::ui.card-content>
+            </x-neuronai-studio::ui.card>
         </div>
     </div>
-
-    <div>
-        <div class="ab-card">
-            <h3>Input Schema</h3>
-            @if (empty($tool->input_schema))
-                <p class="ab-muted">No input properties defined.</p>
-            @else
-                <pre class="ab-code">{{ json_encode($tool->input_schema, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
-            @endif
-        </div>
-
-        @if ($tool->type === 'builder' && $this->generatedPreview)
-            <div class="ab-card ab-mt">
-                <h3>Generated Class</h3>
-                <pre class="ab-code ab-code-preview"><code>{{ $this->generatedPreview }}</code></pre>
-            </div>
-        @endif
-
-        <div class="ab-card ab-mt">
-            <h3>Agent Binding Example</h3>
-            <pre class="ab-code">{{ json_encode(['ref' => $tool->bindingRef(), 'config' => []], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) }}</pre>
-        </div>
-
-        <div class="ab-card ab-mt">
-            <h3>Agents Using This Tool</h3>
-            @if ($agentsUsing->isEmpty())
-                <p class="ab-muted">No agents attached yet.</p>
-            @else
-                <ul>
-                    @foreach ($agentsUsing as $agent)
-                        <li><a href="{{ route('neuronai-studio.agents.edit', $agent) }}">{{ $agent->name }}</a></li>
-                    @endforeach
-                </ul>
-            @endif
-        </div>
-    </div>
-</div>
+</x-neuronai-studio::ui.page>

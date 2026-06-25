@@ -5,6 +5,7 @@ namespace ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Tools;
 use ElvisLopesDigital\NeuronAIStudio\Codegen\ToolClassGenerator;
 use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
 use ElvisLopesDigital\NeuronAIStudio\Models\ToolDefinition;
+use ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout;
 use Livewire\Component;
 
 class Show extends Component
@@ -48,6 +49,12 @@ class Show extends Component
 
         return view('neuronai-studio::livewire.tools.show', [
             'agentsUsing' => $agentsUsing,
-        ])->layout('neuronai-studio::layouts.app', ['title' => $this->tool->name]);
+        ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
+            breadcrumbs: [
+                ['label' => 'Tools', 'url' => route('neuronai-studio.tools.index')],
+                ['label' => $this->tool->name],
+            ],
+            title: $this->tool->name,
+        ));
     }
 }

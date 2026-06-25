@@ -3,6 +3,7 @@
 namespace ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Tools;
 
 use ElvisLopesDigital\NeuronAIStudio\Registry\ToolRegistry;
+use ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout;
 use Livewire\Component;
 
 class RegistryShow extends Component
@@ -39,8 +40,12 @@ class RegistryShow extends Component
 
         return view('neuronai-studio::livewire.tools.registry-show', [
             'categoryLabel' => $categoryLabels[$this->entry['category'] ?? ''] ?? ($this->entry['category'] ?? ''),
-        ])->layout('neuronai-studio::layouts.app', [
-            'title' => $this->entry['label'] ?? 'Tool Details',
-        ]);
+        ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
+            breadcrumbs: [
+                ['label' => 'Tools', 'url' => route('neuronai-studio.tools.index')],
+                ['label' => $this->entry['label'] ?? 'Tool Details'],
+            ],
+            title: $this->entry['label'] ?? 'Tool Details',
+        ));
     }
 }

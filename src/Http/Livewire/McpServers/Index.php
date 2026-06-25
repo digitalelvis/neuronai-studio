@@ -4,6 +4,7 @@ namespace ElvisLopesDigital\NeuronAIStudio\Http\Livewire\McpServers;
 
 use ElvisLopesDigital\NeuronAIStudio\Models\McpServer;
 use ElvisLopesDigital\NeuronAIStudio\Registry\McpRegistry;
+use ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout;
 use Livewire\Component;
 
 class Index extends Component
@@ -33,6 +34,10 @@ class Index extends Component
 
         return view('neuronai-studio::livewire.mcp-servers.index', [
             'servers' => $servers->sortBy('label')->all(),
-        ])->layout('neuronai-studio::layouts.app', ['title' => 'MCP Servers']);
+        ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
+            breadcrumbs: [['label' => 'MCP Servers']],
+            title: 'MCP Servers',
+            headerActions: view('neuronai-studio::partials.header-actions.new-mcp')->render(),
+        ));
     }
 }

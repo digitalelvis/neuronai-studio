@@ -6,6 +6,7 @@ use ElvisLopesDigital\NeuronAIStudio\Codegen\ToolClassGenerator;
 use ElvisLopesDigital\NeuronAIStudio\Codegen\ToolClassImporter;
 use ElvisLopesDigital\NeuronAIStudio\Codegen\ToolExporter;
 use ElvisLopesDigital\NeuronAIStudio\Models\ToolDefinition;
+use ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout;
 use Illuminate\Support\Str;
 use Livewire\Component;
 
@@ -128,6 +129,40 @@ class Edit extends Component
         $this->saveBuilder($exporter);
     }
 
+    /** @param  array<string, mixed>  $payload */
+    public function saveFromReact(array $payload, ToolExporter $exporter): void
+    {
+        $this->toolKind = (string) ($payload['toolKind'] ?? 'builder');
+        $this->name = (string) ($payload['name'] ?? '');
+        $this->toolName = (string) ($payload['toolName'] ?? '');
+        $this->description = (string) ($payload['description'] ?? '');
+        $this->method = (string) ($payload['method'] ?? 'GET');
+        $this->url = (string) ($payload['url'] ?? '');
+        $this->headersJson = (string) ($payload['headersJson'] ?? '{}');
+        $this->invokeBody = (string) ($payload['invokeBody'] ?? '');
+        $this->inputSchema = $payload['inputSchema'] ?? [];
+
+        $this->save($exporter);
+    }
+
+    /** @param  array<string, mixed>  $payload */
+    public function previewFromReact(array $payload): string
+    {
+        $toolKind = (string) ($payload['toolKind'] ?? 'builder');
+
+        if ($toolKind !== 'builder') {
+            return '';
+        }
+
+        return app(ToolClassGenerator::class)->generate([
+            'class_name' => Str::studly((string) ($payload['toolName'] ?? 'example')).'Tool',
+            'tool_name' => (string) ($payload['toolName'] ?? 'example_tool'),
+            'description' => (string) ($payload['description'] ?? 'Tool description'),
+            'input_schema' => $payload['inputSchema'] ?? [],
+            'invoke_body' => (string) ($payload['invokeBody'] ?? "        return 'Executed';"),
+        ]);
+    }
+
     protected function saveBuilder(ToolExporter $exporter): void
     {
         $validated = $this->validate([
@@ -248,8 +283,13 @@ class Edit extends Component
     public function render()
     {
         return view('neuronai-studio::livewire.tools.edit')
-            ->layout('neuronai-studio::layouts.app', [
-                'title' => $this->tool?->exists ? 'Edit Tool' : 'Create Tool',
-            ]);
+            ->layout('neuronai-studio::layouts.app', StudioLayout::params(
+                breadcrumbs: [
+                    ['label' => 'Tools', 'url' => route('neuronai-studio.tools.index')],
+                    ['label' => $this->tool?->exists ? $this->name : 'New Tool'],
+                ],
+                title: $this->tool?->exists ? 'Edit Tool' : 'Create Tool',
+                contentFlush: true,
+            ));
     }
 }

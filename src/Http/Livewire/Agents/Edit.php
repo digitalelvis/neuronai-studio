@@ -7,6 +7,7 @@ use ElvisLopesDigital\NeuronAIStudio\Models\AgentMcpServer;
 use ElvisLopesDigital\NeuronAIStudio\Registry\McpRegistry;
 use ElvisLopesDigital\NeuronAIStudio\Registry\ProviderRegistry;
 use ElvisLopesDigital\NeuronAIStudio\Registry\ToolRegistry;
+use ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout;
 use Illuminate\Support\Str;
 use Livewire\Component;
 
@@ -91,6 +92,27 @@ class Edit extends Component
     }
 
     public function save(): void
+    {
+        $this->persistAgent();
+    }
+
+    /** @param  array<string, mixed>  $payload */
+    public function saveFromReact(array $payload): void
+    {
+        $this->name = (string) ($payload['name'] ?? '');
+        $this->description = (string) ($payload['description'] ?? '');
+        $this->provider = (string) ($payload['provider'] ?? $this->provider);
+        $this->model = (string) ($payload['model'] ?? $this->model);
+        $this->instructions = (string) ($payload['instructions'] ?? '');
+        $this->selectedToolRefs = $payload['selectedToolRefs'] ?? [];
+        $this->toolAdvanced = $payload['toolAdvanced'] ?? [];
+        $this->selectedMcpSlugs = $payload['selectedMcpSlugs'] ?? [];
+        $this->mcpAdvanced = $payload['mcpAdvanced'] ?? [];
+
+        $this->persistAgent();
+    }
+
+    protected function persistAgent(): void
     {
         $validated = $this->validate([
             'name' => 'required|string|max:255',
@@ -178,19 +200,26 @@ class Edit extends Component
         $registry = app(ToolRegistry::class);
         $catalog = collect($registry->all())->groupBy('category');
 
+        $toolList = $catalog->flatten(1)->map(fn (array $tool) => [
+            'ref' => $tool['ref'],
+            'label' => $tool['label'],
+            'description' => $tool['description'] ?? '',
+            'type' => $tool['type'] ?? '',
+            'category' => $tool['category'] ?? '',
+        ])->values()->all();
+
         return view('neuronai-studio::livewire.agents.edit', [
             'providers' => app(ProviderRegistry::class)->labels(),
             'models' => config('neuronai-studio.providers.'.$this->provider.'.models', []),
-            'toolCatalog' => $catalog,
-            'toolCategories' => [
-                'builtin' => 'Built-in Toolkits',
-                'app' => 'App Classes',
-                'studio' => 'Studio Tools',
-                'mcp' => 'MCP Servers',
-            ],
+            'toolList' => $toolList,
             'mcpServers' => app(McpRegistry::class)->labels(includeDisabled: false),
-        ])->layout('neuronai-studio::layouts.app', [
-            'title' => $this->agent?->exists ? 'Edit Agent' : 'Create Agent',
-        ]);
+        ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
+            breadcrumbs: [
+                ['label' => 'Agents', 'url' => route('neuronai-studio.agents.index')],
+                ['label' => $this->agent?->exists ? $this->name : 'New Agent'],
+            ],
+            title: $this->agent?->exists ? 'Edit Agent' : 'Create Agent',
+            contentFlush: true,
+        ));
     }
 }

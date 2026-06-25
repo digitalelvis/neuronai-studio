@@ -1,8 +1,8 @@
 import { createRoot } from 'react-dom/client';
-import StudioChat from './StudioChat';
+import StudioTestHarness from './StudioTestHarness';
 import { AgentSessionAdapter } from './adapters/AgentSessionAdapter';
 import { WorkflowSessionAdapter } from './adapters/WorkflowSessionAdapter';
-import './chat.css';
+import '../../css/globals.css';
 
 const roots = new WeakMap();
 
@@ -34,16 +34,18 @@ export function mountStudioChat(rootEl, config = {}) {
     }
 
     const adapter = createAdapter(config);
+    const embedded = config.embedded === true;
 
     root.render(
-        <StudioChat
+        <StudioTestHarness
             adapter={adapter}
             mode={config.mode ?? 'agent'}
             entityId={config.entityId}
             enableAttachments={Boolean(config.uploadUrl)}
-            showPlayground={config.showPlayground !== false}
             initialContext={config.initialContext ?? {}}
             onRunCompleted={config.onRunCompleted}
+            agentMeta={config.agentMeta ?? null}
+            embedded={embedded}
         />,
     );
 

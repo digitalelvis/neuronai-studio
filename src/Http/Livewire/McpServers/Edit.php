@@ -4,6 +4,7 @@ namespace ElvisLopesDigital\NeuronAIStudio\Http\Livewire\McpServers;
 
 use ElvisLopesDigital\NeuronAIStudio\Models\McpServer;
 use ElvisLopesDigital\NeuronAIStudio\Registry\McpRegistry;
+use ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout;
 use Illuminate\Support\Str;
 use Livewire\Component;
 
@@ -201,8 +202,12 @@ class Edit extends Component
     public function render()
     {
         return view('neuronai-studio::livewire.mcp-servers.edit')
-            ->layout('neuronai-studio::layouts.app', [
-                'title' => $this->server?->exists ? 'Edit MCP Server' : 'Create MCP Server',
-            ]);
+            ->layout('neuronai-studio::layouts.app', StudioLayout::params(
+                breadcrumbs: [
+                    ['label' => 'MCP Servers', 'url' => route('neuronai-studio.mcp-servers.index')],
+                    ['label' => $this->server?->exists ? $this->name : 'New Server'],
+                ],
+                title: $this->server?->exists ? 'Edit MCP Server' : 'Create MCP Server',
+            ));
     }
 }

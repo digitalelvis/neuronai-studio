@@ -1,33 +1,32 @@
-<div class="ab-card">
-    <h2>Runs for {{ $workflow->name }}</h2>
-    @if ($runs->isEmpty())
-        <p class="ab-muted">No runs yet.</p>
-    @else
-        <table class="ab-table ab-mt">
-            <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Status</th>
-                    <th>Started</th>
-                    <th>Duration</th>
-                    <th></th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($runs as $run)
+<x-neuronai-studio::ui.page>
+    <x-neuronai-studio::ui.card>
+        @if ($runs->isEmpty())
+            <x-neuronai-studio::ui.empty-state title="No runs yet" description="Test the workflow from the editor to create a run." />
+        @else
+            <x-neuronai-studio::ui.table>
+                <x-neuronai-studio::ui.table-head>
                     <tr>
-                        <td>#{{ $run->id }}</td>
-                        <td><span class="ab-badge ab-badge-{{ $run->status }}">{{ $run->status }}</span></td>
-                        <td>{{ $run->started_at }}</td>
-                        <td>
-                            @if ($run->started_at && $run->finished_at)
-                                {{ $run->started_at->diffInSeconds($run->finished_at) }}s
-                            @endif
-                        </td>
-                        <td><a href="{{ route('neuronai-studio.workflows.runs.show', $run) }}">Details</a></td>
+                        <x-neuronai-studio::ui.table-header>ID</x-neuronai-studio::ui.table-header>
+                        <x-neuronai-studio::ui.table-header>Status</x-neuronai-studio::ui.table-header>
+                        <x-neuronai-studio::ui.table-header>Started</x-neuronai-studio::ui.table-header>
+                        <x-neuronai-studio::ui.table-header></x-neuronai-studio::ui.table-header>
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
-    @endif
-</div>
+                </x-neuronai-studio::ui.table-head>
+                <x-neuronai-studio::ui.table-body>
+                    @foreach ($runs as $run)
+                        <x-neuronai-studio::ui.table-row wire:key="run-{{ $run->id }}">
+                            <x-neuronai-studio::ui.table-cell>#{{ $run->id }}</x-neuronai-studio::ui.table-cell>
+                            <x-neuronai-studio::ui.table-cell>
+                                <x-neuronai-studio::ui.badge :variant="$run->status">{{ $run->status }}</x-neuronai-studio::ui.badge>
+                            </x-neuronai-studio::ui.table-cell>
+                            <x-neuronai-studio::ui.table-cell class="text-muted-foreground">{{ $run->started_at?->diffForHumans() }}</x-neuronai-studio::ui.table-cell>
+                            <x-neuronai-studio::ui.table-cell>
+                                <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.workflows.runs.show', $run)">Details</x-neuronai-studio::ui.button>
+                            </x-neuronai-studio::ui.table-cell>
+                        </x-neuronai-studio::ui.table-row>
+                    @endforeach
+                </x-neuronai-studio::ui.table-body>
+            </x-neuronai-studio::ui.table>
+        @endif
+    </x-neuronai-studio::ui.card>
+</x-neuronai-studio::ui.page>

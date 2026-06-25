@@ -4,6 +4,7 @@ namespace ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Tools;
 
 use ElvisLopesDigital\NeuronAIStudio\Models\ToolDefinition;
 use ElvisLopesDigital\NeuronAIStudio\Registry\ToolRegistry;
+use ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout;
 use Livewire\Component;
 
 class Index extends Component
@@ -40,6 +41,10 @@ class Index extends Component
                 'studio' => 'Studio',
                 'mcp' => 'MCP',
             ],
-        ])->layout('neuronai-studio::layouts.app', ['title' => 'Tools']);
+        ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
+            breadcrumbs: [['label' => 'Tools']],
+            title: 'Tools',
+            headerActions: view('neuronai-studio::partials.header-actions.new-tool')->render(),
+        ));
     }
 }

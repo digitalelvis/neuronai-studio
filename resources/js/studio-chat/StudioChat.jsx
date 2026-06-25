@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react';
+import { Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import Composer from './Composer';
 import MessageList from './MessageList';
-import StudioPlayground from './StudioPlayground';
 import { createId } from './utils/id';
 
 function formatWorkflowOutput(output) {
@@ -27,17 +29,20 @@ export default function StudioChat({
     enableAttachments = false,
     showPlayground = true,
     initialContext = {},
+    onContextChange,
     onRunCompleted,
+    embedded = false,
 }) {
     const [messages, setMessages] = useState([]);
     const [context, setContext] = useState(initialContext);
     const [sending, setSending] = useState(false);
     const [error, setError] = useState('');
 
+    const effectiveContext = onContextChange ? initialContext : context;
+    const setEffectiveContext = onContextChange ?? setContext;
+
     const updateMessage = useCallback((id, patch) => {
-        setMessages((current) =>
-            current.map((message) => (message.id === id ? { ...message, ...patch } : message)),
-        );
+        setMessages((current) => current.map((message) => (message.id === id ? { ...message, ...patch } : message)));
     }, []);
 
     const appendMessage = useCallback((message) => {
@@ -76,7 +81,7 @@ export default function StudioChat({
         const toolMessages = [];
 
         try {
-            for await (const packet of adapter.send(text, attachments, { state: context })) {
+            for await (const packet of adapter.send(text, attachments, { state: effectiveContext })) {
                 if (packet.event === 'token') {
                     assistantText += packet.data?.delta ?? '';
                     updateMessage(assistantId, { content: assistantText, streaming: true });
@@ -160,23 +165,25 @@ export default function StudioChat({
     };
 
     return (
-        <div className="ab-chat-shell">
-            {showPlayground && (
-                <StudioPlayground
-                    mode={mode}
-                    entityId={entityId}
-                    context={context}
-                    onContextChange={setContext}
-                />
-            )}
-            <div className="ab-chat-toolbar">
-                <button type="button" className="ab-btn ab-btn-sm" onClick={handleClear} disabled={sending}>
-                    Clear
-                </button>
-                {error && <span className="ab-error ab-chat-error">{error}</span>}
+        <div className="flex h-full flex-col">
+            <div className="flex items-center justify-between border-b border-border px-4 py-2">
+                <span className="text-sm font-medium text-muted-foreground">Output</span>
+                <div className="flex items-center gap-2">
+                    {error && <span className="text-xs text-destructive">{error}</span>}
+                    <Button variant="ghost" size="sm" onClick={handleClear} disabled={sending}>
+                        <Trash2 className="h-4 w-4" />
+                        Clear
+                    </Button>
+                </div>
             </div>
-            <MessageList messages={messages} />
-            <Composer disabled={sending} onSend={handleSend} enableAttachments={enableAttachments} />
+
+            <ScrollArea className="flex-1 px-4">
+                <MessageList messages={messages} />
+            </ScrollArea>
+
+            <div className="border-t border-border p-4">
+                <Composer disabled={sending} onSend={handleSend} enableAttachments={enableAttachments} />
+            </div>
         </div>
     );
 }

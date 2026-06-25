@@ -1,4 +1,7 @@
 import { useRef, useState } from 'react';
+import { Paperclip, Send } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 
 const ACCEPT_MAP = {
     image: 'image/*',
@@ -56,15 +59,18 @@ export default function Composer({ disabled, onSend, enableAttachments = false }
     };
 
     return (
-        <form className="ab-chat-composer" onSubmit={handleSubmit}>
+        <form className="space-y-2" onSubmit={handleSubmit}>
             {attachments.length > 0 && (
-                <div className="ab-chat-composer-attachments">
+                <div className="flex flex-wrap gap-2">
                     {attachments.map((attachment) => (
-                        <span key={attachment.id} className="ab-chat-composer-attachment">
+                        <span
+                            key={attachment.id}
+                            className="inline-flex items-center gap-1 rounded-md border border-border bg-muted px-2 py-1 text-xs"
+                        >
                             {attachment.name}
                             <button
                                 type="button"
-                                className="ab-chat-attachment-remove"
+                                className="text-muted-foreground hover:text-foreground"
                                 onClick={() => {
                                     if (attachment.previewUrl) {
                                         URL.revokeObjectURL(attachment.previewUrl);
@@ -78,16 +84,16 @@ export default function Composer({ disabled, onSend, enableAttachments = false }
                     ))}
                 </div>
             )}
-            <textarea
-                className="ab-input ab-chat-input"
+            <Textarea
                 rows={3}
                 placeholder="Type a message…"
                 value={text}
                 disabled={disabled}
                 onChange={(event) => setText(event.target.value)}
                 onKeyDown={handleKeyDown}
+                className="resize-none"
             />
-            <div className="ab-chat-composer-actions">
+            <div className="flex items-center justify-end gap-2">
                 {enableAttachments && (
                     <>
                         <input
@@ -103,19 +109,16 @@ export default function Composer({ disabled, onSend, enableAttachments = false }
                                 event.target.value = '';
                             }}
                         />
-                        <button
-                            type="button"
-                            className="ab-btn ab-btn-sm"
-                            disabled={disabled}
-                            onClick={() => fileRef.current?.click()}
-                        >
+                        <Button type="button" variant="outline" size="sm" disabled={disabled} onClick={() => fileRef.current?.click()}>
+                            <Paperclip className="h-4 w-4" />
                             Attach
-                        </button>
+                        </Button>
                     </>
                 )}
-                <button type="submit" className="ab-btn ab-btn-primary ab-btn-sm" disabled={disabled}>
+                <Button type="submit" size="sm" disabled={disabled}>
+                    <Send className="h-4 w-4" />
                     {disabled ? 'Sending…' : 'Send'}
-                </button>
+                </Button>
             </div>
         </form>
     );

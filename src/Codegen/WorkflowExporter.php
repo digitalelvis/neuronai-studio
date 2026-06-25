@@ -16,12 +16,21 @@ class WorkflowExporter
 
         File::ensureDirectoryExists($path);
 
-        $nodesCode = $this->buildNodesArray($workflow);
+        $meta = [
+            'name' => $workflow->name,
+            'description' => (string) ($workflow->description ?? ''),
+            'status' => $workflow->status,
+        ];
 
         $content = str_replace(
-            ['{{ namespace }}', '{{ className }}', '{{ nodes }}'],
-            [$namespace, $className, $nodesCode],
-            file_get_contents(__DIR__.'/Stubs/workflow.stub')
+            ['{{ namespace }}', '{{ className }}', '{{ meta }}', '{{ graph }}'],
+            [
+                $namespace,
+                $className,
+                $this->exportArray($meta, 2),
+                $this->exportArray($workflow->graph ?? WorkflowDefinition::defaultGraph(), 2),
+            ],
+            file_get_contents(__DIR__.'/Stubs/studio-workflow.stub')
         );
 
         $file = $path.'/'.$className.'.php';
@@ -30,24 +39,28 @@ class WorkflowExporter
         return [$file];
     }
 
-    protected function buildNodesArray(WorkflowDefinition $workflow): string
+    protected function exportArray(array $data, int $indent = 0): string
     {
-        $nodes = $workflow->graph['nodes'] ?? [];
-        $lines = [];
+        $pad = str_repeat('    ', $indent);
+        $inner = str_repeat('    ', $indent + 1);
+        $lines = ["{$pad}["];
 
-        foreach ($nodes as $node) {
-            if (in_array($node['type'], ['start', 'stop'], true)) {
-                continue;
-            }
-
-            $type = Str::studly($node['type']).'Node';
-            $lines[] = "            new {$type}(),";
+        foreach ($data as $key => $value) {
+            $exportedKey = is_int($key) ? $key : var_export($key, true);
+            $lines[] = "{$inner}{$exportedKey} => ".$this->exportValue($value, $indent + 1).',';
         }
 
-        if (empty($lines)) {
-            return '            // Add exported node classes here';
-        }
+        $lines[] = "{$pad}]";
 
         return implode("\n", $lines);
+    }
+
+    protected function exportValue(mixed $value, int $indent): string
+    {
+        if (is_array($value)) {
+            return $this->exportArray($value, $indent);
+        }
+
+        return var_export($value, true);
     }
 }

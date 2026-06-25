@@ -1,50 +1,27 @@
 import { createRoot } from 'react-dom/client';
-import WorkflowCanvas from './WorkflowCanvas';
+import WorkflowEditorShell from './WorkflowEditorShell';
+import { openImportModal } from './graphJson';
+import '../../css/globals.css';
+import './canvas.css';
 
-const roots = new WeakMap();
-let workflowChatMounted = false;
+const editorRoots = new WeakMap();
 
-export function mountWorkflowCanvas(rootEl, config = {}) {
-    if (!rootEl) return null;
+function syncMetadataToLivewire() {
+    const config = window.__NEURONAI_CANVAS_CONFIG;
+    const wireId = config?.wireId;
 
-    let root = roots.get(rootEl);
-    if (!root) {
-        root = createRoot(rootEl);
-        roots.set(rootEl, root);
+    if (!wireId || !window.Livewire) {
+        return;
     }
 
-    root.render(
-        <WorkflowCanvas
-            graph={config.graph}
-            nodeTypesMeta={config.nodeTypes || {}}
-            onGraphChange={config.onGraphChange}
-        />,
-    );
+    const component = window.Livewire.find(wireId);
+    if (!component) {
+        return;
+    }
 
-    return root;
-}
-
-function bindPaletteDrag() {
-    if (window.__neuronaiCanvasDragBound) return;
-    window.__neuronaiCanvasDragBound = true;
-
-    document.addEventListener('dragstart', (event) => {
-        const item = event.target.closest('[data-canvas-node-type]');
-        if (!item) return;
-
-        const type = item.dataset.canvasNodeType;
-        event.dataTransfer.setData('application/x-neuronai-node', type);
-        event.dataTransfer.setData('text/plain', type);
-        event.dataTransfer.effectAllowed = 'copy';
-        item.classList.add('is-dragging');
-    });
-
-    document.addEventListener('dragend', (event) => {
-        const item = event.target.closest('[data-canvas-node-type]');
-        if (item) {
-            item.classList.remove('is-dragging');
-        }
-    });
+    component.set('name', config.workflowName ?? '');
+    component.set('description', config.workflowDescription ?? '');
+    component.set('status', config.workflowStatus ?? 'draft');
 }
 
 function exportGraphForSave() {
@@ -59,9 +36,7 @@ function mergePendingNodeUpdate(graph, pendingUpdate) {
     return {
         ...graph,
         nodes: graph.nodes.map((node) =>
-            node.id === pendingUpdate.id
-                ? { ...node, data: { ...(node.data || {}), ...pendingUpdate.data } }
-                : node,
+            node.id === pendingUpdate.id ? { ...node, data: { ...(node.data || {}), ...pendingUpdate.data } } : node,
         ),
     };
 }
@@ -82,7 +57,11 @@ function captureInspectorFlushUpdate() {
 
 function saveGraphToLivewire(graphOverride = null) {
     const graph = graphOverride ?? exportGraphForSave();
-    if (!graph) return;
+    if (!graph) {
+        return;
+    }
+
+    syncMetadataToLivewire();
 
     const wireId = window.__NEURONAI_CANVAS_CONFIG?.wireId;
     if (wireId && window.Livewire) {
@@ -91,6 +70,9 @@ function saveGraphToLivewire(graphOverride = null) {
             component.call('saveGraph', graph);
         }
     }
+
+    window.__NEURONAI_CANVAS_CONFIG.savedGraph = graph;
+    window.__workflowGraphDirty = false;
 }
 
 function flushInspectorAndSave() {
@@ -105,7 +87,9 @@ function flushInspectorAndSave() {
 }
 
 function bindSaveHandler() {
-    if (window.__neuronaiCanvasSaveBound) return;
+    if (window.__neuronaiCanvasSaveBound) {
+        return;
+    }
     window.__neuronaiCanvasSaveBound = true;
 
     window.addEventListener('workflow-canvas-save', () => {
@@ -123,6 +107,8 @@ async function saveGraphBeforeRun() {
     });
 
     const graph = mergePendingNodeUpdate(exportGraphForSave(), pendingUpdate);
+    syncMetadataToLivewire();
+
     const wireId = window.__NEURONAI_CANVAS_CONFIG?.wireId;
 
     if (!graph || !wireId || !window.Livewire) {
@@ -135,78 +121,87 @@ async function saveGraphBeforeRun() {
     }
 
     await component.call('saveGraph', graph);
+    window.__NEURONAI_CANVAS_CONFIG.savedGraph = graph;
+    window.__workflowGraphDirty = false;
     return true;
 }
 
-function bindOpenTestHandler() {
-    if (window.__neuronaiCanvasOpenTestBound) return;
-    window.__neuronaiCanvasOpenTestBound = true;
+function bindPaletteDrag() {
+    if (window.__neuronaiCanvasDragBound) {
+        return;
+    }
+    window.__neuronaiCanvasDragBound = true;
+
+    document.addEventListener('dragstart', (event) => {
+        const item = event.target.closest('[data-canvas-node-type]');
+        if (!item) {
+            return;
+        }
+
+        const type = item.dataset.canvasNodeType;
+        event.dataTransfer.setData('application/x-neuronai-node', type);
+        event.dataTransfer.setData('text/plain', type);
+        event.dataTransfer.effectAllowed = 'copy';
+        item.classList.add('is-dragging');
+    });
+
+    document.addEventListener('dragend', (event) => {
+        const item = event.target.closest('[data-canvas-node-type]');
+        if (item) {
+            item.classList.remove('is-dragging');
+        }
+    });
+}
+
+function bindLegacyExportHandlers() {
+    if (window.__neuronaiJsonIoBound) {
+        return;
+    }
+    window.__neuronaiJsonIoBound = true;
 
     document.addEventListener('click', (event) => {
-        const button = event.target.closest('[data-workflow-open-test]');
-        if (!button || button.disabled) return;
-
-        window.dispatchEvent(new CustomEvent('workflow-open-test'));
+        const importBtn = event.target.closest('[data-workflow-import-json]');
+        if (importBtn && !importBtn.disabled) {
+            openImportModal();
+        }
     });
 }
 
-function bootstrapWorkflowChat() {
-    const config = window.__NEURONAI_CANVAS_CONFIG;
-    const root = document.getElementById('studio-chat-workflow-root');
-
-    if (!config?.streamUrl || !root || !window.mountStudioChat) {
-        return;
+export function mountWorkflowEditor(rootEl, config = {}) {
+    if (!rootEl) {
+        return null;
     }
 
-    if (workflowChatMounted && root.dataset.mounted === '1') {
-        return;
+    window.__NEURONAI_CANVAS_CONFIG = { ...config, savedGraph: config.graph };
+    window.__workflowGraphDirty = false;
+
+    let root = editorRoots.get(rootEl);
+    if (!root) {
+        root = createRoot(rootEl);
+        editorRoots.set(rootEl, root);
     }
 
-    window.mountStudioChat(root, {
-        mode: 'workflow',
-        entityId: config.workflowId,
-        streamUrl: config.streamUrl,
-        resumeUrlTemplate: config.resumeUrlTemplate,
-        uploadUrl: config.uploadUrl,
-        onBeforeRun: saveGraphBeforeRun,
-        syncCanvas: true,
+    root.render(<WorkflowEditorShell config={config} />);
+
+    bindPaletteDrag();
+    bindSaveHandler();
+    bindLegacyExportHandlers();
+
+    window.addEventListener('canvas-inspector-flush', () => {
+        captureInspectorFlushUpdate();
     });
 
-    root.dataset.mounted = '1';
-    workflowChatMounted = true;
+    return root;
 }
 
-function bootstrapWorkflowCanvas() {
-    const config = window.__NEURONAI_CANVAS_CONFIG;
-    if (!config) return;
-
-    const root = document.getElementById('workflow-canvas-root');
-    if (!root || root.dataset.mounted === '1') return;
-
-    try {
-        mountWorkflowCanvas(root, {
-            graph: config.graph,
-            nodeTypes: config.nodeTypes || {},
-            onGraphChange(graph) {
-                window.__workflowGraph = graph;
-            },
-        });
-        root.dataset.mounted = '1';
-        bindPaletteDrag();
-        bindSaveHandler();
-        bindOpenTestHandler();
-    } catch (error) {
-        console.error('[NeuronAI Studio] Failed to mount workflow canvas:', error);
-    }
-}
-
-window.mountWorkflowCanvas = mountWorkflowCanvas;
-window.bootstrapWorkflowCanvas = bootstrapWorkflowCanvas;
-window.bootstrapWorkflowChat = bootstrapWorkflowChat;
+window.mountWorkflowEditor = mountWorkflowEditor;
 window.saveGraphBeforeRun = saveGraphBeforeRun;
+window.bootstrapWorkflowCanvas = () => {
+    const root = document.getElementById('workflow-editor-root');
+    if (root && !root.dataset.mounted) {
+        mountWorkflowEditor(root, window.__NEURONAI_CANVAS_CONFIG);
+        root.dataset.mounted = '1';
+    }
+};
 
-window.addEventListener('workflow-open-test', () => {
-    bootstrapWorkflowChat();
-});
-
-bootstrapWorkflowCanvas();
+window.bootstrapWorkflowCanvas();

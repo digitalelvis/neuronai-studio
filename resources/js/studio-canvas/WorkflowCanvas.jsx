@@ -36,7 +36,7 @@ import './canvas.css';
 const nodeTypes = { workflowNode: WorkflowNode };
 const edgeTypes = { workflowEdge: WorkflowEdge };
 
-function WorkflowCanvasInner({ graph, nodeTypesMeta, onGraphChange }) {
+function WorkflowCanvasInner({ graph, nodeTypesMeta, onGraphChange, readOnly = false }) {
     const initialNodes = useMemo(() => toFlowNodes(graph?.nodes, nodeTypesMeta), []);
     const initialEdges = useMemo(() => toFlowEdges(graph?.edges), []);
     const initialViewport = graph?.viewport || { x: 0, y: 0, zoom: 1 };
@@ -131,22 +131,66 @@ function WorkflowCanvasInner({ graph, nodeTypesMeta, onGraphChange }) {
         [nodes],
     );
 
+    const loadGraph = useCallback(
+        (nextGraph) => {
+            if (!nextGraph) {
+                return;
+            }
+
+            const flowNodes = toFlowNodes(nextGraph.nodes, nodeTypesMeta);
+            const flowEdges = toFlowEdges(nextGraph.edges);
+            const viewport = nextGraph.viewport || { x: 0, y: 0, zoom: 1 };
+
+            setNodes(flowNodes);
+            setEdges(flowEdges);
+            seedHistory(flowNodes, flowEdges);
+            historySeededRef.current = true;
+            didFitViewRef.current = false;
+            syncSelection(null);
+
+            if (viewport.x || viewport.y || viewport.zoom !== 1) {
+                setViewport(viewport, { duration: 0 });
+                didFitViewRef.current = true;
+            } else if (flowNodes.length > 0) {
+                window.requestAnimationFrame(() => {
+                    fitView({ padding: 0.2, duration: 0 });
+                    didFitViewRef.current = true;
+                });
+            }
+
+            window.dispatchEvent(new CustomEvent('workflow-canvas-loaded', { detail: nextGraph }));
+        },
+        [fitView, nodeTypesMeta, seedHistory, setEdges, setNodes, setViewport, syncSelection],
+    );
+
+    useEffect(() => {
+        window.__workflowCanvasLoadGraph = loadGraph;
+    }, [loadGraph]);
+
     const onReconnect = useCallback(
         (oldEdge, newConnection) => {
+            if (readOnly) {
+                return;
+            }
+
             setEdges((current) =>
                 current.map((edge) =>
                     edge.id === oldEdge.id ? buildFlowEdge({ ...edge, ...newConnection }) : edge,
                 ),
             );
         },
-        [setEdges],
+        [readOnly, setEdges],
     );
 
     const onConnect = useCallback(
         (connection) => {
+            if (readOnly) {
+                return;
+            }
+
             setEdges((current) => addEdge(buildFlowEdge(connection), current));
         },
-        [setEdges],
+        [readOnly, setEdges],
     );
 
     const onSelectionChange = useCallback(
@@ -158,7 +202,7 @@ function WorkflowCanvasInner({ graph, nodeTypesMeta, onGraphChange }) {
 
     const addNodeAt = useCallback(
         (type, position) => {
-            if (!position) {
+            if (readOnly || !position) {
                 return;
             }
 
@@ -193,7 +237,7 @@ function WorkflowCanvasInner({ graph, nodeTypesMeta, onGraphChange }) {
 
             syncSelection(node.id, nextNodes);
         },
-        [getEdges, getNodes, nodeTypesMeta, setEdges, setNodes, syncSelection],
+        [getEdges, getNodes, nodeTypesMeta, readOnly, setEdges, setNodes, syncSelection],
     );
 
     const updateNodeData = useCallback(
@@ -219,6 +263,10 @@ function WorkflowCanvasInner({ graph, nodeTypesMeta, onGraphChange }) {
     );
 
     const removeSelectedNode = useCallback(() => {
+        if (readOnly) {
+            return;
+        }
+
         const id = selectedNodeIdRef.current;
         if (!id) {
             return;
@@ -231,7 +279,7 @@ function WorkflowCanvasInner({ graph, nodeTypesMeta, onGraphChange }) {
 
         deleteElements({ nodes: [{ id }] });
         syncSelection(null);
-    }, [deleteElements, getNodes, syncSelection]);
+    }, [deleteElements, getNodes, readOnly, syncSelection]);
 
     const autoLayout = useCallback(() => {
         setNodes((current) => {
@@ -271,7 +319,12 @@ function WorkflowCanvasInner({ graph, nodeTypesMeta, onGraphChange }) {
             }
         };
         const onRemoveNode = () => removeSelectedNode();
-        const onAutoLayout = () => autoLayout();
+        const onAutoLayout = () => {
+            if (!readOnly) {
+                autoLayout();
+            }
+        };
+        const onLoadGraph = (event) => loadGraph(event.detail);
         const onRunStart = () => {
             clearExecutionStatus();
             setRunStatus('running');
@@ -304,6 +357,7 @@ function WorkflowCanvasInner({ graph, nodeTypesMeta, onGraphChange }) {
         window.addEventListener('canvas-auto-layout', onAutoLayout);
         window.addEventListener('canvas-run-start', onRunStart);
         window.addEventListener('canvas-execution-event', onExecutionEvent);
+        window.addEventListener('workflow-canvas-load-graph', onLoadGraph);
 
         return () => {
             window.removeEventListener('canvas-node-updated', onNodeUpdated);
@@ -311,10 +365,13 @@ function WorkflowCanvasInner({ graph, nodeTypesMeta, onGraphChange }) {
             window.removeEventListener('canvas-auto-layout', onAutoLayout);
             window.removeEventListener('canvas-run-start', onRunStart);
             window.removeEventListener('canvas-execution-event', onExecutionEvent);
+            window.removeEventListener('workflow-canvas-load-graph', onLoadGraph);
         };
     }, [
         autoLayout,
         clearExecutionStatus,
+        loadGraph,
+        readOnly,
         removeSelectedNode,
         setExecutionStatus,
         updateNodeData,
@@ -333,14 +390,17 @@ function WorkflowCanvasInner({ graph, nodeTypesMeta, onGraphChange }) {
             edgesReconnectable
             onSelectionChange={onSelectionChange}
             onPaneClick={() => syncSelection(null)}
-            onDragOver={onDragOver}
-            onDrop={onDrop}
+            onDragOver={readOnly ? undefined : onDragOver}
+            onDrop={readOnly ? undefined : onDrop}
+            nodesDraggable={!readOnly}
+            nodesConnectable={!readOnly}
+            elementsSelectable
             minZoom={0.25}
             maxZoom={2}
             snapToGrid
             snapGrid={[16, 16]}
-            deleteKeyCode={['Backspace', 'Delete']}
-            className="ab-react-flow"
+            deleteKeyCode={readOnly ? null : ['Backspace', 'Delete']}
+            className={`ab-react-flow${readOnly ? ' ab-react-flow--readonly' : ''}`}
         >
             <Background gap={16} size={1} color="#334155" />
             <Controls className="ab-flow-controls" showInteractive={false} />
@@ -353,15 +413,20 @@ function WorkflowCanvasInner({ graph, nodeTypesMeta, onGraphChange }) {
                 maskColor="rgba(15, 23, 42, 0.75)"
             />
             <Panel position="top-center" className="ab-flow-toolbar">
-                <button type="button" className="ab-flow-toolbar-btn" onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)">
-                    Undo
-                </button>
-                <button type="button" className="ab-flow-toolbar-btn" onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)">
-                    Redo
-                </button>
-                <button type="button" className="ab-flow-toolbar-btn" onClick={autoLayout} title="Auto layout">
-                    Layout
-                </button>
+                {!readOnly && (
+                    <>
+                        <button type="button" className="ab-flow-toolbar-btn" onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)">
+                            Undo
+                        </button>
+                        <button type="button" className="ab-flow-toolbar-btn" onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)">
+                            Redo
+                        </button>
+                        <button type="button" className="ab-flow-toolbar-btn" onClick={autoLayout} title="Auto layout">
+                            Layout
+                        </button>
+                    </>
+                )}
+                {readOnly && <span className="ab-flow-toolbar-readonly">Read-only</span>}
                 {runStatus && (
                     <span className={`ab-flow-run-status ab-flow-run-status--${runStatus}`}>
                         {runStatus === 'running' && 'Running…'}

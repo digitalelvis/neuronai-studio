@@ -1,7 +1,7 @@
 # State
 
 **Last Updated:** 2026-06-24
-**Current Work:** studio-test-harness — complete
+**Current Work:** workflow-json-io + workflow-code-bridge — complete
 
 ---
 
@@ -45,6 +45,8 @@ _None._
 | Feature              | Date       | Commit | Status  |
 | -------------------- | ---------- | ------ | ------- |
 | studio-test-harness  | 2026-06-24 | f8a29d2 | ✅ Done |
+| workflow-json-io     | 2026-06-24 | —       | ✅ Done |
+| workflow-code-bridge | 2026-06-24 | —       | ✅ Done |
 
 ---
 

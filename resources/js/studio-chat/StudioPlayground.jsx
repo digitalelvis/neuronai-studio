@@ -1,16 +1,19 @@
 import { useCallback, useMemo, useState } from 'react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Textarea } from '@/components/ui/textarea';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 import { loadPresets, presetStorageKey, savePresets } from './utils/presets';
-import { createId } from './utils/id';
 
 export default function StudioPlayground({
     mode,
     entityId,
     context,
     onContextChange,
-    collapsed: initialCollapsed = false,
+    variant = 'panel',
 }) {
     const storageKey = useMemo(() => presetStorageKey(mode, entityId), [mode, entityId]);
-    const [collapsed, setCollapsed] = useState(initialCollapsed);
     const [contextJson, setContextJson] = useState(() => JSON.stringify(context ?? {}, null, 2));
     const [jsonError, setJsonError] = useState('');
     const [presets, setPresets] = useState(() => loadPresets(storageKey));
@@ -49,53 +52,83 @@ export default function StudioPlayground({
         applyContext(preset.context);
     };
 
-    return (
-        <div className={`ab-playground${collapsed ? ' ab-playground--collapsed' : ''}`}>
-            <button type="button" className="ab-playground-toggle" onClick={() => setCollapsed((value) => !value)}>
-                Playground {collapsed ? '▸' : '▾'}
-            </button>
-            {!collapsed && (
-                <div className="ab-playground-body">
-                    <label className="ab-playground-label">
-                        {mode === 'workflow' ? 'Initial state JSON' : 'Context JSON'}
-                    </label>
-                    <textarea
-                        className="ab-input ab-playground-json"
-                        rows={6}
-                        value={contextJson}
-                        onChange={(event) => applyContext(event.target.value)}
-                    />
-                    {jsonError && <p className="ab-error ab-playground-error">{jsonError}</p>}
+    const contextLabel = mode === 'workflow' ? 'Initial state JSON' : 'Context JSON';
 
-                    <div className="ab-playground-presets">
-                        <input
-                            className="ab-input"
-                            placeholder="Preset name"
-                            value={presetName}
-                            onChange={(event) => setPresetName(event.target.value)}
-                        />
-                        <button type="button" className="ab-btn ab-btn-sm" onClick={savePreset}>
-                            Save preset
-                        </button>
-                    </div>
-                    {presets.length > 0 && (
-                        <div className="ab-playground-preset-list">
-                            {presets.map((preset) => (
-                                <button
-                                    key={preset.name}
-                                    type="button"
-                                    className="ab-btn ab-btn-sm"
-                                    onClick={() => loadPreset(preset)}
-                                >
-                                    {preset.name}
-                                </button>
-                            ))}
-                        </div>
-                    )}
+    const contextEditor = (
+        <>
+            <Label htmlFor="playground-context">{contextLabel}</Label>
+            <Textarea
+                id="playground-context"
+                className="mt-2 min-h-[200px] font-mono text-xs"
+                value={contextJson}
+                onChange={(event) => applyContext(event.target.value)}
+            />
+            {jsonError && <p className="mt-2 text-sm text-destructive">{jsonError}</p>}
+        </>
+    );
+
+    const presetsPanel = (
+        <div className="space-y-3">
+            <div className="flex gap-2">
+                <Input
+                    placeholder="Preset name"
+                    value={presetName}
+                    onChange={(event) => setPresetName(event.target.value)}
+                />
+                <Button type="button" variant="secondary" size="sm" onClick={savePreset}>
+                    Save
+                </Button>
+            </div>
+            {presets.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                    {presets.map((preset) => (
+                        <Button key={preset.name} type="button" variant="outline" size="sm" onClick={() => loadPreset(preset)}>
+                            {preset.name}
+                        </Button>
+                    ))}
                 </div>
+            ) : (
+                <p className="text-sm text-muted-foreground">No saved presets yet.</p>
             )}
         </div>
     );
-}
 
-export { createId };
+    if (variant === 'sheet') {
+        return (
+            <Tabs defaultValue="context">
+                <TabsList className="w-full">
+                    <TabsTrigger value="context" className="flex-1">
+                        Context
+                    </TabsTrigger>
+                    <TabsTrigger value="presets" className="flex-1">
+                        Presets
+                    </TabsTrigger>
+                </TabsList>
+                <TabsContent value="context" className="mt-4">
+                    {contextEditor}
+                </TabsContent>
+                <TabsContent value="presets" className="mt-4">
+                    {presetsPanel}
+                </TabsContent>
+            </Tabs>
+        );
+    }
+
+    return (
+        <div className="flex h-full flex-col">
+            <h3 className="mb-3 text-sm font-medium text-muted-foreground">Inputs</h3>
+            <Tabs defaultValue="context" className="flex flex-1 flex-col overflow-hidden">
+                <TabsList>
+                    <TabsTrigger value="context">Context</TabsTrigger>
+                    <TabsTrigger value="presets">Presets</TabsTrigger>
+                </TabsList>
+                <TabsContent value="context" className="mt-3 flex-1 overflow-auto">
+                    {contextEditor}
+                </TabsContent>
+                <TabsContent value="presets" className="mt-3 flex-1 overflow-auto">
+                    {presetsPanel}
+                </TabsContent>
+            </Tabs>
+        </div>
+    );
+}
