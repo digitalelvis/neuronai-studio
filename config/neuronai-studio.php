@@ -113,6 +113,28 @@ return [
         app_path('Neuron/Tools'),
     ],
 
+    'workflow_scan_paths' => [
+        app_path('Neuron'),
+        app_path('Neuron/Workflows'),
+    ],
+
+    'workflow_json_paths' => [
+        base_path('workflows'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Templates
+    |--------------------------------------------------------------------------
+    */
+
+    'templates_enabled' => env('NEURONAI_STUDIO_TEMPLATES_ENABLED', true),
+
+    'template_paths' => [
+        'agent' => dirname(__DIR__).'/resources/templates/agents',
+        'workflow' => dirname(__DIR__).'/resources/templates/workflows',
+    ],
+
     /*
     |--------------------------------------------------------------------------
     | MCP Servers

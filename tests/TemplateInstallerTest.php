@@ -1,0 +1,85 @@
+<?php
+
+namespace ElvisLopesDigital\NeuronAIStudio\Tests;
+
+use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Templates\Index;
+use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
+use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\GraphValidator;
+use ElvisLopesDigital\NeuronAIStudio\Services\TemplateInstaller;
+use Livewire\Livewire;
+
+class TemplateInstallerTest extends TestCase
+{
+    public function test_install_agent_creates_definition(): void
+    {
+        $agent = app(TemplateInstaller::class)->installAgent('support-assistant');
+
+        $this->assertDatabaseHas('agent_definitions', [
+            'id' => $agent->id,
+            'slug' => 'support-assistant',
+            'name' => 'Support Assistant',
+        ]);
+    }
+
+    public function test_install_agent_reuses_existing_slug(): void
+    {
+        $installer = app(TemplateInstaller::class);
+        $first = $installer->installAgent('support-assistant');
+        $second = $installer->installAgent('support-assistant');
+
+        $this->assertSame($first->id, $second->id);
+        $this->assertSame(1, AgentDefinition::count());
+    }
+
+    public function test_install_workflow_creates_agents_and_remaps_agent_ref(): void
+    {
+        $workflow = app(TemplateInstaller::class)->installWorkflow('basic-agent-chat');
+
+        $this->assertDatabaseHas('workflow_definitions', [
+            'id' => $workflow->id,
+            'name' => 'Basic Agent Chat',
+            'source' => 'studio',
+        ]);
+
+        $agent = AgentDefinition::where('slug', 'support-assistant')->first();
+        $this->assertNotNull($agent);
+
+        $agentNode = collect($workflow->graph['nodes'] ?? [])
+            ->first(fn (array $node) => ($node['type'] ?? '') === 'agent');
+
+        $this->assertNotNull($agentNode);
+        $this->assertSame($agent->id, $agentNode['data']['agent_id'] ?? null);
+        $this->assertArrayNotHasKey('agent_ref', $agentNode['data'] ?? []);
+    }
+
+    public function test_installed_workflow_graph_is_valid(): void
+    {
+        $workflow = app(TemplateInstaller::class)->installWorkflow('support-rag-hitl');
+        $result = app(GraphValidator::class)->validate($workflow->graph);
+
+        $this->assertTrue($result['valid'], implode(' ', $result['errors']));
+    }
+
+    public function test_install_workflow_reuses_existing_agents(): void
+    {
+        $installer = app(TemplateInstaller::class);
+        $installer->installWorkflow('basic-agent-chat');
+        $countAfterFirst = AgentDefinition::count();
+
+        $installer->installWorkflow('lead-qualification');
+
+        $this->assertSame($countAfterFirst, AgentDefinition::count());
+        $this->assertSame(2, WorkflowDefinition::count());
+    }
+
+    public function test_use_template_livewire_action_redirects_to_editor(): void
+    {
+        Livewire::test(Index::class)
+            ->call('useTemplate', 'workflow', 'basic-agent-chat')
+            ->assertRedirect();
+
+        $workflow = WorkflowDefinition::where('name', 'Basic Agent Chat')->first();
+        $this->assertNotNull($workflow);
+    }
+}

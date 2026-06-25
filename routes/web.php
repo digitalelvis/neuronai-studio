@@ -16,6 +16,7 @@ use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Tools\RegistryShow;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Tools\Show as ToolsShow;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Workflows\Editor;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Workflows\Index as WorkflowsIndex;
+use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Templates\Index as TemplatesIndex;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Workflows\RunDetail;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Workflows\Runs;
 use Illuminate\Support\Facades\Route;
@@ -51,12 +52,15 @@ Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
         Route::prefix('workflows')->name('workflows.')->group(function () {
             Route::get('/', WorkflowsIndex::class)->name('index');
             Route::get('/create', Editor::class)->name('create');
+            Route::get('/preview', Editor::class)->name('preview');
             Route::get('/{workflow}/edit', Editor::class)->name('edit');
             Route::match(['GET', 'POST'], '/{workflow}/run/stream', WorkflowStreamController::class)->name('run.stream');
             Route::post('/runs/{run}/resume/stream', WorkflowRunResumeController::class)->name('runs.resume.stream');
             Route::get('/{workflow}/runs', Runs::class)->name('runs');
             Route::get('/runs/{run}', RunDetail::class)->name('runs.show');
         });
+
+        Route::get('/templates', TemplatesIndex::class)->name('templates.index');
 
         Route::post('/studio/attachments', AttachmentController::class)->name('attachments.store');
     });

@@ -1,0 +1,15 @@
+{
+  "meta": {
+    "id": "knowledge-agent",
+    "name": "Knowledge Agent",
+    "description": "Answers user questions using retrieved knowledge base context injected into the message.",
+    "category": "support",
+    "tags": ["rag", "knowledge"]
+  },
+  "definition": {
+    "provider": "openai",
+    "model": "gpt-4o-mini",
+    "instructions": "You are a knowledge base assistant. Use the provided context to answer the user's question accurately. If the context is empty or insufficient, say what information is missing and suggest what the user could clarify.",
+    "tools": []
+  }
+}

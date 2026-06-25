@@ -6,6 +6,7 @@ use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\AgentRunner;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\GraphContext;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\MessageFactory;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\StateTemplateInterpolator;
 use NeuronAI\Workflow\WorkflowState;
 
 class AgentNodeExecutor implements NodeExecutorInterface
@@ -19,7 +20,15 @@ class AgentNodeExecutor implements NodeExecutorInterface
     {
         $data = $nodeConfig['data'] ?? [];
         $outputKey = $data['output_key'] ?? 'agent_response';
-        $message = (string) ($data['message'] ?? $state->get('input', ''));
+        $rawMessage = array_key_exists('message', $data)
+            ? (string) $data['message']
+            : (string) $state->get('input', '');
+
+        if ($rawMessage === '') {
+            $rawMessage = (string) $state->get('input', '');
+        }
+
+        $message = StateTemplateInterpolator::interpolate($rawMessage, $state);
         $attachments = is_array($state->get('attachments')) ? $state->get('attachments') : [];
         $userMessage = $this->messages->userMessage($message, $attachments);
 

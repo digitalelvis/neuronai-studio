@@ -59,6 +59,10 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
             return new NodeExecutorRegistry;
         });
 
+        $this->app->singleton(Registry\TemplateRegistry::class, function () {
+            return new Registry\TemplateRegistry;
+        });
+
         $this->app->singleton('neuronai-studio', function ($app) {
             return new NeuronAIStudioManager(
                 $app->make(NodeTypeRegistry::class),
@@ -171,6 +175,7 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
         Livewire::component('neuronai-studio.workflows.editor', Http\Livewire\Workflows\Editor::class);
         Livewire::component('neuronai-studio.workflows.runs', Http\Livewire\Workflows\Runs::class);
         Livewire::component('neuronai-studio.workflows.run-detail', Http\Livewire\Workflows\RunDetail::class);
+        Livewire::component('neuronai-studio.templates.index', Http\Livewire\Templates\Index::class);
     }
 
     protected function registerCommands(): void
