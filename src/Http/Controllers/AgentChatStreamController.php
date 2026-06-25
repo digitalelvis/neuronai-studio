@@ -5,6 +5,7 @@ namespace ElvisLopesDigital\NeuronAIStudio\Http\Controllers;
 use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\AgentRunner;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use NeuronAI\Chat\Messages\Stream\Chunks\TextChunk;
 use NeuronAI\Chat\Messages\Stream\Chunks\ToolCallChunk;
 use NeuronAI\Chat\Messages\Stream\Chunks\ToolResultChunk;
@@ -17,6 +18,7 @@ class AgentChatStreamController
     {
         $validated = $request->validate([
             'message' => 'required|string',
+            'thread_id' => 'nullable|uuid',
             'context' => 'nullable|array',
             'attachments' => 'nullable|array',
             'attachments.*.type' => 'required_with:attachments|string',
@@ -25,10 +27,15 @@ class AgentChatStreamController
             'attachments.*.name' => 'nullable|string',
         ]);
 
+        $validated['thread_id'] = $validated['thread_id'] ?? (string) Str::uuid();
+
         return response()->stream(function () use ($agent, $runner, $validated) {
             $send = $this->emitter();
+            $thread = $runner->resolveThread($agent, $validated);
 
             try {
+                $send('thread', ['thread_id' => $thread['public_id']]);
+
                 foreach ($runner->stream($agent, $validated) as $event) {
                     if ($event instanceof TextChunk) {
                         $send('token', ['delta' => $event->content]);

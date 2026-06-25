@@ -1,10 +1,12 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import Composer from './Composer';
 import MessageList from './MessageList';
+import ThreadBar from './ThreadBar';
 import { createId } from './utils/id';
+import { createThreadId, getThreadFromUrl, setThreadInUrl } from './utils/thread';
 import { formatWorkflowData } from './utils/workflowOutput';
 
 export default function StudioChat({
@@ -17,8 +19,11 @@ export default function StudioChat({
     onContextChange,
     onRunCompleted,
     embedded = false,
+    threadHistoryUrl = null,
 }) {
     const [messages, setMessages] = useState([]);
+    const [threadId, setThreadId] = useState(() => getThreadFromUrl() ?? createThreadId());
+    const historyLoadedRef = useRef(null);
     const [context, setContext] = useState(initialContext);
     const [inputJson, setInputJson] = useState(() => JSON.stringify(initialContext ?? {}, null, 2));
     const [inputJsonError, setInputJsonError] = useState('');
@@ -62,6 +67,62 @@ export default function StudioChat({
         return message.id;
     }, []);
 
+    useEffect(() => {
+        if (mode !== 'agent') {
+            return;
+        }
+
+        setThreadInUrl(threadId);
+    }, [mode, threadId]);
+
+    useEffect(() => {
+        if (mode !== 'agent' || !threadHistoryUrl || !threadId) {
+            return;
+        }
+
+        if (historyLoadedRef.current === threadId) {
+            return;
+        }
+
+        historyLoadedRef.current = threadId;
+        let cancelled = false;
+
+        const url = threadHistoryUrl.replace('__THREAD__', encodeURIComponent(threadId));
+
+        fetch(url, {
+            headers: { Accept: 'application/json' },
+        })
+            .then((response) => (response.ok ? response.json() : null))
+            .then((data) => {
+                if (cancelled || !data?.messages?.length) {
+                    return;
+                }
+
+                setMessages(
+                    data.messages.map((message, index) => ({
+                        id: createId(`history-${message.role}-${index}`),
+                        role: message.role,
+                        content: message.content,
+                    })),
+                );
+            })
+            .catch(() => {});
+
+        return () => {
+            cancelled = true;
+        };
+    }, [mode, threadHistoryUrl, threadId]);
+
+    const handleNewThread = () => {
+        const nextThreadId = createThreadId();
+        historyLoadedRef.current = nextThreadId;
+        setThreadId(nextThreadId);
+        setMessages([]);
+        setError('');
+        adapter?.reset?.();
+        setThreadInUrl(nextThreadId);
+    };
+
     const handleSend = async (text, attachments = []) => {
         if (!adapter || sending) {
             return;
@@ -95,7 +156,16 @@ export default function StudioChat({
         let traceFinished = false;
 
         try {
-            for await (const packet of adapter.send(text, attachments, { state: effectiveContext })) {
+            const sendContext =
+                mode === 'agent'
+                    ? { state: effectiveContext, threadId }
+                    : { state: effectiveContext };
+
+            for await (const packet of adapter.send(text, attachments, sendContext)) {
+                if (packet.event === 'thread' && packet.data?.thread_id) {
+                    setThreadId(packet.data.thread_id);
+                }
+
                 if (packet.event === 'trace_started' && mode === 'workflow') {
                     updateMessage(assistantId, {
                         content: '',
@@ -106,7 +176,6 @@ export default function StudioChat({
 
                 if (packet.event === 'step_started' && mode === 'workflow') {
                     updateMessage(assistantId, (current) => ({
-                        ...current,
                         streaming: true,
                         meta: {
                             ...current.meta,
@@ -127,7 +196,6 @@ export default function StudioChat({
                         });
 
                         return {
-                            ...current,
                             streaming: true,
                             meta: {
                                 ...current.meta,
@@ -208,6 +276,7 @@ export default function StudioChat({
                         streaming: false,
                         meta: { status: 'failed' },
                     });
+                    window.dispatchEvent(new CustomEvent('workflow-trace-finished'));
                 }
             }
 
@@ -244,6 +313,11 @@ export default function StudioChat({
     };
 
     const handleClear = () => {
+        if (mode === 'agent') {
+            handleNewThread();
+            return;
+        }
+
         setMessages([]);
         setError('');
         adapter?.reset?.();
@@ -251,9 +325,13 @@ export default function StudioChat({
 
     return (
         <div className="flex h-full flex-col">
-            <div className="flex items-center justify-between border-b border-border px-4 py-2">
-                <span className="text-sm font-medium text-muted-foreground">Output</span>
-                <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2">
+                {mode === 'agent' ? (
+                    <ThreadBar threadId={threadId} onNewThread={handleNewThread} disabled={sending} />
+                ) : (
+                    <span className="text-sm font-medium text-muted-foreground">Output</span>
+                )}
+                <div className="flex shrink-0 items-center gap-2">
                     {mode === 'workflow' && (
                         <div className="flex gap-1">
                             <Button
@@ -277,10 +355,12 @@ export default function StudioChat({
                         </div>
                     )}
                     {error && <span className="text-xs text-destructive">{error}</span>}
-                    <Button variant="ghost" size="sm" onClick={handleClear} disabled={sending}>
-                        <Trash2 className="h-4 w-4" />
-                        Clear
-                    </Button>
+                    {mode !== 'agent' && (
+                        <Button variant="ghost" size="sm" onClick={handleClear} disabled={sending}>
+                            <Trash2 className="h-4 w-4" />
+                            Clear
+                        </Button>
+                    )}
                 </div>
             </div>
 

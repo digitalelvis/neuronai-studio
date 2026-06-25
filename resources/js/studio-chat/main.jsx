@@ -46,6 +46,7 @@ export function mountStudioChat(rootEl, config = {}) {
             onRunCompleted={config.onRunCompleted}
             agentMeta={config.agentMeta ?? null}
             embedded={embedded}
+            threadHistoryUrl={config.threadHistoryUrl ?? null}
         />,
     );
 

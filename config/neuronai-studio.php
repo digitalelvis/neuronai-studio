@@ -69,6 +69,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Chat History
+    |--------------------------------------------------------------------------
+    |
+    | Context window for persisted agent test threads. Set ~5-10% below the
+    | model limit to leave room for the system prompt and tool payloads.
+    |
+    */
+
+    'chat_history_context_window' => (int) env('NEURONAI_STUDIO_CHAT_HISTORY_CONTEXT_WINDOW', 150000),
+
+    /*
+    |--------------------------------------------------------------------------
     | Queue Configuration
     |--------------------------------------------------------------------------
     */

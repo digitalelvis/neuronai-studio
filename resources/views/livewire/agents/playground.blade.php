@@ -4,6 +4,7 @@
             mode: 'agent',
             entityId: @json($agent->id),
             streamUrl: @json(route('neuronai-studio.agents.chat.stream', $agent)),
+            threadHistoryUrl: @json(route('neuronai-studio.agents.chat.threads.show', ['agent' => $agent->id, 'thread' => '__THREAD__'])),
             uploadUrl: @json(route('neuronai-studio.attachments.store')),
             agentMeta: {
                 name: @json($agent->name),

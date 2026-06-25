@@ -17,6 +17,7 @@ export default function StudioTestHarness({
     onRunCompleted,
     agentMeta = null,
     embedded = false,
+    threadHistoryUrl = null,
 }) {
     const [context, setContext] = useState(initialContext);
     const [settingsOpen, setSettingsOpen] = useState(false);
@@ -30,6 +31,7 @@ export default function StudioTestHarness({
         initialContext: context,
         onContextChange: setContext,
         onRunCompleted,
+        threadHistoryUrl,
     };
 
     if (embedded) {

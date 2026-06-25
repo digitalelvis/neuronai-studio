@@ -8,12 +8,17 @@ export class AgentSessionAdapter {
 
     async *send(message, attachments = [], context = {}) {
         const uploaded = await this.uploadAttachments(attachments);
-
-        yield* fetchSse(this.streamUrl, jsonPostOptions({
+        const payload = {
             message,
             context,
             attachments: uploaded,
-        }));
+        };
+
+        if (context.threadId) {
+            payload.thread_id = context.threadId;
+        }
+
+        yield* fetchSse(this.streamUrl, jsonPostOptions(payload));
     }
 
     reset() {}

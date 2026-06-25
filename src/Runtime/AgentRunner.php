@@ -4,6 +4,8 @@ namespace ElvisLopesDigital\NeuronAIStudio\Runtime;
 
 use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
 use ElvisLopesDigital\NeuronAIStudio\Registry\ProviderRegistry;
+use ElvisLopesDigital\NeuronAIStudio\Support\ChatThreadKey;
+use Illuminate\Support\Str;
 use Generator;
 use NeuronAI\Chat\Messages\Stream\Chunks\StreamChunk;
 use NeuronAI\Chat\Messages\UserMessage;
@@ -35,12 +37,14 @@ class AgentRunner
     {
         $definition->loadMissing('mcpBindings');
 
+        $threadKey = $this->resolveThreadKey($definition, $payload);
+
         $agent = $this->makeAgent($definition, [
             'provider' => $definition->provider,
             'model' => $definition->model,
             'instructions' => $definition->instructions,
             'tools' => $definition->tools ?? [],
-        ]);
+        ], $threadKey);
 
         $message = $this->messages->userMessage(
             (string) ($payload['message'] ?? ''),
@@ -68,7 +72,7 @@ class AgentRunner
     }
 
     /** @param  array<string, mixed>  $config */
-    protected function makeAgent(?AgentDefinition $definition, array $config): DynamicAgent
+    protected function makeAgent(?AgentDefinition $definition, array $config, ?string $threadKey = null): DynamicAgent
     {
         $provider = $this->providers->resolve(
             $config['provider'] ?? config('neuronai-studio.default_provider'),
@@ -83,6 +87,33 @@ class AgentRunner
             (string) ($config['instructions'] ?? 'You are a helpful AI assistant.'),
             $tools,
             $this->mcpToolResolver,
+            $threadKey,
         );
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array{key: ?string, public_id: ?string}
+     */
+    public function resolveThread(AgentDefinition $definition, array $payload): array
+    {
+        $publicId = isset($payload['thread_id']) && is_string($payload['thread_id']) && $payload['thread_id'] !== ''
+            ? $payload['thread_id']
+            : (string) Str::uuid();
+
+        return [
+            'key' => ChatThreadKey::forAgent($definition->id, $publicId),
+            'public_id' => $publicId,
+        ];
+    }
+
+    /** @param  array<string, mixed>  $payload */
+    protected function resolveThreadKey(AgentDefinition $definition, array $payload): ?string
+    {
+        if (! array_key_exists('thread_id', $payload)) {
+            return null;
+        }
+
+        return $this->resolveThread($definition, $payload)['key'];
     }
 }

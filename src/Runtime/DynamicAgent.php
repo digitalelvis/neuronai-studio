@@ -3,7 +3,11 @@
 namespace ElvisLopesDigital\NeuronAIStudio\Runtime;
 
 use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
+use ElvisLopesDigital\NeuronAIStudio\Models\StudioChatMessage;
 use NeuronAI\Agent\Agent;
+use NeuronAI\Chat\History\ChatHistoryInterface;
+use NeuronAI\Chat\History\EloquentChatHistory;
+use NeuronAI\Chat\History\InMemoryChatHistory;
 use NeuronAI\Providers\AIProviderInterface;
 use NeuronAI\Tools\ProviderToolInterface;
 use NeuronAI\Tools\ToolInterface;
@@ -20,6 +24,8 @@ class DynamicAgent extends Agent
         string $instructions = '',
         protected array $baseTools = [],
         protected ?McpToolResolver $mcpToolResolver = null,
+        protected ?string $threadId = null,
+        protected ?int $contextWindow = null,
     ) {
         parent::__construct();
         $this->setAiProvider($aiProvider);
@@ -43,5 +49,20 @@ class DynamicAgent extends Agent
         }
 
         return $tools;
+    }
+
+    protected function chatHistory(): ChatHistoryInterface
+    {
+        $contextWindow = $this->contextWindow ?? (int) config('neuronai-studio.chat_history_context_window', 150000);
+
+        if ($this->threadId === null) {
+            return new InMemoryChatHistory(contextWindow: $contextWindow);
+        }
+
+        return new EloquentChatHistory(
+            threadId: $this->threadId,
+            modelClass: StudioChatMessage::class,
+            contextWindow: $contextWindow,
+        );
     }
 }

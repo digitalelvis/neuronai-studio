@@ -1,6 +1,7 @@
 <?php
 
 use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\AgentChatStreamController;
+use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\AgentChatThreadController;
 use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\AttachmentController;
 use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\WorkflowStreamController;
 use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\WorkflowTraceController;
@@ -33,6 +34,7 @@ Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
             Route::get('/create', Edit::class)->name('create');
             Route::get('/{agent}/edit', Edit::class)->name('edit');
             Route::get('/{agent}/playground', Playground::class)->name('playground');
+            Route::get('/{agent}/chat/threads/{thread}', AgentChatThreadController::class)->name('chat.threads.show');
             Route::match(['GET', 'POST'], '/{agent}/chat/stream', AgentChatStreamController::class)->name('chat.stream');
         });
 
