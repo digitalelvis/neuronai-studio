@@ -35,11 +35,28 @@ export default function StudioChat({
 }) {
     const [messages, setMessages] = useState([]);
     const [context, setContext] = useState(initialContext);
+    const [inputJson, setInputJson] = useState(() => JSON.stringify(initialContext ?? {}, null, 2));
+    const [inputJsonError, setInputJsonError] = useState('');
     const [sending, setSending] = useState(false);
     const [error, setError] = useState('');
 
     const effectiveContext = onContextChange ? initialContext : context;
     const setEffectiveContext = onContextChange ?? setContext;
+
+    const handleInputJsonChange = useCallback(
+        (value) => {
+            setInputJson(value);
+
+            try {
+                const parsed = JSON.parse(value || '{}');
+                setInputJsonError('');
+                setEffectiveContext(parsed);
+            } catch {
+                setInputJsonError('Invalid JSON');
+            }
+        },
+        [setEffectiveContext],
+    );
 
     const updateMessage = useCallback((id, patch) => {
         setMessages((current) => current.map((message) => (message.id === id ? { ...message, ...patch } : message)));
@@ -79,9 +96,14 @@ export default function StudioChat({
 
         let assistantText = '';
         const toolMessages = [];
+        let runFinished = false;
 
         try {
             for await (const packet of adapter.send(text, attachments, { state: effectiveContext })) {
+                if (packet.event === 'run_started' && mode === 'workflow') {
+                    updateMessage(assistantId, { content: 'Running workflow…', streaming: true });
+                }
+
                 if (packet.event === 'token') {
                     assistantText += packet.data?.delta ?? '';
                     updateMessage(assistantId, { content: assistantText, streaming: true });
@@ -102,6 +124,7 @@ export default function StudioChat({
                 }
 
                 if (packet.event === 'human_input_required') {
+                    runFinished = true;
                     updateMessage(assistantId, { streaming: false, content: assistantText || 'Waiting for your input…' });
                     appendMessage({
                         id: createId('system'),
@@ -114,6 +137,7 @@ export default function StudioChat({
                 }
 
                 if (packet.event === 'run_completed') {
+                    runFinished = true;
                     const outputText = formatWorkflowOutput(packet.data?.output);
                     updateMessage(assistantId, {
                         content: outputText,
@@ -124,6 +148,7 @@ export default function StudioChat({
                 }
 
                 if (packet.event === 'done') {
+                    runFinished = true;
                     updateMessage(assistantId, {
                         content: assistantText || 'Done.',
                         streaming: false,
@@ -132,6 +157,7 @@ export default function StudioChat({
                 }
 
                 if (packet.event === 'run_failed' || packet.event === 'error') {
+                    runFinished = true;
                     const message = packet.data?.message ?? 'Run failed.';
                     setError(message);
                     updateMessage(assistantId, {
@@ -150,11 +176,27 @@ export default function StudioChat({
                 });
             }
         } catch (sendError) {
+            runFinished = true;
             const message = sendError instanceof Error ? sendError.message : 'Request failed.';
             setError(message);
             updateMessage(assistantId, { content: message, streaming: false, meta: { status: 'failed' } });
         } finally {
             setSending(false);
+
+            if (!runFinished) {
+                setMessages((current) =>
+                    current.map((message) =>
+                        message.id === assistantId && message.streaming && !message.content
+                            ? {
+                                  ...message,
+                                  content: 'No response received.',
+                                  streaming: false,
+                                  meta: { status: 'failed' },
+                              }
+                            : message,
+                    ),
+                );
+            }
         }
     };
 
@@ -182,7 +224,15 @@ export default function StudioChat({
             </ScrollArea>
 
             <div className="border-t border-border p-4">
-                <Composer disabled={sending} onSend={handleSend} enableAttachments={enableAttachments} />
+                <Composer
+                    disabled={sending}
+                    onSend={handleSend}
+                    enableAttachments={enableAttachments}
+                    enableInputJson={mode === 'workflow'}
+                    inputJson={inputJson}
+                    onInputJsonChange={handleInputJsonChange}
+                    inputJsonError={inputJsonError}
+                />
             </div>
         </div>
     );

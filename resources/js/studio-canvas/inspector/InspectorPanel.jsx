@@ -60,7 +60,16 @@ export default function InspectorPanel({
 
     useEffect(() => {
         const onSelect = (event) => {
-            setSelectedNode(normalizeNode(event.detail));
+            const { silent, ...nodeDetail } = event.detail ?? {};
+
+            if (silent) {
+                if (nodeDetail?.id) {
+                    setSelectedNode(normalizeNode(nodeDetail));
+                }
+                return;
+            }
+
+            setSelectedNode(normalizeNode(nodeDetail));
             setTab('node');
         };
 
@@ -158,7 +167,7 @@ export default function InspectorPanel({
                     <GraphJsonPanel readOnly={readOnly} />
                 </TabsContent>
 
-                <TabsContent value="test" className="mt-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
+                <TabsContent value="test" forceMount className="mt-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
                     {workflowAdapter ? (
                         <StudioTestHarness
                             adapter={workflowAdapter}

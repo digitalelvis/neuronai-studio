@@ -33,7 +33,7 @@ class InstallCommand extends Command
 
         $this->call('vendor:publish', [
             '--tag' => 'neuronai-studio-assets',
-            '--force' => $this->option('force'),
+            '--force' => true,
         ]);
 
         if ($this->confirm('Run migrations now?', true)) {

@@ -121,7 +121,7 @@ function WorkflowCanvasInner({
     }, [setNodes]);
 
     const syncSelection = useCallback(
-        (nodeId, nodeList = nodes) => {
+        (nodeId, nodeList = nodes, { silent = false } = {}) => {
             selectedNodeIdRef.current = nodeId;
             const node = nodeId ? nodeList.find((n) => n.id === nodeId) : null;
             const payload = node
@@ -130,8 +130,9 @@ function WorkflowCanvasInner({
                       type: node.data.nodeType,
                       position: node.position,
                       data: node.data.config || {},
+                      silent,
                   }
-                : null;
+                : { silent };
 
             window.dispatchEvent(new CustomEvent('canvas-node-selected', { detail: payload }));
         },
@@ -268,7 +269,7 @@ function WorkflowCanvasInner({
                 const updated = next.find((node) => node.id === nodeId);
                 if (updated) {
                     window.requestAnimationFrame(() => {
-                        syncSelection(nodeId, next);
+                        syncSelection(nodeId, next, { silent: true });
                     });
                 }
 

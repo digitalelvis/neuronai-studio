@@ -73,11 +73,14 @@
         </div>
     </div>
     @if (request()->routeIs('neuronai-studio.workflows.create', 'neuronai-studio.workflows.edit', 'neuronai-studio.workflows.preview'))
-        <script src="{{ asset('vendor/neuronai-studio/js/dist/workflow-canvas.bundle.js') }}"></script>
+        @php($workflowCanvasVersion = @filemtime(public_path('vendor/neuronai-studio/js/dist/workflow-canvas.bundle.js')) ?: time())
+        <script src="{{ asset('vendor/neuronai-studio/js/dist/workflow-canvas.bundle.js') }}?v={{ $workflowCanvasVersion }}"></script>
     @elseif (request()->routeIs('neuronai-studio.agents.playground'))
-        <script src="{{ asset('vendor/neuronai-studio/js/dist/studio-chat.bundle.js') }}"></script>
+        @php($studioChatVersion = @filemtime(public_path('vendor/neuronai-studio/js/dist/studio-chat.bundle.js')) ?: time())
+        <script src="{{ asset('vendor/neuronai-studio/js/dist/studio-chat.bundle.js') }}?v={{ $studioChatVersion }}"></script>
     @elseif (\ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout::isFormsPage())
-        <script src="{{ asset('vendor/neuronai-studio/js/dist/studio-forms.bundle.js') }}"></script>
+        @php($studioFormsVersion = @filemtime(public_path('vendor/neuronai-studio/js/dist/studio-forms.bundle.js')) ?: time())
+        <script src="{{ asset('vendor/neuronai-studio/js/dist/studio-forms.bundle.js') }}?v={{ $studioFormsVersion }}"></script>
     @endif
     @livewireScripts
 </body>

@@ -1,7 +1,8 @@
 import { useRef, useState } from 'react';
-import { Paperclip, Send } from 'lucide-react';
+import { Braces, Paperclip, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { cn } from '@/lib/utils';
 
 const ACCEPT_MAP = {
     image: 'image/*',
@@ -17,14 +18,26 @@ function detectType(file) {
     return 'document';
 }
 
-export default function Composer({ disabled, onSend, enableAttachments = false }) {
+export default function Composer({
+    disabled,
+    onSend,
+    enableAttachments = false,
+    enableInputJson = false,
+    inputJson = '{}',
+    onInputJsonChange,
+    inputJsonError = '',
+}) {
     const [text, setText] = useState('');
     const [attachments, setAttachments] = useState([]);
+    const [inputOpen, setInputOpen] = useState(false);
     const fileRef = useRef(null);
+
+    const hasCustomInput = enableInputJson && inputJson.trim() !== '{}' && inputJson.trim() !== '';
+    const sendDisabled = disabled || (enableInputJson && Boolean(inputJsonError));
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        if (disabled || (!text.trim() && attachments.length === 0)) {
+        if (sendDisabled || (!text.trim() && attachments.length === 0)) {
             return;
         }
 
@@ -60,6 +73,19 @@ export default function Composer({ disabled, onSend, enableAttachments = false }
 
     return (
         <form className="space-y-2" onSubmit={handleSubmit}>
+            {enableInputJson && inputOpen && (
+                <div className="space-y-1">
+                    <Textarea
+                        rows={4}
+                        placeholder='{"key": "value"}'
+                        value={inputJson}
+                        disabled={disabled}
+                        onChange={(event) => onInputJsonChange?.(event.target.value)}
+                        className="resize-none font-mono text-xs"
+                    />
+                    {inputJsonError && <p className="text-xs text-destructive">{inputJsonError}</p>}
+                </div>
+            )}
             {attachments.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                     {attachments.map((attachment) => (
@@ -94,6 +120,22 @@ export default function Composer({ disabled, onSend, enableAttachments = false }
                 className="resize-none"
             />
             <div className="flex items-center justify-end gap-2">
+                {enableInputJson && (
+                    <Button
+                        type="button"
+                        variant={inputOpen ? 'secondary' : 'outline'}
+                        size="sm"
+                        disabled={disabled}
+                        onClick={() => setInputOpen((open) => !open)}
+                        className={cn(hasCustomInput && !inputOpen && 'border-primary/50')}
+                    >
+                        <Braces className="h-4 w-4" />
+                        Input
+                        {hasCustomInput && (
+                            <span className="ml-1 h-1.5 w-1.5 rounded-full bg-primary" />
+                        )}
+                    </Button>
+                )}
                 {enableAttachments && (
                     <>
                         <input
@@ -115,7 +157,7 @@ export default function Composer({ disabled, onSend, enableAttachments = false }
                         </Button>
                     </>
                 )}
-                <Button type="submit" size="sm" disabled={disabled}>
+                <Button type="submit" size="sm" disabled={sendDisabled}>
                     <Send className="h-4 w-4" />
                     {disabled ? 'Sending…' : 'Send'}
                 </Button>
