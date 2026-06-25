@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import GraphJsonPanel from '../GraphJsonPanel';
@@ -61,15 +61,40 @@ export default function InspectorPanel({
     const [selectedTraceId, setSelectedTraceId] = useState(null);
     const [traceSheetOpen, setTraceSheetOpen] = useState(false);
     const [tracesRefreshToken, setTracesRefreshToken] = useState(0);
+    const testRunningRef = useRef(false);
 
     useEffect(() => {
         const onSelect = (event) => {
-            setSelectedNode(normalizeNode(event.detail));
-            setTab('node');
+            const detail = event.detail ?? {};
+
+            if (detail.id) {
+                setSelectedNode(normalizeNode(detail));
+            }
+
+            if (!detail.silent && !testRunningRef.current) {
+                setTab('node');
+            }
         };
 
         window.addEventListener('canvas-node-selected', onSelect);
         return () => window.removeEventListener('canvas-node-selected', onSelect);
+    }, []);
+
+    useEffect(() => {
+        const onTestStart = () => {
+            testRunningRef.current = true;
+        };
+        const onTestFinish = () => {
+            testRunningRef.current = false;
+        };
+
+        window.addEventListener('canvas-trace-start', onTestStart);
+        window.addEventListener('workflow-trace-finished', onTestFinish);
+
+        return () => {
+            window.removeEventListener('canvas-trace-start', onTestStart);
+            window.removeEventListener('workflow-trace-finished', onTestFinish);
+        };
     }, []);
 
     useEffect(() => {
@@ -179,7 +204,11 @@ export default function InspectorPanel({
                     <GraphJsonPanel readOnly={readOnly} />
                 </TabsContent>
 
-                <TabsContent value="test" className="mt-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
+                <TabsContent
+                    value="test"
+                    forceMount
+                    className="mt-0 flex-1 overflow-hidden data-[state=inactive]:hidden"
+                >
                     {workflowAdapter ? (
                         <StudioTestHarness
                             adapter={workflowAdapter}

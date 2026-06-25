@@ -51,6 +51,7 @@ function WorkflowCanvasInner({
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     const [runStatus, setRunStatus] = useState(null);
+    const isTestRunning = runStatus === 'running';
     const { getViewport, setViewport, deleteElements, screenToFlowPosition, fitView, getNodes, getEdges } =
         useReactFlow();
     const selectedNodeIdRef = useRef(null);
@@ -122,6 +123,10 @@ function WorkflowCanvasInner({
 
     const syncSelection = useCallback(
         (nodeId, nodeList = nodes, { silent = false } = {}) => {
+            if (isTestRunning && !silent) {
+                return;
+            }
+
             selectedNodeIdRef.current = nodeId;
             const node = nodeId ? nodeList.find((n) => n.id === nodeId) : null;
             const payload = node
@@ -136,7 +141,7 @@ function WorkflowCanvasInner({
 
             window.dispatchEvent(new CustomEvent('canvas-node-selected', { detail: payload }));
         },
-        [nodes],
+        [isTestRunning, nodes],
     );
 
     const loadGraph = useCallback(
@@ -203,9 +208,13 @@ function WorkflowCanvasInner({
 
     const onSelectionChange = useCallback(
         ({ nodes: selectedNodes }) => {
+            if (isTestRunning) {
+                return;
+            }
+
             syncSelection(selectedNodes[0]?.id ?? null);
         },
-        [syncSelection],
+        [isTestRunning, syncSelection],
     );
 
     const addNodeAt = useCallback(
@@ -345,6 +354,8 @@ function WorkflowCanvasInner({
         const onRunStart = () => {
             clearExecutionStatus();
             setRunStatus('running');
+            setNodes((current) => current.map((node) => ({ ...node, selected: false })));
+            selectedNodeIdRef.current = null;
         };
         const onExecutionEvent = (event) => {
             const detail = event.detail || {};
@@ -393,6 +404,7 @@ function WorkflowCanvasInner({
         readOnly,
         removeSelectedNode,
         setExecutionStatus,
+        setNodes,
         updateNodeData,
     ]);
 
@@ -404,22 +416,22 @@ function WorkflowCanvasInner({
             edgeTypes={edgeTypes}
             onNodesChange={onNodesChange}
             onEdgesChange={onEdgesChange}
-            onConnect={onConnect}
-            onReconnect={onReconnect}
-            edgesReconnectable
+            onConnect={readOnly || isTestRunning ? undefined : onConnect}
+            onReconnect={readOnly || isTestRunning ? undefined : onReconnect}
+            edgesReconnectable={!readOnly && !isTestRunning}
             onSelectionChange={onSelectionChange}
-            onPaneClick={() => syncSelection(null)}
-            onDragOver={readOnly ? undefined : onDragOver}
-            onDrop={readOnly ? undefined : onDrop}
-            nodesDraggable={!readOnly}
-            nodesConnectable={!readOnly}
-            elementsSelectable
+            onPaneClick={isTestRunning ? undefined : () => syncSelection(null)}
+            onDragOver={readOnly || isTestRunning ? undefined : onDragOver}
+            onDrop={readOnly || isTestRunning ? undefined : onDrop}
+            nodesDraggable={!readOnly && !isTestRunning}
+            nodesConnectable={!readOnly && !isTestRunning}
+            elementsSelectable={!isTestRunning}
             minZoom={0.25}
             maxZoom={2}
             snapToGrid
             snapGrid={[16, 16]}
-            deleteKeyCode={readOnly ? null : ['Backspace', 'Delete']}
-            className={`ab-react-flow${readOnly ? ' ab-react-flow--readonly' : ''}`}
+            deleteKeyCode={readOnly || isTestRunning ? null : ['Backspace', 'Delete']}
+            className={`ab-react-flow${readOnly ? ' ab-react-flow--readonly' : ''}${isTestRunning ? ' ab-react-flow--test-running' : ''}`}
         >
             <Background gap={16} size={1} color="#334155" />
             <Controls className="ab-flow-controls" showInteractive={false} />
@@ -434,13 +446,13 @@ function WorkflowCanvasInner({
             <Panel position="top-center" className="ab-flow-toolbar">
                 {!readOnly && (
                     <>
-                        <button type="button" className="ab-flow-toolbar-btn" onClick={undo} disabled={!canUndo} title="Undo (Ctrl+Z)">
+                        <button type="button" className="ab-flow-toolbar-btn" onClick={undo} disabled={!canUndo || isTestRunning} title="Undo (Ctrl+Z)">
                             Undo
                         </button>
-                        <button type="button" className="ab-flow-toolbar-btn" onClick={redo} disabled={!canRedo} title="Redo (Ctrl+Shift+Z)">
+                        <button type="button" className="ab-flow-toolbar-btn" onClick={redo} disabled={!canRedo || isTestRunning} title="Redo (Ctrl+Shift+Z)">
                             Redo
                         </button>
-                        <button type="button" className="ab-flow-toolbar-btn" onClick={autoLayout} title="Auto layout">
+                        <button type="button" className="ab-flow-toolbar-btn" onClick={autoLayout} disabled={isTestRunning} title="Auto layout">
                             Layout
                         </button>
                     </>

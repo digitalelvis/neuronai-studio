@@ -233,6 +233,15 @@
     color: #ef4444;
 }
 
+.ab-react-flow--test-running .react-flow__node,
+.ab-react-flow--test-running .react-flow__edge {
+    pointer-events: none;
+}
+
+.ab-react-flow--test-running .react-flow__pane {
+    cursor: grab;
+}
+
 .ab-react-flow .react-flow__pane.dropping {
     cursor: copy;
 }

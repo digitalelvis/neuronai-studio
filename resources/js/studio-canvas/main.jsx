@@ -187,10 +187,6 @@ export function mountWorkflowEditor(rootEl, config = {}) {
     bindSaveHandler();
     bindLegacyExportHandlers();
 
-    window.addEventListener('canvas-inspector-flush', () => {
-        captureInspectorFlushUpdate();
-    });
-
     return root;
 }
 
