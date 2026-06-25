@@ -38,4 +38,26 @@ class WorkflowExporterTest extends TestCase
         @unlink($files[0]);
         @rmdir($exportPath);
     }
+
+    public function test_preview_returns_studio_workflow_class_without_writing_file(): void
+    {
+        config([
+            'neuronai-studio.export_namespace' => 'App\\Neuron',
+        ]);
+
+        $workflow = WorkflowDefinition::make([
+            'name' => 'Atendimento',
+            'slug' => 'atendimento',
+            'graph' => WorkflowDefinition::defaultGraph(),
+            'status' => 'draft',
+        ]);
+
+        $content = app(WorkflowExporter::class)->preview($workflow);
+
+        $this->assertStringContainsString('implements StudioWorkflow', $content);
+        $this->assertStringContainsString('studioGraph', $content);
+        $this->assertStringContainsString("'start_1'", $content);
+        $this->assertStringContainsString("'Atendimento'", $content);
+        $this->assertStringContainsString('class AtendimentoWorkflow', $content);
+    }
 }

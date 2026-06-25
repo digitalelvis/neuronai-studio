@@ -8,13 +8,10 @@ use Illuminate\Support\Str;
 
 class WorkflowExporter
 {
-    public function export(WorkflowDefinition $workflow): array
+    public function preview(WorkflowDefinition $workflow): string
     {
         $namespace = config('neuronai-studio.export_namespace', 'App\\Neuron');
-        $path = config('neuronai-studio.export_path', app_path('Neuron'));
         $className = Str::studly($workflow->slug).'Workflow';
-
-        File::ensureDirectoryExists($path);
 
         $meta = [
             'name' => $workflow->name,
@@ -22,7 +19,7 @@ class WorkflowExporter
             'status' => $workflow->status,
         ];
 
-        $content = str_replace(
+        return str_replace(
             ['{{ namespace }}', '{{ className }}', '{{ meta }}', '{{ graph }}'],
             [
                 $namespace,
@@ -32,9 +29,17 @@ class WorkflowExporter
             ],
             file_get_contents(__DIR__.'/Stubs/studio-workflow.stub')
         );
+    }
+
+    public function export(WorkflowDefinition $workflow): array
+    {
+        $path = config('neuronai-studio.export_path', app_path('Neuron'));
+        $className = Str::studly($workflow->slug).'Workflow';
+
+        File::ensureDirectoryExists($path);
 
         $file = $path.'/'.$className.'.php';
-        File::put($file, $content);
+        File::put($file, $this->preview($workflow));
 
         return [$file];
     }

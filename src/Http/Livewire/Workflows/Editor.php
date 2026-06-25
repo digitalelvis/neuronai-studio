@@ -154,6 +154,33 @@ class Editor extends Component
         session()->flash('success', 'Exported '.count($files).' file(s).');
     }
 
+    /** @return array{code: string, className: string, namespace: string} */
+    public function previewWorkflowCode(
+        array $graph,
+        string $name,
+        string $description,
+        string $status,
+        WorkflowExporter $exporter,
+    ): array {
+        $namespace = config('neuronai-studio.export_namespace', 'App\\Neuron');
+        $slug = Str::slug($name !== '' ? $name : 'workflow');
+        $className = Str::studly($slug).'Workflow';
+
+        $workflow = WorkflowDefinition::make([
+            'name' => $name !== '' ? $name : 'Workflow',
+            'slug' => $slug,
+            'description' => $description,
+            'status' => $status !== '' ? $status : 'draft',
+            'graph' => $graph,
+        ]);
+
+        return [
+            'code' => $exporter->preview($workflow),
+            'className' => $className,
+            'namespace' => $namespace,
+        ];
+    }
+
     protected function mountFromCodeClass(string $class): void
     {
         $imported = app(WorkflowClassImporter::class)->fromClass($class);
