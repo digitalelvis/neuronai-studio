@@ -53,3 +53,13 @@ export function mountStudioChat(rootEl, config = {}) {
 }
 
 window.mountStudioChat = mountStudioChat;
+
+window.bootstrapStudioChat = () => {
+    const root = document.getElementById('studio-chat-root');
+    if (root && !root.dataset.mounted && window.__NEURONAI_CHAT_CONFIG) {
+        mountStudioChat(root, window.__NEURONAI_CHAT_CONFIG);
+        root.dataset.mounted = '1';
+    }
+};
+
+window.bootstrapStudioChat();

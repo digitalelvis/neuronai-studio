@@ -66,7 +66,7 @@ export default function WorkflowEditorShell({ config }) {
                     </div>
                 )}
 
-                <div className="flex flex-wrap items-center gap-3 border-b border-border px-4 py-3">
+                <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-4 py-3">
                     <Input
                         className="h-8 w-48"
                         value={name}
@@ -126,7 +126,7 @@ export default function WorkflowEditorShell({ config }) {
                 )}
 
                 <ResizablePanelGroup direction="horizontal" className="min-h-0 flex-1">
-                    <ResizablePanel id="palette" defaultSize={18} minSize={14} maxSize={28}>
+                    <ResizablePanel defaultSize={18} minSize={14} maxSize={28}>
                         <aside className={`flex h-full min-h-0 flex-col overflow-hidden p-3 ${readOnly ? 'opacity-60' : ''}`}>
                             <h3 className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Nodes</h3>
                             <p className="mb-3 text-[11px] text-muted-foreground">
@@ -149,7 +149,7 @@ export default function WorkflowEditorShell({ config }) {
                         </aside>
                     </ResizablePanel>
                     <ResizableHandle withHandle />
-                    <ResizablePanel id="canvas" defaultSize={57} minSize={35}>
+                    <ResizablePanel defaultSize={57} minSize={35}>
                         <div className="h-full min-h-0 overflow-hidden">
                             <WorkflowCanvas
                                 graph={config.graph}
@@ -165,7 +165,7 @@ export default function WorkflowEditorShell({ config }) {
                         </div>
                     </ResizablePanel>
                     <ResizableHandle withHandle />
-                    <ResizablePanel id="inspector" defaultSize={25} minSize={20} maxSize={42}>
+                    <ResizablePanel defaultSize={25} minSize={20} maxSize={42}>
                         <InspectorPanel
                             agents={config.agents || []}
                             tools={config.tools || []}
@@ -182,7 +182,7 @@ export default function WorkflowEditorShell({ config }) {
                     </ResizablePanel>
                 </ResizablePanelGroup>
 
-                <div className="flex items-center justify-between border-t border-border px-4 py-1.5 text-[11px] text-muted-foreground">
+                <div className="flex shrink-0 items-center justify-between border-t border-border px-4 py-1.5 text-[11px] text-muted-foreground">
                     <span className="flex items-center gap-2">
                         <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
                         Online

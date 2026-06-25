@@ -19,8 +19,8 @@ export default function RunDetailViewer({ config }) {
     const selectedStep = steps.find((s) => s.id === selectedStepId) ?? steps[0];
 
     return (
-        <div className="flex h-[calc(100vh-3rem)] flex-col bg-background">
-            <div className="border-b border-border px-4 py-3">
+        <div className="flex h-full min-h-0 flex-col bg-background">
+            <div className="shrink-0 border-b border-border px-4 py-3">
                 <div className="flex flex-wrap items-center gap-3">
                     <span className="text-sm font-medium">Run #{run.id}</span>
                     <Badge variant={run.status}>{run.status}</Badge>
@@ -29,7 +29,7 @@ export default function RunDetailViewer({ config }) {
                 {run.errorMessage && <p className="mt-2 text-sm text-destructive">{run.errorMessage}</p>}
             </div>
 
-            <ResizablePanelGroup direction="horizontal" className="flex-1">
+            <ResizablePanelGroup direction="horizontal" className="min-h-0 flex-1">
                 <ResizablePanel defaultSize={35} minSize={25}>
                     <div className="flex h-full flex-col border-r border-border">
                         <div className="border-b border-border px-4 py-2 text-xs font-medium uppercase text-muted-foreground">Timeline</div>

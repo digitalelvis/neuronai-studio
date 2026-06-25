@@ -47,14 +47,14 @@ export default function StudioTestHarness({
             <div className="flex h-full flex-col bg-background">
                 {agentMeta && <AgentMetaBar meta={agentMeta} />}
 
-                <div className="flex items-center justify-end gap-2 border-b border-border px-4 py-2">
+            <div className="flex shrink-0 items-center justify-end gap-2 border-b border-border px-4 py-2">
                     <Button variant="ghost" size="sm" onClick={() => setSettingsOpen(true)}>
                         <Settings className="h-4 w-4" />
                         Settings
                     </Button>
                 </div>
 
-                <ResizablePanelGroup direction="horizontal" className="flex-1">
+                <ResizablePanelGroup direction="horizontal" className="min-h-0 flex-1">
                     <ResizablePanel defaultSize={30} minSize={20} maxSize={45}>
                         <div className="flex h-full flex-col overflow-hidden p-4">
                             <StudioPlayground

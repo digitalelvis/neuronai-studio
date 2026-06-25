@@ -99,8 +99,8 @@ export default function AgentForm({ config }) {
     };
 
     return (
-        <div className="flex h-[calc(100vh-3rem)] flex-col bg-background">
-            <ResizablePanelGroup direction="horizontal" className="flex-1">
+        <div className="flex h-full min-h-0 flex-col bg-background">
+            <ResizablePanelGroup direction="horizontal" className="min-h-0 flex-1">
                 <ResizablePanel defaultSize={55} minSize={40}>
                     <ScrollArea className="h-full p-4">
                         <div className="mx-auto max-w-2xl space-y-4">
@@ -274,7 +274,7 @@ export default function AgentForm({ config }) {
                 </ResizablePanel>
             </ResizablePanelGroup>
 
-            <div className="flex items-center justify-between border-t border-border px-4 py-3">
+            <div className="flex shrink-0 items-center justify-between border-t border-border px-4 py-3">
                 {error && <span className="text-sm text-destructive">{error}</span>}
                 <div className="ml-auto flex gap-2">
                     <Button variant="outline" asChild>

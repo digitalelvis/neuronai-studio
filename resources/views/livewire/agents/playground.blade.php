@@ -1,4 +1,4 @@
-<div>
+<div class="studio-product-root flex min-h-0 flex-1 flex-col">
     <script>
         window.__NEURONAI_CHAT_CONFIG = {
             mode: 'agent',
@@ -16,14 +16,5 @@
         };
     </script>
 
-    <div id="studio-chat-root" class="h-[calc(100vh-3rem)]" wire:ignore></div>
+    <div id="studio-chat-root" class="min-h-0 flex-1" wire:ignore></div>
 </div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const root = document.getElementById('studio-chat-root');
-        if (root && window.mountStudioChat) {
-            window.mountStudioChat(root, window.__NEURONAI_CHAT_CONFIG);
-        }
-    });
-</script>

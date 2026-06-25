@@ -95,8 +95,8 @@ export default function ToolBuilder({ config }) {
     };
 
     return (
-        <div className="flex h-[calc(100vh-3rem)] flex-col bg-background">
-            <div className="border-b border-border px-4 py-3">
+        <div className="flex h-full min-h-0 flex-col bg-background">
+            <div className="shrink-0 border-b border-border px-4 py-3">
                 <Tabs value={toolKind} onValueChange={setToolKind}>
                     <TabsList>
                         <TabsTrigger value="builder">PHP Class Builder</TabsTrigger>
@@ -105,7 +105,7 @@ export default function ToolBuilder({ config }) {
                 </Tabs>
             </div>
 
-            <ResizablePanelGroup direction="horizontal" className="flex-1">
+            <ResizablePanelGroup direction="horizontal" className="min-h-0 flex-1">
                 <ResizablePanel defaultSize={toolKind === 'builder' ? 55 : 100} minSize={40}>
                     <ScrollArea className="h-full p-4">
                         <div className="mx-auto max-w-2xl space-y-4">
@@ -237,7 +237,7 @@ export default function ToolBuilder({ config }) {
                 )}
             </ResizablePanelGroup>
 
-            <div className="flex items-center justify-between border-t border-border px-4 py-3">
+            <div className="flex shrink-0 items-center justify-between border-t border-border px-4 py-3">
                 {error && <span className="text-sm text-destructive">{error}</span>}
                 <div className="ml-auto flex gap-2">
                     <Button variant="outline" asChild>

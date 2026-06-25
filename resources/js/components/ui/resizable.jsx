@@ -1,31 +1,31 @@
-import { Group, Panel, Separator } from 'react-resizable-panels';
+import * as ResizablePrimitive from 'react-resizable-panels';
 import { cn } from '@/lib/utils';
 
-function ResizablePanelGroup({ className, direction = 'horizontal', orientation, ...props }) {
+function ResizablePanelGroup({ className, direction = 'horizontal', ...props }) {
     return (
-        <Group
-            orientation={orientation ?? direction}
-            className={cn('flex h-full w-full min-h-0 aria-[orientation=vertical]:flex-col', className)}
+        <ResizablePrimitive.PanelGroup
+            direction={direction}
+            className={cn('flex h-full w-full min-h-0 data-[panel-group-direction=vertical]:flex-col', className)}
             {...props}
         />
     );
 }
 
 function ResizablePanel({ className, ...props }) {
-    return <Panel className={cn('min-h-0 min-w-0', className)} {...props} />;
+    return <ResizablePrimitive.Panel className={cn('min-h-0', className)} {...props} />;
 }
 
 function ResizableHandle({ withHandle, className, ...props }) {
     return (
-        <Separator
+        <ResizablePrimitive.PanelResizeHandle
             className={cn(
                 'relative z-20 flex w-px shrink-0 items-center justify-center bg-border',
                 'after:absolute after:inset-y-0 after:left-1/2 after:w-1 after:-translate-x-1/2',
                 'focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring',
-                'aria-[orientation=vertical]:h-px aria-[orientation=vertical]:w-full',
-                'aria-[orientation=vertical]:after:left-0 aria-[orientation=vertical]:after:h-1 aria-[orientation=vertical]:after:w-full',
-                'aria-[orientation=vertical]:after:translate-x-0 aria-[orientation=vertical]:after:-translate-y-1/2',
-                '[&[aria-orientation=vertical]>div]:rotate-90',
+                'data-[panel-group-direction=vertical]:h-px data-[panel-group-direction=vertical]:w-full',
+                'data-[panel-group-direction=vertical]:after:left-0 data-[panel-group-direction=vertical]:after:h-1 data-[panel-group-direction=vertical]:after:w-full',
+                'data-[panel-group-direction=vertical]:after:translate-x-0 data-[panel-group-direction=vertical]:after:-translate-y-1/2',
+                '[&[data-panel-group-direction=vertical]>div]:rotate-90',
                 className,
             )}
             {...props}
@@ -42,7 +42,7 @@ function ResizableHandle({ withHandle, className, ...props }) {
                     </svg>
                 </div>
             )}
-        </Separator>
+        </ResizablePrimitive.PanelResizeHandle>
     );
 }
 
