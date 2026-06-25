@@ -1,7 +1,7 @@
 import { createRoot } from 'react-dom/client';
 import AgentForm from './AgentForm';
 import ToolBuilder from './ToolBuilder';
-import RunDetailViewer from './RunDetailViewer';
+import TraceDetailViewer from '../studio-traces/TraceDetailViewer';
 import '../../css/globals.css';
 
 const roots = new WeakMap();
@@ -28,19 +28,40 @@ export function mountToolBuilder(rootEl, config = {}) {
     return root;
 }
 
-export function mountRunDetailViewer(rootEl, config = {}) {
+export function mountTraceDetailViewer(rootEl, config = {}) {
     if (!rootEl) return null;
     let root = roots.get(rootEl);
     if (!root) {
         root = createRoot(rootEl);
         roots.set(rootEl, root);
     }
-    root.render(<RunDetailViewer config={config} />);
+
+    const trace = config.trace ?? {};
+    root.render(
+        <TraceDetailViewer
+            variant="page"
+            trace={{
+                id: trace.id,
+                status: trace.status,
+                workflowName: trace.workflowName,
+                errorMessage: trace.errorMessage,
+                input: trace.input,
+                output: trace.output,
+                durationMs: trace.durationMs,
+            }}
+            steps={config.steps ?? []}
+            traceShowUrl={config.traceShowUrl}
+        />,
+    );
     return root;
 }
 
+/** @deprecated Use mountTraceDetailViewer */
+export const mountRunDetailViewer = mountTraceDetailViewer;
+
 window.mountAgentForm = mountAgentForm;
 window.mountToolBuilder = mountToolBuilder;
+window.mountTraceDetailViewer = mountTraceDetailViewer;
 window.mountRunDetailViewer = mountRunDetailViewer;
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -54,8 +75,16 @@ document.addEventListener('DOMContentLoaded', () => {
         mountToolBuilder(toolRoot, window.__NEURONAI_TOOL_BUILDER_CONFIG);
     }
 
-    const runRoot = document.getElementById('run-detail-root');
-    if (runRoot && window.__NEURONAI_RUN_DETAIL_CONFIG) {
-        mountRunDetailViewer(runRoot, window.__NEURONAI_RUN_DETAIL_CONFIG);
+    const traceRoot = document.getElementById('trace-detail-root');
+    if (traceRoot && window.__NEURONAI_TRACE_DETAIL_CONFIG) {
+        mountTraceDetailViewer(traceRoot, window.__NEURONAI_TRACE_DETAIL_CONFIG);
+    }
+
+    const legacyRunRoot = document.getElementById('run-detail-root');
+    if (legacyRunRoot && window.__NEURONAI_RUN_DETAIL_CONFIG) {
+        mountTraceDetailViewer(legacyRunRoot, {
+            trace: window.__NEURONAI_RUN_DETAIL_CONFIG.run,
+            steps: window.__NEURONAI_RUN_DETAIL_CONFIG.steps,
+        });
     }
 });

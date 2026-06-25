@@ -3,6 +3,8 @@ import { ChevronDown, Sparkles } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
+import WorkflowThread from './WorkflowThread';
+import { formatWorkflowData } from './utils/workflowOutput';
 
 function AttachmentPreview({ attachment }) {
     if (attachment.type === 'image' && attachment.previewUrl) {
@@ -48,7 +50,47 @@ function ToolEventBlock({ tool }) {
     );
 }
 
-export default function MessageList({ messages }) {
+function WorkflowAssistantContent({ message, viewMode }) {
+    const isWorkflowResult =
+        message.meta?.workflowOutput != null || message.meta?.stepEvents != null || message.meta?.status === 'running';
+
+    if (viewMode === 'data' && message.meta?.workflowOutput) {
+        return (
+            <pre className="overflow-x-auto whitespace-pre-wrap rounded-md border border-border bg-muted/20 p-3 font-mono text-xs">
+                {formatWorkflowData(message.meta.workflowOutput)}
+            </pre>
+        );
+    }
+
+    if (viewMode === 'pretty' && isWorkflowResult) {
+        return (
+            <WorkflowThread
+                output={message.meta?.workflowOutput}
+                userMessage={message.meta?.userMessage ?? ''}
+                stepEvents={message.meta?.stepEvents ?? []}
+                currentNodeId={message.meta?.currentNodeId ?? null}
+                streaming={message.streaming}
+            />
+        );
+    }
+
+    if (viewMode === 'data' && message.content) {
+        return (
+            <pre className="overflow-x-auto whitespace-pre-wrap rounded-md border border-border bg-muted/20 p-3 font-mono text-xs">
+                {message.content}
+            </pre>
+        );
+    }
+
+    return (
+        <div className="whitespace-pre-wrap text-sm">
+            {message.content}
+            {message.streaming && <span className="animate-pulse text-primary">▍</span>}
+        </div>
+    );
+}
+
+export default function MessageList({ messages, mode = 'agent', viewMode = 'pretty' }) {
     if (!messages.length) {
         return (
             <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -83,16 +125,25 @@ export default function MessageList({ messages }) {
                                 Completed
                             </Badge>
                         )}
+                        {message.meta?.status === 'running' && message.streaming && (
+                            <Badge variant="outline" className="text-[10px]">
+                                Running
+                            </Badge>
+                        )}
                         {message.meta?.status === 'failed' && (
                             <Badge variant="destructive" className="text-[10px]">
                                 Failed
                             </Badge>
                         )}
                     </div>
-                    <div className="whitespace-pre-wrap text-sm">
-                        {message.content}
-                        {message.streaming && <span className="animate-pulse text-primary">▍</span>}
-                    </div>
+                    {message.role === 'assistant' && mode === 'workflow' ? (
+                        <WorkflowAssistantContent message={message} viewMode={viewMode} />
+                    ) : (
+                        <div className="whitespace-pre-wrap text-sm">
+                            {message.content}
+                            {message.streaming && <span className="animate-pulse text-primary">▍</span>}
+                        </div>
+                    )}
                     {message.attachments?.length > 0 && (
                         <div>
                             {message.attachments.map((attachment) => (

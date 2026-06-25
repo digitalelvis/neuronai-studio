@@ -40,11 +40,6 @@ class AgentDefinition extends Model
         });
     }
 
-    public function workflowRuns(): HasMany
-    {
-        return $this->hasMany(WorkflowRun::class);
-    }
-
     public function mcpBindings(): HasMany
     {
         return $this->hasMany(AgentMcpServer::class);

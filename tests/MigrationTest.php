@@ -4,7 +4,8 @@ namespace ElvisLopesDigital\NeuronAIStudio\Tests;
 
 use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
 use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowRun;
+use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowTrace;
+use ElvisLopesDigital\NeuronAIStudio\Support\StudioTables;
 
 class MigrationTest extends TestCase
 {
@@ -12,8 +13,8 @@ class MigrationTest extends TestCase
     {
         $this->assertTrue(\Schema::hasTable('agent_definitions'));
         $this->assertTrue(\Schema::hasTable('workflow_definitions'));
-        $this->assertTrue(\Schema::hasTable('workflow_runs'));
-        $this->assertTrue(\Schema::hasTable('workflow_run_steps'));
+        $this->assertTrue(\Schema::hasTable(StudioTables::name('workflow_traces')));
+        $this->assertTrue(\Schema::hasTable(StudioTables::name('workflow_trace_steps')));
         $this->assertTrue(\Schema::hasTable('mcp_servers'));
         $this->assertTrue(\Schema::hasTable('agent_mcp_server'));
     }
@@ -34,13 +35,13 @@ class MigrationTest extends TestCase
             'graph' => WorkflowDefinition::defaultGraph(),
         ]);
 
-        $run = WorkflowRun::create([
+        $trace = WorkflowTrace::create([
             'workflow_definition_id' => $workflow->id,
             'status' => 'completed',
         ]);
 
         $this->assertDatabaseHas('agent_definitions', ['id' => $agent->id]);
         $this->assertDatabaseHas('workflow_definitions', ['id' => $workflow->id]);
-        $this->assertDatabaseHas('workflow_runs', ['id' => $run->id]);
+        $this->assertDatabaseHas(StudioTables::name('workflow_traces'), ['id' => $trace->id]);
     }
 }

@@ -73,9 +73,9 @@ class WorkflowDefinition extends Model
         ];
     }
 
-    public function runs(): HasMany
+    public function traces(): HasMany
     {
-        return $this->hasMany(WorkflowRun::class, 'workflow_definition_id');
+        return $this->hasMany(WorkflowTrace::class, 'workflow_definition_id');
     }
 
     public function isCodeLinked(): bool

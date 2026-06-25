@@ -112,13 +112,13 @@ class ConditionNodeExecutorTest extends TestCase
             'graph' => $this->conditionBranchGraph(),
         ]);
 
-        $run = app(WorkflowRunner::class)->run($workflow, [
+        $trace = app(WorkflowRunner::class)->run($workflow, [
             'message' => 'run',
             'state' => ['tier' => 'gold'],
         ]);
 
-        $this->assertEquals('completed', $run->status);
-        $this->assertEquals('true_branch', $run->output['branch'] ?? null);
+        $this->assertEquals('completed', $trace->status);
+        $this->assertEquals('true_branch', $trace->output['branch'] ?? null);
     }
 
     public function test_workflow_routes_false_branch_when_condition_fails(): void
@@ -129,13 +129,13 @@ class ConditionNodeExecutorTest extends TestCase
             'graph' => $this->conditionBranchGraph(),
         ]);
 
-        $run = app(WorkflowRunner::class)->run($workflow, [
+        $trace = app(WorkflowRunner::class)->run($workflow, [
             'message' => 'run',
             'state' => ['tier' => 'silver'],
         ]);
 
-        $this->assertEquals('completed', $run->status);
-        $this->assertEquals('false_branch', $run->output['branch'] ?? null);
+        $this->assertEquals('completed', $trace->status);
+        $this->assertEquals('false_branch', $trace->output['branch'] ?? null);
     }
 
     /** @return array<string, mixed> */

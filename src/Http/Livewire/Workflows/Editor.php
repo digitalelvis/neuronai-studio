@@ -139,9 +139,9 @@ class Editor extends Component
             $this->save();
         }
 
-        $run = $runner->run($this->workflow, ['input' => 'Hello from workflow test']);
+        $trace = $runner->run($this->workflow, ['input' => 'Hello from workflow test']);
 
-        $this->redirect(route('neuronai-studio.workflows.runs.show', $run));
+        $this->redirect(route('neuronai-studio.workflows.traces.show', $trace));
     }
 
     public function exportWorkflow(WorkflowExporter $exporter): void

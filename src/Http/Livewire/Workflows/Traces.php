@@ -6,7 +6,7 @@ use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
 use ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout;
 use Livewire\Component;
 
-class Runs extends Component
+class Traces extends Component
 {
     public WorkflowDefinition $workflow;
 
@@ -17,15 +17,15 @@ class Runs extends Component
 
     public function render()
     {
-        return view('neuronai-studio::livewire.workflows.runs', [
-            'runs' => $this->workflow->runs()->latest()->get(),
+        return view('neuronai-studio::livewire.workflows.traces', [
+            'traces' => $this->workflow->traces()->latest()->get(),
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
             breadcrumbs: [
                 ['label' => 'Workflows', 'url' => route('neuronai-studio.workflows.index')],
                 ['label' => $this->workflow->name, 'url' => route('neuronai-studio.workflows.edit', $this->workflow)],
-                ['label' => 'Runs'],
+                ['label' => 'Traces'],
             ],
-            title: 'Runs — '.$this->workflow->name,
+            title: 'Traces — '.$this->workflow->name,
         ));
     }
 }

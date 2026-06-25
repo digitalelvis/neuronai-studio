@@ -27,7 +27,7 @@
                                 <x-neuronai-studio::ui.table-cell>
                                     <div class="studio-table-row-actions">
                                         <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.workflows.edit', $workflow)">Edit</x-neuronai-studio::ui.button>
-                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.workflows.runs', $workflow)">Runs</x-neuronai-studio::ui.button>
+                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.workflows.traces', $workflow)">Traces</x-neuronai-studio::ui.button>
                                         <x-neuronai-studio::ui.button variant="ghost" size="sm" wire:click="delete({{ $workflow->id }})" wire:confirm="Delete this workflow?" class="text-destructive">Delete</x-neuronai-studio::ui.button>
                                     </div>
                                 </x-neuronai-studio::ui.table-cell>

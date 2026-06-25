@@ -32,13 +32,13 @@ export class WorkflowSessionAdapter {
 
     async *resume(message) {
         if (!this.pendingResume) {
-            throw new Error('No workflow run awaiting input.');
+            throw new Error('No workflow trace awaiting input.');
         }
 
-        const { runId, nodeId } = this.pendingResume;
+        const { traceId, nodeId } = this.pendingResume;
         this.pendingResume = null;
 
-        const url = this.resumeUrlTemplate.replace('__RUN__', String(runId));
+        const url = this.resumeUrlTemplate.replace('__TRACE__', String(traceId));
 
         yield* this.consumeStream(
             fetchSse(url, jsonPostOptions({
@@ -50,7 +50,7 @@ export class WorkflowSessionAdapter {
 
     async *consumeStream(stream) {
         for await (const packet of stream) {
-            if (this.syncCanvas && ['step_started', 'step_completed', 'run_completed', 'run_failed'].includes(packet.event)) {
+            if (this.syncCanvas && ['step_started', 'step_completed', 'trace_completed', 'trace_failed'].includes(packet.event)) {
                 window.dispatchEvent(
                     new CustomEvent('canvas-execution-event', {
                         detail: { event: packet.event, ...(typeof packet.data === 'object' ? packet.data : {}) },
@@ -60,7 +60,7 @@ export class WorkflowSessionAdapter {
 
             if (packet.event === 'human_input_required') {
                 this.pendingResume = {
-                    runId: packet.data.run_id,
+                    traceId: packet.data.trace_id,
                     nodeId: packet.data.node_id,
                 };
             }

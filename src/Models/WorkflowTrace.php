@@ -2,12 +2,15 @@
 
 namespace ElvisLopesDigital\NeuronAIStudio\Models;
 
+use ElvisLopesDigital\NeuronAIStudio\Support\StudioTables;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class WorkflowRun extends Model
+class WorkflowTrace extends Model
 {
+    protected $table;
+
     protected $fillable = [
         'workflow_definition_id',
         'status',
@@ -19,6 +22,13 @@ class WorkflowRun extends Model
         'started_at',
         'finished_at',
     ];
+
+    public function __construct(array $attributes = [])
+    {
+        $this->table = StudioTables::name('workflow_traces');
+
+        parent::__construct($attributes);
+    }
 
     protected function casts(): array
     {
@@ -38,6 +48,15 @@ class WorkflowRun extends Model
 
     public function steps(): HasMany
     {
-        return $this->hasMany(WorkflowRunStep::class)->orderBy('id');
+        return $this->hasMany(WorkflowTraceStep::class, 'workflow_trace_id')->orderBy('id');
+    }
+
+    public function durationMs(): ?int
+    {
+        if ($this->started_at === null || $this->finished_at === null) {
+            return null;
+        }
+
+        return (int) $this->started_at->diffInMilliseconds($this->finished_at);
     }
 }

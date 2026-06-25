@@ -29,16 +29,16 @@ class StudioTestHarnessTest extends TestCase
             ],
         ]);
 
-        $run = app(WorkflowRunner::class)->run($workflow, [
+        $trace = app(WorkflowRunner::class)->run($workflow, [
             'message' => 'hello',
             'state' => ['customer_id' => 'cust-123'],
         ]);
 
-        $this->assertEquals('completed', $run->status);
-        $this->assertEquals('cust-123', $run->output['customer_id'] ?? null);
+        $this->assertEquals('completed', $trace->status);
+        $this->assertEquals('cust-123', $trace->output['customer_id'] ?? null);
     }
 
-    public function test_human_node_pauses_and_resumes_run(): void
+    public function test_human_node_pauses_and_resumes_trace(): void
     {
         $workflow = WorkflowDefinition::create([
             'name' => 'Human Flow',
@@ -111,7 +111,7 @@ class StudioTestHarnessTest extends TestCase
             'graph' => WorkflowDefinition::defaultGraph(),
         ]);
 
-        $response = $this->post(route('neuronai-studio.workflows.run.stream', $workflow), [
+        $response = $this->post(route('neuronai-studio.workflows.trace.stream', $workflow), [
             'message' => 'Testing via POST',
             'state' => ['locale' => 'pt-BR'],
         ]);

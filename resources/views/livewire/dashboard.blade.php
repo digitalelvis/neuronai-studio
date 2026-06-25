@@ -8,11 +8,11 @@
 
     <x-neuronai-studio::ui.card>
         <x-neuronai-studio::ui.card-header>
-            <h2 class="text-lg font-semibold">Recent Workflow Runs</h2>
+            <h2 class="text-lg font-semibold">Recent Workflow Traces</h2>
         </x-neuronai-studio::ui.card-header>
         <x-neuronai-studio::ui.card-content>
-            @if ($recentRuns->isEmpty())
-                <x-neuronai-studio::ui.empty-state title="No workflow runs yet" description="Run a workflow from the editor to see activity here." />
+            @if ($recentTraces->isEmpty())
+                <x-neuronai-studio::ui.empty-state title="No workflow traces yet" description="Test a workflow from the editor to see activity here." />
             @else
                 <x-neuronai-studio::ui.table>
                     <x-neuronai-studio::ui.table-head>
@@ -25,16 +25,16 @@
                         </tr>
                     </x-neuronai-studio::ui.table-head>
                     <x-neuronai-studio::ui.table-body>
-                        @foreach ($recentRuns as $run)
-                            <x-neuronai-studio::ui.table-row wire:key="run-{{ $run->id }}">
-                                <x-neuronai-studio::ui.table-cell>#{{ $run->id }}</x-neuronai-studio::ui.table-cell>
-                                <x-neuronai-studio::ui.table-cell>{{ $run->workflow?->name }}</x-neuronai-studio::ui.table-cell>
+                        @foreach ($recentTraces as $trace)
+                            <x-neuronai-studio::ui.table-row wire:key="trace-{{ $trace->id }}">
+                                <x-neuronai-studio::ui.table-cell>#{{ $trace->id }}</x-neuronai-studio::ui.table-cell>
+                                <x-neuronai-studio::ui.table-cell>{{ $trace->workflow?->name }}</x-neuronai-studio::ui.table-cell>
                                 <x-neuronai-studio::ui.table-cell>
-                                    <x-neuronai-studio::ui.badge :variant="$run->status">{{ $run->status }}</x-neuronai-studio::ui.badge>
+                                    <x-neuronai-studio::ui.badge :variant="$trace->status">{{ $trace->status }}</x-neuronai-studio::ui.badge>
                                 </x-neuronai-studio::ui.table-cell>
-                                <x-neuronai-studio::ui.table-cell class="text-muted-foreground">{{ $run->started_at?->diffForHumans() }}</x-neuronai-studio::ui.table-cell>
+                                <x-neuronai-studio::ui.table-cell class="text-muted-foreground">{{ $trace->started_at?->diffForHumans() }}</x-neuronai-studio::ui.table-cell>
                                 <x-neuronai-studio::ui.table-cell>
-                                    <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.workflows.runs.show', $run)">View</x-neuronai-studio::ui.button>
+                                    <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.workflows.traces.show', $trace)">View</x-neuronai-studio::ui.button>
                                 </x-neuronai-studio::ui.table-cell>
                             </x-neuronai-studio::ui.table-row>
                         @endforeach

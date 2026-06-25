@@ -4,6 +4,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import GraphJsonPanel from '../GraphJsonPanel';
 import StudioTestHarness from '../../studio-chat/StudioTestHarness';
 import { WorkflowSessionAdapter } from '../../studio-chat/adapters/WorkflowSessionAdapter';
+import { TraceList, TraceDetailSheet } from '../../studio-traces';
 import NodeConfigForm from './NodeConfigForm';
 
 function normalizeNode(node) {
@@ -57,19 +58,13 @@ export default function InspectorPanel({
 }) {
     const [tab, setTab] = useState('node');
     const [selectedNode, setSelectedNode] = useState(null);
+    const [selectedTraceId, setSelectedTraceId] = useState(null);
+    const [traceSheetOpen, setTraceSheetOpen] = useState(false);
+    const [tracesRefreshToken, setTracesRefreshToken] = useState(0);
 
     useEffect(() => {
         const onSelect = (event) => {
-            const { silent, ...nodeDetail } = event.detail ?? {};
-
-            if (silent) {
-                if (nodeDetail?.id) {
-                    setSelectedNode(normalizeNode(nodeDetail));
-                }
-                return;
-            }
-
-            setSelectedNode(normalizeNode(nodeDetail));
+            setSelectedNode(normalizeNode(event.detail));
             setTab('node');
         };
 
@@ -81,6 +76,12 @@ export default function InspectorPanel({
         const onOpenTest = () => setTab('test');
         window.addEventListener('workflow-open-test', onOpenTest);
         return () => window.removeEventListener('workflow-open-test', onOpenTest);
+    }, []);
+
+    useEffect(() => {
+        const onOpenTraces = () => setTab('traces');
+        window.addEventListener('workflow-open-traces', onOpenTraces);
+        return () => window.removeEventListener('workflow-open-traces', onOpenTraces);
     }, []);
 
     useEffect(() => {
@@ -133,13 +134,24 @@ export default function InspectorPanel({
         });
     }, [workflowConfig.streamUrl, workflowConfig.resumeUrlTemplate, onBeforeRun]);
 
+    const handleTraceSelect = (trace) => {
+        setSelectedTraceId(trace.id);
+        setTraceSheetOpen(true);
+    };
+
+    const handleTraceFinished = useCallback(() => {
+        setTracesRefreshToken((current) => current + 1);
+        window.dispatchEvent(new CustomEvent('workflow-trace-finished'));
+    }, []);
+
     return (
         <div className="flex h-full min-h-0 flex-col overflow-hidden bg-card">
             <Tabs value={tab} onValueChange={setTab} className="flex h-full flex-col">
-                <TabsList className="mx-2 mt-2 grid w-auto grid-cols-3">
+                <TabsList className="mx-2 mt-2 grid w-auto grid-cols-4">
                     <TabsTrigger value="node">Node</TabsTrigger>
                     <TabsTrigger value="json">JSON</TabsTrigger>
                     <TabsTrigger value="test">Test</TabsTrigger>
+                    <TabsTrigger value="traces">Traces</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="node" className="mt-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
@@ -167,7 +179,7 @@ export default function InspectorPanel({
                     <GraphJsonPanel readOnly={readOnly} />
                 </TabsContent>
 
-                <TabsContent value="test" forceMount className="mt-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
+                <TabsContent value="test" className="mt-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
                     {workflowAdapter ? (
                         <StudioTestHarness
                             adapter={workflowAdapter}
@@ -175,12 +187,30 @@ export default function InspectorPanel({
                             entityId={workflowConfig.workflowId}
                             enableAttachments={Boolean(workflowConfig.uploadUrl)}
                             embedded
+                            onRunCompleted={handleTraceFinished}
                         />
                     ) : (
                         <p className="p-4 text-sm text-muted-foreground">Save the workflow first to enable testing.</p>
                     )}
                 </TabsContent>
+
+                <TabsContent value="traces" className="mt-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
+                    <TraceList
+                        tracesIndexUrl={workflowConfig.tracesIndexUrl}
+                        selectedTraceId={selectedTraceId}
+                        onSelectTrace={handleTraceSelect}
+                        refreshToken={tracesRefreshToken}
+                    />
+                </TabsContent>
             </Tabs>
+
+            <TraceDetailSheet
+                open={traceSheetOpen}
+                onOpenChange={setTraceSheetOpen}
+                traceId={selectedTraceId}
+                traceShowJsonUrlTemplate={workflowConfig.traceShowJsonUrlTemplate}
+                traceShowUrlTemplate={workflowConfig.traceShowUrlTemplate}
+            />
         </div>
     );
 }

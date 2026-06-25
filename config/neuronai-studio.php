@@ -10,6 +10,8 @@ return [
 
     'route_prefix' => env('NEURONAI_STUDIO_ROUTE_PREFIX', 'neuronai-studio'),
 
+    'table_prefix' => env('NEURONAI_STUDIO_TABLE_PREFIX', 'neuronai_studio_'),
+
     'middleware' => ['web', 'neuronai-studio.auth'],
 
     'gate' => 'viewNeuronAIStudio',

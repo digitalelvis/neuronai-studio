@@ -1,24 +1,25 @@
 <?php
 
-use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\WorkflowStreamController;
 use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\AgentChatStreamController;
 use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\AttachmentController;
-use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\WorkflowRunResumeController;
+use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\WorkflowStreamController;
+use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\WorkflowTraceController;
+use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\WorkflowTraceResumeController;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Edit;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Index as AgentsIndex;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Playground;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Dashboard;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\McpServers\Edit as McpServersEdit;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\McpServers\Index as McpServersIndex;
+use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Templates\Index as TemplatesIndex;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Tools\Edit as ToolsEdit;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Tools\Index as ToolsIndex;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Tools\RegistryShow;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Tools\Show as ToolsShow;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Workflows\Editor;
 use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Workflows\Index as WorkflowsIndex;
-use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Templates\Index as TemplatesIndex;
-use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Workflows\RunDetail;
-use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Workflows\Runs;
+use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Workflows\TraceDetail;
+use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Workflows\Traces;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
@@ -54,10 +55,17 @@ Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
             Route::get('/create', Editor::class)->name('create');
             Route::get('/preview', Editor::class)->name('preview');
             Route::get('/{workflow}/edit', Editor::class)->name('edit');
+            Route::match(['GET', 'POST'], '/{workflow}/trace/stream', WorkflowStreamController::class)->name('trace.stream');
+            Route::post('/traces/{trace}/resume/stream', WorkflowTraceResumeController::class)->name('traces.resume.stream');
+            Route::get('/{workflow}/traces', Traces::class)->name('traces');
+            Route::get('/{workflow}/traces/list', [WorkflowTraceController::class, 'index'])->name('traces.index');
+            Route::get('/traces/{trace}', TraceDetail::class)->name('traces.show');
+            Route::get('/traces/{trace}/json', [WorkflowTraceController::class, 'show'])->name('traces.show.json');
+
+            Route::redirect('/{workflow}/runs', '/{workflow}/traces', 301)->name('runs');
+            Route::redirect('/runs/{trace}', '/traces/{trace}', 301)->name('runs.show');
+            Route::post('/runs/{trace}/resume/stream', WorkflowTraceResumeController::class)->name('runs.resume.stream');
             Route::match(['GET', 'POST'], '/{workflow}/run/stream', WorkflowStreamController::class)->name('run.stream');
-            Route::post('/runs/{run}/resume/stream', WorkflowRunResumeController::class)->name('runs.resume.stream');
-            Route::get('/{workflow}/runs', Runs::class)->name('runs');
-            Route::get('/runs/{run}', RunDetail::class)->name('runs.show');
         });
 
         Route::get('/templates', TemplatesIndex::class)->name('templates.index');

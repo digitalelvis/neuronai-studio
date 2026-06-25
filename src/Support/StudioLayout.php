@@ -36,7 +36,7 @@ class StudioLayout
             'neuronai-studio.agents.edit',
             'neuronai-studio.tools.create',
             'neuronai-studio.tools.edit',
-            'neuronai-studio.workflows.runs.show',
+            'neuronai-studio.workflows.traces.show',
         );
     }
 }

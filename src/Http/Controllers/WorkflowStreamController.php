@@ -50,24 +50,24 @@ class WorkflowStreamController
                 flush();
             };
 
-            $send('run_started', [
+            $send('trace_started', [
                 'workflow_id' => $workflow->id,
             ]);
 
             try {
-                $run = $runner->run($workflow, $input, $send);
+                $trace = $runner->run($workflow, $input, $send);
 
-                if ($run->status === 'awaiting_input') {
+                if ($trace->status === 'awaiting_input') {
                     return;
                 }
 
-                $send('run_completed', [
-                    'run_id' => $run->id,
-                    'status' => $run->status,
-                    'output' => $run->output,
+                $send('trace_completed', [
+                    'trace_id' => $trace->id,
+                    'status' => $trace->status,
+                    'output' => $trace->output,
                 ]);
             } catch (Throwable $exception) {
-                $send('run_failed', [
+                $send('trace_failed', [
                     'message' => $exception->getMessage(),
                 ]);
             }

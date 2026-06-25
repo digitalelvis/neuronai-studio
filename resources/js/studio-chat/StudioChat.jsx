@@ -5,22 +5,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import Composer from './Composer';
 import MessageList from './MessageList';
 import { createId } from './utils/id';
-
-function formatWorkflowOutput(output) {
-    if (!output) {
-        return 'Workflow completed.';
-    }
-
-    try {
-        const filtered = { ...output };
-        delete filtered.__steps;
-        delete filtered.__current_node_id;
-        delete filtered.__workflow_run_id;
-        return JSON.stringify(filtered, null, 2);
-    } catch {
-        return String(output);
-    }
-}
+import { formatWorkflowData } from './utils/workflowOutput';
 
 export default function StudioChat({
     adapter,
@@ -39,6 +24,7 @@ export default function StudioChat({
     const [inputJsonError, setInputJsonError] = useState('');
     const [sending, setSending] = useState(false);
     const [error, setError] = useState('');
+    const [viewMode, setViewMode] = useState('pretty');
 
     const effectiveContext = onContextChange ? initialContext : context;
     const setEffectiveContext = onContextChange ?? setContext;
@@ -59,7 +45,16 @@ export default function StudioChat({
     );
 
     const updateMessage = useCallback((id, patch) => {
-        setMessages((current) => current.map((message) => (message.id === id ? { ...message, ...patch } : message)));
+        setMessages((current) =>
+            current.map((message) => {
+                if (message.id !== id) {
+                    return message;
+                }
+
+                const nextPatch = typeof patch === 'function' ? patch(message) : patch;
+                return { ...message, ...nextPatch };
+            }),
+        );
     }, []);
 
     const appendMessage = useCallback((message) => {
@@ -88,20 +83,60 @@ export default function StudioChat({
             role: 'assistant',
             content: '',
             streaming: true,
+            meta: mode === 'workflow' ? { userMessage: text, stepEvents: [] } : undefined,
         });
 
         if (mode === 'workflow') {
-            window.dispatchEvent(new CustomEvent('canvas-run-start'));
+            window.dispatchEvent(new CustomEvent('canvas-trace-start'));
         }
 
         let assistantText = '';
         const toolMessages = [];
-        let runFinished = false;
+        let traceFinished = false;
 
         try {
             for await (const packet of adapter.send(text, attachments, { state: effectiveContext })) {
-                if (packet.event === 'run_started' && mode === 'workflow') {
-                    updateMessage(assistantId, { content: 'Running workflow…', streaming: true });
+                if (packet.event === 'trace_started' && mode === 'workflow') {
+                    updateMessage(assistantId, {
+                        content: '',
+                        streaming: true,
+                        meta: { userMessage: text, stepEvents: [], status: 'running' },
+                    });
+                }
+
+                if (packet.event === 'step_started' && mode === 'workflow') {
+                    updateMessage(assistantId, (current) => ({
+                        ...current,
+                        streaming: true,
+                        meta: {
+                            ...current.meta,
+                            userMessage: text,
+                            currentNodeId: packet.data?.node_id ?? null,
+                        },
+                    }));
+                }
+
+                if (packet.event === 'step_completed' && mode === 'workflow') {
+                    updateMessage(assistantId, (current) => {
+                        const stepEvents = [...(current.meta?.stepEvents ?? [])];
+                        stepEvents.push({
+                            nodeId: packet.data?.node_id ?? 'unknown',
+                            nodeType: packet.data?.node_type ?? 'unknown',
+                            handle: packet.data?.handle,
+                            durationMs: packet.data?.duration_ms ?? null,
+                        });
+
+                        return {
+                            ...current,
+                            streaming: true,
+                            meta: {
+                                ...current.meta,
+                                userMessage: text,
+                                stepEvents,
+                                currentNodeId: null,
+                            },
+                        };
+                    });
                 }
 
                 if (packet.event === 'token') {
@@ -124,31 +159,39 @@ export default function StudioChat({
                 }
 
                 if (packet.event === 'human_input_required') {
-                    runFinished = true;
+                    traceFinished = true;
                     updateMessage(assistantId, { streaming: false, content: assistantText || 'Waiting for your input…' });
                     appendMessage({
                         id: createId('system'),
                         role: 'system',
                         content: packet.data?.prompt ?? 'Please provide input to continue.',
-                        meta: { status: 'awaiting_input', nodeId: packet.data?.node_id, runId: packet.data?.run_id },
+                        meta: { status: 'awaiting_input', nodeId: packet.data?.node_id, traceId: packet.data?.trace_id },
                     });
                     setSending(false);
                     return;
                 }
 
-                if (packet.event === 'run_completed') {
-                    runFinished = true;
-                    const outputText = formatWorkflowOutput(packet.data?.output);
+                if (packet.event === 'trace_completed') {
+                    traceFinished = true;
+                    const output = packet.data?.output;
                     updateMessage(assistantId, {
-                        content: outputText,
+                        content: formatWorkflowData(output),
                         streaming: false,
-                        meta: { runId: packet.data?.run_id, status: 'completed' },
+                        meta: {
+                            traceId: packet.data?.trace_id,
+                            status: 'completed',
+                            workflowOutput: output,
+                            userMessage: text,
+                            stepEvents: undefined,
+                            currentNodeId: null,
+                        },
                     });
                     onRunCompleted?.(packet.data);
+                    window.dispatchEvent(new CustomEvent('workflow-trace-finished'));
                 }
 
                 if (packet.event === 'done') {
-                    runFinished = true;
+                    traceFinished = true;
                     updateMessage(assistantId, {
                         content: assistantText || 'Done.',
                         streaming: false,
@@ -156,9 +199,9 @@ export default function StudioChat({
                     });
                 }
 
-                if (packet.event === 'run_failed' || packet.event === 'error') {
-                    runFinished = true;
-                    const message = packet.data?.message ?? 'Run failed.';
+                if (packet.event === 'trace_failed' || packet.event === 'error') {
+                    traceFinished = true;
+                    const message = packet.data?.message ?? 'Trace failed.';
                     setError(message);
                     updateMessage(assistantId, {
                         content: message,
@@ -176,22 +219,22 @@ export default function StudioChat({
                 });
             }
         } catch (sendError) {
-            runFinished = true;
+            traceFinished = true;
             const message = sendError instanceof Error ? sendError.message : 'Request failed.';
             setError(message);
             updateMessage(assistantId, { content: message, streaming: false, meta: { status: 'failed' } });
         } finally {
             setSending(false);
 
-            if (!runFinished) {
+            if (!traceFinished) {
                 setMessages((current) =>
                     current.map((message) =>
-                        message.id === assistantId && message.streaming && !message.content
+                        message.id === assistantId && message.streaming && !message.content && !message.meta?.stepEvents?.length
                             ? {
                                   ...message,
                                   content: 'No response received.',
                                   streaming: false,
-                                  meta: { status: 'failed' },
+                                  meta: { ...message.meta, status: 'failed' },
                               }
                             : message,
                     ),
@@ -211,6 +254,28 @@ export default function StudioChat({
             <div className="flex items-center justify-between border-b border-border px-4 py-2">
                 <span className="text-sm font-medium text-muted-foreground">Output</span>
                 <div className="flex items-center gap-2">
+                    {mode === 'workflow' && (
+                        <div className="flex gap-1">
+                            <Button
+                                type="button"
+                                variant={viewMode === 'pretty' ? 'secondary' : 'ghost'}
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() => setViewMode('pretty')}
+                            >
+                                Pretty
+                            </Button>
+                            <Button
+                                type="button"
+                                variant={viewMode === 'data' ? 'secondary' : 'ghost'}
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() => setViewMode('data')}
+                            >
+                                Data
+                            </Button>
+                        </div>
+                    )}
                     {error && <span className="text-xs text-destructive">{error}</span>}
                     <Button variant="ghost" size="sm" onClick={handleClear} disabled={sending}>
                         <Trash2 className="h-4 w-4" />
@@ -220,7 +285,7 @@ export default function StudioChat({
             </div>
 
             <ScrollArea className="flex-1 px-4">
-                <MessageList messages={messages} />
+                <MessageList messages={messages} mode={mode} viewMode={viewMode} />
             </ScrollArea>
 
             <div className="border-t border-border p-4">

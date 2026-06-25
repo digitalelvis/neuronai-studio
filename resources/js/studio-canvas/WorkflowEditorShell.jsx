@@ -52,6 +52,7 @@ export default function WorkflowEditorShell({ config }) {
     const handleExportPhp = () => callLivewire('exportWorkflow');
     const handleSave = () => window.dispatchEvent(new CustomEvent('workflow-canvas-save'));
     const handleOpenTest = () => window.dispatchEvent(new CustomEvent('workflow-open-test'));
+    const handleOpenTraces = () => window.dispatchEvent(new CustomEvent('workflow-open-traces'));
 
     const paletteTypes = Object.entries(config.nodeTypes || {}).filter(
         ([type]) => !['start', 'stop'].includes(type),
@@ -98,6 +99,9 @@ export default function WorkflowEditorShell({ config }) {
                         </Button>
                         <Button variant="outline" size="sm" onClick={handleOpenTest} disabled={!config.workflowId}>
                             Test
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={handleOpenTraces} disabled={!config.workflowId}>
+                            Traces
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => downloadWorkflowJson(false)}>
                             <Download className="h-3.5 w-3.5" />
@@ -182,6 +186,9 @@ export default function WorkflowEditorShell({ config }) {
                                 streamUrl: config.streamUrl,
                                 resumeUrlTemplate: config.resumeUrlTemplate,
                                 uploadUrl: config.uploadUrl,
+                                tracesIndexUrl: config.tracesIndexUrl,
+                                traceShowUrlTemplate: config.traceShowUrlTemplate,
+                                traceShowJsonUrlTemplate: config.traceShowJsonUrlTemplate,
                             }}
                             onBeforeRun={window.saveGraphBeforeRun}
                         />

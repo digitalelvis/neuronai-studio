@@ -2,13 +2,16 @@
 
 namespace ElvisLopesDigital\NeuronAIStudio\Models;
 
+use ElvisLopesDigital\NeuronAIStudio\Support\StudioTables;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class WorkflowRunStep extends Model
+class WorkflowTraceStep extends Model
 {
+    protected $table;
+
     protected $fillable = [
-        'workflow_run_id',
+        'workflow_trace_id',
         'node_id',
         'node_type',
         'event_in',
@@ -17,6 +20,13 @@ class WorkflowRunStep extends Model
         'duration_ms',
     ];
 
+    public function __construct(array $attributes = [])
+    {
+        $this->table = StudioTables::name('workflow_trace_steps');
+
+        parent::__construct($attributes);
+    }
+
     protected function casts(): array
     {
         return [
@@ -24,8 +34,8 @@ class WorkflowRunStep extends Model
         ];
     }
 
-    public function run(): BelongsTo
+    public function trace(): BelongsTo
     {
-        return $this->belongsTo(WorkflowRun::class, 'workflow_run_id');
+        return $this->belongsTo(WorkflowTrace::class, 'workflow_trace_id');
     }
 }

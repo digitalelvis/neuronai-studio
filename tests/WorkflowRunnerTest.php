@@ -26,14 +26,14 @@ class WorkflowRunnerTest extends TestCase
             ],
         ]);
 
-        $run = app(WorkflowRunner::class)->run($workflow, ['input' => 'test']);
+        $trace = app(WorkflowRunner::class)->run($workflow, ['input' => 'test']);
 
-        $this->assertEquals('completed', $run->status);
-        $this->assertEquals('Hello', $run->output['greeting'] ?? null);
-        $this->assertGreaterThan(0, $run->steps()->count());
+        $this->assertEquals('completed', $trace->status);
+        $this->assertEquals('Hello', $trace->output['greeting'] ?? null);
+        $this->assertGreaterThan(0, $trace->steps()->count());
     }
 
-    public function test_run_emits_step_events_when_listener_provided(): void
+    public function test_trace_emits_step_events_when_listener_provided(): void
     {
         $workflow = WorkflowDefinition::create([
             'name' => 'Emitter Flow',

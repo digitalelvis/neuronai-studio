@@ -3,8 +3,8 @@
 namespace ElvisLopesDigital\NeuronAIStudio\Runtime;
 
 use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowRun;
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowRunStep;
+use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowTrace;
+use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowTraceStep;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\Exceptions\HumanInputRequiredException;
 use Throwable;
 
@@ -16,11 +16,11 @@ class WorkflowRunner
     ) {}
 
     /** @param  array<string, mixed>  $input */
-    public function run(WorkflowDefinition $workflow, array $input = [], ?callable $emitter = null): WorkflowRun
+    public function run(WorkflowDefinition $workflow, array $input = [], ?callable $emitter = null): WorkflowTrace
     {
         $this->validator->assertValid($workflow->graph);
 
-        $run = WorkflowRun::create([
+        $trace = WorkflowTrace::create([
             'workflow_definition_id' => $workflow->id,
             'status' => 'running',
             'input' => $input,
@@ -35,18 +35,18 @@ class WorkflowRunner
                 $workflow->graph['edges'] ?? [],
             );
 
-            $state = $this->buildInitialState($graphContext, $run->id, $input, $emitter);
+            $state = $this->buildInitialState($graphContext, $trace->id, $input, $emitter);
 
             $interpreter = new GraphInterpreterWorkflow($graphContext, $state);
             $interpreter->bootstrap();
 
             $finalState = $interpreter->init()->run();
 
-            return $this->finalizeRun($run, $finalState);
+            return $this->finalizeTrace($trace, $finalState);
         } catch (HumanInputRequiredException $exception) {
-            return $this->pauseForHumanInput($run, $exception, $state, $emitter);
+            return $this->pauseForHumanInput($trace, $exception, $state, $emitter);
         } catch (Throwable $exception) {
-            $run->update([
+            $trace->update([
                 'status' => 'failed',
                 'error_message' => $exception->getMessage(),
                 'finished_at' => now(),
@@ -56,10 +56,10 @@ class WorkflowRunner
         }
     }
 
-    public function resume(WorkflowRun $run, string $nodeId, string $message, ?callable $emitter = null): WorkflowRun
+    public function resume(WorkflowTrace $trace, string $nodeId, string $message, ?callable $emitter = null): WorkflowTrace
     {
-        $workflow = $run->workflow ?? WorkflowDefinition::findOrFail($run->workflow_definition_id);
-        $checkpoint = $run->checkpoint ?? [];
+        $workflow = $trace->workflow ?? WorkflowDefinition::findOrFail($trace->workflow_definition_id);
+        $checkpoint = $trace->checkpoint ?? [];
         $nodeConfig = (new GraphContext(
             $workflow->graph['nodes'] ?? [],
             $workflow->graph['edges'] ?? [],
@@ -76,42 +76,42 @@ class WorkflowRunner
         unset($stateData['__steps']);
         $stateData[$outputKey] = $message;
 
-        $state = new BuilderWorkflowState($graphContext, $run->id, $stateData);
+        $state = new BuilderWorkflowState($graphContext, $trace->id, $stateData);
 
         if ($emitter !== null) {
             $state->stepEmitter = fn (string $event, array $data) => $emitter($event, array_merge($data, [
-                'run_id' => $run->id,
+                'trace_id' => $trace->id,
             ]));
         }
 
-        $run->update([
+        $trace->update([
             'status' => 'running',
             'awaiting_node_id' => null,
         ]);
 
         try {
             $nextNodeId = $graphContext->targetForHandle($nodeId) ?? '';
-            $this->recordHumanStep($run, $nodeId, $state, $outputKey, $message);
+            $this->recordHumanStep($trace, $nodeId, $state, $outputKey, $message);
 
             if ($nextNodeId === '') {
-                $run->update([
+                $trace->update([
                     'status' => 'completed',
                     'output' => $state->all(),
                     'checkpoint' => null,
                     'finished_at' => now(),
                 ]);
 
-                return $run->fresh(['steps']);
+                return $trace->fresh(['steps']);
             }
 
             $state->set('__current_node_id', $nextNodeId);
             $finalState = $this->executionLoop->runFromNode($nextNodeId, $graphContext, $state);
 
-            return $this->finalizeRun($run, $finalState);
+            return $this->finalizeTrace($trace, $finalState);
         } catch (HumanInputRequiredException $exception) {
-            return $this->pauseForHumanInput($run, $exception, $state, $emitter);
+            return $this->pauseForHumanInput($trace, $exception, $state, $emitter);
         } catch (Throwable $exception) {
-            $run->update([
+            $trace->update([
                 'status' => 'failed',
                 'error_message' => $exception->getMessage(),
                 'finished_at' => now(),
@@ -122,37 +122,37 @@ class WorkflowRunner
     }
 
     /** @param  array<string, mixed>  $input */
-    protected function buildInitialState(GraphContext $graphContext, int $runId, array $input, ?callable $emitter): BuilderWorkflowState
+    protected function buildInitialState(GraphContext $graphContext, int $traceId, array $input, ?callable $emitter): BuilderWorkflowState
     {
         $message = (string) ($input['message'] ?? $input['input'] ?? '');
         $initialState = is_array($input['state'] ?? null) ? $input['state'] : [];
 
         $stateData = array_merge($initialState, [
             'input' => $message,
-            '__workflow_run_id' => $runId,
+            '__workflow_trace_id' => $traceId,
         ]);
 
         if (! empty($input['attachments']) && is_array($input['attachments'])) {
             $stateData['attachments'] = $input['attachments'];
         }
 
-        $state = new BuilderWorkflowState($graphContext, $runId, $stateData);
+        $state = new BuilderWorkflowState($graphContext, $traceId, $stateData);
 
         if ($emitter !== null) {
             $state->stepEmitter = fn (string $event, array $data) => $emitter($event, array_merge($data, [
-                'run_id' => $runId,
+                'trace_id' => $traceId,
             ]));
         }
 
         return $state;
     }
 
-    protected function finalizeRun(WorkflowRun $run, BuilderWorkflowState $finalState): WorkflowRun
+    protected function finalizeTrace(WorkflowTrace $trace, BuilderWorkflowState $finalState): WorkflowTrace
     {
         $steps = $finalState->get('__steps', []);
         foreach ($steps as $step) {
-            WorkflowRunStep::create([
-                'workflow_run_id' => $run->id,
+            WorkflowTraceStep::create([
+                'workflow_trace_id' => $trace->id,
                 'node_id' => $step['node_id'],
                 'node_type' => $step['node_type'],
                 'state_snapshot' => $step['state_snapshot'] ?? null,
@@ -160,7 +160,7 @@ class WorkflowRunner
             ]);
         }
 
-        $run->update([
+        $trace->update([
             'status' => 'completed',
             'output' => $finalState->all(),
             'checkpoint' => null,
@@ -168,16 +168,16 @@ class WorkflowRunner
             'finished_at' => now(),
         ]);
 
-        return $run->fresh(['steps']);
+        return $trace->fresh(['steps']);
     }
 
     protected function pauseForHumanInput(
-        WorkflowRun $run,
+        WorkflowTrace $trace,
         HumanInputRequiredException $exception,
         ?BuilderWorkflowState $state,
         ?callable $emitter,
-    ): WorkflowRun {
-        $run->update([
+    ): WorkflowTrace {
+        $trace->update([
             'status' => 'awaiting_input',
             'awaiting_node_id' => $exception->nodeId,
             'checkpoint' => [
@@ -190,18 +190,18 @@ class WorkflowRunner
 
         if ($emitter !== null) {
             $emitter('human_input_required', [
-                'run_id' => $run->id,
+                'trace_id' => $trace->id,
                 'node_id' => $exception->nodeId,
                 'prompt' => $exception->prompt,
                 'output_key' => $exception->outputKey,
             ]);
         }
 
-        return $run->fresh(['steps']);
+        return $trace->fresh(['steps']);
     }
 
     protected function recordHumanStep(
-        WorkflowRun $run,
+        WorkflowTrace $trace,
         string $nodeId,
         BuilderWorkflowState $state,
         string $outputKey,
@@ -212,8 +212,8 @@ class WorkflowRunner
             'node_type' => 'human',
         ]);
 
-        WorkflowRunStep::create([
-            'workflow_run_id' => $run->id,
+        WorkflowTraceStep::create([
+            'workflow_trace_id' => $trace->id,
             'node_id' => $nodeId,
             'node_type' => 'human',
             'state_snapshot' => array_merge($state->all(), [$outputKey => $message]),

@@ -359,12 +359,12 @@ function WorkflowCanvasInner({
                 return;
             }
 
-            if (detail.event === 'run_completed') {
+            if (detail.event === 'trace_completed') {
                 setRunStatus('completed');
                 return;
             }
 
-            if (detail.event === 'run_failed') {
+            if (detail.event === 'trace_failed') {
                 setRunStatus('failed');
             }
         };
@@ -372,6 +372,7 @@ function WorkflowCanvasInner({
         window.addEventListener('canvas-node-updated', onNodeUpdated);
         window.addEventListener('canvas-remove-node', onRemoveNode);
         window.addEventListener('canvas-auto-layout', onAutoLayout);
+        window.addEventListener('canvas-trace-start', onRunStart);
         window.addEventListener('canvas-run-start', onRunStart);
         window.addEventListener('canvas-execution-event', onExecutionEvent);
         window.addEventListener('workflow-canvas-load-graph', onLoadGraph);
@@ -380,6 +381,7 @@ function WorkflowCanvasInner({
             window.removeEventListener('canvas-node-updated', onNodeUpdated);
             window.removeEventListener('canvas-remove-node', onRemoveNode);
             window.removeEventListener('canvas-auto-layout', onAutoLayout);
+            window.removeEventListener('canvas-trace-start', onRunStart);
             window.removeEventListener('canvas-run-start', onRunStart);
             window.removeEventListener('canvas-execution-event', onExecutionEvent);
             window.removeEventListener('workflow-canvas-load-graph', onLoadGraph);

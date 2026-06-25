@@ -1,5 +1,6 @@
 <?php
 
+use ElvisLopesDigital\NeuronAIStudio\Support\StudioTables;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -8,9 +9,11 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('workflow_run_steps', function (Blueprint $table) {
+        Schema::create(StudioTables::name('workflow_trace_steps'), function (Blueprint $table) {
             $table->id();
-            $table->foreignId('workflow_run_id')->constrained('workflow_runs')->cascadeOnDelete();
+            $table->foreignId('workflow_trace_id')
+                ->constrained(StudioTables::name('workflow_traces'))
+                ->cascadeOnDelete();
             $table->string('node_id');
             $table->string('node_type');
             $table->string('event_in')->nullable();
@@ -23,6 +26,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('workflow_run_steps');
+        Schema::dropIfExists(StudioTables::name('workflow_trace_steps'));
     }
 };
