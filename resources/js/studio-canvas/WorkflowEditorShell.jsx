@@ -155,6 +155,8 @@ export default function WorkflowEditorShell({ config }) {
                                 graph={config.graph}
                                 nodeTypesMeta={config.nodeTypes || {}}
                                 readOnly={readOnly}
+                                defaultProvider={config.defaultProvider ?? ''}
+                                defaultModel={config.defaultModel ?? ''}
                                 onGraphChange={(graph) => {
                                     window.__workflowGraph = graph;
                                     const saved = window.__NEURONAI_CANVAS_CONFIG?.savedGraph;
@@ -170,6 +172,10 @@ export default function WorkflowEditorShell({ config }) {
                             agents={config.agents || []}
                             tools={config.tools || []}
                             mcpServers={config.mcpServers || []}
+                            providers={config.providers || {}}
+                            providerModels={config.providerModels || {}}
+                            defaultProvider={config.defaultProvider ?? ''}
+                            defaultModel={config.defaultModel ?? ''}
                             readOnly={readOnly}
                             workflowConfig={{
                                 workflowId: config.workflowId,

@@ -7,8 +7,6 @@
     "tags": ["chat", "starter"]
   },
   "definition": {
-    "provider": "openai",
-    "model": "gpt-4o-mini",
     "instructions": "You are a helpful and professional customer support assistant. Answer clearly, empathize with the user, and keep responses concise. If you cannot resolve an issue, explain what the next step would be.",
     "tools": []
   }

@@ -33,4 +33,20 @@ class ProviderRegistryTest extends TestCase
 
         $this->assertSame('gpt-4o-mini', (new ReflectionProperty($provider::class, 'model'))->getValue($provider));
     }
+
+    public function test_resolve_throws_when_provider_key_is_missing(): void
+    {
+        config([
+            'neuron.provider.openai' => [
+                'key' => null,
+                'model' => 'gpt-4o-mini',
+                'parameters' => [],
+            ],
+        ]);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessage('OPENAI_KEY');
+
+        app(ProviderRegistry::class)->resolve('openai', 'gpt-4o-mini');
+    }
 }

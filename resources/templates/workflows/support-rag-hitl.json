@@ -32,8 +32,6 @@
         "position": { "x": 400, "y": 280 },
         "data": {
           "prompt": "Classify the following user message into exactly one label: question, complaint, or escalation. Reply with only the label, no other text.\n\nMessage: {{user_message}}",
-          "provider": "openai",
-          "model": "gpt-4o-mini",
           "output_key": "intent"
         }
       },

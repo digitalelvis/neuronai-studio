@@ -7,8 +7,6 @@
     "tags": ["classification", "routing"]
   },
   "definition": {
-    "provider": "openai",
-    "model": "gpt-4o-mini",
     "instructions": "You classify customer messages. Respond with exactly one word: question, complaint, or escalation.\n\n- question: general information requests\n- complaint: dissatisfaction or service issues\n- escalation: requests for a manager or urgent handling",
     "tools": []
   }

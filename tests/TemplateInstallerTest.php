@@ -82,4 +82,37 @@ class TemplateInstallerTest extends TestCase
         $workflow = WorkflowDefinition::where('name', 'Basic Agent Chat')->first();
         $this->assertNotNull($workflow);
     }
+
+    public function test_install_workflow_uses_studio_default_provider_on_llm_nodes(): void
+    {
+        config([
+            'neuronai-studio.default_provider' => 'gemini',
+            'neuronai-studio.default_model' => 'gemini-3.5-flash',
+        ]);
+
+        $workflow = app(TemplateInstaller::class)->installWorkflow('lead-qualification');
+
+        $llmNodes = collect($workflow->graph['nodes'] ?? [])
+            ->filter(fn (array $node) => ($node['type'] ?? '') === 'llm');
+
+        $this->assertCount(2, $llmNodes);
+
+        foreach ($llmNodes as $node) {
+            $this->assertSame('gemini', $node['data']['provider'] ?? null);
+            $this->assertSame('gemini-3.5-flash', $node['data']['model'] ?? null);
+        }
+    }
+
+    public function test_install_agent_uses_studio_default_provider(): void
+    {
+        config([
+            'neuronai-studio.default_provider' => 'gemini',
+            'neuronai-studio.default_model' => 'gemini-3.5-flash',
+        ]);
+
+        $agent = app(TemplateInstaller::class)->installAgent('support-assistant');
+
+        $this->assertSame('gemini', $agent->provider);
+        $this->assertSame('gemini-3.5-flash', $agent->model);
+    }
 }

@@ -38,8 +38,8 @@ class TemplateInstaller
             'name' => (string) ($meta['name'] ?? Str::headline($slug)),
             'slug' => $slug,
             'description' => (string) ($meta['description'] ?? ''),
-            'provider' => (string) ($definition['provider'] ?? config('neuronai-studio.default_provider', 'openai')),
-            'model' => (string) ($definition['model'] ?? config('neuronai-studio.default_model', 'gpt-4o-mini')),
+            'provider' => (string) config('neuronai-studio.default_provider', 'openai'),
+            'model' => (string) config('neuronai-studio.default_model', 'gpt-4o-mini'),
             'instructions' => (string) ($definition['instructions'] ?? ''),
             'tools' => is_array($definition['tools'] ?? null) ? $definition['tools'] : [],
             'memory_config' => is_array($definition['memory_config'] ?? null) ? $definition['memory_config'] : null,
@@ -69,7 +69,9 @@ class TemplateInstaller
             $agentMap[$agentRef] = $this->installAgent($agentRef)->id;
         }
 
-        $graph = $this->remapAgentRefs($template['graph'], $agentMap);
+        $graph = $this->remapProviderDefaults(
+            $this->remapAgentRefs($template['graph'], $agentMap),
+        );
         $this->validator->assertValid($graph);
 
         $name = (string) ($meta['name'] ?? Str::headline($id));
@@ -113,6 +115,28 @@ class TemplateInstaller
 
             $data['agent_id'] = $agentMap[$ref];
             unset($data['agent_ref']);
+            $nodes[$index]['data'] = $data;
+        }
+
+        $graph['nodes'] = $nodes;
+
+        return $graph;
+    }
+
+    protected function remapProviderDefaults(array $graph): array
+    {
+        $provider = (string) config('neuronai-studio.default_provider', 'openai');
+        $model = (string) config('neuronai-studio.default_model', 'gpt-4o-mini');
+        $nodes = $graph['nodes'] ?? [];
+
+        foreach ($nodes as $index => $node) {
+            if (! in_array($node['type'] ?? '', ['llm', 'rag'], true)) {
+                continue;
+            }
+
+            $data = $node['data'] ?? [];
+            $data['provider'] = $provider;
+            $data['model'] = $model;
             $nodes[$index]['data'] = $data;
         }
 

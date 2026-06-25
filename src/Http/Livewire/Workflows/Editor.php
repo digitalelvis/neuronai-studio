@@ -8,6 +8,7 @@ use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
 use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
 use ElvisLopesDigital\NeuronAIStudio\Registry\McpRegistry;
 use ElvisLopesDigital\NeuronAIStudio\Registry\NodeTypeRegistry;
+use ElvisLopesDigital\NeuronAIStudio\Registry\ProviderRegistry;
 use ElvisLopesDigital\NeuronAIStudio\Registry\ToolRegistry;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\GraphValidator;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\WorkflowRunner;
@@ -223,6 +224,7 @@ class Editor extends Component
 
         return view('neuronai-studio::livewire.workflows.editor', [
             'nodeTypes' => app(NodeTypeRegistry::class)->forCanvas(),
+            'providers' => app(ProviderRegistry::class)->labels(),
             'agents' => AgentDefinition::orderBy('name')->get(),
             'agentsForCanvas' => AgentDefinition::orderBy('name')->get(['id', 'name'])->values()->all(),
             'toolsForCanvas' => collect(app(ToolRegistry::class)->all())

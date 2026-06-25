@@ -2,6 +2,7 @@
 
 namespace ElvisLopesDigital\NeuronAIStudio\Registry;
 
+use InvalidArgumentException;
 use NeuronAI\Laravel\Facades\AIProvider;
 use NeuronAI\Providers\AIProviderInterface;
 use NeuronAI\Providers\Anthropic\Anthropic;
@@ -47,7 +48,38 @@ class ProviderRegistry
 
         $config['model'] = $model;
 
+        $this->assertProviderConfigured($provider, $config);
+
         return $this->makeProvider($provider, $config);
+    }
+
+    /** @param array<string, mixed> $config */
+    protected function assertProviderConfigured(string $provider, array $config): void
+    {
+        if (! array_key_exists('key', $config)) {
+            return;
+        }
+
+        $key = $config['key'];
+
+        if ($key !== null && $key !== '') {
+            return;
+        }
+
+        $envHint = match ($provider) {
+            'openai', 'openai-responses', 'openai-tts', 'openai-stt' => 'OPENAI_KEY',
+            'anthropic' => 'ANTHROPIC_KEY',
+            'gemini' => 'GEMINI_KEY',
+            'mistral' => 'MISTRAL_KEY',
+            'deepseek' => 'DEEPSEEK_KEY',
+            'huggingface' => 'HUGGINGFACE_KEY',
+            default => 'the provider key in config/neuron.php',
+        };
+
+        throw new InvalidArgumentException(
+            "AI provider [{$provider}] is not configured. Set {$envHint} in your .env file, "
+            .'or choose a different provider in the node settings.',
+        );
     }
 
     /** @param array<string, mixed> $config */

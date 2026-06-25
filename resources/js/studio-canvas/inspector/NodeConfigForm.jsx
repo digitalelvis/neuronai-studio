@@ -9,8 +9,21 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import ProviderModelFields from './ProviderModelFields';
 
-export default function NodeConfigForm({ node, agents, tools, mcpServers, readOnly, onUpdate, onRemove }) {
+export default function NodeConfigForm({
+    node,
+    agents,
+    tools,
+    mcpServers,
+    providers = {},
+    providerModels = {},
+    defaultProvider = '',
+    defaultModel = '',
+    readOnly,
+    onUpdate,
+    onRemove,
+}) {
     if (!node) {
         return <p className="text-sm text-muted-foreground">Select a node to configure it.</p>;
     }
@@ -72,15 +85,38 @@ export default function NodeConfigForm({ node, agents, tools, mcpServers, readOn
             )}
 
             {node.type === 'llm' && (
-                <div className="space-y-2">
-                    <Label>Prompt</Label>
-                    <Textarea
-                        rows={4}
-                        value={data.prompt ?? ''}
-                        onChange={(e) => updateField('prompt', e.target.value)}
-                        disabled={readOnly}
+                <>
+                    <ProviderModelFields
+                        provider={data.provider}
+                        model={data.model}
+                        providers={providers}
+                        providerModels={providerModels}
+                        defaultProvider={defaultProvider}
+                        defaultModel={defaultModel}
+                        readOnly={readOnly}
+                        onChange={(patch) => onUpdate?.({ ...data, ...patch })}
                     />
-                </div>
+                    <div className="space-y-2">
+                        <Label>Prompt</Label>
+                        <Textarea
+                            rows={4}
+                            value={data.prompt ?? ''}
+                            onChange={(e) => updateField('prompt', e.target.value)}
+                            disabled={readOnly}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Output Key</Label>
+                        <Input
+                            value={data.output_key ?? 'llm_response'}
+                            onChange={(e) => updateField('output_key', e.target.value)}
+                            disabled={readOnly}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            State key where the LLM response is stored.
+                        </p>
+                    </div>
+                </>
             )}
 
             {node.type === 'human' && (

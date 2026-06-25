@@ -34,6 +34,12 @@ function normalizeNode(node) {
         data.operator = 'not_empty';
     }
 
+    if (node.type === 'llm') {
+        if (!data.output_key) {
+            data.output_key = 'llm_response';
+        }
+    }
+
     return { ...node, data };
 }
 
@@ -41,6 +47,10 @@ export default function InspectorPanel({
     agents = [],
     tools = [],
     mcpServers = [],
+    providers = {},
+    providerModels = {},
+    defaultProvider = '',
+    defaultModel = '',
     readOnly = false,
     workflowConfig = {},
     onBeforeRun,
@@ -133,6 +143,10 @@ export default function InspectorPanel({
                             agents={agents}
                             tools={tools}
                             mcpServers={mcpServers}
+                            providers={providers}
+                            providerModels={providerModels}
+                            defaultProvider={defaultProvider}
+                            defaultModel={defaultModel}
                             readOnly={readOnly}
                             onUpdate={readOnly ? undefined : syncNode}
                             onRemove={readOnly ? undefined : removeNode}

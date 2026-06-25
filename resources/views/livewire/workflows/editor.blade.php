@@ -1,3 +1,9 @@
+@php
+    $providerModels = collect(config('neuronai-studio.providers', []))
+        ->mapWithKeys(fn ($provider, $key) => [$key => $provider['models'] ?? []])
+        ->all();
+@endphp
+
 <div class="studio-product-root flex min-h-0 flex-1 flex-col">
     @if ($readOnly)
         @php
@@ -25,6 +31,10 @@
             agents: @json($agentsForCanvas),
             tools: @json($toolsForCanvas),
             mcpServers: @json($mcpServersForCanvas),
+            providers: @json($providers),
+            providerModels: @json($providerModels),
+            defaultProvider: @json(config('neuronai-studio.default_provider')),
+            defaultModel: @json(config('neuronai-studio.default_model')),
         };
     </script>
 

@@ -70,6 +70,9 @@ export default function WorkflowNode({ data, selected }) {
                 <span className="ab-flow-node-type">{data.nodeType}</span>
             </div>
             <div className="ab-flow-node-label">{data.label}</div>
+            {data.nodeType === 'llm' && data.config?.model && (
+                <div className="ab-flow-node-meta">{data.config.model}</div>
+            )}
             {data.nodeType === 'condition' && (
                 <div className="ab-flow-node-handles-labels">
                     <span className="ab-flow-handle-label ab-flow-handle-label-true">true</span>

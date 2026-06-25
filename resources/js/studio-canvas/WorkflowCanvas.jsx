@@ -36,7 +36,14 @@ import './canvas.css';
 const nodeTypes = { workflowNode: WorkflowNode };
 const edgeTypes = { workflowEdge: WorkflowEdge };
 
-function WorkflowCanvasInner({ graph, nodeTypesMeta, onGraphChange, readOnly = false }) {
+function WorkflowCanvasInner({
+    graph,
+    nodeTypesMeta,
+    onGraphChange,
+    readOnly = false,
+    defaultProvider = '',
+    defaultModel = '',
+}) {
     const initialNodes = useMemo(() => toFlowNodes(graph?.nodes, nodeTypesMeta), []);
     const initialEdges = useMemo(() => toFlowEdges(graph?.edges), []);
     const initialViewport = graph?.viewport || { x: 0, y: 0, zoom: 1 };
@@ -226,7 +233,16 @@ function WorkflowCanvasInner({ graph, nodeTypesMeta, onGraphChange, readOnly = f
                 };
             }
 
-            const node = buildFlowNode(type, nodePosition, nodeTypesMeta);
+            const defaultConfig =
+                type === 'llm'
+                    ? {
+                          provider: defaultProvider,
+                          model: defaultModel,
+                          output_key: 'llm_response',
+                      }
+                    : {};
+
+            const node = buildFlowNode(type, nodePosition, nodeTypesMeta, defaultConfig);
             const nextNodes = [...currentNodes, node];
 
             setNodes(nextNodes);
@@ -237,7 +253,7 @@ function WorkflowCanvasInner({ graph, nodeTypesMeta, onGraphChange, readOnly = f
 
             syncSelection(node.id, nextNodes);
         },
-        [getEdges, getNodes, nodeTypesMeta, readOnly, setEdges, setNodes, syncSelection],
+        [getEdges, getNodes, nodeTypesMeta, readOnly, setEdges, setNodes, syncSelection, defaultProvider, defaultModel],
     );
 
     const updateNodeData = useCallback(
