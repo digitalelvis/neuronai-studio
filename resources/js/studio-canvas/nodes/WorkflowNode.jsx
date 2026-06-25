@@ -1,5 +1,8 @@
-import { Handle, Position } from '@xyflow/react';
+import { Handle, NodeToolbar, Position } from '@xyflow/react';
+import { Pencil } from 'lucide-react';
+import { useCanvasUi } from '../CanvasUiContext';
 import { categoryColor } from '../graph';
+import { dispatchNodeEdit } from '../inspector/nodeUtils';
 
 const ICONS = {
     play: '▶',
@@ -53,16 +56,34 @@ function NodeHandles({ nodeType }) {
     );
 }
 
-export default function WorkflowNode({ data, selected }) {
+export default function WorkflowNode({ id, data, selected }) {
+    const { readOnly } = useCanvasUi();
     const accent = categoryColor(data.category);
     const icon = ICONS[data.icon] || ICONS.circle;
     const executionClass = data.executionStatus ? ` ab-flow-node--${data.executionStatus}` : '';
+
+    const handleEdit = (event) => {
+        event.stopPropagation();
+        dispatchNodeEdit({ id, data });
+    };
 
     return (
         <div
             className={`ab-flow-node${selected ? ' selected' : ''}${executionClass}`}
             style={{ '--node-accent': accent }}
         >
+            {!readOnly && (
+                <NodeToolbar isVisible={selected} position={Position.Top} offset={8}>
+                    <button
+                        type="button"
+                        className="ab-flow-node-toolbar-btn"
+                        onClick={handleEdit}
+                        title="Edit node"
+                    >
+                        <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                </NodeToolbar>
+            )}
             <NodeHandles nodeType={data.nodeType} />
             <div className="ab-flow-node-accent" />
             <div className="ab-flow-node-header">

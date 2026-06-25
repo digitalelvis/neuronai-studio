@@ -13,8 +13,10 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
+import { CanvasUiProvider } from './CanvasUiContext';
 import WorkflowEdge from './edges/WorkflowEdge';
 import WorkflowNode from './nodes/WorkflowNode';
+import { dispatchNodeEdit } from './inspector/nodeUtils';
 import { useUndoRedo } from './hooks/useUndoRedo';
 import { layoutWithDagre } from './layout';
 import {
@@ -262,6 +264,7 @@ function WorkflowCanvasInner({
             }
 
             syncSelection(node.id, nextNodes);
+            dispatchNodeEdit(node);
         },
         [getEdges, getNodes, nodeTypesMeta, readOnly, setEdges, setNodes, syncSelection, defaultProvider, defaultModel],
     );
@@ -288,24 +291,27 @@ function WorkflowCanvasInner({
         [setNodes, syncSelection],
     );
 
-    const removeSelectedNode = useCallback(() => {
-        if (readOnly) {
-            return;
-        }
+    const removeSelectedNode = useCallback(
+        (nodeId = null) => {
+            if (readOnly) {
+                return;
+            }
 
-        const id = selectedNodeIdRef.current;
-        if (!id) {
-            return;
-        }
+            const id = nodeId ?? selectedNodeIdRef.current;
+            if (!id) {
+                return;
+            }
 
-        const node = getNodes().find((item) => item.id === id);
-        if (node && (node.data.nodeType === 'start' || node.data.nodeType === 'stop')) {
-            return;
-        }
+            const node = getNodes().find((item) => item.id === id);
+            if (node && (node.data.nodeType === 'start' || node.data.nodeType === 'stop')) {
+                return;
+            }
 
-        deleteElements({ nodes: [{ id }] });
-        syncSelection(null);
-    }, [deleteElements, getNodes, readOnly, syncSelection]);
+            deleteElements({ nodes: [{ id }] });
+            syncSelection(null);
+        },
+        [deleteElements, getNodes, readOnly, syncSelection],
+    );
 
     const autoLayout = useCallback(() => {
         setNodes((current) => {
@@ -344,7 +350,7 @@ function WorkflowCanvasInner({
                 updateNodeData(event.detail.id, event.detail.data || {});
             }
         };
-        const onRemoveNode = () => removeSelectedNode();
+        const onRemoveNode = (event) => removeSelectedNode(event.detail?.id);
         const onAutoLayout = () => {
             if (!readOnly) {
                 autoLayout();
@@ -409,6 +415,7 @@ function WorkflowCanvasInner({
     ]);
 
     return (
+        <CanvasUiProvider readOnly={readOnly}>
         <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -467,6 +474,7 @@ function WorkflowCanvasInner({
                 )}
             </Panel>
         </ReactFlow>
+        </CanvasUiProvider>
     );
 }
 

@@ -15,6 +15,7 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import WorkflowCanvas from './WorkflowCanvas';
 import InspectorPanel from './inspector/InspectorPanel';
+import NodeEditSheet from './inspector/NodeEditSheet';
 import ImportJsonDialog from './ImportJsonDialog';
 import { downloadWorkflowJson } from './graphJson';
 
@@ -33,6 +34,7 @@ export default function WorkflowEditorShell({ config }) {
                 window.__NEURONAI_CANVAS_CONFIG.workflowDescription = description;
                 window.__NEURONAI_CANVAS_CONFIG.workflowStatus = status;
             }
+            window.dispatchEvent(new CustomEvent('workflow-meta-changed'));
         };
         syncMeta();
     }, [name, description, status]);
@@ -49,10 +51,10 @@ export default function WorkflowEditorShell({ config }) {
             setValidationMessage(component.get('validationMessage') ?? '');
         }
     };
-    const handleExportPhp = () => callLivewire('exportWorkflow');
     const handleSave = () => window.dispatchEvent(new CustomEvent('workflow-canvas-save'));
     const handleOpenTest = () => window.dispatchEvent(new CustomEvent('workflow-open-test'));
     const handleOpenTraces = () => window.dispatchEvent(new CustomEvent('workflow-open-traces'));
+    const handleOpenCode = () => window.dispatchEvent(new CustomEvent('workflow-open-code'));
 
     const paletteTypes = Object.entries(config.nodeTypes || {}).filter(
         ([type]) => !['start', 'stop'].includes(type),
@@ -103,6 +105,9 @@ export default function WorkflowEditorShell({ config }) {
                         <Button variant="outline" size="sm" onClick={handleOpenTraces} disabled={!config.workflowId}>
                             Traces
                         </Button>
+                        <Button variant="outline" size="sm" onClick={handleOpenCode}>
+                            Code
+                        </Button>
                         <Button variant="outline" size="sm" onClick={() => downloadWorkflowJson(false)}>
                             <Download className="h-3.5 w-3.5" />
                             JSON
@@ -112,9 +117,6 @@ export default function WorkflowEditorShell({ config }) {
                                 <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
                                     <Upload className="h-3.5 w-3.5" />
                                     Import
-                                </Button>
-                                <Button variant="outline" size="sm" onClick={handleExportPhp}>
-                                    Export PHP
                                 </Button>
                                 <Button size="sm" onClick={handleSave}>
                                     <Save className="h-3.5 w-3.5" />
@@ -173,15 +175,8 @@ export default function WorkflowEditorShell({ config }) {
                     <ResizableHandle withHandle />
                     <ResizablePanel defaultSize={25} minSize={20} maxSize={42}>
                         <InspectorPanel
-                            agents={config.agents || []}
-                            tools={config.tools || []}
-                            mcpServers={config.mcpServers || []}
-                            providers={config.providers || {}}
-                            providerModels={config.providerModels || {}}
-                            defaultProvider={config.defaultProvider ?? ''}
-                            defaultModel={config.defaultModel ?? ''}
-                            readOnly={readOnly}
                             workflowConfig={{
+                                readOnly,
                                 workflowId: config.workflowId,
                                 streamUrl: config.streamUrl,
                                 resumeUrlTemplate: config.resumeUrlTemplate,
@@ -208,6 +203,17 @@ export default function WorkflowEditorShell({ config }) {
                 </div>
 
                 <ImportJsonDialog open={importOpen} onOpenChange={setImportOpen} />
+
+                <NodeEditSheet
+                    agents={config.agents || []}
+                    tools={config.tools || []}
+                    mcpServers={config.mcpServers || []}
+                    providers={config.providers || {}}
+                    providerModels={config.providerModels || {}}
+                    defaultProvider={config.defaultProvider ?? ''}
+                    defaultModel={config.defaultModel ?? ''}
+                    readOnly={readOnly}
+                />
             </div>
         </TooltipProvider>
     );

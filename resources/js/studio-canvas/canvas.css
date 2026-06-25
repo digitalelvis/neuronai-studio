@@ -333,3 +333,30 @@
 .ab-mb {
     margin-bottom: 1rem;
 }
+
+.ab-flow-node-toolbar-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    border: 1px solid var(--ab-border, #334155);
+    border-radius: 0.375rem;
+    background: var(--ab-surface, #1e293b);
+    color: var(--ab-text, #f1f5f9);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.ab-flow-node-toolbar-btn:hover {
+    background: var(--ab-muted-surface, #334155);
+    border-color: var(--node-accent, #6366f1);
+    color: var(--node-accent, #6366f1);
+}
+
+.ab-flow-node-toolbar-btn:focus-visible {
+    outline: 2px solid var(--node-accent, #6366f1);
+    outline-offset: 2px;
+}
