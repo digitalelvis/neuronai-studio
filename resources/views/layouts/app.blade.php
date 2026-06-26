@@ -59,12 +59,12 @@
             </header>
             <div class="studio-content {{ ($contentFlush ?? false) ? 'studio-content--flush' : '' }}">
                 @if (session('success'))
-                    <div class="mb-4">
+                    <div @class([($contentFlush ?? false) ? 'studio-flash' : 'mb-4'])>
                         <x-neuronai-studio::ui.alert variant="success">{{ session('success') }}</x-neuronai-studio::ui.alert>
                     </div>
                 @endif
                 @if (session('error'))
-                    <div class="mb-4">
+                    <div @class([($contentFlush ?? false) ? 'studio-flash' : 'mb-4'])>
                         <x-neuronai-studio::ui.alert variant="error">{{ session('error') }}</x-neuronai-studio::ui.alert>
                     </div>
                 @endif

@@ -104,8 +104,12 @@
     @apply min-h-0 overflow-hidden p-0;
 }
 
-.studio-content--flush > * {
+.studio-content--flush > .studio-product-root {
     @apply flex min-h-0 flex-1 flex-col;
+}
+
+.studio-flash {
+    @apply shrink-0 px-4 pt-4;
 }
 
 .studio-product-root {
