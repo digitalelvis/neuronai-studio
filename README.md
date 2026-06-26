@@ -88,6 +88,18 @@ Credentials are read from `config/neuron.php` — no duplicate API key configura
 
 See [examples/demo-app](examples/demo-app) for a Laravel 12 demo installation.
 
+## Contributing & Releases
+
+This project uses release-branch git-flow with automated versioning:
+
+- **Development** happens on `v0.0.x` (feature/fix PRs target this branch).
+- **Production** is `main` — merges from `v0.0.x` or `hotfix/*` only.
+- **Commits** must follow [Conventional Commits](https://conventionalcommits.org) (`feat(scope):`, `fix(scope):`, etc.).
+- **Releases** are automated on merge to `main` via `release-it` (changelog, Git tag, GitHub Release).
+- **Packagist** publishes from Git tags (`composer require elvislopesdigital/neuronai-studio`).
+
+See [docs/RELEASE.md](docs/RELEASE.md) for the full release guide, hotfix process, and bootstrap steps.
+
 ## License
 
 MIT

@@ -11,14 +11,24 @@ description: Git branch and commit conventions and governance
 
 ### Core Branches
 
-- **`main`**: **Production-Ready.** A clean mirror of the current published package on NPM. Only merges from release branches (`vX.Y.x`) or `hotfix/` are permitted. Each merge must be tagged with a version.
-- **`vX.Y.x` (Development Main-lines)**: These function as the "develop" branches for specific release series (e.g., `v1.0.x`, `v1.1.x`). They are the primary targets for all new features and improvements within that version's scope.
+- **`main`**: **Production-Ready.** A clean mirror of the current published package on Packagist. Only merges from release branches (`vX.Y.x`) or `hotfix/` are permitted. Each merge is tagged automatically via `release-it` on GitHub Actions.
+- **`vX.Y.x` (Development Main-lines)**: These function as the "develop" branches for specific release series (e.g., `v0.0.x`, `v1.0.x`). They are the primary targets for all new features and improvements within that version's scope.
 
 ### Supporting Branches (Ephemeral)
 
 - **`feat/`**: Branched from a specific `vX.Y.x`. Must be atomic and focused. Returns to the same `vX.Y.x` via Pull Request.
 - **`fix/`**: Branched from `vX.Y.x` to resolve bugs identified during the development cycle.
 - **`hotfix/`**: **Emergency only.** Branched directly from `main` to fix production errors. Must be merged back into `main` and simultaneously back-ported to all active `vX.Y.x` branches.
+
+### Release Flow
+
+1. Develop and merge PRs into the active `vX.Y.x` branch.
+2. When stable, open a release PR from `vX.Y.x` → `main`.
+3. Merge on `main` triggers the Release workflow: conventional commits since the last tag determine the semver bump, `CHANGELOG.md` is updated, a `vX.Y.Z` tag is created, and a GitHub Release is published.
+4. Packagist auto-updates from the new Git tag.
+5. Back-merge `main` → `vX.Y.x` to sync `CHANGELOG.md` and release metadata.
+
+See [docs/RELEASE.md](docs/RELEASE.md) for the operational guide.
 
 ---
 

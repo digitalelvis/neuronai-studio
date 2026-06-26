@@ -1,0 +1,23 @@
+{
+    "git": {
+        "commit": true,
+        "commitMessage": "chore(release): ${version} [skip ci]",
+        "tag": true,
+        "tagName": "v${version}",
+        "push": true,
+        "requireCommits": true,
+        "requireCommitsFail": false
+    },
+    "github": {
+        "release": true
+    },
+    "npm": {
+        "publish": false
+    },
+    "plugins": {
+        "@release-it/conventional-changelog": {
+            "preset": "angular",
+            "infile": "CHANGELOG.md"
+        }
+    }
+}
