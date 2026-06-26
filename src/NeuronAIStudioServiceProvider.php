@@ -2,6 +2,8 @@
 
 namespace ElvisLopesDigital\NeuronAIStudio;
 
+use ElvisLopesDigital\NeuronAIStudio\Commands\EvalSuiteCommand;
+use ElvisLopesDigital\NeuronAIStudio\Commands\EvaluationsCommand;
 use ElvisLopesDigital\NeuronAIStudio\Commands\ExportCommand;
 use ElvisLopesDigital\NeuronAIStudio\Commands\InstallCommand;
 use ElvisLopesDigital\NeuronAIStudio\Commands\MakeToolCommand;
@@ -99,6 +101,14 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
             ], 'neuronai-studio-views');
 
             $this->publishes([
+                __DIR__.'/../stubs/evaluation.php.stub' => base_path('evaluation.php'),
+            ], 'neuronai-studio-evaluation');
+
+            $this->publishes([
+                __DIR__.'/../stubs/evaluator.stub' => app_path('Evaluators/ExampleAgentEvaluator.php'),
+            ], 'neuronai-studio-evaluator');
+
+            $this->publishes([
                 __DIR__.'/../resources/css' => public_path('vendor/neuronai-studio/css'),
                 __DIR__.'/../resources/js/canvas' => public_path('vendor/neuronai-studio/js/canvas'),
                 __DIR__.'/../resources/js/dist' => public_path('vendor/neuronai-studio/js/dist'),
@@ -175,6 +185,10 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
         Livewire::component('neuronai-studio.workflows.editor', Http\Livewire\Workflows\Editor::class);
         Livewire::component('neuronai-studio.workflows.traces', Http\Livewire\Workflows\Traces::class);
         Livewire::component('neuronai-studio.workflows.trace-detail', Http\Livewire\Workflows\TraceDetail::class);
+        Livewire::component('neuronai-studio.agents.evals.index', Http\Livewire\Agents\Evals\Index::class);
+        Livewire::component('neuronai-studio.agents.evals.edit', Http\Livewire\Agents\Evals\Edit::class);
+        Livewire::component('neuronai-studio.agents.evals.runs', Http\Livewire\Agents\Evals\Runs::class);
+        Livewire::component('neuronai-studio.agents.evals.run-detail', Http\Livewire\Agents\Evals\RunDetail::class);
         Livewire::component('neuronai-studio.templates.index', Http\Livewire\Templates\Index::class);
     }
 
@@ -185,6 +199,8 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
                 InstallCommand::class,
                 ExportCommand::class,
                 MakeToolCommand::class,
+                EvaluationsCommand::class,
+                EvalSuiteCommand::class,
             ]);
         }
     }

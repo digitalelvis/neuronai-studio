@@ -1,0 +1,37 @@
+<?php
+
+namespace App\Evaluators;
+
+use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\AgentRunner;
+use NeuronAI\Evaluation\Assertions\StringContains;
+use NeuronAI\Evaluation\BaseEvaluator;
+use NeuronAI\Evaluation\Contracts\DatasetInterface;
+use NeuronAI\Evaluation\Dataset\JsonDataset;
+
+class ExampleAgentEvaluator extends BaseEvaluator
+{
+    private AgentDefinition $agent;
+
+    public function setUp(): void
+    {
+        $this->agent = AgentDefinition::where('slug', 'support-assistant')->firstOrFail();
+    }
+
+    public function getDataset(): DatasetInterface
+    {
+        return new JsonDataset(__DIR__.'/datasets/example.json');
+    }
+
+    public function run(array $datasetItem): mixed
+    {
+        return app(AgentRunner::class)
+            ->run($this->agent, (string) $datasetItem['input'])
+            ->content;
+    }
+
+    public function evaluate(mixed $output, array $datasetItem): void
+    {
+        $this->assert(new StringContains($datasetItem['reference']), $output);
+    }
+}

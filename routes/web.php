@@ -34,6 +34,11 @@ Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
             Route::get('/create', Edit::class)->name('create');
             Route::get('/{agent}/edit', Edit::class)->name('edit');
             Route::get('/{agent}/playground', Playground::class)->name('playground');
+            Route::get('/{agent}/evals', \ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Evals\Index::class)->name('evals.index');
+            Route::get('/{agent}/evals/create', \ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Evals\Edit::class)->name('evals.create');
+            Route::get('/{agent}/evals/{suite}/edit', \ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Evals\Edit::class)->name('evals.edit');
+            Route::get('/{agent}/evals/{suite}/runs', \ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Evals\Runs::class)->name('evals.runs');
+            Route::get('/eval-runs/{run}', \ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Evals\RunDetail::class)->name('eval-runs.show');
             Route::get('/{agent}/chat/threads/{thread}', AgentChatThreadController::class)->name('chat.threads.show');
             Route::match(['GET', 'POST'], '/{agent}/chat/stream', AgentChatStreamController::class)->name('chat.stream');
         });

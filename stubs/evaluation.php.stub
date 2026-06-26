@@ -1,0 +1,11 @@
+<?php
+
+use NeuronAI\Evaluation\Output\ConsoleOutput;
+use NeuronAI\Evaluation\Output\JsonOutput;
+
+return [
+    'output' => [
+        ConsoleOutput::class => ['verbose' => true],
+        JsonOutput::class => ['path' => 'storage/evaluation-results.json'],
+    ],
+];

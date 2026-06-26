@@ -27,6 +27,7 @@
                             <x-neuronai-studio::ui.table-cell>{{ $agent->model }}</x-neuronai-studio::ui.table-cell>
                             <x-neuronai-studio::ui.table-cell>
                                 <div class="studio-table-row-actions">
+                                    <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.agents.evals.index', $agent)">Evals</x-neuronai-studio::ui.button>
                                     <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.agents.playground', $agent)">Playground</x-neuronai-studio::ui.button>
                                     <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.agents.edit', $agent)">Edit</x-neuronai-studio::ui.button>
                                     <x-neuronai-studio::ui.button variant="ghost" size="sm" wire:click="delete({{ $agent->id }})" wire:confirm="Delete this agent?" class="text-destructive hover:text-destructive">Delete</x-neuronai-studio::ui.button>

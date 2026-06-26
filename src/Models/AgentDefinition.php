@@ -44,4 +44,9 @@ class AgentDefinition extends Model
     {
         return $this->hasMany(AgentMcpServer::class);
     }
+
+    public function evalSuites(): HasMany
+    {
+        return $this->hasMany(EvalSuite::class);
+    }
 }
