@@ -24,7 +24,7 @@ class Index extends Component
     public function render()
     {
         return view('neuronai-studio::livewire.agents.evals.index', [
-            'suites' => $this->agent->evalSuites()->latest()->get(),
+            'suites' => $this->agent->evalSuites()->with('judgeAgent')->latest()->get(),
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
             breadcrumbs: [
                 ['label' => 'Agents', 'url' => route('neuronai-studio.agents.index')],

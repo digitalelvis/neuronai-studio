@@ -86,7 +86,7 @@ php artisan neuronai-studio:eval 1 --fake
 | Argument / Option | Description |
 |-------------------|-------------|
 | `{suite}` | Eval suite ID or slug |
-| `--fake` | Use `FakeAIProvider` for deterministic runs (CI) |
+| `--fake` | Use `FakeAIProvider` for the agent under test only (judge still uses real provider) |
 
 Exit code is non-zero when any case fails. Results are persisted to `eval_runs` and `eval_run_items`.
 

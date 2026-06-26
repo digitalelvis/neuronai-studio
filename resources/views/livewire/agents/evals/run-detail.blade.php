@@ -1,6 +1,6 @@
 <x-neuronai-studio::ui.page>
     <x-neuronai-studio::ui.card class="mb-4">
-        <x-neuronai-studio::ui.card-content class="grid gap-4 pt-4 md:grid-cols-4">
+        <x-neuronai-studio::ui.card-content class="grid gap-4 pt-4 md:grid-cols-2 lg:grid-cols-5">
             <div>
                 <div class="text-sm text-muted-foreground">Status</div>
                 <div class="font-medium">{{ $run->status }}</div>
@@ -17,6 +17,17 @@
                 <div class="text-sm text-muted-foreground">Duration</div>
                 <div class="font-medium">{{ $run->total_time_ms }}ms</div>
             </div>
+            <div>
+                <div class="text-sm text-muted-foreground">Judge</div>
+                <div class="font-medium">
+                    @if ($run->judgeAgent)
+                        {{ $run->judgeAgent->name }}
+                        <div class="text-xs text-muted-foreground">{{ $run->judge_provider }} / {{ $run->judge_model }}</div>
+                    @else
+                        —
+                    @endif
+                </div>
+            </div>
         </x-neuronai-studio::ui.card-content>
     </x-neuronai-studio::ui.card>
 
@@ -27,6 +38,7 @@
                     <x-neuronai-studio::ui.table-header>#</x-neuronai-studio::ui.table-header>
                     <x-neuronai-studio::ui.table-header>Input</x-neuronai-studio::ui.table-header>
                     <x-neuronai-studio::ui.table-header>Result</x-neuronai-studio::ui.table-header>
+                    <x-neuronai-studio::ui.table-header>Scores</x-neuronai-studio::ui.table-header>
                     <x-neuronai-studio::ui.table-header>Output</x-neuronai-studio::ui.table-header>
                     <x-neuronai-studio::ui.table-header>Time</x-neuronai-studio::ui.table-header>
                 </tr>
@@ -51,6 +63,17 @@
                                         <li>{{ $failure['description'] ?? $failure['message'] ?? 'Assertion failed' }}</li>
                                     @endforeach
                                 </ul>
+                            @endif
+                        </x-neuronai-studio::ui.table-cell>
+                        <x-neuronai-studio::ui.table-cell>
+                            @if (! empty($item->scores))
+                                <div class="flex flex-wrap gap-1">
+                                    @foreach ($item->scores as $score)
+                                        <x-neuronai-studio::ui.badge variant="outline">{{ number_format((float) $score * 100, 0) }}%</x-neuronai-studio::ui.badge>
+                                    @endforeach
+                                </div>
+                            @else
+                                <span class="text-sm text-muted-foreground">—</span>
                             @endif
                         </x-neuronai-studio::ui.table-cell>
                         <x-neuronai-studio::ui.table-cell>

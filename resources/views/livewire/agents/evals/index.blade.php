@@ -10,6 +10,7 @@
                     <tr>
                         <x-neuronai-studio::ui.table-header>Name</x-neuronai-studio::ui.table-header>
                         <x-neuronai-studio::ui.table-header>Cases</x-neuronai-studio::ui.table-header>
+                        <x-neuronai-studio::ui.table-header>Judge</x-neuronai-studio::ui.table-header>
                         <x-neuronai-studio::ui.table-header>Last Updated</x-neuronai-studio::ui.table-header>
                         <x-neuronai-studio::ui.table-header></x-neuronai-studio::ui.table-header>
                     </tr>
@@ -22,6 +23,13 @@
                                 <div class="text-sm text-muted-foreground"><code>{{ $suite->slug }}</code></div>
                             </x-neuronai-studio::ui.table-cell>
                             <x-neuronai-studio::ui.table-cell>{{ count($suite->dataset ?? []) }}</x-neuronai-studio::ui.table-cell>
+                            <x-neuronai-studio::ui.table-cell>
+                                @if ($suite->judgeAgent)
+                                    <x-neuronai-studio::ui.badge variant="secondary">{{ $suite->judgeAgent->name }}</x-neuronai-studio::ui.badge>
+                                @else
+                                    <span class="text-sm text-muted-foreground">—</span>
+                                @endif
+                            </x-neuronai-studio::ui.table-cell>
                             <x-neuronai-studio::ui.table-cell>{{ $suite->updated_at?->diffForHumans() }}</x-neuronai-studio::ui.table-cell>
                             <x-neuronai-studio::ui.table-cell>
                                 <div class="studio-table-row-actions">

@@ -12,7 +12,7 @@ class RunDetail extends Component
 
     public function mount(EvalRun $run): void
     {
-        $this->run = $run->load(['suite', 'agentDefinition', 'items']);
+        $this->run = $run->load(['suite', 'agentDefinition', 'judgeAgent', 'items']);
     }
 
     public function render()

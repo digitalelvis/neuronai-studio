@@ -14,6 +14,7 @@ class EvalSuite extends Model
 
     protected $fillable = [
         'agent_definition_id',
+        'judge_agent_definition_id',
         'name',
         'slug',
         'dataset',
@@ -49,6 +50,11 @@ class EvalSuite extends Model
     public function agentDefinition(): BelongsTo
     {
         return $this->belongsTo(AgentDefinition::class, 'agent_definition_id');
+    }
+
+    public function judgeAgent(): BelongsTo
+    {
+        return $this->belongsTo(AgentDefinition::class, 'judge_agent_definition_id');
     }
 
     public function runs(): HasMany

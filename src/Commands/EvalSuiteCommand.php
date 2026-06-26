@@ -6,17 +6,13 @@ use ElvisLopesDigital\NeuronAIStudio\Evaluation\EloquentEvaluationOutput;
 use ElvisLopesDigital\NeuronAIStudio\Evaluation\SuiteEvaluator;
 use ElvisLopesDigital\NeuronAIStudio\Models\EvalRun;
 use ElvisLopesDigital\NeuronAIStudio\Models\EvalSuite;
-use ElvisLopesDigital\NeuronAIStudio\Registry\ProviderRegistry;
 use Illuminate\Console\Command;
-use NeuronAI\Chat\Messages\AssistantMessage;
 use NeuronAI\Evaluation\Runner\EvaluatorRunner;
-use NeuronAI\Providers\AIProviderInterface;
-use NeuronAI\Testing\FakeAIProvider;
 use Throwable;
 
 class EvalSuiteCommand extends Command
 {
-    protected $signature = 'neuronai-studio:eval {suite : Eval suite ID or slug} {--fake : Use FakeAIProvider for deterministic runs}';
+    protected $signature = 'neuronai-studio:eval {suite : Eval suite ID or slug} {--fake : Use FakeAIProvider for the agent under test only}';
 
     protected $description = 'Run an eval suite stored in the database';
 
@@ -30,10 +26,12 @@ class EvalSuiteCommand extends Command
             return self::FAILURE;
         }
 
-        $suite->loadMissing('agentDefinition');
+        $suite->loadMissing(['agentDefinition', 'judgeAgent']);
 
-        if ($this->option('fake')) {
-            $this->bindFakeProvider();
+        if (SuiteEvaluator::datasetRequiresJudge($suite->dataset ?? []) && $suite->judge_agent_definition_id === null) {
+            $this->error('This suite uses AI judge assertions but has no judge agent configured.');
+
+            return self::FAILURE;
         }
 
         $agent = $suite->agentDefinition;
@@ -44,11 +42,17 @@ class EvalSuiteCommand extends Command
             'status' => 'running',
             'provider' => $agent->provider,
             'model' => $agent->model,
+            'judge_agent_definition_id' => $suite->judge_agent_definition_id,
+            'judge_provider' => $suite->judgeAgent?->provider,
+            'judge_model' => $suite->judgeAgent?->model,
             'started_at' => now(),
         ]);
 
         try {
-            $summary = (new EvaluatorRunner)->run(new SuiteEvaluator($suite));
+            $summary = (new EvaluatorRunner)->run(new SuiteEvaluator(
+                $suite,
+                fakeAgentProvider: (bool) $this->option('fake'),
+            ));
 
             (new EloquentEvaluationOutput($run))->output($summary);
 
@@ -76,18 +80,5 @@ class EvalSuiteCommand extends Command
         }
 
         return EvalSuite::query()->where('slug', $identifier)->first();
-    }
-
-    protected function bindFakeProvider(): void
-    {
-        $this->app->singleton(ProviderRegistry::class, function () {
-            return new class extends ProviderRegistry
-            {
-                public function resolve(string $provider, ?string $model = null, array $parameters = []): AIProviderInterface
-                {
-                    return new FakeAIProvider(new AssistantMessage('Eval fake response'));
-                }
-            };
-        });
     }
 }

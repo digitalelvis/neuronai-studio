@@ -34,6 +34,7 @@ erDiagram
     workflow_traces ||--o{ workflow_trace_steps : contains
     agent_definitions ||--o{ chat_messages : threads
     agent_definitions ||--o{ eval_suites : has
+    agent_definitions ||--o{ eval_suites : judges
     eval_suites ||--o{ eval_runs : produces
     eval_runs ||--o{ eval_run_items : contains
 ```
@@ -59,16 +60,18 @@ erDiagram
 
 ### eval_suites
 
-- `agent_definition_id` — linked agent
+- `agent_definition_id` — agent under test
+- `judge_agent_definition_id` — optional Studio agent used as AI judge
 - `slug` — unique per agent
-- `dataset` — JSON array of test cases (`input`, `reference`, `_assertions`, `tool`)
-- `judge_config` — optional AI judge provider/model/instructions
+- `dataset` — JSON array of test cases (`input`, `reference`, `context`, `_assertions`, `tool`)
+- `judge_config` — deprecated inline judge provider/model/instructions (prefer `judge_agent_definition_id`)
 
 ### eval_runs
 
 - `status` — running, completed, failed
 - `passed_count`, `failed_count`, `success_rate` — aggregated from `EvaluatorSummary`
-- `provider`, `model` — snapshot at run time
+- `provider`, `model` — snapshot of agent under test at run time
+- `judge_agent_definition_id`, `judge_provider`, `judge_model` — snapshot of judge agent at run time
 
 ### eval_run_items
 

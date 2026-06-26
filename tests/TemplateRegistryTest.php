@@ -11,11 +11,16 @@ class TemplateRegistryTest extends TestCase
         $registry = app(TemplateRegistry::class);
         $templates = $registry->all();
 
-        $this->assertCount(6, $templates);
+        $this->assertCount(11, $templates);
 
         $ids = collect($templates)->map(fn (array $entry) => $entry['type'].':'.$entry['id'])->sort()->values()->all();
 
         $this->assertSame([
+            'agent:eval-judge-correctness',
+            'agent:eval-judge-faithfulness',
+            'agent:eval-judge-general',
+            'agent:eval-judge-helpfulness',
+            'agent:eval-judge-relevance',
             'agent:intent-classifier',
             'agent:knowledge-agent',
             'agent:support-assistant',
@@ -29,7 +34,7 @@ class TemplateRegistryTest extends TestCase
     {
         $registry = app(TemplateRegistry::class);
 
-        $this->assertCount(3, $registry->all('agent'));
+        $this->assertCount(8, $registry->all('agent'));
         $this->assertCount(3, $registry->all('workflow'));
         $this->assertCount(1, $registry->all('workflow', 'basic'));
         $this->assertCount(1, $registry->all('workflow', 'intermediate'));

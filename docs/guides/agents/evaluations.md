@@ -194,21 +194,56 @@ Studio suites store a JSON array of test cases. Each item supports these fields:
 | `contains_any` | `values` | `StringContainsAny` |
 | `contains_all` | `values` | `StringContainsAll` |
 | `regex`, `matches_regex` | `pattern` | `MatchesRegex` |
-| `correctness` | `expected`, `threshold` | `CorrectnessJudge` (requires `judge_config`) |
+| `correctness` | `expected`, `threshold?` | `CorrectnessJudge` |
+| `faithfulness` | `context`, `threshold?` | `FaithfulnessJudge` |
+| `relevance` | `question?`, `threshold?` | `RelevanceJudge` |
+| `helpfulness` | `threshold?` | `HelpfulnessJudge` |
+| `criteria` | `criteria`, `threshold?`, `reference?`, `examples?` | `AgentJudge` |
 
-### AI judge configuration
+Judge assertion types require a **Judge Agent** on the eval suite (configured in the UI or via `judge_agent_definition_id`).
 
-For `correctness` assertions, set `judge_config` on the eval suite (via database or seeder):
+### Judge agent configuration
+
+1. Open **Templates** and install an agent from the `eval-judge` category (`eval-judge-correctness`, `eval-judge-faithfulness`, etc.)
+2. In the eval suite editor, select that agent as **Judge Agent**
+3. Add judge assertions to your dataset `_assertions`
+
+Example with multiple judge types:
+
+```json
+[
+  {
+    "input": "What are your hours?",
+    "_assertions": [
+      { "type": "relevance", "threshold": 0.8 },
+      { "type": "correctness", "expected": "9am-5pm weekdays", "threshold": 0.7 }
+    ]
+  },
+  {
+    "input": "Summarize the return policy",
+    "context": "Returns accepted within 30 days.",
+    "_assertions": [
+      { "type": "faithfulness", "context": "Returns accepted within 30 days." }
+    ]
+  }
+]
+```
+
+### Legacy `judge_config` (deprecated)
+
+The inline `judge_config` JSON column is still supported for backward compatibility but deprecated in favor of selecting a Studio agent:
 
 ```json
 {
   "provider": "openai",
   "model": "gpt-4o-mini",
-  "instructions": "You are an expert evaluator for customer support responses."
+  "instructions": "You are an expert evaluator."
 }
 ```
 
-AI judges consume additional API calls. Use them for live evals, not CI smoke tests.
+You can also reference a Studio agent via `"agent_id": 1` in `judge_config`.
+
+AI judges consume additional API calls. Use them for live evals, not CI smoke tests. The `--fake` flag only fakes the **agent under test**; the judge always uses the real provider.
 
 ## CLI commands
 
@@ -223,7 +258,7 @@ php artisan neuronai-studio:eval support-basic --fake
 | Option | Description |
 |--------|-------------|
 | `{suite}` | Suite ID or slug |
-| `--fake` | Use `FakeAIProvider` for deterministic output (CI) |
+| `--fake` | Use `FakeAIProvider` for the agent under test only (judge still uses real provider) |
 
 Exit code is non-zero when any case fails.
 

@@ -14,6 +14,18 @@ class Index extends Component
 
     public string $complexityFilter = 'all';
 
+    public string $categoryFilter = 'all';
+
+    public function mount(): void
+    {
+        $category = request()->query('category');
+
+        if (is_string($category) && $category !== '') {
+            $this->categoryFilter = $category;
+            $this->typeFilter = 'agent';
+        }
+    }
+
     public function updatedTypeFilter(): void
     {
         if ($this->typeFilter !== 'workflow') {
@@ -63,8 +75,17 @@ class Index extends Component
 
         $type = $this->typeFilter === 'all' ? null : $this->typeFilter;
 
+        $templates = $registry->all($type, $complexity);
+
+        if ($this->categoryFilter !== 'all') {
+            $templates = array_values(array_filter(
+                $templates,
+                fn (array $template) => ($template['category'] ?? '') === $this->categoryFilter,
+            ));
+        }
+
         return view('neuronai-studio::livewire.templates.index', [
-            'templates' => $registry->all($type, $complexity),
+            'templates' => $templates,
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
             breadcrumbs: [['label' => 'Templates']],
             title: 'Templates',

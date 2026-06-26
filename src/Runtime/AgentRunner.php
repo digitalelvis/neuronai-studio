@@ -9,8 +9,10 @@ use ElvisLopesDigital\NeuronAIStudio\Support\PlaygroundContext;
 use ElvisLopesDigital\NeuronAIStudio\Support\ProviderParameters;
 use Illuminate\Support\Str;
 use Generator;
+use NeuronAI\Chat\Messages\AssistantMessage;
 use NeuronAI\Chat\Messages\Stream\Chunks\StreamChunk;
 use NeuronAI\Chat\Messages\UserMessage;
+use NeuronAI\Testing\FakeAIProvider;
 
 class AgentRunner
 {
@@ -22,7 +24,7 @@ class AgentRunner
         protected MessageFactory $messages,
     ) {}
 
-    public function run(AgentDefinition $definition, string $message): AgentRunResult
+    public function run(AgentDefinition $definition, string $message, bool $fake = false): AgentRunResult
     {
         $definition->loadMissing('mcpBindings');
 
@@ -31,7 +33,19 @@ class AgentRunner
             'model' => $definition->model,
             'instructions' => $definition->instructions,
             'tools' => $definition->tools ?? [],
-        ], $message, $definition);
+        ], $message, $definition, fake: $fake);
+    }
+
+    public function resolveAgent(AgentDefinition $definition): DynamicAgent
+    {
+        $definition->loadMissing('mcpBindings');
+
+        return $this->makeAgent($definition, [
+            'provider' => $definition->provider,
+            'model' => $definition->model,
+            'instructions' => $definition->instructions,
+            'tools' => $definition->tools ?? [],
+        ]);
     }
 
     /** @param  array<string, mixed>  $payload */
@@ -58,9 +72,9 @@ class AgentRunner
         }
     }
 
-    public function runInline(array $config, string|UserMessage $message, ?AgentDefinition $definition = null, ?string $threadKey = null): AgentRunResult
+    public function runInline(array $config, string|UserMessage $message, ?AgentDefinition $definition = null, ?string $threadKey = null, bool $fake = false): AgentRunResult
     {
-        $agent = $this->makeAgent($definition, $config, $threadKey);
+        $agent = $this->makeAgent($definition, $config, $threadKey, $fake);
         $userMessage = $message instanceof UserMessage ? $message : new UserMessage($message);
         $handler = $agent->chat($userMessage);
         $content = $handler->getMessage()->getContent();
@@ -95,16 +109,20 @@ class AgentRunner
     }
 
     /** @param  array<string, mixed>  $config */
-    protected function makeAgent(?AgentDefinition $definition, array $config, ?string $threadKey = null): DynamicAgent
+    protected function makeAgent(?AgentDefinition $definition, array $config, ?string $threadKey = null, bool $fake = false): DynamicAgent
     {
-        $provider = $this->providers->resolve(
-            $config['provider'] ?? config('neuronai-studio.default_provider'),
-            $config['model'] ?? config('neuronai-studio.default_model'),
-            ProviderParameters::normalize(
-                (string) ($config['provider'] ?? config('neuronai-studio.default_provider')),
-                is_array($config['parameters'] ?? null) ? $config['parameters'] : [],
-            ),
-        );
+        if ($fake) {
+            $provider = new FakeAIProvider(new AssistantMessage('Eval fake response'));
+        } else {
+            $provider = $this->providers->resolve(
+                $config['provider'] ?? config('neuronai-studio.default_provider'),
+                $config['model'] ?? config('neuronai-studio.default_model'),
+                ProviderParameters::normalize(
+                    (string) ($config['provider'] ?? config('neuronai-studio.default_provider')),
+                    is_array($config['parameters'] ?? null) ? $config['parameters'] : [],
+                ),
+            );
+        }
 
         $tools = $this->toolResolver->resolveMany($config['tools'] ?? []);
 
