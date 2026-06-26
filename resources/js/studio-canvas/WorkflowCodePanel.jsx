@@ -6,6 +6,7 @@ import { exportWorkflowWithLivewire, previewWorkflowCodeWithLivewire } from './w
 export default function WorkflowCodePanel({ readOnly = false }) {
     const [code, setCode] = useState('');
     const [classLabel, setClassLabel] = useState('');
+    const [fileCount, setFileCount] = useState(0);
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const [exporting, setExporting] = useState(false);
@@ -32,6 +33,7 @@ export default function WorkflowCodePanel({ readOnly = false }) {
 
         setCode(result.code ?? '');
         setClassLabel(`${result.namespace}\\${result.className}`);
+        setFileCount(result.fileCount ?? 0);
     }, []);
 
     useEffect(() => {
@@ -83,6 +85,7 @@ export default function WorkflowCodePanel({ readOnly = false }) {
                 {classLabel && (
                     <span className="min-w-0 flex-1 truncate font-mono text-[11px] text-muted-foreground">
                         {classLabel}
+                        {fileCount > 0 ? ` · ${fileCount} files` : ''}
                     </span>
                 )}
                 <Button type="button" variant="outline" size="sm" onClick={refreshFromCanvas} disabled={loading}>

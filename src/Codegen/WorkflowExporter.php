@@ -3,69 +3,43 @@
 namespace ElvisLopesDigital\NeuronAIStudio\Codegen;
 
 use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
 
 class WorkflowExporter
 {
+    public function __construct(
+        protected NativeWorkflowExporter $nativeExporter,
+    ) {}
+
     public function preview(WorkflowDefinition $workflow): string
     {
-        $namespace = config('neuronai-studio.export_namespace', 'App\\Neuron');
-        $className = Str::studly($workflow->slug).'Workflow';
-
-        $meta = [
-            'name' => $workflow->name,
-            'description' => (string) ($workflow->description ?? ''),
-            'status' => $workflow->status,
-        ];
-
-        return str_replace(
-            ['{{ namespace }}', '{{ className }}', '{{ meta }}', '{{ graph }}'],
-            [
-                $namespace,
-                $className,
-                $this->exportArray($meta, 2),
-                $this->exportArray($workflow->graph ?? WorkflowDefinition::defaultGraph(), 2),
-            ],
-            file_get_contents(__DIR__.'/Stubs/studio-workflow.stub')
-        );
+        return $this->nativeExporter->preview($workflow);
     }
 
+    /** @return array<int, string> */
     public function export(WorkflowDefinition $workflow): array
     {
-        $path = config('neuronai-studio.export_path', app_path('Neuron'));
-        $className = Str::studly($workflow->slug).'Workflow';
-
-        File::ensureDirectoryExists($path);
-
-        $file = $path.'/'.$className.'.php';
-        File::put($file, $this->preview($workflow));
-
-        return [$file];
+        return $this->nativeExporter->export($workflow)['files'];
     }
 
-    protected function exportArray(array $data, int $indent = 0): string
+    /** @return array{files: array<int, string>, preview: string, className: string, namespace: string, fqcn: string} */
+    public function exportWithMeta(WorkflowDefinition $workflow): array
     {
-        $pad = str_repeat('    ', $indent);
-        $inner = str_repeat('    ', $indent + 1);
-        $lines = ["{$pad}["];
-
-        foreach ($data as $key => $value) {
-            $exportedKey = is_int($key) ? $key : var_export($key, true);
-            $lines[] = "{$inner}{$exportedKey} => ".$this->exportValue($value, $indent + 1).',';
-        }
-
-        $lines[] = "{$pad}]";
-
-        return implode("\n", $lines);
+        return $this->nativeExporter->export($workflow);
     }
 
-    protected function exportValue(mixed $value, int $indent): string
+    /**
+     * @return array{code: string, className: string, namespace: string, fqcn: string, fileCount: int}
+     */
+    public function previewMeta(WorkflowDefinition $workflow): array
     {
-        if (is_array($value)) {
-            return $this->exportArray($value, $indent);
-        }
+        $build = $this->nativeExporter->build($workflow);
 
-        return var_export($value, true);
+        return [
+            'code' => $build['preview'],
+            'className' => $build['className'],
+            'namespace' => $build['namespace'],
+            'fqcn' => $build['fqcn'],
+            'fileCount' => 1 + count($build['nodeFiles']) + count($build['eventFiles']),
+        ];
     }
 }

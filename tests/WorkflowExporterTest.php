@@ -7,7 +7,7 @@ use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
 
 class WorkflowExporterTest extends TestCase
 {
-    public function test_exports_studio_workflow_class_with_graph(): void
+    public function test_exports_native_workflow_files(): void
     {
         $exportPath = sys_get_temp_dir().'/neuron-workflow-export-'.uniqid();
         mkdir($exportPath, 0777, true);
@@ -25,21 +25,21 @@ class WorkflowExporterTest extends TestCase
             'source' => 'studio',
         ]);
 
-        $files = app(WorkflowExporter::class)->export($workflow);
+        $result = app(WorkflowExporter::class)->exportWithMeta($workflow);
 
-        $this->assertCount(1, $files);
-        $content = file_get_contents($files[0]);
+        $this->assertNotEmpty($result['files']);
+        $content = file_get_contents($result['files'][0]);
 
-        $this->assertStringContainsString('implements StudioWorkflow', $content);
-        $this->assertStringContainsString('studioGraph', $content);
-        $this->assertStringContainsString("'start_1'", $content);
-        $this->assertStringContainsString("'Atendimento'", $content);
+        $this->assertStringContainsString('extends Workflow', $content);
+        $this->assertStringContainsString('StudioGraph', $content);
+        $this->assertStringContainsString('Atendimento', $content);
+        $this->assertStringNotContainsString('implements StudioWorkflow', $content);
+        $this->assertStringNotContainsString('studioGraph()', $content);
 
-        @unlink($files[0]);
-        @rmdir($exportPath);
+        $this->cleanupExport($exportPath);
     }
 
-    public function test_preview_returns_studio_workflow_class_without_writing_file(): void
+    public function test_preview_meta_returns_native_code_without_writing(): void
     {
         config([
             'neuronai-studio.export_namespace' => 'App\\Neuron',
@@ -52,12 +52,29 @@ class WorkflowExporterTest extends TestCase
             'status' => 'draft',
         ]);
 
-        $content = app(WorkflowExporter::class)->preview($workflow);
+        $meta = app(WorkflowExporter::class)->previewMeta($workflow);
 
-        $this->assertStringContainsString('implements StudioWorkflow', $content);
-        $this->assertStringContainsString('studioGraph', $content);
-        $this->assertStringContainsString("'start_1'", $content);
-        $this->assertStringContainsString("'Atendimento'", $content);
-        $this->assertStringContainsString('class AtendimentoWorkflow', $content);
+        $this->assertStringContainsString('extends Workflow', $meta['code']);
+        $this->assertStringContainsString('class AtendimentoWorkflow', $meta['code']);
+        $this->assertSame('AtendimentoWorkflow', $meta['className']);
+        $this->assertGreaterThan(0, $meta['fileCount']);
+    }
+
+    protected function cleanupExport(string $exportPath): void
+    {
+        if (! is_dir($exportPath)) {
+            return;
+        }
+
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($exportPath, \FilesystemIterator::SKIP_DOTS),
+            \RecursiveIteratorIterator::CHILD_FIRST,
+        );
+
+        foreach ($iterator as $file) {
+            $file->isDir() ? @rmdir($file->getPathname()) : @unlink($file->getPathname());
+        }
+
+        @rmdir($exportPath);
     }
 }

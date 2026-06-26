@@ -2,6 +2,7 @@
 
 namespace ElvisLopesDigital\NeuronAIStudio\Codegen;
 
+use ElvisLopesDigital\NeuronAIStudio\Attributes\StudioGraphReader;
 use ElvisLopesDigital\NeuronAIStudio\Contracts\StudioWorkflow;
 use Illuminate\Support\Str;
 use NeuronAI\Workflow\Workflow;
@@ -9,6 +10,10 @@ use ReflectionClass;
 
 class WorkflowClassImporter
 {
+    public function __construct(
+        protected StudioGraphReader $studioGraphReader,
+    ) {}
+
     /** @return array<string, mixed>|null */
     public function fromClass(string $class): ?array
     {
@@ -26,15 +31,36 @@ class WorkflowClassImporter
             ];
         }
 
-        if (! in_array(StudioWorkflow::class, class_implements($class) ?: [], true)) {
-            if (is_subclass_of($class, Workflow::class)) {
+        $nativeGraph = $this->studioGraphReader->fromClass($class);
+
+        if ($nativeGraph !== null && is_subclass_of($class, Workflow::class)) {
+            if (empty($nativeGraph['graph']['nodes'])) {
                 return [
-                    'error' => 'This class uses the Neuron AI native Workflow format, which is not supported for studio preview. Export from the studio editor or implement StudioWorkflow with studioGraph().',
+                    'error' => 'StudioGraph attribute must contain a graph with a nodes key.',
                 ];
             }
 
             return [
-                'error' => 'Class does not implement StudioWorkflow. Add studioMeta() and studioGraph() methods.',
+                'class_path' => $class,
+                'name' => $nativeGraph['name'] !== ''
+                    ? $nativeGraph['name']
+                    : Str::headline(str_replace('Workflow', '', class_basename($class))),
+                'description' => $nativeGraph['description'],
+                'status' => $nativeGraph['status'] !== '' ? $nativeGraph['status'] : 'draft',
+                'graph' => $nativeGraph['graph'],
+                'format' => 'native',
+            ];
+        }
+
+        if (! in_array(StudioWorkflow::class, class_implements($class) ?: [], true)) {
+            if (is_subclass_of($class, Workflow::class)) {
+                return [
+                    'error' => 'This native Workflow class is missing the #[StudioGraph] attribute required for studio import.',
+                ];
+            }
+
+            return [
+                'error' => 'Class does not implement StudioWorkflow or extend Workflow with #[StudioGraph].',
             ];
         }
 
@@ -54,6 +80,7 @@ class WorkflowClassImporter
             'description' => (string) ($meta['description'] ?? ''),
             'status' => (string) ($meta['status'] ?? 'draft'),
             'graph' => $graph,
+            'format' => 'legacy',
         ];
     }
 
@@ -111,5 +138,12 @@ class WorkflowClassImporter
     public function hasError(array $result): bool
     {
         return isset($result['error']);
+    }
+
+    public function isNativeWorkflow(string $class): bool
+    {
+        return class_exists($class)
+            && is_subclass_of($class, Workflow::class)
+            && $this->studioGraphReader->fromClass($class) !== null;
     }
 }

@@ -2,13 +2,19 @@
 
 namespace ElvisLopesDigital\NeuronAIStudio\Registry;
 
+use ElvisLopesDigital\NeuronAIStudio\Attributes\StudioGraphReader;
 use ElvisLopesDigital\NeuronAIStudio\Contracts\StudioWorkflow;
 use Illuminate\Support\Str;
+use NeuronAI\Workflow\Workflow;
 use ReflectionClass;
 use Symfony\Component\Finder\Finder;
 
 class WorkflowRegistry
 {
+    public function __construct(
+        protected StudioGraphReader $studioGraphReader,
+    ) {}
+
     /** @return array<int, array{ref: string, label: string, source: string, description: string|null, class_path: string|null, json_path: string|null}> */
     public function codeEntries(): array
     {
@@ -51,11 +57,17 @@ class WorkflowRegistry
                     continue;
                 }
 
-                if (! in_array(StudioWorkflow::class, class_implements($class) ?: [], true)) {
+                $reflection = new ReflectionClass($class);
+
+                if ($reflection->isAbstract()) {
                     continue;
                 }
 
-                if ((new ReflectionClass($class))->isAbstract()) {
+                $implementsStudio = in_array(StudioWorkflow::class, class_implements($class) ?: [], true);
+                $hasNativeGraph = is_subclass_of($class, Workflow::class)
+                    && $this->studioGraphReader->fromClass($class) !== null;
+
+                if (! $implementsStudio && ! $hasNativeGraph) {
                     continue;
                 }
 
@@ -75,12 +87,22 @@ class WorkflowRegistry
 
         foreach ($this->scanWorkflowClasses() as $class) {
             $label = class_basename($class);
+            $description = null;
 
             try {
-                /** @var StudioWorkflow&class-string $class */
-                $meta = $class::studioMeta();
-                $label = (string) ($meta['name'] ?? Str::headline(str_replace('Workflow', '', $label)));
-                $description = (string) ($meta['description'] ?? '');
+                $nativeGraph = $this->studioGraphReader->fromClass($class);
+
+                if ($nativeGraph !== null) {
+                    $label = $nativeGraph['name'] !== ''
+                        ? $nativeGraph['name']
+                        : Str::headline(str_replace('Workflow', '', $label));
+                    $description = $nativeGraph['description'] !== '' ? $nativeGraph['description'] : null;
+                } elseif (in_array(StudioWorkflow::class, class_implements($class) ?: [], true)) {
+                    /** @var StudioWorkflow&class-string $class */
+                    $meta = $class::studioMeta();
+                    $label = (string) ($meta['name'] ?? Str::headline(str_replace('Workflow', '', $label)));
+                    $description = (string) ($meta['description'] ?? '');
+                }
             } catch (\Throwable) {
                 $description = null;
             }

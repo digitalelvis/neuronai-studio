@@ -2,46 +2,109 @@
 
 namespace ElvisLopesDigital\NeuronAIStudio\Tests;
 
+use ElvisLopesDigital\NeuronAIStudio\Attributes\StudioGraph;
 use ElvisLopesDigital\NeuronAIStudio\Codegen\WorkflowClassImporter;
 use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Tests\Fixtures\NativeNeuronWorkflow;
-use ElvisLopesDigital\NeuronAIStudio\Tests\Fixtures\SampleStudioWorkflow;
+use ElvisLopesDigital\NeuronAIStudio\Registry\WorkflowRegistry;
+use Illuminate\Support\Facades\File;
+use NeuronAI\Workflow\Workflow;
 
 class WorkflowClassImporterTest extends TestCase
 {
-    public function test_imports_studio_workflow_class(): void
+    public function test_imports_native_workflow_with_studio_graph_attribute(): void
     {
-        $result = app(WorkflowClassImporter::class)->fromClass(SampleStudioWorkflow::class);
+        $dir = app_path('Neuron/Workflows/ImporterNativeWorkflow');
+        File::ensureDirectoryExists($dir);
 
-        $this->assertNotNull($result);
-        $this->assertFalse(app(WorkflowClassImporter::class)->hasError($result));
-        $this->assertSame('Sample Workflow', $result['name']);
-        $this->assertArrayHasKey('set_1', collect($result['graph']['nodes'])->keyBy('id')->all());
-    }
-
-    public function test_rejects_native_neuron_workflow_with_friendly_error(): void
-    {
-        $result = app(WorkflowClassImporter::class)->fromClass(NativeNeuronWorkflow::class);
-
-        $this->assertTrue(app(WorkflowClassImporter::class)->hasError($result));
-        $this->assertStringContainsString('native Workflow format', $result['error']);
-    }
-
-    public function test_imports_json_file(): void
-    {
-        $path = sys_get_temp_dir().'/demo-workflow-'.uniqid().'.json';
         $graph = WorkflowDefinition::defaultGraph();
+        $graphExport = var_export($graph, true);
 
-        file_put_contents($path, json_encode([
-            'meta' => ['name' => 'JSON Workflow'],
-            'graph' => $graph,
-        ], JSON_THROW_ON_ERROR));
+        $classFile = $dir.'/ImporterNativeWorkflow.php';
+        File::put($classFile, <<<PHP
+<?php
 
-        $result = app(WorkflowClassImporter::class)->fromJsonFile($path);
+namespace App\\Neuron\\Workflows\\ImporterNativeWorkflow;
 
-        @unlink($path);
+use ElvisLopesDigital\\NeuronAIStudio\\Attributes\\StudioGraph;
+use NeuronAI\\Workflow\\Workflow;
 
-        $this->assertFalse(app(WorkflowClassImporter::class)->hasError($result));
-        $this->assertSame('JSON Workflow', $result['name']);
+#[StudioGraph(
+    name: 'Importer Native',
+    description: 'Native test',
+    status: 'draft',
+    graph: {$graphExport},
+)]
+class ImporterNativeWorkflow extends Workflow
+{
+    protected function nodes(): array
+    {
+        return [];
+    }
+}
+PHP);
+
+        require_once $classFile;
+
+        $imported = app(WorkflowClassImporter::class)->fromClass(
+            'App\\Neuron\\Workflows\\ImporterNativeWorkflow\\ImporterNativeWorkflow'
+        );
+
+        File::delete($classFile);
+        @rmdir($dir);
+
+        $this->assertFalse(app(WorkflowClassImporter::class)->hasError($imported));
+        $this->assertSame('Importer Native', $imported['name']);
+        $this->assertSame('native', $imported['format']);
+    }
+
+    public function test_registry_discovers_native_workflow_classes(): void
+    {
+        $dir = app_path('Neuron/Workflows/RegistryNativeWorkflow');
+        File::ensureDirectoryExists($dir);
+
+        $graph = WorkflowDefinition::defaultGraph();
+        $graphExport = var_export($graph, true);
+
+        $classFile = $dir.'/RegistryNativeWorkflow.php';
+        File::put($classFile, <<<PHP
+<?php
+
+namespace App\\Neuron\\Workflows\\RegistryNativeWorkflow;
+
+use ElvisLopesDigital\\NeuronAIStudio\\Attributes\\StudioGraph;
+use NeuronAI\\Workflow\\Workflow;
+
+#[StudioGraph(
+    name: 'Registry Native',
+    description: '',
+    status: 'draft',
+    graph: {$graphExport},
+)]
+class RegistryNativeWorkflow extends Workflow
+{
+    protected function nodes(): array
+    {
+        return [];
+    }
+}
+PHP);
+
+        require_once $classFile;
+
+        config([
+            'neuronai-studio.workflow_scan_paths' => [app_path('Neuron')],
+            'neuronai-studio.workflow_json_paths' => [],
+        ]);
+
+        $entries = app(WorkflowRegistry::class)->codeEntries();
+        $refs = collect($entries)->pluck('ref')->all();
+
+        File::delete($classFile);
+        @rmdir($dir);
+
+        $this->assertContains(
+            'class:App\\Neuron\\Workflows\\RegistryNativeWorkflow\\RegistryNativeWorkflow',
+            $refs
+        );
     }
 }

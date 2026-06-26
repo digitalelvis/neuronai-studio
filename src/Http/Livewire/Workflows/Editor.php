@@ -150,11 +150,13 @@ class Editor extends Component
             $this->save();
         }
 
-        $files = $exporter->export($this->workflow);
-        session()->flash('success', 'Exported '.count($files).' file(s).');
+        $result = $exporter->exportWithMeta($this->workflow);
+        $this->workflow->update(['class_path' => $result['fqcn']]);
+        $this->linkedClassPath = $result['fqcn'];
+        session()->flash('success', 'Exported '.count($result['files']).' native PHP file(s).');
     }
 
-    /** @return array{code: string, className: string, namespace: string} */
+    /** @return array{code: string, className: string, namespace: string, fqcn: string, fileCount: int} */
     public function previewWorkflowCode(
         array $graph,
         string $name,
@@ -162,23 +164,15 @@ class Editor extends Component
         string $status,
         WorkflowExporter $exporter,
     ): array {
-        $namespace = config('neuronai-studio.export_namespace', 'App\\Neuron');
-        $slug = Str::slug($name !== '' ? $name : 'workflow');
-        $className = Str::studly($slug).'Workflow';
-
         $workflow = WorkflowDefinition::make([
             'name' => $name !== '' ? $name : 'Workflow',
-            'slug' => $slug,
+            'slug' => Str::slug($name !== '' ? $name : 'workflow'),
             'description' => $description,
             'status' => $status !== '' ? $status : 'draft',
             'graph' => $graph,
         ]);
 
-        return [
-            'code' => $exporter->preview($workflow),
-            'className' => $className,
-            'namespace' => $namespace,
-        ];
+        return $exporter->previewMeta($workflow);
     }
 
     protected function mountFromCodeClass(string $class): void

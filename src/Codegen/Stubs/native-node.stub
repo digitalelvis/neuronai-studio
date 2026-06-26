@@ -1,0 +1,19 @@
+<?php
+
+namespace {{ namespace }};
+
+use NeuronAI\Workflow\Events\StartEvent;
+use NeuronAI\Workflow\Events\StopEvent;
+use NeuronAI\Workflow\Node;
+use NeuronAI\Workflow\WorkflowState;
+{{ extraImports }}
+
+class {{ className }} extends Node
+{
+    public const STUDIO_NODE_ID = '{{ nodeId }}';
+
+    public function __invoke({{ inputEvent }} $event, WorkflowState $state): {{ returnType }}
+    {
+{{ body }}
+    }
+}
