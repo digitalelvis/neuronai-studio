@@ -5,6 +5,8 @@ namespace ElvisLopesDigital\NeuronAIStudio\Runtime;
 use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
 use ElvisLopesDigital\NeuronAIStudio\Registry\ProviderRegistry;
 use ElvisLopesDigital\NeuronAIStudio\Support\ChatThreadKey;
+use ElvisLopesDigital\NeuronAIStudio\Support\PlaygroundContext;
+use ElvisLopesDigital\NeuronAIStudio\Support\ProviderParameters;
 use Illuminate\Support\Str;
 use Generator;
 use NeuronAI\Chat\Messages\Stream\Chunks\StreamChunk;
@@ -38,13 +40,9 @@ class AgentRunner
         $definition->loadMissing('mcpBindings');
 
         $threadKey = $this->resolveThreadKey($definition, $payload);
+        $config = $this->resolvePlaygroundConfig($definition, $payload);
 
-        $agent = $this->makeAgent($definition, [
-            'provider' => $definition->provider,
-            'model' => $definition->model,
-            'instructions' => $definition->instructions,
-            'tools' => $definition->tools ?? [],
-        ], $threadKey);
+        $agent = $this->makeAgent($definition, $config, $threadKey);
 
         $message = $this->messages->userMessage(
             (string) ($payload['message'] ?? ''),
@@ -71,12 +69,41 @@ class AgentRunner
         return new AgentRunResult($content, $events);
     }
 
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    protected function resolvePlaygroundConfig(AgentDefinition $definition, array $payload): array
+    {
+        $instructions = isset($payload['instructions']) && is_string($payload['instructions']) && $payload['instructions'] !== ''
+            ? $payload['instructions']
+            : (string) $definition->instructions;
+
+        $context = PlaygroundContext::normalize(
+            is_array($payload['context'] ?? null) ? $payload['context'] : null,
+        );
+
+        $parameters = is_array($payload['parameters'] ?? null) ? $payload['parameters'] : [];
+
+        return [
+            'provider' => $definition->provider,
+            'model' => $definition->model,
+            'instructions' => PlaygroundContext::augmentInstructions($instructions, $context),
+            'tools' => $definition->tools ?? [],
+            'parameters' => $parameters,
+        ];
+    }
+
     /** @param  array<string, mixed>  $config */
     protected function makeAgent(?AgentDefinition $definition, array $config, ?string $threadKey = null): DynamicAgent
     {
         $provider = $this->providers->resolve(
             $config['provider'] ?? config('neuronai-studio.default_provider'),
             $config['model'] ?? config('neuronai-studio.default_model'),
+            ProviderParameters::normalize(
+                (string) ($config['provider'] ?? config('neuronai-studio.default_provider')),
+                is_array($config['parameters'] ?? null) ? $config['parameters'] : [],
+            ),
         );
 
         $tools = $this->toolResolver->resolveMany($config['tools'] ?? []);

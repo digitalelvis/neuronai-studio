@@ -10,6 +10,7 @@
                 name: @json($agent->name),
                 provider: @json($agent->provider),
                 model: @json($agent->model),
+                instructions: @json($agent->instructions),
                 tools: @json(collect($agent->tools)->pluck('ref')->values()->all()),
                 mcpServers: @json($agent->mcpBindings->pluck('mcp_server_slug')->values()->all()),
                 mcpToolCount: @json($mcpToolCount),

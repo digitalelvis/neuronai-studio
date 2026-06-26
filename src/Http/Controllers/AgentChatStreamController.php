@@ -19,7 +19,12 @@ class AgentChatStreamController
         $validated = $request->validate([
             'message' => 'required|string',
             'thread_id' => 'nullable|uuid',
+            'instructions' => 'nullable|string',
             'context' => 'nullable|array',
+            'parameters' => 'nullable|array',
+            'parameters.temperature' => 'nullable|numeric|min:0|max:2',
+            'parameters.top_p' => 'nullable|numeric|min:0|max:1',
+            'parameters.max_tokens' => 'nullable|integer|min:1',
             'attachments' => 'nullable|array',
             'attachments.*.type' => 'required_with:attachments|string',
             'attachments.*.mime_type' => 'nullable|string',

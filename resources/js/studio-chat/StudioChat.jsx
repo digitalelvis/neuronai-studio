@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -9,7 +9,7 @@ import { createId } from './utils/id';
 import { createThreadId, getThreadFromUrl, setThreadInUrl } from './utils/thread';
 import { formatWorkflowData } from './utils/workflowOutput';
 
-export default function StudioChat({
+export default forwardRef(function StudioChat({
     adapter,
     mode = 'agent',
     entityId,
@@ -20,7 +20,11 @@ export default function StudioChat({
     onRunCompleted,
     embedded = false,
     threadHistoryUrl = null,
-}) {
+    hideComposer = false,
+    instructions = '',
+    parameters = {},
+    onSendingChange,
+}, ref) {
     const [messages, setMessages] = useState([]);
     const [threadId, setThreadId] = useState(() => getThreadFromUrl() ?? createThreadId());
     const historyLoadedRef = useRef(null);
@@ -31,6 +35,10 @@ export default function StudioChat({
     const [error, setError] = useState('');
     const [viewMode, setViewMode] = useState('pretty');
     const supportsThreads = mode === 'agent' || mode === 'workflow';
+
+    useEffect(() => {
+        onSendingChange?.(sending);
+    }, [onSendingChange, sending]);
 
     const effectiveContext = onContextChange ? initialContext : context;
     const setEffectiveContext = onContextChange ?? setContext;
@@ -158,8 +166,17 @@ export default function StudioChat({
 
         try {
             const sendContext = supportsThreads
-                ? { state: effectiveContext, threadId }
-                : { state: effectiveContext };
+                ? {
+                      state: effectiveContext,
+                      threadId,
+                      instructions: mode === 'agent' ? instructions : undefined,
+                      parameters: mode === 'agent' ? parameters : undefined,
+                  }
+                : {
+                      state: effectiveContext,
+                      instructions: mode === 'agent' ? instructions : undefined,
+                      parameters: mode === 'agent' ? parameters : undefined,
+                  };
 
             for await (const packet of adapter.send(text, attachments, sendContext)) {
                 if (packet.event === 'thread' && packet.data?.thread_id) {
@@ -323,6 +340,11 @@ export default function StudioChat({
         adapter?.reset?.();
     };
 
+    useImperativeHandle(ref, () => ({
+        send: handleSend,
+        sending,
+    }));
+
     return (
         <div className="flex h-full flex-col">
             <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2">
@@ -368,17 +390,19 @@ export default function StudioChat({
                 <MessageList messages={messages} mode={mode} viewMode={viewMode} />
             </ScrollArea>
 
-            <div className="border-t border-border p-4">
-                <Composer
-                    disabled={sending}
-                    onSend={handleSend}
-                    enableAttachments={enableAttachments}
-                    enableInputJson={mode === 'workflow'}
-                    inputJson={inputJson}
-                    onInputJsonChange={handleInputJsonChange}
-                    inputJsonError={inputJsonError}
-                />
-            </div>
+            {!hideComposer && (
+                <div className="border-t border-border p-4">
+                    <Composer
+                        disabled={sending}
+                        onSend={handleSend}
+                        enableAttachments={enableAttachments}
+                        enableInputJson={mode === 'workflow'}
+                        inputJson={inputJson}
+                        onInputJsonChange={handleInputJsonChange}
+                        inputJsonError={inputJsonError}
+                    />
+                </div>
+            )}
         </div>
     );
-}
+});

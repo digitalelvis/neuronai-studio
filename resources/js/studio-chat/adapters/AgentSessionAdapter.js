@@ -8,11 +8,25 @@ export class AgentSessionAdapter {
 
     async *send(message, attachments = [], context = {}) {
         const uploaded = await this.uploadAttachments(attachments);
+        const state = context?.state && typeof context.state === 'object' ? context.state : {};
         const payload = {
             message,
-            context,
+            context: state,
             attachments: uploaded,
         };
+
+        if (context.instructions) {
+            payload.instructions = context.instructions;
+        }
+
+        const parameters = context.parameters ?? {};
+        const normalizedParameters = Object.fromEntries(
+            Object.entries(parameters).filter(([, value]) => value !== null && value !== undefined && value !== ''),
+        );
+
+        if (Object.keys(normalizedParameters).length > 0) {
+            payload.parameters = normalizedParameters;
+        }
 
         if (context.threadId) {
             payload.thread_id = context.threadId;

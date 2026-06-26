@@ -20,7 +20,7 @@ class AgentRunnerTest extends TestCase
         $registry = $this->createMock(ProviderRegistry::class);
         $registry->expects($this->once())
             ->method('resolve')
-            ->with('openai', 'gpt-4o-mini')
+            ->with('openai', 'gpt-4o-mini', [])
             ->willReturn($provider);
 
         $toolResolver = $this->createMock(ToolResolver::class);

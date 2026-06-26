@@ -34,9 +34,10 @@ class ProviderRegistry
         return config("neuronai-studio.providers.{$provider}.models", []);
     }
 
-    public function resolve(string $provider, ?string $model = null): AIProviderInterface
+    /** @param  array<string, mixed>  $parameters */
+    public function resolve(string $provider, ?string $model = null, array $parameters = []): AIProviderInterface
     {
-        if ($model === null) {
+        if ($model === null && $parameters === []) {
             return AIProvider::driver($provider);
         }
 
@@ -46,7 +47,14 @@ class ProviderRegistry
             return AIProvider::driver($provider);
         }
 
-        $config['model'] = $model;
+        if ($model !== null) {
+            $config['model'] = $model;
+        }
+
+        if ($parameters !== []) {
+            $base = is_array($config['parameters'] ?? null) ? $config['parameters'] : [];
+            $config['parameters'] = \ElvisLopesDigital\NeuronAIStudio\Support\ProviderParameters::merge($provider, $base, $parameters);
+        }
 
         $this->assertProviderConfigured($provider, $config);
 
