@@ -20,7 +20,9 @@ Configure with `NEURONAI_STUDIO_TABLE_PREFIX`.
 | `workflow_traces` | Workflow execution records |
 | `workflow_trace_steps` | Per-step input/output timeline |
 | `chat_messages` | Persisted agent playground messages |
-| `eval_*` | Evaluation datasets and runs (when enabled) |
+| `eval_suites` | Agent evaluation datasets and judge config |
+| `eval_runs` | Evaluation execution records |
+| `eval_run_items` | Per-case results (input, output, pass/fail) |
 
 ## Entity relationships
 
@@ -31,6 +33,9 @@ erDiagram
     workflow_definitions ||--o{ workflow_traces : produces
     workflow_traces ||--o{ workflow_trace_steps : contains
     agent_definitions ||--o{ chat_messages : threads
+    agent_definitions ||--o{ eval_suites : has
+    eval_suites ||--o{ eval_runs : produces
+    eval_runs ||--o{ eval_run_items : contains
 ```
 
 ## Key columns
@@ -51,6 +56,26 @@ erDiagram
 
 - `status` — running, completed, failed, waiting_for_human
 - `checkpoint` — serialized state for HITL resume
+
+### eval_suites
+
+- `agent_definition_id` — linked agent
+- `slug` — unique per agent
+- `dataset` — JSON array of test cases (`input`, `reference`, `_assertions`, `tool`)
+- `judge_config` — optional AI judge provider/model/instructions
+
+### eval_runs
+
+- `status` — running, completed, failed
+- `passed_count`, `failed_count`, `success_rate` — aggregated from `EvaluatorSummary`
+- `provider`, `model` — snapshot at run time
+
+### eval_run_items
+
+- `case_index` — dataset item index
+- `input`, `output` — case data
+- `passed` — boolean result
+- `failures`, `scores` — JSON from NeuronAI assertion results
 
 ## Migrations
 

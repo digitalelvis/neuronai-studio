@@ -52,19 +52,45 @@ See [Make Tool CLI](../guides/tools/make-tool-cli.md).
 
 ## neuronai-studio:evaluations
 
-Manage agent evaluations (when evaluation features are enabled).
+Run NeuronAI evaluators discovered in a directory. Delegates to NeuronAI's `EvaluatorDiscovery` and `EvaluatorRunner`.
 
 ```bash
 php artisan neuronai-studio:evaluations
+php artisan neuronai-studio:evaluations --path=evaluators
+php artisan neuronai-studio:evaluations --path=evaluators --verbose
 ```
 
-## neuronai-studio:eval-suite
+| Option | Description |
+|--------|-------------|
+| `--path` | Directory containing evaluator classes (default: `evaluators`) |
+| `--verbose` | Show evaluator names during execution |
 
-Run evaluation suites against agents.
+Output drivers are configured in `evaluation.php` at the project root. Publish the stub:
 
 ```bash
-php artisan neuronai-studio:eval-suite
+php artisan vendor:publish --tag=neuronai-studio-evaluation
 ```
+
+See [Evaluations](../guides/agents/evaluations.md).
+
+## neuronai-studio:eval
+
+Run an eval suite stored in the database against its linked agent.
+
+```bash
+php artisan neuronai-studio:eval {suite}
+php artisan neuronai-studio:eval support-basic
+php artisan neuronai-studio:eval 1 --fake
+```
+
+| Argument / Option | Description |
+|-------------------|-------------|
+| `{suite}` | Eval suite ID or slug |
+| `--fake` | Use `FakeAIProvider` for deterministic runs (CI) |
+
+Exit code is non-zero when any case fails. Results are persisted to `eval_runs` and `eval_run_items`.
+
+See [Evaluations](../guides/agents/evaluations.md).
 
 ## Related Neuron Laravel commands
 

@@ -27,6 +27,7 @@ flowchart TB
 |-------|-------|-------|
 | Create / edit | Agent form | [Creating Agents](creating-agents.md) |
 | Test | Playground | [Playground & Threads](playground-and-threads.md) |
+| Evaluate | Evals UI or CLI | [Evaluations](evaluations.md) |
 | Use in workflow | Agent node | [AI Nodes](../workflows/node-types/ai-nodes.md) |
 | Export | CLI or future UI | [Export & Production](../export-and-production.md) |
 
@@ -38,6 +39,7 @@ flowchart TB
 | `/neuronai-studio/agents/create` | Create new agent |
 | `/neuronai-studio/agents/{id}/edit` | Edit agent |
 | `/neuronai-studio/agents/{id}/playground` | Test agent in chat |
+| `/neuronai-studio/agents/{id}/evals` | Manage evaluation suites |
 
 <!-- SCREENSHOT: agents-index -->
 > **Screenshot pending:** Agent list with Create Agent button.
@@ -61,4 +63,5 @@ Agents are stored in the `agent_definitions` table (prefix configurable). Key fi
 
 - [Creating Agents](creating-agents.md)
 - [Playground & Threads](playground-and-threads.md)
+- [Evaluations](evaluations.md)
 - [Tools Overview](../tools/overview.md)

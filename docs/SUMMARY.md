@@ -19,6 +19,7 @@
 * [Overview](guides/agents/overview.md)
 * [Creating Agents](guides/agents/creating-agents.md)
 * [Playground & Threads](guides/agents/playground-and-threads.md)
+* [Evaluations](guides/agents/evaluations.md)
 * [Attachments](guides/agents/attachments.md)
 
 ### Tools

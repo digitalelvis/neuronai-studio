@@ -20,6 +20,8 @@ All documentation pages reference screenshots with `<!-- SCREENSHOT: tag -->` co
 | [ ] | `agents-playground` | Playground | Streaming chat with an expanded tool-call panel |
 | [ ] | `agents-thread-bar` | Threads | Thread selector showing multiple conversation threads |
 | [ ] | `agents-attachments` | Attachments | Composer with a PDF or image attached |
+| [ ] | `agents-evals-index` | Evaluations | Eval suites list for an agent |
+| [ ] | `agents-evals-run-detail` | Evaluations | Run detail with pass/fail cases |
 | [ ] | `tools-builder` | Builder tools | Tool builder with PHP invoke preview |
 | [ ] | `tools-webhook` | Webhook tools | Webhook config + JSON schema editor |
 | [ ] | `tools-registry` | Registry | Unified tool catalog (builtin + DB + MCP) |
