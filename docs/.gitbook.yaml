@@ -1,0 +1,9 @@
+root: ./
+
+structure:
+  readme: README.md
+  summary: SUMMARY.md
+
+redirects:
+  workflow-state: guides/workflows/state-and-conditions.md
+  templates: guides/templates.md

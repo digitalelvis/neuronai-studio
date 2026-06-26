@@ -1,8 +1,23 @@
 # NeuronAI Studio
 
+[![Documentation](https://img.shields.io/badge/docs-GitBook-blue)](https://YOUR_ORG.gitbook.io/neuronai-studio)
+
 Visual AI Agent Builder for Laravel powered by [Neuron AI](https://neuron-ai.dev).
 
 Create agents, design workflow graphs, run them at runtime for prototyping, and export production-ready PHP classes.
+
+## Documentation
+
+Full documentation is available on GitBook:
+
+**[docs/README.md](docs/README.md)** — local docs source (syncs to GitBook on push to `main`)
+
+Quick links:
+
+- [Installation](docs/getting-started/installation.md)
+- [Quickstart: First Agent](docs/getting-started/quickstart-first-agent.md)
+- [Quickstart: First Workflow](docs/getting-started/quickstart-first-workflow.md)
+- [Configuration](docs/reference/configuration.md)
 
 ## Requirements
 
@@ -10,7 +25,7 @@ Create agents, design workflow graphs, run them at runtime for prototyping, and 
 - Laravel 11 or 12
 - [neuron-core/neuron-laravel](https://github.com/neuron-core/neuron-laravel) ^1.0
 
-## Installation
+## Quick install
 
 ```bash
 composer require elvislopesdigital/neuronai-studio neuron-core/neuron-laravel
@@ -18,88 +33,27 @@ php artisan neuron:install
 php artisan neuronai-studio:install
 ```
 
-Publish assets for the dashboard UI:
+Open `/neuronai-studio` (configurable via `NEURONAI_STUDIO_ROUTE_PREFIX`).
 
-```bash
-php artisan vendor:publish --tag=neuronai-studio-assets
-```
+## Features
 
-Blade views load from the package automatically. Only publish views if you need to customize templates:
-
-```bash
-php artisan vendor:publish --tag=neuronai-studio-views
-```
-
-If you previously published views and the UI looks outdated after a package update, remove the override directory and clear compiled views:
-
-```bash
-rm -rf resources/views/vendor/neuronai-studio
-php artisan view:clear
-```
-
-Build frontend assets (from the package root when developing):
-
-```bash
-npm install
-npm run build
-```
-
-`npm run build` produces four bundles: `studio-ui.css`, `workflow-canvas.bundle.js`, `studio-chat.bundle.js`, and `studio-forms.bundle.js`.
-
-## Usage
-
-Open the dashboard at `/neuronai-studio` (configurable via `NEURONAI_STUDIO_ROUTE_PREFIX`).
-
-### Features
-
-- **Agents** — CRUD with provider, model, and system prompt
-- **Playground** — Test agents in a chat UI
-- **Workflows** — Visual graph editor with drag-and-drop nodes ([workflow state & condition node](docs/workflow-state.md))
-- **Runtime execution** — Run workflows from the UI with step-by-step history
-- **PHP export** — Generate Neuron Agent/Workflow classes for production
-
-### Export to PHP
-
-```bash
-php artisan neuronai-studio:export agent 1
-php artisan neuronai-studio:export workflow 1
-```
-
-Or use the **Export PHP** button in the workflow editor.
-
-## Configuration
-
-Publish config:
-
-```bash
-php artisan vendor:publish --tag=neuronai-studio-config
-```
-
-Key options in `config/neuronai-studio.php`:
-
-- `route_prefix` — Dashboard URL prefix (default: `neuronai-studio`)
-- `export_namespace` — PHP namespace for exported classes (default: `App\Neuron`)
-- `export_path` — Directory for exported files (default: `app/Neuron`)
-- `providers` — AI providers available in the UI
-
-Credentials are read from `config/neuron.php` — no duplicate API key configuration.
+- **Agents** — CRUD with provider, model, system prompt, tools, and MCP bindings
+- **Playground** — Streaming chat with threads and attachments
+- **Workflows** — Visual graph editor with 12 node types
+- **Tools** — Builder, webhook, registry, and CLI codegen
+- **MCP Servers** — Stdio and HTTP connectors
+- **Runtime** — Execute workflows with traces and human-in-the-loop
+- **Export** — Generate Neuron Agent/Workflow/Tool PHP classes
+- **Templates** — Pre-built agent and workflow starters
 
 ## Demo App
 
-See [examples/demo-app](examples/demo-app) for a Laravel 12 demo installation.
+See [examples/demo-app](examples/demo-app) for a local development setup.
 
-## Contributing & Releases
+## Contributing
 
-This project uses release-branch git-flow with automated versioning:
-
-- **Development** happens on `v0.0.x` (feature/fix PRs target this branch).
-- **Production** is `main` — merges from `v0.0.x` or `hotfix/*` only.
-- **Commits** must follow [Conventional Commits](https://conventionalcommits.org) (`feat(scope):`, `fix(scope):`, etc.).
-- **Releases** are automated on merge to `main` via `release-it` (changelog, Git tag, GitHub Release).
-- **Packagist** publishes from Git tags (`composer require elvislopesdigital/neuronai-studio`).
-
-See [docs/RELEASE.md](docs/RELEASE.md) for the full release guide, hotfix process, and bootstrap steps.
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).
