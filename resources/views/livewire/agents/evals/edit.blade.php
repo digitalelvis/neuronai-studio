@@ -26,7 +26,20 @@
 
                 <x-neuronai-studio::ui.form-group>
                     <x-neuronai-studio::ui.label>Dataset (JSON)</x-neuronai-studio::ui.label>
-                    <x-neuronai-studio::ui.textarea wire:model="datasetJson" rows="16" class="font-mono text-sm" placeholder='[{"input":"...","reference":"..."}]' />
+                    <script>
+                        window.__NEURONAI_CODE_EDITORS = window.__NEURONAI_CODE_EDITORS || {};
+                        window.__NEURONAI_CODE_EDITORS['eval-dataset-editor'] = { value: @json($datasetJson) };
+                    </script>
+                    <div
+                        wire:ignore
+                        id="eval-dataset-editor"
+                        data-neuron-code-editor
+                        data-wire-id="{{ $this->getId() }}"
+                        data-field="datasetJson"
+                        data-language="json"
+                        data-min-height="384px"
+                        class="min-h-[384px]"
+                    ></div>
                     @error('datasetJson') <p class="text-sm text-destructive">{{ $message }}</p> @enderror
                     <p class="text-sm text-muted-foreground">
                         Each case supports <code>input</code>, <code>reference</code>, optional <code>context</code>, optional <code>_assertions</code>, and optional <code>tool</code>.

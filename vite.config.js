@@ -34,6 +34,13 @@ const entries = {
         format: 'iife',
         name: 'NeuronAIStudioForms',
     },
+    code: {
+        input: resolve(__dirname, 'resources/js/studio-code/main.jsx'),
+        fileName: 'studio-code.bundle.js',
+        cssName: 'studio-code.css',
+        format: 'iife',
+        name: 'NeuronStudioCode',
+    },
 };
 
 const entry = entries[target] ?? entries.canvas;
@@ -44,6 +51,13 @@ export default defineConfig({
         alias: {
             '@': resolve(__dirname, 'resources/js'),
         },
+        dedupe: [
+            '@codemirror/state',
+            '@codemirror/view',
+            '@codemirror/language',
+            '@codemirror/commands',
+            '@codemirror/lint',
+        ],
     },
     build: {
         outDir: target === 'css' ? 'resources/css' : 'resources/js/dist',

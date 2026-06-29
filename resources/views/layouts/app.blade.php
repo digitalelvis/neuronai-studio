@@ -16,6 +16,9 @@
     @if (\ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout::isFormsPage())
         <link rel="stylesheet" href="{{ asset('vendor/neuronai-studio/js/dist/studio-forms.css') }}">
     @endif
+    @if (\ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout::isCodeEditorPage())
+        <link rel="stylesheet" href="{{ asset('vendor/neuronai-studio/js/dist/studio-code.css') }}">
+    @endif
 </head>
 <body class="bg-background text-foreground">
     <div class="studio-shell">
@@ -81,7 +84,11 @@
     @elseif (\ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout::isFormsPage())
         @php($studioFormsVersion = @filemtime(public_path('vendor/neuronai-studio/js/dist/studio-forms.bundle.js')) ?: time())
         <script src="{{ asset('vendor/neuronai-studio/js/dist/studio-forms.bundle.js') }}?v={{ $studioFormsVersion }}"></script>
+    @elseif (\ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout::isCodeEditorPage())
+        @php($studioCodeVersion = @filemtime(public_path('vendor/neuronai-studio/js/dist/studio-code.bundle.js')) ?: time())
+        <script src="{{ asset('vendor/neuronai-studio/js/dist/studio-code.bundle.js') }}?v={{ $studioCodeVersion }}"></script>
     @endif
+    @stack('code-editor')
     @livewireScripts
 </body>
 </html>

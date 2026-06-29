@@ -39,4 +39,12 @@ class StudioLayout
             'neuronai-studio.workflows.traces.show',
         );
     }
+
+    public static function isCodeEditorPage(): bool
+    {
+        return request()->routeIs(
+            'neuronai-studio.agents.evals.create',
+            'neuronai-studio.agents.evals.edit',
+        );
+    }
 }

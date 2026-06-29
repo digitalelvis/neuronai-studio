@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import CodeEditor from '@/components/code/CodeEditor';
 import { validateGraphWithLivewire, applyGraphImport } from './graphJson';
 
 function extractGraph(parsed) {
@@ -107,16 +107,25 @@ export default function GraphJsonPanel({
                     </Button>
                 )}
             </div>
-            <Textarea
-                className="min-h-0 flex-1 resize-none font-mono text-xs"
-                value={jsonText}
-                readOnly={readOnly}
-                onChange={(event) => {
-                    setJsonText(event.target.value);
-                    setJsonError('');
-                    setValidationErrors([]);
-                }}
-            />
+            <div className="min-h-0 flex-1">
+                <CodeEditor
+                    className="h-full"
+                    height="100%"
+                    minHeight="200px"
+                    language="json"
+                    value={jsonText}
+                    readOnly={readOnly}
+                    onChange={
+                        readOnly
+                            ? undefined
+                            : (value) => {
+                                  setJsonText(value);
+                                  setJsonError('');
+                                  setValidationErrors([]);
+                              }
+                    }
+                />
+            </div>
             {jsonError && <p className="text-xs text-destructive">{jsonError}</p>}
             {validationErrors.length > 0 && (
                 <ul className="space-y-1 text-xs text-destructive">

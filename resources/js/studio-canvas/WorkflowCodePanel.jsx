@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
+import CodeViewer from '@/components/code/CodeViewer';
 import { exportWorkflowWithLivewire, previewWorkflowCodeWithLivewire } from './workflowCode';
 
 export default function WorkflowCodePanel({ readOnly = false }) {
@@ -100,11 +100,15 @@ export default function WorkflowCodePanel({ readOnly = false }) {
                     </Button>
                 )}
             </div>
-            <Textarea
-                className="min-h-0 flex-1 resize-none font-mono text-xs"
-                value={loading && !code ? 'Generating preview…' : code}
-                readOnly
-            />
+            <div className="min-h-0 flex-1">
+                <CodeViewer
+                    className="h-full"
+                    height="100%"
+                    minHeight="200px"
+                    language="php"
+                    value={loading && !code ? 'Generating preview…' : code}
+                />
+            </div>
             {error && <p className="text-xs text-destructive">{error}</p>}
         </div>
     );
