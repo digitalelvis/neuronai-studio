@@ -1,10 +1,10 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Templates;
+namespace DigitalElvis\NeuronAIStudio\Http\Livewire\Templates;
 
-use ElvisLopesDigital\NeuronAIStudio\Registry\TemplateRegistry;
-use ElvisLopesDigital\NeuronAIStudio\Services\TemplateInstaller;
-use ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout;
+use DigitalElvis\NeuronAIStudio\Registry\TemplateRegistry;
+use DigitalElvis\NeuronAIStudio\Services\TemplateInstaller;
+use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
 use Livewire\Component;
 use Throwable;
 

@@ -1,12 +1,12 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Tools;
+namespace DigitalElvis\NeuronAIStudio\Http\Livewire\Tools;
 
-use ElvisLopesDigital\NeuronAIStudio\Codegen\ToolClassGenerator;
-use ElvisLopesDigital\NeuronAIStudio\Codegen\ToolClassImporter;
-use ElvisLopesDigital\NeuronAIStudio\Codegen\ToolExporter;
-use ElvisLopesDigital\NeuronAIStudio\Models\ToolDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout;
+use DigitalElvis\NeuronAIStudio\Codegen\ToolClassGenerator;
+use DigitalElvis\NeuronAIStudio\Codegen\ToolClassImporter;
+use DigitalElvis\NeuronAIStudio\Codegen\ToolExporter;
+use DigitalElvis\NeuronAIStudio\Models\ToolDefinition;
+use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
 use Illuminate\Support\Str;
 use Livewire\Component;
 

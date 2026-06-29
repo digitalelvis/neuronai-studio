@@ -27,7 +27,7 @@ docs/
 
 1. In GitBook, open your space → **Integrations** → **GitHub**
 2. Install the GitBook GitHub App on the repository
-3. Grant access to `elvislopesdigital/neuronai-studio` (or your fork)
+3. Grant access to `digitalelvis/neuronai-studio` (or your fork)
 
 ### 3. Enable Git Sync
 

@@ -1,11 +1,11 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests;
+namespace DigitalElvis\NeuronAIStudio\Tests;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowTrace;
-use ElvisLopesDigital\NeuronAIStudio\Support\StudioTables;
+use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
+use DigitalElvis\NeuronAIStudio\Support\StudioTables;
 
 class MigrationTest extends TestCase
 {

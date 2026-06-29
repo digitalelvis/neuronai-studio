@@ -1,9 +1,9 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio;
+namespace DigitalElvis\NeuronAIStudio;
 
-use ElvisLopesDigital\NeuronAIStudio\Registry\NodeTypeRegistry;
-use ElvisLopesDigital\NeuronAIStudio\Registry\ProviderRegistry;
+use DigitalElvis\NeuronAIStudio\Registry\NodeTypeRegistry;
+use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
 
 class NeuronAIStudioManager
 {

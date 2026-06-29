@@ -1,9 +1,9 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests;
+namespace DigitalElvis\NeuronAIStudio\Tests;
 
-use ElvisLopesDigital\NeuronAIStudio\Codegen\WorkflowExporter;
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
+use DigitalElvis\NeuronAIStudio\Codegen\WorkflowExporter;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
 
 class WorkflowExporterTest extends TestCase
 {

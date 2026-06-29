@@ -1,8 +1,8 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Codegen;
+namespace DigitalElvis\NeuronAIStudio\Codegen;
 
-use ElvisLopesDigital\NeuronAIStudio\Runtime\GraphContext;
+use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 

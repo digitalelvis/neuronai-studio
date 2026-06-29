@@ -1,5 +1,11 @@
 # Changelog
 
+## [Unreleased]
+
+### BREAKING CHANGE
+
+* Rename Composer package to `digitalelvis/neuronai-studio` and PHP namespace to `DigitalElvis\NeuronAIStudio`.
+
 # 0.1.0 (2026-06-29)
 
 
@@ -63,5 +69,5 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - PHP export for agents, workflows, and tools
 - Pre-built agent and workflow templates
 
-[Unreleased]: https://github.com/elvislopesdigital/neuronai-studio/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/elvislopesdigital/neuronai-studio/releases/tag/v0.1.0
+[Unreleased]: https://github.com/digitalelvis/neuronai-studio/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/digitalelvis/neuronai-studio/releases/tag/v0.1.0

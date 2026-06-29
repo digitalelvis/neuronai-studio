@@ -1,9 +1,9 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests\Fixtures;
+namespace DigitalElvis\NeuronAIStudio\Tests\Fixtures;
 
-use ElvisLopesDigital\NeuronAIStudio\Contracts\StudioWorkflow;
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
+use DigitalElvis\NeuronAIStudio\Contracts\StudioWorkflow;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
 
 class SampleStudioWorkflow implements StudioWorkflow
 {

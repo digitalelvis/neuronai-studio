@@ -1,8 +1,8 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Runtime;
+namespace DigitalElvis\NeuronAIStudio\Runtime;
 
-use ElvisLopesDigital\NeuronAIStudio\Runtime\Exceptions\HumanInputRequiredException;
+use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\HumanInputRequiredException;
 use Illuminate\Support\Facades\Storage;
 use NeuronAI\Chat\Enums\SourceType;
 use NeuronAI\Chat\Messages\ContentBlocks\AudioContent;

@@ -49,7 +49,7 @@ NEURONAI_STUDIO_DEFAULT_MODEL=gpt-4o-mini
 Extend `ProviderRegistry` at boot time if you need dynamic provider lists:
 
 ```php
-use ElvisLopesDigital\NeuronAIStudio\Registry\ProviderRegistry;
+use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
 
 $this->app->make(ProviderRegistry::class)->register('my_provider', [
     'label' => 'My Provider',

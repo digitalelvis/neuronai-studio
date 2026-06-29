@@ -1,10 +1,10 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors;
+namespace DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors;
 
-use ElvisLopesDigital\NeuronAIStudio\Registry\McpRegistry;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\GraphContext;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\McpToolResolver;
+use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
+use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
+use DigitalElvis\NeuronAIStudio\Runtime\McpToolResolver;
 use NeuronAI\MCP\McpConnector;
 use NeuronAI\Tools\ToolInterface;
 use NeuronAI\Workflow\WorkflowState;

@@ -1,9 +1,9 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Codegen;
+namespace DigitalElvis\NeuronAIStudio\Codegen;
 
-use ElvisLopesDigital\NeuronAIStudio\Attributes\StudioGraphReader;
-use ElvisLopesDigital\NeuronAIStudio\Contracts\StudioWorkflow;
+use DigitalElvis\NeuronAIStudio\Attributes\StudioGraphReader;
+use DigitalElvis\NeuronAIStudio\Contracts\StudioWorkflow;
 use Illuminate\Support\Str;
 use NeuronAI\Workflow\Workflow;
 use ReflectionClass;

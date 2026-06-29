@@ -1,11 +1,11 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests;
+namespace DigitalElvis\NeuronAIStudio\Tests;
 
-use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Workflows\Editor;
-use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Workflows\Index;
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Tests\Fixtures\SampleStudioWorkflow;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\Workflows\Editor;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\Workflows\Index;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
+use DigitalElvis\NeuronAIStudio\Tests\Fixtures\SampleStudioWorkflow;
 use Livewire\Livewire;
 
 class WorkflowCodeBridgeTest extends TestCase

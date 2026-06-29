@@ -1,8 +1,8 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests;
+namespace DigitalElvis\NeuronAIStudio\Tests;
 
-use ElvisLopesDigital\NeuronAIStudio\Support\ChatThreadKey;
+use DigitalElvis\NeuronAIStudio\Support\ChatThreadKey;
 
 class ChatThreadKeyTest extends TestCase
 {

@@ -1,9 +1,9 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Runtime;
+namespace DigitalElvis\NeuronAIStudio\Runtime;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Registry\McpRegistry;
+use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
 use NeuronAI\MCP\McpConnector;
 use NeuronAI\Tools\ToolInterface;
 

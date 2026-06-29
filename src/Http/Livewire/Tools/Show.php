@@ -1,11 +1,11 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Tools;
+namespace DigitalElvis\NeuronAIStudio\Http\Livewire\Tools;
 
-use ElvisLopesDigital\NeuronAIStudio\Codegen\ToolClassGenerator;
-use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Models\ToolDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout;
+use DigitalElvis\NeuronAIStudio\Codegen\ToolClassGenerator;
+use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Models\ToolDefinition;
+use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
 use Livewire\Component;
 
 class Show extends Component

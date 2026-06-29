@@ -1,11 +1,11 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Workflows;
+namespace DigitalElvis\NeuronAIStudio\Http\Livewire\Workflows;
 
-use ElvisLopesDigital\NeuronAIStudio\Codegen\WorkflowClassImporter;
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Registry\WorkflowRegistry;
-use ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout;
+use DigitalElvis\NeuronAIStudio\Codegen\WorkflowClassImporter;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
+use DigitalElvis\NeuronAIStudio\Registry\WorkflowRegistry;
+use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
 use Illuminate\Support\Str;
 use Livewire\Component;
 

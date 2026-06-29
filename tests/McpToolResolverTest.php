@@ -1,12 +1,12 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests;
+namespace DigitalElvis\NeuronAIStudio\Tests;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Models\AgentMcpServer;
-use ElvisLopesDigital\NeuronAIStudio\Registry\McpRegistry;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\McpToolResolver;
-use ElvisLopesDigital\NeuronAIStudio\Tests\Support\FakeMcpTransport;
+use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Models\AgentMcpServer;
+use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
+use DigitalElvis\NeuronAIStudio\Runtime\McpToolResolver;
+use DigitalElvis\NeuronAIStudio\Tests\Support\FakeMcpTransport;
 use Mockery;
 
 class McpToolResolverTest extends TestCase

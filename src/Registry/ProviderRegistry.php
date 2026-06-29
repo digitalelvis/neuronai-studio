@@ -1,6 +1,6 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Registry;
+namespace DigitalElvis\NeuronAIStudio\Registry;
 
 use InvalidArgumentException;
 use NeuronAI\Laravel\Facades\AIProvider;
@@ -53,7 +53,7 @@ class ProviderRegistry
 
         if ($parameters !== []) {
             $base = is_array($config['parameters'] ?? null) ? $config['parameters'] : [];
-            $config['parameters'] = \ElvisLopesDigital\NeuronAIStudio\Support\ProviderParameters::merge($provider, $base, $parameters);
+            $config['parameters'] = \DigitalElvis\NeuronAIStudio\Support\ProviderParameters::merge($provider, $base, $parameters);
         }
 
         $this->assertProviderConfigured($provider, $config);

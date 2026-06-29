@@ -1,6 +1,6 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Registry;
+namespace DigitalElvis\NeuronAIStudio\Registry;
 
 use InvalidArgumentException;
 

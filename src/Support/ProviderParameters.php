@@ -1,6 +1,6 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Support;
+namespace DigitalElvis\NeuronAIStudio\Support;
 
 class ProviderParameters
 {

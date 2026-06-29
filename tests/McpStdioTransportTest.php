@@ -1,8 +1,8 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests;
+namespace DigitalElvis\NeuronAIStudio\Tests;
 
-use ElvisLopesDigital\NeuronAIStudio\MCP\McpStdioTransport;
+use DigitalElvis\NeuronAIStudio\MCP\McpStdioTransport;
 use PHPUnit\Framework\TestCase;
 
 class McpStdioTransportTest extends TestCase

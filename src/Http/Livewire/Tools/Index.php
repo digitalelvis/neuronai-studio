@@ -1,10 +1,10 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Tools;
+namespace DigitalElvis\NeuronAIStudio\Http\Livewire\Tools;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\ToolDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Registry\ToolRegistry;
-use ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout;
+use DigitalElvis\NeuronAIStudio\Models\ToolDefinition;
+use DigitalElvis\NeuronAIStudio\Registry\ToolRegistry;
+use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
 use Livewire\Component;
 
 class Index extends Component

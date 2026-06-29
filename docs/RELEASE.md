@@ -1,6 +1,6 @@
 # Release Process
 
-Operational guide for versioning and publishing `elvislopesdigital/neuronai-studio` on Packagist.
+Operational guide for versioning and publishing `digitalelvis/neuronai-studio` on Packagist.
 
 ## Overview
 
@@ -113,7 +113,7 @@ Repository → Settings → Branches → Add rule:
 
 1. Go to [packagist.org](https://packagist.org) and submit `https://github.com/digitalelvis/neuronai-studio`.
 2. Enable **Auto-update** (GitHub hook or Packagist API token).
-3. Confirm package name: `elvislopesdigital/neuronai-studio`.
+3. Confirm package name: `digitalelvis/neuronai-studio`.
 
 ### 4. First release
 

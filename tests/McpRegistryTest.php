@@ -1,10 +1,10 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests;
+namespace DigitalElvis\NeuronAIStudio\Tests;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\McpServer;
-use ElvisLopesDigital\NeuronAIStudio\Registry\McpRegistry;
-use ElvisLopesDigital\NeuronAIStudio\Tests\Support\FakeMcpTransport;
+use DigitalElvis\NeuronAIStudio\Models\McpServer;
+use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
+use DigitalElvis\NeuronAIStudio\Tests\Support\FakeMcpTransport;
 
 class McpRegistryTest extends TestCase
 {

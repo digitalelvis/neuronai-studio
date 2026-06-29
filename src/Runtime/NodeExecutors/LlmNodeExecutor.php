@@ -1,10 +1,10 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors;
+namespace DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors;
 
-use ElvisLopesDigital\NeuronAIStudio\Registry\ProviderRegistry;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\GraphContext;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\StateTemplateInterpolator;
+use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
+use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
+use DigitalElvis\NeuronAIStudio\Runtime\StateTemplateInterpolator;
 use NeuronAI\Chat\Messages\UserMessage;
 use NeuronAI\Workflow\WorkflowState;
 

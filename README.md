@@ -28,7 +28,7 @@ Quick links:
 ## Quick install
 
 ```bash
-composer require elvislopesdigital/neuronai-studio neuron-core/neuron-laravel
+composer require digitalelvis/neuronai-studio neuron-core/neuron-laravel
 php artisan neuron:install
 php artisan neuronai-studio:install
 ```

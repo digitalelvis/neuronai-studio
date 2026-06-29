@@ -1,6 +1,6 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Attributes;
+namespace DigitalElvis\NeuronAIStudio\Attributes;
 
 #[\Attribute(\Attribute::TARGET_CLASS)]
 class StudioGraph

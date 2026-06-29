@@ -1,6 +1,6 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Commands;
+namespace DigitalElvis\NeuronAIStudio\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;

@@ -1,8 +1,8 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tools;
+namespace DigitalElvis\NeuronAIStudio\Tools;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\ToolDefinition;
+use DigitalElvis\NeuronAIStudio\Models\ToolDefinition;
 use Illuminate\Support\Facades\Http;
 use NeuronAI\Tools\PropertyType;
 use NeuronAI\Tools\Tool;

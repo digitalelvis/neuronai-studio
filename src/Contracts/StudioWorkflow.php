@@ -1,6 +1,6 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Contracts;
+namespace DigitalElvis\NeuronAIStudio\Contracts;
 
 interface StudioWorkflow
 {

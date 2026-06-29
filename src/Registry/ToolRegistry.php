@@ -1,9 +1,9 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Registry;
+namespace DigitalElvis\NeuronAIStudio\Registry;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\McpServer;
-use ElvisLopesDigital\NeuronAIStudio\Models\ToolDefinition;
+use DigitalElvis\NeuronAIStudio\Models\McpServer;
+use DigitalElvis\NeuronAIStudio\Models\ToolDefinition;
 use Illuminate\Support\Str;
 use NeuronAI\Tools\Tool;
 use NeuronAI\Tools\ToolInterface;

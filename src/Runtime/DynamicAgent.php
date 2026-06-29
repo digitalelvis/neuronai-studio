@@ -1,9 +1,9 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Runtime;
+namespace DigitalElvis\NeuronAIStudio\Runtime;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Models\StudioChatMessage;
+use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Models\StudioChatMessage;
 use NeuronAI\Agent\Agent;
 use NeuronAI\Chat\History\ChatHistoryInterface;
 use NeuronAI\Chat\History\EloquentChatHistory;

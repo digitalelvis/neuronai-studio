@@ -1,9 +1,9 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Workflows;
+namespace DigitalElvis\NeuronAIStudio\Http\Livewire\Workflows;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowTrace;
-use ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
+use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
 use Livewire\Component;
 
 class TraceDetail extends Component

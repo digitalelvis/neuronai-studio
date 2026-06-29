@@ -1,11 +1,11 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Codegen;
+namespace DigitalElvis\NeuronAIStudio\Codegen;
 
-use ElvisLopesDigital\NeuronAIStudio\Codegen\NodeCodeGenerators\CodegenContext;
-use ElvisLopesDigital\NeuronAIStudio\Codegen\NodeCodeGenerators\NodeCodeGeneratorRegistry;
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\GraphValidator;
+use DigitalElvis\NeuronAIStudio\Codegen\NodeCodeGenerators\CodegenContext;
+use DigitalElvis\NeuronAIStudio\Codegen\NodeCodeGenerators\NodeCodeGeneratorRegistry;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
+use DigitalElvis\NeuronAIStudio\Runtime\GraphValidator;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 

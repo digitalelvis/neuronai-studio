@@ -1,9 +1,9 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Evaluation;
+namespace DigitalElvis\NeuronAIStudio\Evaluation;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\EvalRun;
-use ElvisLopesDigital\NeuronAIStudio\Models\EvalRunItem;
+use DigitalElvis\NeuronAIStudio\Models\EvalRun;
+use DigitalElvis\NeuronAIStudio\Models\EvalRunItem;
 use NeuronAI\Evaluation\AssertionFailure;
 use NeuronAI\Evaluation\Contracts\EvaluationOutputInterface;
 use NeuronAI\Evaluation\Runner\EvaluatorResult;

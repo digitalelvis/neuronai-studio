@@ -1,6 +1,6 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Runtime\Events;
+namespace DigitalElvis\NeuronAIStudio\Runtime\Events;
 
 use NeuronAI\Workflow\Events\Event;
 

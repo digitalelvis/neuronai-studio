@@ -1,9 +1,9 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Registry;
+namespace DigitalElvis\NeuronAIStudio\Registry;
 
-use ElvisLopesDigital\NeuronAIStudio\MCP\McpStdioTransport;
-use ElvisLopesDigital\NeuronAIStudio\Models\McpServer;
+use DigitalElvis\NeuronAIStudio\MCP\McpStdioTransport;
+use DigitalElvis\NeuronAIStudio\Models\McpServer;
 use Illuminate\Support\Str;
 use NeuronAI\MCP\McpClient;
 

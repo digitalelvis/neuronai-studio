@@ -1,6 +1,6 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Evaluation;
+namespace DigitalElvis\NeuronAIStudio\Evaluation;
 
 use NeuronAI\Evaluation\AssertionResult;
 use NeuronAI\Evaluation\Assertions\AbstractAssertion;

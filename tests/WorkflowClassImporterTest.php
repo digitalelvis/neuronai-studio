@@ -1,11 +1,11 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests;
+namespace DigitalElvis\NeuronAIStudio\Tests;
 
-use ElvisLopesDigital\NeuronAIStudio\Attributes\StudioGraph;
-use ElvisLopesDigital\NeuronAIStudio\Codegen\WorkflowClassImporter;
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Registry\WorkflowRegistry;
+use DigitalElvis\NeuronAIStudio\Attributes\StudioGraph;
+use DigitalElvis\NeuronAIStudio\Codegen\WorkflowClassImporter;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
+use DigitalElvis\NeuronAIStudio\Registry\WorkflowRegistry;
 use Illuminate\Support\Facades\File;
 use NeuronAI\Workflow\Workflow;
 
@@ -25,7 +25,7 @@ class WorkflowClassImporterTest extends TestCase
 
 namespace App\\Neuron\\Workflows\\ImporterNativeWorkflow;
 
-use ElvisLopesDigital\\NeuronAIStudio\\Attributes\\StudioGraph;
+use DigitalElvis\\NeuronAIStudio\\Attributes\\StudioGraph;
 use NeuronAI\\Workflow\\Workflow;
 
 #[StudioGraph(
@@ -71,7 +71,7 @@ PHP);
 
 namespace App\\Neuron\\Workflows\\RegistryNativeWorkflow;
 
-use ElvisLopesDigital\\NeuronAIStudio\\Attributes\\StudioGraph;
+use DigitalElvis\\NeuronAIStudio\\Attributes\\StudioGraph;
 use NeuronAI\\Workflow\\Workflow;
 
 #[StudioGraph(

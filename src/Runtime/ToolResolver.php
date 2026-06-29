@@ -1,10 +1,10 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Runtime;
+namespace DigitalElvis\NeuronAIStudio\Runtime;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\ToolDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Registry\ToolRegistry;
-use ElvisLopesDigital\NeuronAIStudio\Tools\WebhookTool;
+use DigitalElvis\NeuronAIStudio\Models\ToolDefinition;
+use DigitalElvis\NeuronAIStudio\Registry\ToolRegistry;
+use DigitalElvis\NeuronAIStudio\Tools\WebhookTool;
 use Illuminate\Support\Str;
 use NeuronAI\MCP\McpConnector;
 use NeuronAI\Tools\ProviderTool;

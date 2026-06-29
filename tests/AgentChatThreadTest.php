@@ -1,17 +1,17 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests;
+namespace DigitalElvis\NeuronAIStudio\Tests;
 
-use ElvisLopesDigital\NeuronAIStudio\Http\Middleware\EnsureNeuronAIStudioAuthorized;
-use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Models\StudioChatMessage;
-use ElvisLopesDigital\NeuronAIStudio\Registry\ProviderRegistry;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\AgentRunner;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\McpToolResolver;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\MessageFactory;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\ToolEventExtractor;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\ToolResolver;
-use ElvisLopesDigital\NeuronAIStudio\Support\ChatThreadKey;
+use DigitalElvis\NeuronAIStudio\Http\Middleware\EnsureNeuronAIStudioAuthorized;
+use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Models\StudioChatMessage;
+use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
+use DigitalElvis\NeuronAIStudio\Runtime\AgentRunner;
+use DigitalElvis\NeuronAIStudio\Runtime\McpToolResolver;
+use DigitalElvis\NeuronAIStudio\Runtime\MessageFactory;
+use DigitalElvis\NeuronAIStudio\Runtime\ToolEventExtractor;
+use DigitalElvis\NeuronAIStudio\Runtime\ToolResolver;
+use DigitalElvis\NeuronAIStudio\Support\ChatThreadKey;
 use NeuronAI\Chat\Messages\AssistantMessage;
 use NeuronAI\Testing\FakeAIProvider;
 

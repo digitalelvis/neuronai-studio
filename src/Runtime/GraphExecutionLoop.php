@@ -1,8 +1,8 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Runtime;
+namespace DigitalElvis\NeuronAIStudio\Runtime;
 
-use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorRegistry;
+use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorRegistry;
 use NeuronAI\Workflow\WorkflowState;
 
 class GraphExecutionLoop

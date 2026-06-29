@@ -1,26 +1,26 @@
 <?php
 
-use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\AgentChatStreamController;
-use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\AgentChatThreadController;
-use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\AttachmentController;
-use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\WorkflowStreamController;
-use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\WorkflowTraceController;
-use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\WorkflowTraceResumeController;
-use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Edit;
-use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Index as AgentsIndex;
-use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Playground;
-use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Dashboard;
-use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\McpServers\Edit as McpServersEdit;
-use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\McpServers\Index as McpServersIndex;
-use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Templates\Index as TemplatesIndex;
-use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Tools\Edit as ToolsEdit;
-use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Tools\Index as ToolsIndex;
-use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Tools\RegistryShow;
-use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Tools\Show as ToolsShow;
-use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Workflows\Editor;
-use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Workflows\Index as WorkflowsIndex;
-use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Workflows\TraceDetail;
-use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Workflows\Traces;
+use DigitalElvis\NeuronAIStudio\Http\Controllers\AgentChatStreamController;
+use DigitalElvis\NeuronAIStudio\Http\Controllers\AgentChatThreadController;
+use DigitalElvis\NeuronAIStudio\Http\Controllers\AttachmentController;
+use DigitalElvis\NeuronAIStudio\Http\Controllers\WorkflowStreamController;
+use DigitalElvis\NeuronAIStudio\Http\Controllers\WorkflowTraceController;
+use DigitalElvis\NeuronAIStudio\Http\Controllers\WorkflowTraceResumeController;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\Agents\Edit;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\Agents\Index as AgentsIndex;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\Agents\Playground;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\Dashboard;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\McpServers\Edit as McpServersEdit;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\McpServers\Index as McpServersIndex;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\Templates\Index as TemplatesIndex;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\Tools\Edit as ToolsEdit;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\Tools\Index as ToolsIndex;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\Tools\RegistryShow;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\Tools\Show as ToolsShow;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\Workflows\Editor;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\Workflows\Index as WorkflowsIndex;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\Workflows\TraceDetail;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\Workflows\Traces;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
@@ -34,11 +34,11 @@ Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
             Route::get('/create', Edit::class)->name('create');
             Route::get('/{agent}/edit', Edit::class)->name('edit');
             Route::get('/{agent}/playground', Playground::class)->name('playground');
-            Route::get('/{agent}/evals', \ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Evals\Index::class)->name('evals.index');
-            Route::get('/{agent}/evals/create', \ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Evals\Edit::class)->name('evals.create');
-            Route::get('/{agent}/evals/{suite}/edit', \ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Evals\Edit::class)->name('evals.edit');
-            Route::get('/{agent}/evals/{suite}/runs', \ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Evals\Runs::class)->name('evals.runs');
-            Route::get('/eval-runs/{run}', \ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Evals\RunDetail::class)->name('eval-runs.show');
+            Route::get('/{agent}/evals', \DigitalElvis\NeuronAIStudio\Http\Livewire\Agents\Evals\Index::class)->name('evals.index');
+            Route::get('/{agent}/evals/create', \DigitalElvis\NeuronAIStudio\Http\Livewire\Agents\Evals\Edit::class)->name('evals.create');
+            Route::get('/{agent}/evals/{suite}/edit', \DigitalElvis\NeuronAIStudio\Http\Livewire\Agents\Evals\Edit::class)->name('evals.edit');
+            Route::get('/{agent}/evals/{suite}/runs', \DigitalElvis\NeuronAIStudio\Http\Livewire\Agents\Evals\Runs::class)->name('evals.runs');
+            Route::get('/eval-runs/{run}', \DigitalElvis\NeuronAIStudio\Http\Livewire\Agents\Evals\RunDetail::class)->name('eval-runs.show');
             Route::get('/{agent}/chat/threads/{thread}', AgentChatThreadController::class)->name('chat.threads.show');
             Route::match(['GET', 'POST'], '/{agent}/chat/stream', AgentChatStreamController::class)->name('chat.stream');
         });

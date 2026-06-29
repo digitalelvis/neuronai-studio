@@ -1,13 +1,13 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Evals;
+namespace DigitalElvis\NeuronAIStudio\Http\Livewire\Agents\Evals;
 
-use ElvisLopesDigital\NeuronAIStudio\Evaluation\EloquentEvaluationOutput;
-use ElvisLopesDigital\NeuronAIStudio\Evaluation\SuiteEvaluator;
-use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Models\EvalRun;
-use ElvisLopesDigital\NeuronAIStudio\Models\EvalSuite;
-use ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout;
+use DigitalElvis\NeuronAIStudio\Evaluation\EloquentEvaluationOutput;
+use DigitalElvis\NeuronAIStudio\Evaluation\SuiteEvaluator;
+use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Models\EvalRun;
+use DigitalElvis\NeuronAIStudio\Models\EvalSuite;
+use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
 use Illuminate\Support\Str;
 use Livewire\Component;
 use NeuronAI\Evaluation\Runner\EvaluatorRunner;

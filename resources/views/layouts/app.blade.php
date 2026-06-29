@@ -13,10 +13,10 @@
     @if (request()->routeIs('neuronai-studio.agents.playground', 'neuronai-studio.workflows.create', 'neuronai-studio.workflows.edit', 'neuronai-studio.workflows.preview'))
         <link rel="stylesheet" href="{{ asset('vendor/neuronai-studio/js/dist/studio-chat.css') }}">
     @endif
-    @if (\ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout::isFormsPage())
+    @if (\DigitalElvis\NeuronAIStudio\Support\StudioLayout::isFormsPage())
         <link rel="stylesheet" href="{{ asset('vendor/neuronai-studio/js/dist/studio-forms.css') }}">
     @endif
-    @if (\ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout::isCodeEditorPage())
+    @if (\DigitalElvis\NeuronAIStudio\Support\StudioLayout::isCodeEditorPage())
         <link rel="stylesheet" href="{{ asset('vendor/neuronai-studio/js/dist/studio-code.css') }}">
     @endif
 </head>
@@ -81,10 +81,10 @@
     @elseif (request()->routeIs('neuronai-studio.agents.playground'))
         @php($studioChatVersion = @filemtime(public_path('vendor/neuronai-studio/js/dist/studio-chat.bundle.js')) ?: time())
         <script src="{{ asset('vendor/neuronai-studio/js/dist/studio-chat.bundle.js') }}?v={{ $studioChatVersion }}"></script>
-    @elseif (\ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout::isFormsPage())
+    @elseif (\DigitalElvis\NeuronAIStudio\Support\StudioLayout::isFormsPage())
         @php($studioFormsVersion = @filemtime(public_path('vendor/neuronai-studio/js/dist/studio-forms.bundle.js')) ?: time())
         <script src="{{ asset('vendor/neuronai-studio/js/dist/studio-forms.bundle.js') }}?v={{ $studioFormsVersion }}"></script>
-    @elseif (\ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout::isCodeEditorPage())
+    @elseif (\DigitalElvis\NeuronAIStudio\Support\StudioLayout::isCodeEditorPage())
         @php($studioCodeVersion = @filemtime(public_path('vendor/neuronai-studio/js/dist/studio-code.bundle.js')) ?: time())
         <script src="{{ asset('vendor/neuronai-studio/js/dist/studio-code.bundle.js') }}?v={{ $studioCodeVersion }}"></script>
     @endif

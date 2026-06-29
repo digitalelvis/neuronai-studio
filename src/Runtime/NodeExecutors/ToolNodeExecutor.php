@@ -1,9 +1,9 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors;
+namespace DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors;
 
-use ElvisLopesDigital\NeuronAIStudio\Runtime\GraphContext;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\ToolResolver;
+use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
+use DigitalElvis\NeuronAIStudio\Runtime\ToolResolver;
 use NeuronAI\Tools\ToolInterface;
 use NeuronAI\Workflow\WorkflowState;
 

@@ -1,9 +1,9 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Http\Controllers;
+namespace DigitalElvis\NeuronAIStudio\Http\Controllers;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Services\ChatThreadLoader;
+use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Services\ChatThreadLoader;
 use Illuminate\Http\JsonResponse;
 
 class AgentChatThreadController

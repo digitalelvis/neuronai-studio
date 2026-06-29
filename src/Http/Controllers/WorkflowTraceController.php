@@ -1,9 +1,9 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Http\Controllers;
+namespace DigitalElvis\NeuronAIStudio\Http\Controllers;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowTrace;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

@@ -1,6 +1,6 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Codegen;
+namespace DigitalElvis\NeuronAIStudio\Codegen;
 
 use Illuminate\Support\Str;
 

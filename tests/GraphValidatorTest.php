@@ -1,8 +1,8 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests;
+namespace DigitalElvis\NeuronAIStudio\Tests;
 
-use ElvisLopesDigital\NeuronAIStudio\Runtime\GraphValidator;
+use DigitalElvis\NeuronAIStudio\Runtime\GraphValidator;
 
 class GraphValidatorTest extends TestCase
 {

@@ -1,12 +1,12 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests;
+namespace DigitalElvis\NeuronAIStudio\Tests;
 
-use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Templates\Index;
-use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\GraphValidator;
-use ElvisLopesDigital\NeuronAIStudio\Services\TemplateInstaller;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\Templates\Index;
+use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
+use DigitalElvis\NeuronAIStudio\Runtime\GraphValidator;
+use DigitalElvis\NeuronAIStudio\Services\TemplateInstaller;
 use Livewire\Livewire;
 
 class TemplateInstallerTest extends TestCase

@@ -1,8 +1,8 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests;
+namespace DigitalElvis\NeuronAIStudio\Tests;
 
-use ElvisLopesDigital\NeuronAIStudio\Registry\TemplateRegistry;
+use DigitalElvis\NeuronAIStudio\Registry\TemplateRegistry;
 
 class TemplateRegistryTest extends TestCase
 {
