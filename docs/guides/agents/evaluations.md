@@ -56,7 +56,7 @@ Routes:
 > Asset path: `docs/assets/screenshots/agents-evals-index.png`
 > Capture: Evals index — dark theme, 1440×900
 
-![Eval suites index](../assets/screenshots/agents-evals-index.png)
+![Eval suites index](../../assets/screenshots/agents-evals-index.png)
 
 <!-- SCREENSHOT: agents-evals-run-detail -->
 > **Screenshot pending:** Eval run detail with pass/fail cases.
@@ -64,7 +64,7 @@ Routes:
 > Asset path: `docs/assets/screenshots/agents-evals-run-detail.png`
 > Capture: Run detail showing failed case output — dark theme, 1440×900
 
-![Eval run detail](../assets/screenshots/agents-evals-run-detail.png)
+![Eval run detail](../../assets/screenshots/agents-evals-run-detail.png)
 
 ### 2. PHP evaluators (advanced)
 

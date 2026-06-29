@@ -15,7 +15,7 @@ Builder tools let you define custom tool logic with a PHP invoke body and JSON i
 > Asset path: `docs/assets/screenshots/tools-builder.png`
 > Capture: Tool edit page with builder form — dark theme, 1440×900
 
-![Tool builder](../assets/screenshots/tools-builder.png)
+![Tool builder](../../assets/screenshots/tools-builder.png)
 
 ## How it works
 

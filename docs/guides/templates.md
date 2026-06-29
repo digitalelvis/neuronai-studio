@@ -19,7 +19,7 @@ Repeating the same workflow template creates a new workflow. Agents referenced b
 > Asset path: `docs/assets/screenshots/templates-gallery.png`
 > Capture: `/neuronai-studio/templates` — dark theme, 1440×900
 
-![Templates gallery](assets/screenshots/templates-gallery.png)
+![Templates gallery](../assets/screenshots/templates-gallery.png)
 
 ## Bundled templates
 

@@ -35,7 +35,7 @@ sequenceDiagram
 > Asset path: `docs/assets/screenshots/agents-attachments.png`
 > Capture: Playground composer with attachment chip visible — dark theme, 1440×900
 
-![Attachments](../assets/screenshots/agents-attachments.png)
+![Attachments](../../assets/screenshots/agents-attachments.png)
 
 ## Configuration
 

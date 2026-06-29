@@ -72,7 +72,7 @@ In the MCP server editor, use **Test Discovery** to list available tools from th
 > Asset path: `docs/assets/screenshots/mcp-servers-edit.png`
 > Capture: MCP server edit page — dark theme, 1440×900
 
-![MCP server editor](../assets/screenshots/mcp-servers-edit.png)
+![MCP server editor](../../assets/screenshots/mcp-servers-edit.png)
 
 ## Transport comparison
 

@@ -25,7 +25,7 @@ Previous context: {{rag_context}}
 > Asset path: `docs/assets/screenshots/workflows-inspector-agent.png`
 > Capture: Workflow editor with Agent node selected in inspector — dark theme, 1440×900
 
-![Agent node inspector](../../assets/screenshots/workflows-inspector-agent.png)
+![Agent node inspector](../../../assets/screenshots/workflows-inspector-agent.png)
 
 ## LLM
 

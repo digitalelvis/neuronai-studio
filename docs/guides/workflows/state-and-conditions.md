@@ -56,7 +56,7 @@ Connect the `true` and `false` handles on the canvas to different downstream nod
 > Asset path: `docs/assets/screenshots/workflows-inspector-condition.png`
 > Capture: Workflow editor with a Condition node selected — dark theme, 1440×900
 
-![Condition node inspector](assets/screenshots/workflows-inspector-condition.png)
+![Condition node inspector](../../assets/screenshots/workflows-inspector-condition.png)
 
 ### Example: branch on Playground context
 

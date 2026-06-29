@@ -16,7 +16,7 @@ From the agent list, click **Playground** on any agent:
 > Asset path: `docs/assets/screenshots/agents-playground.png`
 > Capture: Playground with an active streaming response — dark theme, 1440×900
 
-![Agent Playground](../assets/screenshots/agents-playground.png)
+![Agent Playground](../../assets/screenshots/agents-playground.png)
 
 ## Streaming architecture
 
@@ -57,7 +57,7 @@ Each agent playground session uses a UUID-based thread. Threads persist message 
 > Asset path: `docs/assets/screenshots/agents-thread-bar.png`
 > Capture: Playground thread bar — dark theme, 1440×900
 
-![Thread bar](../assets/screenshots/agents-thread-bar.png)
+![Thread bar](../../assets/screenshots/agents-thread-bar.png)
 
 ### Thread behavior
 

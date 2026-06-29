@@ -51,6 +51,8 @@ Documentation lives in `docs/` and is published via GitBook Git Sync.
 ![My feature](assets/screenshots/my-feature.png)
 ```
 
+Use `../assets/screenshots/` from `docs/guides/`, `../../assets/screenshots/` from `docs/guides/<section>/`, `../../../assets/screenshots/` from deeper nested dirs, or `assets/screenshots/` only from `docs/` root.
+
 - Register the tag in `docs/assets/screenshots/PENDING.md`
 
 ### Validate locally

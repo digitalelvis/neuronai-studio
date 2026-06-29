@@ -48,7 +48,7 @@ flowchart LR
 
 When the Human node executes, the workflow pauses and saves a checkpoint. The user replies via the test harness, and execution resumes from the checkpoint.
 
-See [Human-in-the-Loop](human-in-the-loop.md) for the full resume flow.
+See [Human-in-the-Loop](../human-in-the-loop.md) for the full resume flow.
 
 ## Flow node summary
 

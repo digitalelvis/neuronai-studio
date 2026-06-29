@@ -76,7 +76,7 @@ Configure the prefix with `NEURONAI_STUDIO_ROUTE_PREFIX` in `.env`.
 > Asset path: `docs/assets/screenshots/install-success-dashboard.png`
 > Capture: `/neuronai-studio` immediately after install — dark theme, 1440×900
 
-![Dashboard after install](assets/screenshots/install-success-dashboard.png)
+![Dashboard after install](../assets/screenshots/install-success-dashboard.png)
 
 ## Environment variables
 
