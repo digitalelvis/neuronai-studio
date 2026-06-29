@@ -2,8 +2,6 @@
 
 ## [0.1.1](https://github.com/digitalelvis/neuronai-studio/compare/v0.1.0...v0.1.1) (2026-06-29)
 
-## [Unreleased]
-
 ### BREAKING CHANGE
 
 * Rename Composer package to `digitalelvis/neuronai-studio` and PHP namespace to `DigitalElvis\NeuronAIStudio`.

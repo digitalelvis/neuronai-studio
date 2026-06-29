@@ -111,16 +111,31 @@ Repository → Settings → Branches → Add rule:
 
 ### 3. Register on Packagist
 
-1. Go to [packagist.org](https://packagist.org) and submit `https://github.com/digitalelvis/neuronai-studio`.
-2. Enable **Auto-update** (GitHub hook or Packagist API token).
-3. Confirm package name: `digitalelvis/neuronai-studio`.
+1. Create or sign in at [packagist.org](https://packagist.org).
+2. Profile → **Link GitHub Account** (OAuth). Use an account with admin access to the `digitalelvis` org.
+3. [Submit Package](https://packagist.org/packages/submit) → URL: `https://github.com/digitalelvis/neuronai-studio`.
+4. Confirm the package name reads **`digitalelvis/neuronai-studio`** (from `composer.json`).
+5. Enable **Auto-update** on the package settings page (installs the GitHub webhook).
+6. After submit, confirm version **`v0.1.1`** appears (first release with the new vendor/namespace).
+
+Validate install in a fresh Laravel app:
+
+```bash
+composer require digitalelvis/neuronai-studio neuron-core/neuron-laravel
+php artisan neuron:install
+php artisan neuronai-studio:install
+```
 
 ### 4. First release
 
+Tag **`v0.1.1`** is published with the `digitalelvis/neuronai-studio` vendor. Submit to Packagist (step 3) to make it installable via Composer.
+
+For future releases:
+
 1. Merge `v0.0.x` → `main` via PR.
-2. Release workflow creates `v0.1.0` (or appropriate semver from commit history).
+2. Release workflow creates the next semver tag (or run `npm run release:dry` locally to preview).
 3. Verify tag and GitHub Release appear on the repository.
-4. Verify Packagist shows the new version.
+4. Verify Packagist shows the new version (auto-update webhook).
 5. Back-merge `main` → `v0.0.x`.
 
 ## Troubleshooting
