@@ -42,7 +42,7 @@ Config presets appear in the UI as starting points. Database records support per
 > Asset path: `docs/assets/screenshots/mcp-servers-list.png`
 > Capture: `/neuronai-studio/mcp-servers` — dark theme, 1440×900
 
-![MCP servers list](../assets/screenshots/mcp-servers-list.png)
+![MCP servers list](../../assets/screenshots/mcp-servers-list.png)
 
 ## Bundled config presets
 

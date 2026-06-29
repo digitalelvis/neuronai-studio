@@ -16,7 +16,7 @@ From any tool binding UI or directly:
 > Asset path: `docs/assets/screenshots/tools-registry.png`
 > Capture: Tool registry page — dark theme, 1440×900
 
-![Tool registry](../assets/screenshots/tools-registry.png)
+![Tool registry](../../assets/screenshots/tools-registry.png)
 
 ## Registry sources
 

@@ -8,3 +8,4 @@
 # Cópias locais de vendor:publish (não confundir com /vendor/ do Composer)
 /resources/**/vendor/
 .cursor/
+.agents/mcp.json

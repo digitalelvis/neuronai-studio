@@ -18,7 +18,7 @@ Webhook tools call external HTTP endpoints when an agent invokes them. Define th
 > Asset path: `docs/assets/screenshots/tools-webhook.png`
 > Capture: Webhook tool edit page — dark theme, 1440×900
 
-![Webhook tool](../assets/screenshots/tools-webhook.png)
+![Webhook tool](../../assets/screenshots/tools-webhook.png)
 
 ## Request flow
 

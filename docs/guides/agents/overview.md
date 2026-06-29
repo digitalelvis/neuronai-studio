@@ -47,7 +47,7 @@ flowchart TB
 > Asset path: `docs/assets/screenshots/agents-index.png`
 > Capture: `/neuronai-studio/agents` — dark theme, 1440×900
 
-![Agents index](../assets/screenshots/agents-index.png)
+![Agents index](../../assets/screenshots/agents-index.png)
 
 ## Database model
 

@@ -14,7 +14,7 @@ The agent editor lets you configure provider, model, instructions, and tool bind
 > Asset path: `docs/assets/screenshots/agents-form.png`
 > Capture: `/neuronai-studio/agents/create` or edit page — dark theme, 1440×900
 
-![Agent form](../assets/screenshots/agents-form.png)
+![Agent form](../../assets/screenshots/agents-form.png)
 
 ## Form fields
 
