@@ -5,7 +5,7 @@ namespace {{ namespace }};
 use NeuronAI\Agent\Agent;
 use NeuronAI\Laravel\Facades\AIProvider;
 use NeuronAI\Providers\AIProviderInterface;
-
+{{ mcpUse }}
 class {{ className }} extends Agent
 {
     protected function provider(): AIProviderInterface
@@ -17,4 +17,6 @@ class {{ className }} extends Agent
     {
         return '{{ instructions }}';
     }
+
+{{ toolsMethod }}
 }

@@ -1,0 +1,245 @@
+{
+  "meta": {
+    "id": "support-rag-hitl",
+    "name": "Support RAG with Human-in-the-Loop",
+    "description": "Classifies intent, routes questions through RAG, and pauses for human review on complaints and escalations. RAG returns placeholder context until configured for production.",
+    "complexity": "advanced",
+    "category": "support",
+    "tags": ["rag", "human", "condition", "intent"],
+    "agents": ["support-assistant", "knowledge-agent"]
+  },
+  "graph": {
+    "version": 1,
+    "nodes": [
+      {
+        "id": "start_1",
+        "type": "start",
+        "position": { "x": 60, "y": 280 },
+        "data": {}
+      },
+      {
+        "id": "set_user_message",
+        "type": "set_state",
+        "position": { "x": 220, "y": 280 },
+        "data": {
+          "key": "user_message",
+          "from_key": "input"
+        }
+      },
+      {
+        "id": "llm_intent",
+        "type": "llm",
+        "position": { "x": 400, "y": 280 },
+        "data": {
+          "prompt": "Classify the following user message into exactly one label: question, complaint, or escalation. Reply with only the label, no other text.\n\nMessage: {{user_message}}",
+          "output_key": "intent"
+        }
+      },
+      {
+        "id": "cond_question",
+        "type": "condition",
+        "position": { "x": 600, "y": 280 },
+        "data": {
+          "state_key": "intent",
+          "operator": "equals",
+          "value": "question"
+        }
+      },
+      {
+        "id": "rag_1",
+        "type": "rag",
+        "position": { "x": 820, "y": 120 },
+        "data": {
+          "query": "{{user_message}}",
+          "output_key": "rag_context"
+        }
+      },
+      {
+        "id": "agent_knowledge",
+        "type": "agent",
+        "position": { "x": 1020, "y": 120 },
+        "data": {
+          "agent_ref": "knowledge-agent",
+          "message": "User question: {{user_message}}\n\nContext from knowledge base:\n{{rag_context}}",
+          "output_key": "agent_response"
+        }
+      },
+      {
+        "id": "stop_question",
+        "type": "stop",
+        "position": { "x": 1220, "y": 120 },
+        "data": {}
+      },
+      {
+        "id": "cond_complaint",
+        "type": "condition",
+        "position": { "x": 820, "y": 280 },
+        "data": {
+          "state_key": "intent",
+          "operator": "equals",
+          "value": "complaint"
+        }
+      },
+      {
+        "id": "human_complaint",
+        "type": "human",
+        "position": { "x": 1020, "y": 220 },
+        "data": {
+          "prompt": "Please review this complaint and add resolution notes.",
+          "output_key": "human_response"
+        }
+      },
+      {
+        "id": "agent_complaint",
+        "type": "agent",
+        "position": { "x": 1220, "y": 220 },
+        "data": {
+          "agent_ref": "support-assistant",
+          "message": "{{human_response}}\n\nOriginal message: {{user_message}}",
+          "output_key": "agent_response"
+        }
+      },
+      {
+        "id": "stop_complaint",
+        "type": "stop",
+        "position": { "x": 1420, "y": 220 },
+        "data": {}
+      },
+      {
+        "id": "human_escalation",
+        "type": "human",
+        "position": { "x": 1020, "y": 400 },
+        "data": {
+          "prompt": "Manager approval required before proceeding.",
+          "output_key": "human_response"
+        }
+      },
+      {
+        "id": "set_approved",
+        "type": "set_state",
+        "position": { "x": 1220, "y": 400 },
+        "data": {
+          "key": "approved",
+          "value": true
+        }
+      },
+      {
+        "id": "agent_escalation",
+        "type": "agent",
+        "position": { "x": 1420, "y": 400 },
+        "data": {
+          "agent_ref": "support-assistant",
+          "message": "Escalation approved. Original message: {{user_message}}\n\nManager notes: {{human_response}}",
+          "output_key": "agent_response"
+        }
+      },
+      {
+        "id": "stop_escalation",
+        "type": "stop",
+        "position": { "x": 1620, "y": 400 },
+        "data": {}
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge_start_set",
+        "source": "start_1",
+        "target": "set_user_message",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_set_llm",
+        "source": "set_user_message",
+        "target": "llm_intent",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_llm_cond_q",
+        "source": "llm_intent",
+        "target": "cond_question",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_cond_q_rag",
+        "source": "cond_question",
+        "target": "rag_1",
+        "sourceHandle": "true",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_cond_q_complaint",
+        "source": "cond_question",
+        "target": "cond_complaint",
+        "sourceHandle": "false",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_rag_agent",
+        "source": "rag_1",
+        "target": "agent_knowledge",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_agent_stop_q",
+        "source": "agent_knowledge",
+        "target": "stop_question",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_cond_c_human",
+        "source": "cond_complaint",
+        "target": "human_complaint",
+        "sourceHandle": "true",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_cond_c_escalation",
+        "source": "cond_complaint",
+        "target": "human_escalation",
+        "sourceHandle": "false",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_human_agent_c",
+        "source": "human_complaint",
+        "target": "agent_complaint",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_agent_stop_c",
+        "source": "agent_complaint",
+        "target": "stop_complaint",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_human_set",
+        "source": "human_escalation",
+        "target": "set_approved",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_set_agent_e",
+        "source": "set_approved",
+        "target": "agent_escalation",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_agent_stop_e",
+        "source": "agent_escalation",
+        "target": "stop_escalation",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      }
+    ],
+    "viewport": { "x": 0, "y": 0, "zoom": 1 }
+  }
+}

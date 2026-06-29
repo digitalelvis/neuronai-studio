@@ -23,20 +23,44 @@ class GraphStepExecutorNode extends Node
     {
         $nodeId = $event->nodeId;
         $nodeConfig = $this->graphContext->nodeConfig($nodeId);
+        $nodeConfig['id'] = $nodeId;
         $nodeType = $nodeConfig['type'] ?? 'unknown';
 
         $startedAt = microtime(true);
 
+        if ($state instanceof BuilderWorkflowState) {
+            $state->emitStep('step_started', [
+                'node_id' => $nodeId,
+                'node_type' => $nodeType,
+            ]);
+        }
+
         if ($nodeType === 'stop') {
+            if ($state instanceof BuilderWorkflowState) {
+                $state->emitStep('step_completed', [
+                    'node_id' => $nodeId,
+                    'node_type' => $nodeType,
+                    'handle' => 'default',
+                    'duration_ms' => 0,
+                ]);
+            }
+
             return new StopEvent($state->all());
         }
 
         $handle = $this->executors->execute($nodeType, $nodeConfig, $state, $this->graphContext);
 
+        $durationMs = (int) ((microtime(true) - $startedAt) * 1000);
+
         $this->recordStep($state, $nodeId, $nodeType, $startedAt);
 
-        if ($nodeType === 'stop') {
-            return new StopEvent($state->all());
+        if ($state instanceof BuilderWorkflowState) {
+            $state->emitStep('step_completed', [
+                'node_id' => $nodeId,
+                'node_type' => $nodeType,
+                'handle' => $handle,
+                'duration_ms' => $durationMs,
+            ]);
         }
 
         $nextNodeId = $this->graphContext->targetForHandle($nodeId, $handle);

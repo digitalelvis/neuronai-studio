@@ -2,16 +2,24 @@
 
 namespace ElvisLopesDigital\NeuronAIStudio;
 
+use ElvisLopesDigital\NeuronAIStudio\Commands\EvalSuiteCommand;
+use ElvisLopesDigital\NeuronAIStudio\Commands\EvaluationsCommand;
 use ElvisLopesDigital\NeuronAIStudio\Commands\ExportCommand;
 use ElvisLopesDigital\NeuronAIStudio\Commands\InstallCommand;
+use ElvisLopesDigital\NeuronAIStudio\Commands\MakeToolCommand;
 use ElvisLopesDigital\NeuronAIStudio\Http\Middleware\EnsureNeuronAIStudioAuthorized;
+use ElvisLopesDigital\NeuronAIStudio\Registry\McpRegistry;
 use ElvisLopesDigital\NeuronAIStudio\Registry\NodeTypeRegistry;
 use ElvisLopesDigital\NeuronAIStudio\Registry\ProviderRegistry;
+use ElvisLopesDigital\NeuronAIStudio\Registry\ToolRegistry;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\McpToolResolver;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\AgentNodeExecutor;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\ConditionNodeExecutor;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\DelayNodeExecutor;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\HumanNodeExecutor;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\LlmNodeExecutor;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorRegistry;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\McpNodeExecutor;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\RagNodeExecutor;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\SetStateNodeExecutor;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\StartNodeExecutor;
@@ -37,8 +45,24 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
             return new ProviderRegistry;
         });
 
+        $this->app->singleton(ToolRegistry::class, function () {
+            return new ToolRegistry;
+        });
+
+        $this->app->singleton(McpRegistry::class, function () {
+            return new McpRegistry;
+        });
+
+        $this->app->singleton(McpToolResolver::class, function ($app) {
+            return new McpToolResolver($app->make(McpRegistry::class));
+        });
+
         $this->app->singleton(NodeExecutorRegistry::class, function ($app) {
             return new NodeExecutorRegistry;
+        });
+
+        $this->app->singleton(Registry\TemplateRegistry::class, function () {
+            return new Registry\TemplateRegistry;
         });
 
         $this->app->singleton('neuronai-studio', function ($app) {
@@ -77,8 +101,17 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
             ], 'neuronai-studio-views');
 
             $this->publishes([
+                __DIR__.'/../stubs/evaluation.php.stub' => base_path('evaluation.php'),
+            ], 'neuronai-studio-evaluation');
+
+            $this->publishes([
+                __DIR__.'/../stubs/evaluator.stub' => app_path('Evaluators/ExampleAgentEvaluator.php'),
+            ], 'neuronai-studio-evaluator');
+
+            $this->publishes([
                 __DIR__.'/../resources/css' => public_path('vendor/neuronai-studio/css'),
                 __DIR__.'/../resources/js/canvas' => public_path('vendor/neuronai-studio/js/canvas'),
+                __DIR__.'/../resources/js/dist' => public_path('vendor/neuronai-studio/js/dist'),
             ], 'neuronai-studio-assets');
         }
 
@@ -126,6 +159,8 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
             'tool' => ToolNodeExecutor::class,
             'rag' => RagNodeExecutor::class,
             'delay' => DelayNodeExecutor::class,
+            'mcp' => McpNodeExecutor::class,
+            'human' => HumanNodeExecutor::class,
         ];
 
         foreach ($types as $type => $executorClass) {
@@ -140,10 +175,21 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
         Livewire::component('neuronai-studio.agents.index', Http\Livewire\Agents\Index::class);
         Livewire::component('neuronai-studio.agents.edit', Http\Livewire\Agents\Edit::class);
         Livewire::component('neuronai-studio.agents.playground', Http\Livewire\Agents\Playground::class);
+        Livewire::component('neuronai-studio.tools.index', Http\Livewire\Tools\Index::class);
+        Livewire::component('neuronai-studio.tools.edit', Http\Livewire\Tools\Edit::class);
+        Livewire::component('neuronai-studio.tools.show', Http\Livewire\Tools\Show::class);
+        Livewire::component('neuronai-studio.tools.registry', Http\Livewire\Tools\RegistryShow::class);
+        Livewire::component('neuronai-studio.mcp-servers.index', Http\Livewire\McpServers\Index::class);
+        Livewire::component('neuronai-studio.mcp-servers.edit', Http\Livewire\McpServers\Edit::class);
         Livewire::component('neuronai-studio.workflows.index', Http\Livewire\Workflows\Index::class);
         Livewire::component('neuronai-studio.workflows.editor', Http\Livewire\Workflows\Editor::class);
-        Livewire::component('neuronai-studio.workflows.runs', Http\Livewire\Workflows\Runs::class);
-        Livewire::component('neuronai-studio.workflows.run-detail', Http\Livewire\Workflows\RunDetail::class);
+        Livewire::component('neuronai-studio.workflows.traces', Http\Livewire\Workflows\Traces::class);
+        Livewire::component('neuronai-studio.workflows.trace-detail', Http\Livewire\Workflows\TraceDetail::class);
+        Livewire::component('neuronai-studio.agents.evals.index', Http\Livewire\Agents\Evals\Index::class);
+        Livewire::component('neuronai-studio.agents.evals.edit', Http\Livewire\Agents\Evals\Edit::class);
+        Livewire::component('neuronai-studio.agents.evals.runs', Http\Livewire\Agents\Evals\Runs::class);
+        Livewire::component('neuronai-studio.agents.evals.run-detail', Http\Livewire\Agents\Evals\RunDetail::class);
+        Livewire::component('neuronai-studio.templates.index', Http\Livewire\Templates\Index::class);
     }
 
     protected function registerCommands(): void
@@ -152,6 +198,9 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
             $this->commands([
                 InstallCommand::class,
                 ExportCommand::class,
+                MakeToolCommand::class,
+                EvaluationsCommand::class,
+                EvalSuiteCommand::class,
             ]);
         }
     }

@@ -1,0 +1,43 @@
+name: Documentation
+
+on:
+  pull_request:
+    paths:
+      - 'docs/**'
+      - '.github/workflows/docs.yml'
+      - '.github/scripts/validate-docs.sh'
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/**'
+  release:
+    types:
+      - published
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate docs structure
+        run: bash .github/scripts/validate-docs.sh
+
+      - name: Check internal markdown links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --offline --no-progress --exclude-path docs/assets/screenshots/PENDING.md docs/**/*.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  release-note:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Log release
+        run: |
+          echo "Release ${{ github.event.release.tag_name }} published."
+          echo "GitBook Git Sync will update docs from main branch automatically."
+          echo "Update CHANGELOG.md version section if not already done."

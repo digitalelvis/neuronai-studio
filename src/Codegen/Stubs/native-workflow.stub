@@ -1,0 +1,23 @@
+<?php
+
+namespace {{ namespace }};
+
+use ElvisLopesDigital\NeuronAIStudio\Attributes\StudioGraph;
+use NeuronAI\Workflow\Workflow;
+{{ nodeImports }}
+
+#[StudioGraph(
+    name: {{ name }},
+    description: {{ description }},
+    status: {{ status }},
+    graph: {{ graph }},
+)]
+class {{ className }} extends Workflow
+{
+    protected function nodes(): array
+    {
+        return [
+{{ nodeInstances }}
+        ];
+    }
+}

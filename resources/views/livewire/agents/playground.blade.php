@@ -1,26 +1,22 @@
-<div class="ab-grid ab-grid-2">
-    <div class="ab-card">
-        <h2>{{ $agent->name }}</h2>
-        <p class="ab-muted">{{ $agent->provider }} / {{ $agent->model }}</p>
+<div class="studio-product-root flex min-h-0 flex-1 flex-col">
+    <script>
+        window.__NEURONAI_CHAT_CONFIG = {
+            mode: 'agent',
+            entityId: @json($agent->id),
+            streamUrl: @json(route('neuronai-studio.agents.chat.stream', $agent)),
+            threadHistoryUrl: @json(route('neuronai-studio.agents.chat.threads.show', ['agent' => $agent->id, 'thread' => '__THREAD__'])),
+            uploadUrl: @json(route('neuronai-studio.attachments.store')),
+            agentMeta: {
+                name: @json($agent->name),
+                provider: @json($agent->provider),
+                model: @json($agent->model),
+                instructions: @json($agent->instructions),
+                tools: @json(collect($agent->tools)->pluck('ref')->values()->all()),
+                mcpServers: @json($agent->mcpBindings->pluck('mcp_server_slug')->values()->all()),
+                mcpToolCount: @json($mcpToolCount),
+            },
+        };
+    </script>
 
-        <form wire:submit="send" class="ab-mt">
-            <div class="ab-form-group">
-                <label>Message</label>
-                <textarea wire:model="message" class="ab-input" rows="4" placeholder="Ask something..."></textarea>
-            </div>
-            <button type="submit" class="ab-btn ab-btn-primary" wire:loading.attr="disabled">
-                <span wire:loading.remove wire:target="send">Send</span>
-                <span wire:loading wire:target="send">Thinking...</span>
-            </button>
-        </form>
-    </div>
-
-    <div class="ab-card">
-        <h3>Response</h3>
-        @if ($response)
-            <div class="ab-response">{{ $response }}</div>
-        @else
-            <p class="ab-muted">Send a message to test this agent.</p>
-        @endif
-    </div>
+    <div id="studio-chat-root" class="min-h-0 flex-1" wire:ignore></div>
 </div>

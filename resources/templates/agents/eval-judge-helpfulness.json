@@ -1,0 +1,13 @@
+{
+  "meta": {
+    "id": "eval-judge-helpfulness",
+    "name": "Eval Judge — Helpfulness",
+    "description": "Judges clarity, completeness, and actionability of agent responses.",
+    "category": "eval-judge",
+    "tags": ["eval", "judge", "helpfulness"]
+  },
+  "definition": {
+    "instructions": "You are an expert evaluator for helpfulness. Assess whether the response is clear, complete, and actionable for the user. Penalize vague, overly terse, or confusing answers. Score 1.0 when the user could act on or fully understand the answer without follow-up.",
+    "tools": []
+  }
+}

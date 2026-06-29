@@ -1,0 +1,13 @@
+{
+  "meta": {
+    "id": "eval-judge-relevance",
+    "name": "Eval Judge — Relevance",
+    "description": "Judges whether the output directly addresses the user's question.",
+    "category": "eval-judge",
+    "tags": ["eval", "judge", "relevance"]
+  },
+  "definition": {
+    "instructions": "You are an expert evaluator for response relevance. Determine whether the output directly addresses the user's question or request. Penalize off-topic content, evasive answers, and responses that ignore key parts of the question. Score 1.0 when the answer is focused and complete relative to the question.",
+    "tools": []
+  }
+}

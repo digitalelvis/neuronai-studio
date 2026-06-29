@@ -1,0 +1,153 @@
+@import "tailwindcss";
+@plugin "tailwindcss-animate";
+@source "../../resources/views/**/*.blade.php";
+@source "../js/**/*.{js,jsx}";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --radius-sm: calc(var(--radius) - 4px);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) + 4px);
+    --color-background: hsl(var(--background));
+    --color-foreground: hsl(var(--foreground));
+    --color-card: hsl(var(--card));
+    --color-card-foreground: hsl(var(--card-foreground));
+    --color-popover: hsl(var(--popover));
+    --color-popover-foreground: hsl(var(--popover-foreground));
+    --color-primary: hsl(var(--primary));
+    --color-primary-foreground: hsl(var(--primary-foreground));
+    --color-secondary: hsl(var(--secondary));
+    --color-secondary-foreground: hsl(var(--secondary-foreground));
+    --color-muted: hsl(var(--muted));
+    --color-muted-foreground: hsl(var(--muted-foreground));
+    --color-accent: hsl(var(--accent));
+    --color-accent-foreground: hsl(var(--accent-foreground));
+    --color-destructive: hsl(var(--destructive));
+    --color-destructive-foreground: hsl(var(--destructive-foreground));
+    --color-border: hsl(var(--border));
+    --color-input: hsl(var(--input));
+    --color-ring: hsl(var(--ring));
+}
+
+:root {
+    --radius: 0.5rem;
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 217.2 32.6% 17.5%;
+    --card-foreground: 210 40% 98%;
+    --popover: 217.2 32.6% 17.5%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 239 84% 67%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 25%;
+    --input: 217.2 32.6% 25%;
+    --ring: 239 84% 67%;
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+    }
+}
+
+/* Studio shell (Blade) */
+.studio-shell {
+    @apply flex min-h-screen bg-background text-foreground;
+}
+
+.studio-icon-rail {
+    @apply flex w-14 shrink-0 flex-col border-r border-border bg-card;
+}
+
+.studio-icon-rail-link {
+    @apply relative flex h-11 w-full items-center justify-center text-muted-foreground transition-colors hover:bg-accent hover:text-foreground;
+}
+
+.studio-icon-rail-link.active {
+    @apply bg-accent text-foreground;
+}
+
+.studio-icon-rail-link.active::before {
+    content: "";
+    @apply absolute left-0 top-1/2 h-5 w-0.5 -translate-y-1/2 rounded-r bg-primary;
+}
+
+.studio-main {
+    @apply flex min-h-screen flex-1 flex-col overflow-hidden;
+}
+
+.studio-topbar {
+    @apply flex h-12 shrink-0 items-center justify-between border-b border-border px-4;
+}
+
+.studio-content {
+    @apply flex min-h-0 flex-1 flex-col overflow-auto p-4;
+}
+
+.studio-content--flush {
+    height: calc(100svh - 3rem);
+    max-height: calc(100svh - 3rem);
+    @apply min-h-0 overflow-hidden p-0;
+}
+
+.studio-content--flush > .studio-product-root {
+    @apply flex min-h-0 flex-1 flex-col;
+}
+
+.studio-flash {
+    @apply shrink-0 px-4 pt-4;
+}
+
+.studio-product-root {
+    @apply h-full min-h-0 flex-1;
+}
+
+.studio-breadcrumb {
+    @apply flex items-center gap-1.5 text-sm text-muted-foreground;
+}
+
+.studio-breadcrumb a {
+    @apply transition-colors hover:text-foreground;
+}
+
+.studio-breadcrumb-sep {
+    @apply text-muted-foreground/50;
+}
+
+.studio-breadcrumb-current {
+    @apply font-medium text-foreground;
+}
+
+.studio-page {
+    @apply mx-auto max-w-7xl space-y-4;
+}
+
+.studio-table-row-actions {
+    @apply flex items-center gap-2;
+}
+
+[data-separator],
+[data-panel-resize-handle] {
+    @apply relative z-20 shrink-0 touch-none;
+}
+
+[data-separator][data-separator='active'],
+[data-separator][data-separator='hover'],
+[data-panel-resize-handle][data-resize-handle-state='drag'],
+[data-panel-resize-handle][data-resize-handle-state='hover'] {
+    @apply bg-primary/40;
+}

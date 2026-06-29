@@ -1,41 +1,33 @@
-<form wire:submit="save" class="ab-form ab-card">
-    <div class="ab-form-group">
-        <label>Name</label>
-        <input type="text" wire:model="name" class="ab-input" required>
-        @error('name') <span class="ab-error">{{ $message }}</span> @enderror
-    </div>
+@php
+    $providerModels = collect(config('neuronai-studio.providers', []))
+        ->mapWithKeys(fn ($provider, $key) => [$key => $provider['models'] ?? []])
+        ->all();
+@endphp
 
-    <div class="ab-form-group">
-        <label>Description</label>
-        <textarea wire:model="description" class="ab-input" rows="2"></textarea>
-    </div>
+<div class="studio-product-root flex min-h-0 flex-1 flex-col">
+    <script>
+        window.__NEURONAI_AGENT_FORM_CONFIG = {
+            wireId: @json($this->getId()),
+            cancelUrl: @json(route('neuronai-studio.agents.index')),
+            providers: @json($providers),
+            providerModels: @json($providerModels),
+            models: @json($models),
+            defaultProvider: @json(config('neuronai-studio.default_provider')),
+            toolList: @json($toolList),
+            mcpServers: @json($mcpServers),
+            initial: {
+                name: @json($name),
+                description: @json($description),
+                provider: @json($provider),
+                model: @json($model),
+                instructions: @json($instructions),
+                selectedToolRefs: @json($selectedToolRefs),
+                toolAdvanced: @json($toolAdvanced),
+                selectedMcpSlugs: @json($selectedMcpSlugs),
+                mcpAdvanced: @json($mcpAdvanced),
+            },
+        };
+    </script>
 
-    <div class="ab-form-row">
-        <div class="ab-form-group">
-            <label>Provider</label>
-            <select wire:model.live="provider" class="ab-input">
-                @foreach ($providers as $key => $label)
-                    <option value="{{ $key }}">{{ $label }}</option>
-                @endforeach
-            </select>
-        </div>
-        <div class="ab-form-group">
-            <label>Model</label>
-            <select wire:model="model" class="ab-input">
-                @foreach ($models as $modelOption)
-                    <option value="{{ $modelOption }}">{{ $modelOption }}</option>
-                @endforeach
-            </select>
-        </div>
-    </div>
-
-    <div class="ab-form-group">
-        <label>Instructions (System Prompt)</label>
-        <textarea wire:model="instructions" class="ab-input" rows="8" placeholder="You are a helpful assistant..."></textarea>
-    </div>
-
-    <div class="ab-form-actions">
-        <a href="{{ route('neuronai-studio.agents.index') }}" class="ab-btn">Cancel</a>
-        <button type="submit" class="ab-btn ab-btn-primary">Save Agent</button>
-    </div>
-</form>
+    <div id="agent-form-root" class="studio-product-root" wire:ignore></div>
+</div>

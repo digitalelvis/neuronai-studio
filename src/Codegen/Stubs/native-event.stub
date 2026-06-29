@@ -1,0 +1,9 @@
+<?php
+
+namespace {{ namespace }};
+
+use NeuronAI\Workflow\Events\Event;
+
+class {{ className }} implements Event
+{
+}

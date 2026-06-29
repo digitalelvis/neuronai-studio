@@ -3,42 +3,44 @@
 namespace ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents;
 
 use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\AgentRunner;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\McpToolResolver;
+use ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout;
 use Livewire\Component;
 
 class Playground extends Component
 {
     public AgentDefinition $agent;
 
-    public string $message = '';
-
-    public string $response = '';
-
-    public bool $loading = false;
-
     public function mount(AgentDefinition $agent): void
     {
-        $this->agent = $agent;
-    }
-
-    public function send(AgentRunner $runner): void
-    {
-        $this->validate(['message' => 'required|string']);
-
-        $this->loading = true;
-
-        try {
-            $this->response = $runner->run($this->agent, $this->message);
-        } catch (\Throwable $exception) {
-            $this->response = 'Error: '.$exception->getMessage();
-        } finally {
-            $this->loading = false;
-        }
+        $this->agent = $agent->load('mcpBindings');
     }
 
     public function render()
     {
-        return view('neuronai-studio::livewire.agents.playground')
-            ->layout('neuronai-studio::layouts.app', ['title' => 'Playground — '.$this->agent->name]);
+        return view('neuronai-studio::livewire.agents.playground', [
+            'mcpToolCount' => $this->estimateMcpToolCount(),
+        ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
+            breadcrumbs: [
+                ['label' => 'Agents', 'url' => route('neuronai-studio.agents.index')],
+                ['label' => $this->agent->name, 'url' => route('neuronai-studio.agents.edit', $this->agent)],
+                ['label' => 'Playground'],
+            ],
+            title: 'Playground — '.$this->agent->name,
+            contentFlush: true,
+        ));
+    }
+
+    protected function estimateMcpToolCount(): int
+    {
+        if ($this->agent->mcpBindings->isEmpty()) {
+            return 0;
+        }
+
+        try {
+            return count(app(McpToolResolver::class)->toolsForAgent($this->agent));
+        } catch (\Throwable) {
+            return $this->agent->mcpBindings->count();
+        }
     }
 }

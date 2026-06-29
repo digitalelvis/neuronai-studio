@@ -1,0 +1,55 @@
+{
+  "meta": {
+    "id": "basic-agent-chat",
+    "name": "Basic Agent Chat",
+    "description": "Minimal workflow: user input flows through a single agent node to produce a response.",
+    "complexity": "basic",
+    "category": "starter",
+    "tags": ["agent", "chat"],
+    "agents": ["support-assistant"]
+  },
+  "graph": {
+    "version": 1,
+    "nodes": [
+      {
+        "id": "start_1",
+        "type": "start",
+        "position": { "x": 100, "y": 200 },
+        "data": {}
+      },
+      {
+        "id": "agent_1",
+        "type": "agent",
+        "position": { "x": 320, "y": 200 },
+        "data": {
+          "agent_ref": "support-assistant",
+          "message": "",
+          "output_key": "agent_response"
+        }
+      },
+      {
+        "id": "stop_1",
+        "type": "stop",
+        "position": { "x": 540, "y": 200 },
+        "data": {}
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge_start_agent",
+        "source": "start_1",
+        "target": "agent_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_agent_stop",
+        "source": "agent_1",
+        "target": "stop_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      }
+    ],
+    "viewport": { "x": 0, "y": 0, "zoom": 1 }
+  }
+}

@@ -15,6 +15,9 @@ class WorkflowDefinition extends Model
         'graph',
         'state_schema',
         'status',
+        'class_path',
+        'source',
+        'locked',
     ];
 
     protected function casts(): array
@@ -22,6 +25,7 @@ class WorkflowDefinition extends Model
         return [
             'graph' => 'array',
             'state_schema' => 'array',
+            'locked' => 'boolean',
         ];
     }
 
@@ -69,8 +73,21 @@ class WorkflowDefinition extends Model
         ];
     }
 
-    public function runs(): HasMany
+    public function traces(): HasMany
     {
-        return $this->hasMany(WorkflowRun::class, 'workflow_definition_id');
+        return $this->hasMany(WorkflowTrace::class, 'workflow_definition_id');
+    }
+
+    public function isCodeLinked(): bool
+    {
+        return $this->source === 'code' && $this->class_path !== null;
+    }
+
+    /** @param  \Illuminate\Database\Eloquent\Builder<self>  $query */
+    public function scopeStudio($query)
+    {
+        return $query->where(function ($query) {
+            $query->where('source', 'studio')->orWhereNull('source');
+        });
     }
 }

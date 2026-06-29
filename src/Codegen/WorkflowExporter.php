@@ -3,51 +3,43 @@
 namespace ElvisLopesDigital\NeuronAIStudio\Codegen;
 
 use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
-use Illuminate\Support\Facades\File;
-use Illuminate\Support\Str;
 
 class WorkflowExporter
 {
-    public function export(WorkflowDefinition $workflow): array
+    public function __construct(
+        protected NativeWorkflowExporter $nativeExporter,
+    ) {}
+
+    public function preview(WorkflowDefinition $workflow): string
     {
-        $namespace = config('neuronai-studio.export_namespace', 'App\\Neuron');
-        $path = config('neuronai-studio.export_path', app_path('Neuron'));
-        $className = Str::studly($workflow->slug).'Workflow';
-
-        File::ensureDirectoryExists($path);
-
-        $nodesCode = $this->buildNodesArray($workflow);
-
-        $content = str_replace(
-            ['{{ namespace }}', '{{ className }}', '{{ nodes }}'],
-            [$namespace, $className, $nodesCode],
-            file_get_contents(__DIR__.'/Stubs/workflow.stub')
-        );
-
-        $file = $path.'/'.$className.'.php';
-        File::put($file, $content);
-
-        return [$file];
+        return $this->nativeExporter->preview($workflow);
     }
 
-    protected function buildNodesArray(WorkflowDefinition $workflow): string
+    /** @return array<int, string> */
+    public function export(WorkflowDefinition $workflow): array
     {
-        $nodes = $workflow->graph['nodes'] ?? [];
-        $lines = [];
+        return $this->nativeExporter->export($workflow)['files'];
+    }
 
-        foreach ($nodes as $node) {
-            if (in_array($node['type'], ['start', 'stop'], true)) {
-                continue;
-            }
+    /** @return array{files: array<int, string>, preview: string, className: string, namespace: string, fqcn: string} */
+    public function exportWithMeta(WorkflowDefinition $workflow): array
+    {
+        return $this->nativeExporter->export($workflow);
+    }
 
-            $type = Str::studly($node['type']).'Node';
-            $lines[] = "            new {$type}(),";
-        }
+    /**
+     * @return array{code: string, className: string, namespace: string, fqcn: string, fileCount: int}
+     */
+    public function previewMeta(WorkflowDefinition $workflow): array
+    {
+        $build = $this->nativeExporter->build($workflow);
 
-        if (empty($lines)) {
-            return '            // Add exported node classes here';
-        }
-
-        return implode("\n", $lines);
+        return [
+            'code' => $build['preview'],
+            'className' => $build['className'],
+            'namespace' => $build['namespace'],
+            'fqcn' => $build['fqcn'],
+            'fileCount' => 1 + count($build['nodeFiles']) + count($build['eventFiles']),
+        ];
     }
 }
