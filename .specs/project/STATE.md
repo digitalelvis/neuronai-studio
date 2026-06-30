@@ -1,18 +1,27 @@
 # State
 
 **Last Updated:** 2026-06-30
-**Current Work:** Planejamento north star — agentes multimodais autônomos + grafos cíclicos (spec/design only)
+**Development line:** `v0.2.x` (target release `v0.2.0`)
+**Latest published:** `v0.1.2` on `main`
+**Current Work:** M1 — `workflow-cyclic-graphs` (feature 1/3)
 
 ---
 
 ## Recent Decisions (Last 60 days)
 
+### AD-004: Linha de desenvolvimento v0.2.x (2026-06-30)
+
+**Decision:** Abrir `v0.2.x` a partir de `main` (`v0.1.2`) para o milestone M1 (north star: agentes multimodais autônomos + grafos cíclicos).
+**Reason:** `v0.1.x` entregou fundação do Studio (harness, code bridge, multimodal parcial); ciclos e RAG real exigem minor bump.
+**Trade-off:** `v0.0.x` permanece como linha histórica; novos PRs vão para `v0.2.x`.
+**Impact:** Ver [ROADMAP.md](ROADMAP.md); primeiro entregável = nó `loop` + validação de ciclos.
+
 ### AD-003: Roadmap north star — cíclicos + multimodal autônomo (2026-06-30)
 
-**Decision:** Priorizar M1 com três features P0 (`workflow-cyclic-graphs`, `autonomous-multimodal-agents`, `workflow-rag`) antes de P1/P2. Spec e design documentados; `tasks.md` deliberadamente adiado.
+**Decision:** Priorizar M1 com três features P0 (`workflow-cyclic-graphs`, `autonomous-multimodal-agents`, `workflow-rag`) antes de P1/P2.
 **Reason:** Estado atual é DAG-only, `RagNodeExecutor` stub, `GraphExecutionLoop` sem guardrail — bloqueia agentes autônomos com mídia em loops.
 **Trade-off:** Nove features planejadas aumentam superfície; M1 é mínimo viável para north star.
-**Impact:** Ver [.specs/project/ROADMAP.md](ROADMAP.md) para ordem, dependências e índice de documentação.
+**Impact:** Ver [.specs/project/ROADMAP.md](ROADMAP.md).
 
 ### AD-001: IIFE output for studio JS bundles (2026-06-24)
 
@@ -36,6 +45,25 @@ _None._
 
 ---
 
+## M1 progress snapshot
+
+| Feature | Status | Notas |
+|---------|--------|-------|
+| `workflow-cyclic-graphs` | 🔄 in progress | Próximo: spec → tasks → implementação nó `loop` |
+| `autonomous-multimodal-agents` | 🟡 partial | Upload, `MessageFactory`, validação attachments, preview route — ver AMA abaixo |
+| `workflow-rag` | ⏳ planned | Depende de ciclos + executor real |
+
+### AMA já entregue em `v0.1.2` (baseline para v0.2.0)
+
+- [x] AMA-02 — `MessageFactory` em `AgentNodeExecutor` e `LlmNodeExecutor`
+- [x] AMA-01 parcial — attachments no workflow stream + resume + `state.attachments`
+- [x] Upload/preview (`AttachmentController` store + show route)
+- [x] Codegen agent/llm com `MessageFactory`
+- [ ] AMA-03 — thread estável em loops (aguarda `workflow-cyclic-graphs`)
+- [ ] AMA-04–07, AMA-10 — template autonomous-lead-qualification, tool events no harness
+
+---
+
 ## Lessons Learned
 
 ### L-001: Multiple Vite bundles need isolated scope (2026-06-24)
@@ -45,28 +73,36 @@ _None._
 **Solution:** `format: 'iife'` per bundle in `vite.config.js`.
 **Prevents:** Duplicate identifier errors when adding more studio bundles to same layout.
 
+### L-002: Private disk attachments need authenticated preview route (2026-06-30)
+
+**Context:** Multimodal workflow/agent test harness.
+**Problem:** `Storage::url()` apontava para `/storage/...` (403) em disco `local` privado.
+**Solution:** `GET /studio/attachments/file?storage_key=` + manter blob preview no composer.
+
 ---
 
 ## Features Completed
 
-| Feature              | Date       | Commit | Status  |
-| -------------------- | ---------- | ------ | ------- |
-| studio-test-harness  | 2026-06-24 | f8a29d2 | ✅ Done |
-| workflow-json-io     | 2026-06-24 | —       | ✅ Done |
-| workflow-code-bridge | 2026-06-24 | —       | ✅ Done |
+| Feature              | Date       | Version | Status  |
+| -------------------- | ---------- | ------- | ------- |
+| studio-test-harness  | 2026-06-24 | 0.1.x   | ✅ Done |
+| workflow-json-io     | 2026-06-24 | 0.1.x   | ✅ Done |
+| workflow-code-bridge | 2026-06-24 | 0.1.x   | ✅ Done |
+| multimodal-attachments (partial AMA) | 2026-06-30 | 0.1.2 | ✅ Done |
 
 ---
 
 ## Deferred Ideas
 
-- [ ] Autonomia multi-turn dentro de um único nó agent (múltiplas tool rounds sem sair do nó) — Captured during: autonomous-multimodal-agents planning
-- [ ] SSE em tempo real para `RunWorkflowJob` (broadcast vs polling) — Captured during: workflow-queue-runner planning
-- [ ] Remove redundant layout `<link>` tags for `studio-chat.css` / `workflow-canvas.css` now that styles are inlined in bundles — Captured during: studio-test-harness
-- [ ] Extract `StudioTestHarness.jsx` shell component (design doc) if Playground+Chat composition grows — Captured during: studio-test-harness
+- [ ] Autonomia multi-turn dentro de um único nó agent (múltiplas tool rounds sem sair do nó)
+- [ ] SSE em tempo real para `RunWorkflowJob` (broadcast vs polling)
+- [ ] Remove redundant layout `<link>` tags for bundle-inlined CSS
+- [ ] Extract `StudioTestHarness.jsx` shell component if composition grows
 
 ---
 
 ## Todos
 
-- [ ] Republish assets in consuming apps: `php artisan vendor:publish --tag=neuronai-studio-assets --force`
-- [ ] Republish views if layout changed: `php artisan vendor:publish --tag=neuronai-studio-views --force`
+- [ ] `workflow-cyclic-graphs`: gerar `tasks.md` e iniciar implementação
+- [ ] Atualizar `docs/RELEASE.md` consumidores: linha ativa `v0.2.x`
+- [ ] Configurar branch protection para `v0.2.x` no GitHub (espelhar `v0.0.x`)

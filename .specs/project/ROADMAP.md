@@ -2,23 +2,28 @@
 
 **North star:** Agentes multimodais autônomos com grafos de workflow cíclicos.
 
+**Development line:** `v0.2.x` → release alvo `v0.2.0`  
+**Última publicação:** `v0.1.2` (`main`)  
 **Última atualização:** 2026-06-30
 
 ---
 
 ## Milestones
 
-### M1 — Fundação autônoma (P0) `planned`
+### M1 — Fundação autônoma (P0) `in progress`
 
 Grafos cíclicos + agentes multimodais + RAG real. Entrega o padrão end-to-end para loops com agent, attachments e knowledge base.
 
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
-| 1 | `workflow-cyclic-graphs` | planned | [spec](../features/workflow-cyclic-graphs/spec.md) |
-| 2 | `autonomous-multimodal-agents` | planned | [spec](../features/autonomous-multimodal-agents/spec.md) |
+| 1 | `workflow-cyclic-graphs` | **in progress** | [spec](../features/workflow-cyclic-graphs/spec.md) · [design](../features/workflow-cyclic-graphs/design.md) |
+| 2 | `autonomous-multimodal-agents` | **partial** (baseline `v0.1.2`) | [spec](../features/autonomous-multimodal-agents/spec.md) · [design](../features/autonomous-multimodal-agents/design.md) |
 | 3 | `workflow-rag` | planned | [spec](../features/workflow-rag/spec.md) |
 
-**Critério de conclusão M1:** Template autonomous-lead-qualification executável no test harness com loop, agent com tools, anexo PDF/imagem, e opcionalmente nó RAG upstream.
+**Critério de conclusão M1:** Template `autonomous-lead-qualification` executável no test harness com loop, agent com tools, anexo PDF/imagem, e opcionalmente nó RAG upstream.
+
+**Etapa atual (v0.2.x):** Feature 1 — `workflow-cyclic-graphs`  
+Próximos passos: `tasks.md` → nó `loop` no registry/canvas → `GraphExecutionLoop` + `max_steps` → validação de ciclos → template `lead-qualification-loop`.
 
 ### M2 — Capacidades de agente no workflow (P1) `planned`
 
@@ -44,11 +49,12 @@ Paralelismo, checkpoints generalizados e execução assíncrona.
 
 ## Features concluídas
 
-| Feature | Status |
-|---------|--------|
-| `studio-test-harness` | ✅ done |
-| `workflow-json-io` | ✅ done |
-| `workflow-code-bridge` | ✅ done |
+| Feature | Status | Version |
+|---------|--------|---------|
+| `studio-test-harness` | ✅ done | 0.1.x |
+| `workflow-json-io` | ✅ done | 0.1.x |
+| `workflow-code-bridge` | ✅ done | 0.1.x |
+| Multimodal attachments (AMA partial) | ✅ done | 0.1.2 |
 
 ---
 
