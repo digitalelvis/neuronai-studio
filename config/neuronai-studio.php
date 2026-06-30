@@ -279,6 +279,7 @@ return [
         'max_size_kb' => (int) env('NEURONAI_STUDIO_ATTACHMENTS_MAX_KB', 10240),
         'allowed_mimes' => [
             'image/jpeg',
+            'image/jpg',
             'image/png',
             'image/gif',
             'image/webp',

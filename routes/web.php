@@ -77,5 +77,6 @@ Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
 
         Route::get('/templates', TemplatesIndex::class)->name('templates.index');
 
-        Route::post('/studio/attachments', AttachmentController::class)->name('attachments.store');
+        Route::post('/studio/attachments', [AttachmentController::class, 'store'])->name('attachments.store');
+        Route::get('/studio/attachments/file', [AttachmentController::class, 'show'])->name('attachments.show');
     });

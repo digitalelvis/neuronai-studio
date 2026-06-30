@@ -93,6 +93,7 @@ class NativeWorkflowExporterTest extends TestCase
         $this->assertStringNotContainsString('studioGraph()', $result['preview']);
         $this->assertStringNotContainsString('implements StudioWorkflow', $result['preview']);
         $this->assertStringContainsString('function __invoke(StartEvent $event, WorkflowState $state): Llm1Event', $result['preview']);
+        $this->assertStringContainsString('MessageFactory', $result['preview']);
         $this->assertStringNotContainsString('): App\\Neuron\\', $result['preview']);
 
         $this->cleanupExport($exportPath);

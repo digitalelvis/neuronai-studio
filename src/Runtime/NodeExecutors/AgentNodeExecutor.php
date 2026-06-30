@@ -30,7 +30,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
 
         $message = StateTemplateInterpolator::interpolate($rawMessage, $state);
         $attachments = is_array($state->get('attachments')) ? $state->get('attachments') : [];
-        $userMessage = $this->messages->userMessage($message, $attachments);
+        $userMessage = $this->messages->resolveMessageWithAttachments($message, $attachments);
         $threadKey = $state->get('__studio_thread_id');
         $threadKey = is_string($threadKey) && $threadKey !== '' ? $threadKey : null;
 

@@ -2,6 +2,7 @@
 
 namespace DigitalElvis\NeuronAIStudio\Http\Controllers;
 
+use DigitalElvis\NeuronAIStudio\Http\Controllers\Concerns\ValidatesChatAttachments;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
 use Illuminate\Http\Request;
@@ -11,6 +12,8 @@ use Throwable;
 
 class WorkflowStreamController
 {
+    use ValidatesChatAttachments;
+
     public function __invoke(Request $request, WorkflowDefinition $workflow, WorkflowRunner $runner): StreamedResponse
     {
         if ($request->isMethod('GET')) {
@@ -21,12 +24,12 @@ class WorkflowStreamController
         }
 
         $validated = $request->validate([
-            'message' => 'nullable|string',
             'state' => 'nullable|array',
-            'attachments' => 'nullable|array',
             'thread_id' => 'nullable|uuid',
         ]);
 
+        $chat = $this->validateChatPayload($request);
+        $validated = array_merge($validated, $chat);
         $validated['thread_id'] = $validated['thread_id'] ?? (string) Str::uuid();
 
         $payload = [

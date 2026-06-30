@@ -50,4 +50,45 @@ class WorkflowRunnerTest extends TestCase
         $this->assertContains('step_started', array_column($events, 0));
         $this->assertContains('step_completed', array_column($events, 0));
     }
+
+    public function test_native_output_includes_normalized_steps_from_graph(): void
+    {
+        $workflow = WorkflowDefinition::create([
+            'name' => 'Native Steps Flow',
+            'slug' => 'native-steps-flow',
+            'graph' => [
+                'version' => 1,
+                'nodes' => [
+                    ['id' => 'agent_1', 'type' => 'agent', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                    ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+                ],
+                'edges' => [],
+            ],
+        ]);
+
+        $runner = app(WorkflowRunner::class);
+        $reflection = new \ReflectionClass($runner);
+
+        $normalize = $reflection->getMethod('normalizeNativeSteps');
+        $normalize->setAccessible(true);
+
+        $outputWithSteps = $reflection->getMethod('outputWithNativeSteps');
+        $outputWithSteps->setAccessible(true);
+
+        $steps = [
+            [
+                'node_id' => 'agent_1',
+                'node_type' => 'agent_1',
+                'state_snapshot' => ['agent_response' => 'Done'],
+                'duration_ms' => 12,
+            ],
+        ];
+
+        $normalized = $normalize->invoke($runner, $steps, $workflow);
+        $this->assertSame('agent', $normalized[0]['node_type']);
+
+        $output = $outputWithSteps->invoke($runner, ['agent_response' => 'Done'], $steps, $workflow);
+        $this->assertArrayHasKey('__steps', $output);
+        $this->assertSame('agent', $output['__steps'][0]['node_type']);
+    }
 }

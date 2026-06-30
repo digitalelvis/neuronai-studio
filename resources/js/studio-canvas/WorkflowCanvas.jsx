@@ -45,6 +45,7 @@ function WorkflowCanvasInner({
     readOnly = false,
     defaultProvider = '',
     defaultModel = '',
+    agents = [],
 }) {
     const initialNodes = useMemo(() => toFlowNodes(graph?.nodes, nodeTypesMeta), []);
     const initialEdges = useMemo(() => toFlowEdges(graph?.edges), []);
@@ -415,7 +416,7 @@ function WorkflowCanvasInner({
     ]);
 
     return (
-        <CanvasUiProvider readOnly={readOnly}>
+        <CanvasUiProvider readOnly={readOnly} agents={agents}>
         <ReactFlow
             nodes={nodes}
             edges={edges}

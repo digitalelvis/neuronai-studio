@@ -2,6 +2,7 @@
 
 namespace DigitalElvis\NeuronAIStudio\Http\Controllers;
 
+use DigitalElvis\NeuronAIStudio\Http\Controllers\Concerns\ValidatesChatAttachments;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
 use Illuminate\Http\Request;
@@ -10,12 +11,16 @@ use Throwable;
 
 class WorkflowTraceResumeController
 {
+    use ValidatesChatAttachments;
+
     public function __invoke(Request $request, WorkflowTrace $trace, WorkflowRunner $runner): StreamedResponse
     {
         $validated = $request->validate([
-            'message' => 'required|string',
             'node_id' => 'required|string',
         ]);
+
+        $chat = $this->validateChatPayload($request);
+        $validated = array_merge($validated, $chat);
 
         return response()->stream(function () use ($trace, $runner, $validated) {
             $send = function (string $event, array $data): void {
@@ -35,6 +40,7 @@ class WorkflowTraceResumeController
                     $validated['node_id'],
                     $validated['message'],
                     $send,
+                    $validated['attachments'] ?? [],
                 );
 
                 if ($result->status === 'awaiting_input') {
