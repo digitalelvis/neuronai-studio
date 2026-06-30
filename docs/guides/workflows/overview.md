@@ -23,13 +23,13 @@ flowchart TB
     Export --> PHP[app/Neuron/Workflows]
 ```
 
-## Node types (12)
+## Node types (13)
 
 | Category | Types |
 |----------|-------|
 | Flow | start, stop, delay, human |
 | AI | agent, llm, tool, mcp, rag |
-| Logic | condition, set_state |
+| Logic | condition, set_state, loop |
 
 See the [node type guides](node-types/flow-nodes.md) for configuration details.
 
@@ -61,6 +61,16 @@ Workflows can originate from:
 | Branching logic | start → llm → condition → agents → stop |
 | Human approval | start → agent → human → agent → stop |
 | Tool pipeline | start → tool → llm → stop |
+| Cyclic refinement | start → loop → agent/llm → loop → stop |
+| Autonomous lead qualification | start → loop → agent (tools + attachments) → condition → stop |
+
+## Cyclic graphs
+
+Workflows may contain cycles when a **Loop** node authorizes back-edges. Each loop enforces `max_steps` to prevent infinite execution. Use loops for iterative extraction, qualification, or refinement until a state condition is satisfied.
+
+## Autonomous agents in workflows
+
+Combine loops with **Agent** nodes, multimodal attachments, and shared `__studio_thread_id` so the agent retains conversation memory across iterations. Tool calls during agent steps emit `tool_call` / `tool_result` SSE events in the test harness.
 
 Try the bundled templates — see [Templates](../templates.md).
 
