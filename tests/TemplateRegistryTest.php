@@ -11,7 +11,7 @@ class TemplateRegistryTest extends TestCase
         $registry = app(TemplateRegistry::class);
         $templates = $registry->all();
 
-        $this->assertCount(11, $templates);
+        $this->assertCount(12, $templates);
 
         $ids = collect($templates)->map(fn (array $entry) => $entry['type'].':'.$entry['id'])->sort()->values()->all();
 
@@ -26,6 +26,7 @@ class TemplateRegistryTest extends TestCase
             'agent:support-assistant',
             'workflow:basic-agent-chat',
             'workflow:lead-qualification',
+            'workflow:lead-qualification-loop',
             'workflow:support-rag-hitl',
         ], $ids);
     }
@@ -35,9 +36,9 @@ class TemplateRegistryTest extends TestCase
         $registry = app(TemplateRegistry::class);
 
         $this->assertCount(8, $registry->all('agent'));
-        $this->assertCount(3, $registry->all('workflow'));
+        $this->assertCount(4, $registry->all('workflow'));
         $this->assertCount(1, $registry->all('workflow', 'basic'));
-        $this->assertCount(1, $registry->all('workflow', 'intermediate'));
+        $this->assertCount(2, $registry->all('workflow', 'intermediate'));
         $this->assertCount(1, $registry->all('workflow', 'advanced'));
     }
 

@@ -49,7 +49,7 @@ _None._
 
 | Feature | Status | Notas |
 |---------|--------|-------|
-| `workflow-cyclic-graphs` | 🔄 in progress | Próximo: spec → tasks → implementação nó `loop` |
+| `workflow-cyclic-graphs` | 🔄 in progress | P0: loop runtime, validation, canvas, template, tests — P1: codegen + harness inspector |
 | `autonomous-multimodal-agents` | 🟡 partial | Upload, `MessageFactory`, validação attachments, preview route — ver AMA abaixo |
 | `workflow-rag` | ⏳ planned | Depende de ciclos + executor real |
 
@@ -103,6 +103,7 @@ _None._
 
 ## Todos
 
-- [ ] `workflow-cyclic-graphs`: gerar `tasks.md` e iniciar implementação
+- [x] `workflow-cyclic-graphs`: gerar `tasks.md` e implementar P0 (branch `feat/workflow-cyclic-graphs`)
+- [ ] `workflow-cyclic-graphs`: P1 — `LoopNodeCodeGenerator`, inspector iteração no harness
 - [ ] Atualizar `docs/RELEASE.md` consumidores: linha ativa `v0.2.x`
 - [ ] Configurar branch protection para `v0.2.x` no GitHub (espelhar `v0.0.x`)

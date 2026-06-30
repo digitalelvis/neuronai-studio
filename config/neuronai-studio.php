@@ -265,6 +265,22 @@ return [
             'icon' => 'message-square',
             'category' => 'flow',
         ],
+        'loop' => [
+            'label' => 'Loop',
+            'icon' => 'repeat',
+            'category' => 'logic',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Loop / Cyclic Graph Defaults
+    |--------------------------------------------------------------------------
+    */
+
+    'loop' => [
+        'default_max_steps' => (int) env('NEURONAI_STUDIO_LOOP_DEFAULT_MAX_STEPS', 10),
+        'global_max_steps' => (int) env('NEURONAI_STUDIO_LOOP_GLOBAL_MAX_STEPS', 1000),
     ],
 
     /*
