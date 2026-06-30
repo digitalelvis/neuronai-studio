@@ -11,6 +11,7 @@ function createAdapter(config) {
         return new WorkflowSessionAdapter({
             streamUrl: config.streamUrl,
             resumeUrlTemplate: config.resumeUrlTemplate,
+            uploadUrl: config.uploadUrl,
             onBeforeRun: config.onBeforeRun,
             syncCanvas: config.syncCanvas !== false,
         });
@@ -42,6 +43,7 @@ export function mountStudioChat(rootEl, config = {}) {
             mode={config.mode ?? 'agent'}
             entityId={config.entityId}
             enableAttachments={Boolean(config.uploadUrl)}
+            uploadUrl={config.uploadUrl}
             initialContext={config.initialContext ?? {}}
             onRunCompleted={config.onRunCompleted}
             agentMeta={config.agentMeta ?? null}

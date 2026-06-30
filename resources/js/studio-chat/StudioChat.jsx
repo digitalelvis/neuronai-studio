@@ -8,12 +8,28 @@ import ThreadBar from './ThreadBar';
 import { createId } from './utils/id';
 import { createThreadId, getThreadFromUrl, setThreadInUrl } from './utils/thread';
 import { formatWorkflowData } from './utils/workflowOutput';
+import { uploadAttachments } from './utils/uploadAttachments';
+
+function toDisplayAttachments(attachments, uploaded = []) {
+    return attachments.map((attachment, index) => {
+        const stored = uploaded[index];
+
+        return {
+            ...attachment,
+            id: attachment.id ?? `${attachment.name}-${index}`,
+            storageKey: stored?.storage_key ?? attachment.storageKey,
+            mimeType: stored?.mime_type ?? attachment.mimeType,
+            url: stored?.url ?? attachment.url,
+        };
+    });
+}
 
 export default forwardRef(function StudioChat({
     adapter,
     mode = 'agent',
     entityId,
     enableAttachments = false,
+    uploadUrl = null,
     showPlayground = true,
     initialContext = {},
     onContextChange,
@@ -140,31 +156,45 @@ export default forwardRef(function StudioChat({
         setError('');
         setSending(true);
 
-        appendMessage({
-            id: createId('user'),
-            role: 'user',
-            content: text,
-            attachments,
-        });
-
-        const assistantId = createId('assistant');
-        appendMessage({
-            id: assistantId,
-            role: 'assistant',
-            content: '',
-            streaming: true,
-            meta: mode === 'workflow' ? { userMessage: text, stepEvents: [] } : undefined,
-        });
-
-        if (mode === 'workflow') {
-            window.dispatchEvent(new CustomEvent('canvas-trace-start'));
-        }
-
-        let assistantText = '';
-        const toolMessages = [];
+        let uploaded = [];
+        let payloadAttachments = attachments;
         let traceFinished = false;
+        let assistantId = null;
 
         try {
+            if (enableAttachments && attachments.length > 0 && uploadUrl) {
+                uploaded = await uploadAttachments(attachments, uploadUrl);
+                payloadAttachments = uploaded.map((item, index) => ({
+                    ...attachments[index],
+                    storageKey: item.storage_key,
+                    mimeType: item.mime_type,
+                    url: item.url,
+                }));
+            }
+
+            appendMessage({
+                id: createId('user'),
+                role: 'user',
+                content: text,
+                attachments: toDisplayAttachments(attachments, uploaded),
+            });
+
+            assistantId = createId('assistant');
+            appendMessage({
+                id: assistantId,
+                role: 'assistant',
+                content: '',
+                streaming: true,
+                meta: mode === 'workflow' ? { userMessage: text, stepEvents: [] } : undefined,
+            });
+
+            if (mode === 'workflow') {
+                window.dispatchEvent(new CustomEvent('canvas-trace-start'));
+            }
+
+            let assistantText = '';
+            const toolMessages = [];
+
             const sendContext = supportsThreads
                 ? {
                       state: effectiveContext,
@@ -178,7 +208,11 @@ export default forwardRef(function StudioChat({
                       parameters: mode === 'agent' ? parameters : undefined,
                   };
 
-            for await (const packet of adapter.send(text, attachments, sendContext)) {
+            for await (const packet of adapter.send(
+                text,
+                uploaded.length > 0 ? payloadAttachments : attachments,
+                sendContext,
+            )) {
                 if (packet.event === 'thread' && packet.data?.thread_id) {
                     setThreadId(packet.data.thread_id);
                 }
@@ -308,11 +342,14 @@ export default forwardRef(function StudioChat({
             traceFinished = true;
             const message = sendError instanceof Error ? sendError.message : 'Request failed.';
             setError(message);
-            updateMessage(assistantId, { content: message, streaming: false, meta: { status: 'failed' } });
+            setSuccessMessage('');
+            if (assistantId) {
+                updateMessage(assistantId, { content: message, streaming: false, meta: { status: 'failed' } });
+            }
         } finally {
             setSending(false);
 
-            if (!traceFinished) {
+            if (!traceFinished && assistantId) {
                 setMessages((current) =>
                     current.map((message) =>
                         message.id === assistantId && message.streaming && !message.content && !message.meta?.stepEvents?.length

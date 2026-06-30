@@ -115,6 +115,32 @@ Repository → Settings → Branches → Add rule:
 2. Enable **Auto-update** (GitHub hook or Packagist API token).
 3. Confirm package name: `elvislopesdigital/neuronai-studio`.
 
+### 3.3 GitHub Hook (auto-update)
+
+If Packagist shows *"This package is not auto-updated"*, configure the webhook once.
+
+**Option A — via Packagist (recommended)**
+
+1. Open [digitalelvis/neuronai-studio on Packagist](https://packagist.org/packages/digitalelvis/neuronai-studio).
+2. Click **Setup GitHub Hook** (or **Enable auto-update**) on the package page.
+3. Authorize Packagist on GitHub when prompted (repo `digitalelvis/neuronai-studio`).
+4. Refresh Packagist — the warning should disappear.
+
+**Option B — manual webhook on GitHub**
+
+1. Packagist → **Profile** → copy your **API Token**.
+2. GitHub → `digitalelvis/neuronai-studio` → **Settings** → **Webhooks** → **Add webhook** (or edit existing):
+   - **Payload URL:** `https://packagist.org/api/github?username=digitalelvis`
+   - **Content type:** `application/json`
+   - **Secret:** your Packagist API token
+   - **Events:** Just the **push** event
+3. Save, then use **Recent Deliveries** → **Redeliver** on a push event to confirm **200** response.
+
+**Verify**
+
+- Packagist package page no longer shows the auto-update warning.
+- After a new tag on `main`, the version appears on Packagist within ~1 minute (or click **Update** on the package page to force sync).
+
 ### 4. First release
 
 1. Merge `v0.0.x` → `main` via PR.
@@ -129,5 +155,6 @@ Repository → Settings → Branches → Add rule:
 |-------|-------|-----|
 | Release workflow loops | Missing `[skip ci]` on release commit | Ensure `.release-it.json` has `[skip ci]` in `commitMessage` |
 | No version bump | Only `docs`/`chore` commits since last tag | Expected — `requireCommitsFail: false` skips release |
-| Packagist stale | Hook not configured | Re-trigger update on Packagist or check GitHub webhook |
+| Packagist stale | Hook not configured | Follow [3.3 GitHub Hook](#33-github-hook-auto-update); add API token as webhook secret |
+| Packagist hook 403 | Webhook missing secret | Set **Secret** to your Packagist API token (Profile) |
 | Wrong semver | Non-conventional commit messages | Rewrite is not possible after merge; use correct types going forward |

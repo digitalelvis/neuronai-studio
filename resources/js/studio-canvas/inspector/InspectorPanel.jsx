@@ -41,10 +41,11 @@ export default function InspectorPanel({
         return new WorkflowSessionAdapter({
             streamUrl: workflowConfig.streamUrl,
             resumeUrlTemplate: workflowConfig.resumeUrlTemplate,
+            uploadUrl: workflowConfig.uploadUrl,
             onBeforeRun,
             syncCanvas: true,
         });
-    }, [workflowConfig.streamUrl, workflowConfig.resumeUrlTemplate, onBeforeRun]);
+    }, [workflowConfig.streamUrl, workflowConfig.resumeUrlTemplate, workflowConfig.uploadUrl, onBeforeRun]);
 
     const handleTraceSelect = (trace) => {
         setSelectedTraceId(trace.id);
@@ -77,6 +78,7 @@ export default function InspectorPanel({
                             mode="workflow"
                             entityId={workflowConfig.workflowId}
                             enableAttachments={Boolean(workflowConfig.uploadUrl)}
+                            uploadUrl={workflowConfig.uploadUrl}
                             embedded
                             onRunCompleted={handleTraceFinished}
                         />

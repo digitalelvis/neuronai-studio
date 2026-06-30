@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Storage;
 
 class AttachmentController
 {
-    public function __invoke(Request $request): JsonResponse
+    public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'file' => 'required|file|max:'.((int) config('neuronai-studio.attachments.max_size_kb', 10240)),
@@ -16,7 +16,7 @@ class AttachmentController
         ]);
 
         $file = $validated['file'];
-        $mimeType = (string) $file->getMimeType();
+        $mimeType = $this->resolveMimeType($file);
         $this->assertAllowedMime($mimeType);
 
         $type = (string) ($validated['type'] ?? $this->detectType($mimeType));
@@ -29,8 +29,32 @@ class AttachmentController
             'mime_type' => $mimeType,
             'name' => $file->getClientOriginalName(),
             'type' => $type,
-            'url' => Storage::disk($disk)->url($storageKey),
+            'url' => route('neuronai-studio.attachments.show', ['storage_key' => $storageKey]),
         ]);
+    }
+
+    public function show(Request $request): \Symfony\Component\HttpFoundation\Response
+    {
+        $validated = $request->validate([
+            'storage_key' => 'required|string',
+        ]);
+
+        $storageKey = (string) $validated['storage_key'];
+        $disk = (string) config('neuronai-studio.attachments.disk', 'local');
+        $directory = trim((string) config('neuronai-studio.attachments.path', 'neuronai-studio/attachments'), '/');
+
+        if ($directory !== '' && ! str_starts_with($storageKey, $directory.'/')) {
+            abort(403);
+        }
+
+        if (! Storage::disk($disk)->exists($storageKey)) {
+            abort(404);
+        }
+
+        return response()->file(
+            Storage::disk($disk)->path($storageKey),
+            ['Content-Type' => (string) Storage::disk($disk)->mimeType($storageKey)],
+        );
     }
 
     protected function assertAllowedMime(string $mimeType): void
@@ -59,5 +83,34 @@ class AttachmentController
         }
 
         return 'document';
+    }
+
+    protected function resolveMimeType(\Illuminate\Http\UploadedFile $file): string
+    {
+        $mimeType = (string) $file->getMimeType();
+
+        if ($mimeType !== '' && $mimeType !== 'application/octet-stream') {
+            return $mimeType;
+        }
+
+        $clientMime = (string) $file->getClientMimeType();
+        if ($clientMime !== '' && $clientMime !== 'application/octet-stream') {
+            return $clientMime;
+        }
+
+        return match (strtolower((string) $file->getClientOriginalExtension())) {
+            'jpg', 'jpeg' => 'image/jpeg',
+            'png' => 'image/png',
+            'gif' => 'image/gif',
+            'webp' => 'image/webp',
+            'mp3' => 'audio/mpeg',
+            'wav' => 'audio/wav',
+            'ogg' => 'audio/ogg',
+            'mp4' => 'video/mp4',
+            'webm' => 'video/webm',
+            'pdf' => 'application/pdf',
+            'txt' => 'text/plain',
+            default => $mimeType !== '' ? $mimeType : 'application/octet-stream',
+        };
     }
 }

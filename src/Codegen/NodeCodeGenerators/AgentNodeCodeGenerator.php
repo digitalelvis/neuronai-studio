@@ -25,13 +25,16 @@ class AgentNodeCodeGenerator implements NodeCodeGeneratorInterface
             \$message = (string) \$state->get('input', '');
         }
 
+        \$attachments = is_array(\$state->get('attachments')) ? \$state->get('attachments') : [];
+        \$userMessage = app(MessageFactory::class)->resolveMessageWithAttachments(\$message, \$attachments);
+
         \$agent = AgentDefinition::findOrFail({$agentId});
         \$response = app(AgentRunner::class)->runInline([
             'provider' => \$agent->provider,
             'model' => \$agent->model,
             'instructions' => \$agent->instructions,
             'tools' => \$agent->tools ?? [],
-        ], new UserMessage(\$message), \$agent, is_string(\$state->get('__studio_thread_id')) ? \$state->get('__studio_thread_id') : null);
+        ], \$userMessage, \$agent, is_string(\$state->get('__studio_thread_id')) ? \$state->get('__studio_thread_id') : null);
 
         \$state->set({$outputKey}, \$response->content);
 
@@ -43,7 +46,7 @@ PHP;
                 'imports' => [
                     'ElvisLopesDigital\\NeuronAIStudio\\Models\\AgentDefinition',
                     'ElvisLopesDigital\\NeuronAIStudio\\Runtime\\AgentRunner',
-                    'NeuronAI\\Chat\\Messages\\UserMessage',
+                    'ElvisLopesDigital\\NeuronAIStudio\\Runtime\\MessageFactory',
                 ],
             ];
         }
@@ -60,11 +63,14 @@ PHP;
             \$message = (string) \$state->get('input', '');
         }
 
+        \$attachments = is_array(\$state->get('attachments')) ? \$state->get('attachments') : [];
+        \$userMessage = app(MessageFactory::class)->resolveMessageWithAttachments(\$message, \$attachments);
+
         \$agent = Agent::make()
             ->setProvider({$providerExpr})
             ->addSystemTip({$instructions});
 
-        \$response = \$agent->chat(new UserMessage(\$message));
+        \$response = \$agent->chat(\$userMessage);
         \$state->set({$outputKey}, \$response->getContent());
 
         {$return}
@@ -74,7 +80,7 @@ PHP;
             'body' => $body,
             'imports' => [
                 'NeuronAI\\Agent',
-                'NeuronAI\\Chat\\Messages\\UserMessage',
+                'ElvisLopesDigital\\NeuronAIStudio\\Runtime\\MessageFactory',
             ],
         ];
     }

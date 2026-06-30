@@ -98,7 +98,27 @@ class StudioTestHarnessTest extends TestCase
         ]);
 
         $response->assertOk();
-        $response->assertJsonStructure(['storage_key', 'mime_type', 'name', 'type']);
+        $response->assertJsonStructure(['storage_key', 'mime_type', 'name', 'type', 'url']);
+        $this->assertStringContainsString('storage_key=', (string) $response->json('url'));
+    }
+
+    public function test_attachment_preview_route_serves_uploaded_file(): void
+    {
+        Storage::fake('local');
+        $this->withoutMiddleware(EnsureNeuronAIStudioAuthorized::class);
+
+        $file = UploadedFile::fake()->image('preview.png');
+
+        $upload = $this->post(route('neuronai-studio.attachments.store'), [
+            'file' => $file,
+            'type' => 'image',
+        ]);
+
+        $storageKey = (string) $upload->json('storage_key');
+
+        $this->get(route('neuronai-studio.attachments.show', ['storage_key' => $storageKey]))
+            ->assertOk()
+            ->assertHeader('content-type', 'image/png');
     }
 
     public function test_workflow_stream_accepts_post_payload(): void
@@ -118,5 +138,89 @@ class StudioTestHarnessTest extends TestCase
 
         $response->assertOk();
         $this->assertStringContainsString('text/event-stream', (string) $response->headers->get('content-type'));
+    }
+
+    public function test_workflow_stream_rejects_attachment_without_storage_key(): void
+    {
+        $this->withoutMiddleware(EnsureNeuronAIStudioAuthorized::class);
+
+        $workflow = WorkflowDefinition::create([
+            'name' => 'Attachment Validation Flow',
+            'slug' => 'attachment-validation-flow',
+            'graph' => WorkflowDefinition::defaultGraph(),
+        ]);
+
+        $response = $this->postJson(route('neuronai-studio.workflows.trace.stream', $workflow), [
+            'message' => 'See attached',
+            'attachments' => [
+                ['type' => 'image', 'name' => 'photo.png'],
+            ],
+        ]);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors(['attachments.0.storage_key']);
+    }
+
+    public function test_workflow_resume_rejects_attachment_without_storage_key(): void
+    {
+        $this->withoutMiddleware(EnsureNeuronAIStudioAuthorized::class);
+
+        $workflow = WorkflowDefinition::create([
+            'name' => 'Resume Attachment Flow',
+            'slug' => 'resume-attachment-flow',
+            'graph' => WorkflowDefinition::defaultGraph(),
+        ]);
+
+        $trace = app(WorkflowRunner::class)->run($workflow, ['message' => 'start']);
+
+        $response = $this->postJson(route('neuronai-studio.workflows.traces.resume.stream', $trace), [
+            'message' => 'resume message',
+            'node_id' => 'human_1',
+            'attachments' => [
+                ['type' => 'document', 'name' => 'notes.pdf'],
+            ],
+        ]);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors(['attachments.0.storage_key']);
+    }
+
+    public function test_workflow_run_stores_attachments_in_state(): void
+    {
+        Storage::fake('local');
+        config(['neuronai-studio.attachments.disk' => 'local']);
+
+        $storageKey = 'neuronai-studio/attachments/notes.txt';
+        Storage::disk('local')->put($storageKey, 'lead details');
+
+        $workflow = WorkflowDefinition::create([
+            'name' => 'Attachment State Flow',
+            'slug' => 'attachment-state-flow',
+            'graph' => [
+                'version' => 1,
+                'nodes' => [
+                    ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                    ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+                ],
+                'edges' => [
+                    ['id' => 'e1', 'source' => 'start_1', 'target' => 'stop_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ],
+            ],
+        ]);
+
+        $trace = app(WorkflowRunner::class)->run($workflow, [
+            'message' => 'Qualify this lead',
+            'attachments' => [
+                [
+                    'type' => 'document',
+                    'storage_key' => $storageKey,
+                    'mime_type' => 'text/plain',
+                    'name' => 'notes.txt',
+                ],
+            ],
+        ]);
+
+        $this->assertEquals('completed', $trace->status);
+        $this->assertSame($storageKey, $trace->output['attachments'][0]['storage_key'] ?? null);
     }
 }
