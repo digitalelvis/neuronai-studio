@@ -1,6 +1,6 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Codegen\NodeCodeGenerators;
+namespace DigitalElvis\NeuronAIStudio\Codegen\NodeCodeGenerators;
 
 class NodeCodeGeneratorRegistry
 {

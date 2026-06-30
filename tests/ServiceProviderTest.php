@@ -1,8 +1,8 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests;
+namespace DigitalElvis\NeuronAIStudio\Tests;
 
-use ElvisLopesDigital\NeuronAIStudio\NeuronAIStudioServiceProvider;
+use DigitalElvis\NeuronAIStudio\NeuronAIStudioServiceProvider;
 
 class ServiceProviderTest extends TestCase
 {

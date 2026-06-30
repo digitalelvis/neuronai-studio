@@ -1,9 +1,9 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors;
+namespace DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors;
 
-use ElvisLopesDigital\NeuronAIStudio\Runtime\Exceptions\HumanInputRequiredException;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\GraphContext;
+use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\HumanInputRequiredException;
+use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
 use NeuronAI\Workflow\WorkflowState;
 
 class HumanNodeExecutor implements NodeExecutorInterface

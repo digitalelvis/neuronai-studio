@@ -1,9 +1,9 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors;
+namespace DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors;
 
-use ElvisLopesDigital\NeuronAIStudio\Runtime\GraphContext;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\StateTemplateInterpolator;
+use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
+use DigitalElvis\NeuronAIStudio\Runtime\StateTemplateInterpolator;
 use NeuronAI\Workflow\WorkflowState;
 
 class RagNodeExecutor implements NodeExecutorInterface

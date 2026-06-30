@@ -1,10 +1,10 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Http\Controllers;
+namespace DigitalElvis\NeuronAIStudio\Http\Controllers;
 
-use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\Concerns\ValidatesChatAttachments;
-use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\AgentRunner;
+use DigitalElvis\NeuronAIStudio\Http\Controllers\Concerns\ValidatesChatAttachments;
+use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Runtime\AgentRunner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use NeuronAI\Chat\Messages\Stream\Chunks\TextChunk;

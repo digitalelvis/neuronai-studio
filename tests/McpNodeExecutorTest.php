@@ -1,13 +1,13 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests;
+namespace DigitalElvis\NeuronAIStudio\Tests;
 
-use ElvisLopesDigital\NeuronAIStudio\Registry\McpRegistry;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\BuilderWorkflowState;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\GraphContext;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\McpToolResolver;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\McpNodeExecutor;
-use ElvisLopesDigital\NeuronAIStudio\Tests\Support\FakeMcpTransport;
+use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
+use DigitalElvis\NeuronAIStudio\Runtime\BuilderWorkflowState;
+use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
+use DigitalElvis\NeuronAIStudio\Runtime\McpToolResolver;
+use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\McpNodeExecutor;
+use DigitalElvis\NeuronAIStudio\Tests\Support\FakeMcpTransport;
 use Mockery;
 
 class McpNodeExecutorTest extends TestCase

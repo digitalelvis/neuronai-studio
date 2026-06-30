@@ -1,8 +1,8 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Http\Controllers\Concerns;
+namespace DigitalElvis\NeuronAIStudio\Http\Controllers\Concerns;
 
-use ElvisLopesDigital\NeuronAIStudio\Runtime\MessageFactory;
+use DigitalElvis\NeuronAIStudio\Runtime\MessageFactory;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 

@@ -1,10 +1,10 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Runtime;
+namespace DigitalElvis\NeuronAIStudio\Runtime;
 
-use ElvisLopesDigital\NeuronAIStudio\Runtime\Events\GraphStepEvent;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\Nodes\GraphBootstrapNode;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\Nodes\GraphStepExecutorNode;
+use DigitalElvis\NeuronAIStudio\Runtime\Events\GraphStepEvent;
+use DigitalElvis\NeuronAIStudio\Runtime\Nodes\GraphBootstrapNode;
+use DigitalElvis\NeuronAIStudio\Runtime\Nodes\GraphStepExecutorNode;
 use NeuronAI\Workflow\Workflow;
 use NeuronAI\Workflow\WorkflowState;
 

@@ -1,13 +1,13 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Runtime;
+namespace DigitalElvis\NeuronAIStudio\Runtime;
 
-use ElvisLopesDigital\NeuronAIStudio\Codegen\WorkflowClassImporter;
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowTrace;
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowTraceStep;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\Exceptions\HumanInputRequiredException;
-use ElvisLopesDigital\NeuronAIStudio\Support\ChatThreadKey;
+use DigitalElvis\NeuronAIStudio\Codegen\WorkflowClassImporter;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowTraceStep;
+use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\HumanInputRequiredException;
+use DigitalElvis\NeuronAIStudio\Support\ChatThreadKey;
 use NeuronAI\Workflow\Interrupt\WorkflowInterrupt;
 use NeuronAI\Workflow\Persistence\InMemoryPersistence;
 use NeuronAI\Workflow\Workflow;

@@ -1,8 +1,8 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Runtime;
+namespace DigitalElvis\NeuronAIStudio\Runtime;
 
-use ElvisLopesDigital\NeuronAIStudio\Registry\NodeTypeRegistry;
+use DigitalElvis\NeuronAIStudio\Registry\NodeTypeRegistry;
 use InvalidArgumentException;
 
 class GraphValidator

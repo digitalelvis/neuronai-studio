@@ -1,6 +1,6 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Codegen\NodeCodeGenerators;
+namespace DigitalElvis\NeuronAIStudio\Codegen\NodeCodeGenerators;
 
 class LlmNodeCodeGenerator implements NodeCodeGeneratorInterface
 {
@@ -39,7 +39,7 @@ PHP;
         return [
             'body' => $body,
             'imports' => [
-                'ElvisLopesDigital\\NeuronAIStudio\\Runtime\\MessageFactory',
+                'DigitalElvis\\NeuronAIStudio\\Runtime\\MessageFactory',
             ],
         ];
     }

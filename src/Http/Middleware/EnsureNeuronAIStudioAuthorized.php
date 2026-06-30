@@ -1,6 +1,6 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Http\Middleware;
+namespace DigitalElvis\NeuronAIStudio\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;

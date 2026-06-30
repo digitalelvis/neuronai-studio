@@ -1,10 +1,10 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Http\Controllers;
+namespace DigitalElvis\NeuronAIStudio\Http\Controllers;
 
-use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\Concerns\ValidatesChatAttachments;
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowTrace;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\WorkflowRunner;
+use DigitalElvis\NeuronAIStudio\Http\Controllers\Concerns\ValidatesChatAttachments;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
+use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;

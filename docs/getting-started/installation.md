@@ -12,7 +12,7 @@ This guide walks through installing NeuronAI Studio in a Laravel application, fr
 ## Step 1 — Install packages
 
 ```bash
-composer require elvislopesdigital/neuronai-studio neuron-core/neuron-laravel
+composer require digitalelvis/neuronai-studio neuron-core/neuron-laravel
 ```
 
 NeuronAI Studio depends on [neuron-core/neuron-laravel](https://github.com/neuron-core/neuron-laravel) for LLM provider integration. Credentials live in `config/neuron.php` — the studio does not duplicate API key configuration.

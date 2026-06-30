@@ -1,8 +1,8 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Codegen\NodeCodeGenerators;
+namespace DigitalElvis\NeuronAIStudio\Codegen\NodeCodeGenerators;
 
-use ElvisLopesDigital\NeuronAIStudio\Codegen\PhpArrayExporter;
+use DigitalElvis\NeuronAIStudio\Codegen\PhpArrayExporter;
 
 class CodegenContext
 {

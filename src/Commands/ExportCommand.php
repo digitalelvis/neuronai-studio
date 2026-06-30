@@ -1,11 +1,11 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Commands;
+namespace DigitalElvis\NeuronAIStudio\Commands;
 
-use ElvisLopesDigital\NeuronAIStudio\Codegen\AgentExporter;
-use ElvisLopesDigital\NeuronAIStudio\Codegen\WorkflowExporter;
-use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
+use DigitalElvis\NeuronAIStudio\Codegen\AgentExporter;
+use DigitalElvis\NeuronAIStudio\Codegen\WorkflowExporter;
+use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
 use Illuminate\Console\Command;
 
 class ExportCommand extends Command

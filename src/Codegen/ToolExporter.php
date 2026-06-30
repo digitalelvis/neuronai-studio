@@ -1,8 +1,8 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Codegen;
+namespace DigitalElvis\NeuronAIStudio\Codegen;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\ToolDefinition;
+use DigitalElvis\NeuronAIStudio\Models\ToolDefinition;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 

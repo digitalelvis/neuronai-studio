@@ -1,9 +1,9 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Agents\Evals;
+namespace DigitalElvis\NeuronAIStudio\Http\Livewire\Agents\Evals;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\EvalRun;
-use ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout;
+use DigitalElvis\NeuronAIStudio\Models\EvalRun;
+use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
 use Livewire\Component;
 
 class RunDetail extends Component

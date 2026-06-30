@@ -1,12 +1,12 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Evaluation;
+namespace DigitalElvis\NeuronAIStudio\Evaluation;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Models\EvalSuite;
-use ElvisLopesDigital\NeuronAIStudio\Registry\ProviderRegistry;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\AgentRunner;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\DynamicAgent;
+use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Models\EvalSuite;
+use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
+use DigitalElvis\NeuronAIStudio\Runtime\AgentRunner;
+use DigitalElvis\NeuronAIStudio\Runtime\DynamicAgent;
 use NeuronAI\Agent;
 use NeuronAI\Evaluation\Assertions\AgentJudge;
 use NeuronAI\Evaluation\Assertions\Judges\CorrectnessJudge;

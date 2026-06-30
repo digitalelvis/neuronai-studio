@@ -1,17 +1,17 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests\Evaluation;
+namespace DigitalElvis\NeuronAIStudio\Tests\Evaluation;
 
-use ElvisLopesDigital\NeuronAIStudio\Evaluation\SuiteEvaluator;
-use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Models\EvalSuite;
-use ElvisLopesDigital\NeuronAIStudio\Registry\ProviderRegistry;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\AgentRunner;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\McpToolResolver;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\MessageFactory;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\ToolEventExtractor;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\ToolResolver;
-use ElvisLopesDigital\NeuronAIStudio\Tests\TestCase;
+use DigitalElvis\NeuronAIStudio\Evaluation\SuiteEvaluator;
+use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Models\EvalSuite;
+use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
+use DigitalElvis\NeuronAIStudio\Runtime\AgentRunner;
+use DigitalElvis\NeuronAIStudio\Runtime\McpToolResolver;
+use DigitalElvis\NeuronAIStudio\Runtime\MessageFactory;
+use DigitalElvis\NeuronAIStudio\Runtime\ToolEventExtractor;
+use DigitalElvis\NeuronAIStudio\Runtime\ToolResolver;
+use DigitalElvis\NeuronAIStudio\Tests\TestCase;
 use NeuronAI\Chat\Messages\AssistantMessage;
 use NeuronAI\Evaluation\Assertions\AgentJudge;
 use NeuronAI\Evaluation\Assertions\Judges\CorrectnessJudge;

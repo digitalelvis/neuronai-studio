@@ -8,7 +8,7 @@ The repository includes an example Laravel application for local development and
 examples/demo-app/
 ```
 
-See the [demo app README](https://github.com/elvislopesdigital/neuronai-studio/blob/main/examples/demo-app/README.md) in the repository.
+See the [demo app README](https://github.com/digitalelvis/neuronai-studio/blob/main/examples/demo-app/README.md) in the repository.
 
 ## Path repository setup
 
@@ -23,7 +23,7 @@ Add a path repository to your Laravel app's `composer.json`:
         }
     ],
     "require": {
-        "elvislopesdigital/neuronai-studio": "@dev",
+        "digitalelvis/neuronai-studio": "@dev",
         "neuron-core/neuron-laravel": "^1.0"
     }
 }
@@ -32,7 +32,7 @@ Add a path repository to your Laravel app's `composer.json`:
 Then install:
 
 ```bash
-composer require elvislopesdigital/neuronai-studio:@dev neuron-core/neuron-laravel
+composer require digitalelvis/neuronai-studio:@dev neuron-core/neuron-laravel
 php artisan neuron:install
 php artisan neuronai-studio:install
 php artisan vendor:publish --tag=neuronai-studio-assets --force

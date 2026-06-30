@@ -1,6 +1,6 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Codegen\NodeCodeGenerators;
+namespace DigitalElvis\NeuronAIStudio\Codegen\NodeCodeGenerators;
 
 class McpNodeCodeGenerator implements NodeCodeGeneratorInterface
 {
@@ -54,7 +54,7 @@ PHP;
         return [
             'body' => $body,
             'imports' => [
-                'ElvisLopesDigital\\NeuronAIStudio\\Runtime\\McpToolResolver',
+                'DigitalElvis\\NeuronAIStudio\\Runtime\\McpToolResolver',
             ],
         ];
     }

@@ -2,7 +2,7 @@
 
 namespace {{ namespace }};
 
-use ElvisLopesDigital\NeuronAIStudio\Contracts\StudioWorkflow;
+use DigitalElvis\NeuronAIStudio\Contracts\StudioWorkflow;
 
 class {{ className }} implements StudioWorkflow
 {

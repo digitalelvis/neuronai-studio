@@ -1,9 +1,9 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests;
+namespace DigitalElvis\NeuronAIStudio\Tests;
 
-use ElvisLopesDigital\NeuronAIStudio\Codegen\ToolClassGenerator;
-use ElvisLopesDigital\NeuronAIStudio\Codegen\ToolClassImporter;
+use DigitalElvis\NeuronAIStudio\Codegen\ToolClassGenerator;
+use DigitalElvis\NeuronAIStudio\Codegen\ToolClassImporter;
 
 class ToolClassGeneratorTest extends TestCase
 {

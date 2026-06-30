@@ -1,8 +1,8 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests;
+namespace DigitalElvis\NeuronAIStudio\Tests;
 
-use ElvisLopesDigital\NeuronAIStudio\NeuronAIStudioServiceProvider;
+use DigitalElvis\NeuronAIStudio\NeuronAIStudioServiceProvider;
 use Livewire\LivewireServiceProvider;
 use NeuronAI\Laravel\NeuronAIServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;

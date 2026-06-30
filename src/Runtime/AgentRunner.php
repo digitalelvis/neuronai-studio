@@ -1,12 +1,12 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Runtime;
+namespace DigitalElvis\NeuronAIStudio\Runtime;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Registry\ProviderRegistry;
-use ElvisLopesDigital\NeuronAIStudio\Support\ChatThreadKey;
-use ElvisLopesDigital\NeuronAIStudio\Support\PlaygroundContext;
-use ElvisLopesDigital\NeuronAIStudio\Support\ProviderParameters;
+use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
+use DigitalElvis\NeuronAIStudio\Support\ChatThreadKey;
+use DigitalElvis\NeuronAIStudio\Support\PlaygroundContext;
+use DigitalElvis\NeuronAIStudio\Support\ProviderParameters;
 use Illuminate\Support\Str;
 use Generator;
 use NeuronAI\Chat\Messages\AssistantMessage;

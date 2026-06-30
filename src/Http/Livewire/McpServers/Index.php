@@ -1,10 +1,10 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Http\Livewire\McpServers;
+namespace DigitalElvis\NeuronAIStudio\Http\Livewire\McpServers;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\McpServer;
-use ElvisLopesDigital\NeuronAIStudio\Registry\McpRegistry;
-use ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout;
+use DigitalElvis\NeuronAIStudio\Models\McpServer;
+use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
+use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
 use Livewire\Component;
 
 class Index extends Component

@@ -1,9 +1,9 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests;
+namespace DigitalElvis\NeuronAIStudio\Tests;
 
-use ElvisLopesDigital\NeuronAIStudio\Support\PlaygroundContext;
-use ElvisLopesDigital\NeuronAIStudio\Support\ProviderParameters;
+use DigitalElvis\NeuronAIStudio\Support\PlaygroundContext;
+use DigitalElvis\NeuronAIStudio\Support\ProviderParameters;
 
 class PlaygroundContextTest extends TestCase
 {

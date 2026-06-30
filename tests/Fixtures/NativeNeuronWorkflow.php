@@ -1,6 +1,6 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests\Fixtures;
+namespace DigitalElvis\NeuronAIStudio\Tests\Fixtures;
 
 use NeuronAI\Workflow\Workflow;
 

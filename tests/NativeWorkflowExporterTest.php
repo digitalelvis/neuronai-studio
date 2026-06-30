@@ -1,12 +1,12 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests;
+namespace DigitalElvis\NeuronAIStudio\Tests;
 
-use ElvisLopesDigital\NeuronAIStudio\Attributes\StudioGraph;
-use ElvisLopesDigital\NeuronAIStudio\Codegen\NativeWorkflowExporter;
-use ElvisLopesDigital\NeuronAIStudio\Codegen\WorkflowClassImporter;
-use ElvisLopesDigital\NeuronAIStudio\Codegen\WorkflowExporter;
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
+use DigitalElvis\NeuronAIStudio\Attributes\StudioGraph;
+use DigitalElvis\NeuronAIStudio\Codegen\NativeWorkflowExporter;
+use DigitalElvis\NeuronAIStudio\Codegen\WorkflowClassImporter;
+use DigitalElvis\NeuronAIStudio\Codegen\WorkflowExporter;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
 use Illuminate\Support\Facades\File;
 
 class NativeWorkflowExporterTest extends TestCase

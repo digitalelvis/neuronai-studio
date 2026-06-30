@@ -1,6 +1,6 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\MCP;
+namespace DigitalElvis\NeuronAIStudio\MCP;
 
 use NeuronAI\MCP\McpException;
 use NeuronAI\MCP\McpTransportInterface;

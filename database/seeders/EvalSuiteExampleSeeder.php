@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Models\EvalSuite;
+use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Models\EvalSuite;
 use Illuminate\Database\Seeder;
 
 class EvalSuiteExampleSeeder extends Seeder

@@ -1,9 +1,9 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests;
+namespace DigitalElvis\NeuronAIStudio\Tests;
 
-use ElvisLopesDigital\NeuronAIStudio\Http\Livewire\Workflows\Editor;
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\Workflows\Editor;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
 use Livewire\Livewire;
 
 class GraphJsonImportTest extends TestCase

@@ -1,9 +1,9 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests;
+namespace DigitalElvis\NeuronAIStudio\Tests;
 
-use ElvisLopesDigital\NeuronAIStudio\Codegen\AgentExporter;
-use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Codegen\AgentExporter;
+use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use Illuminate\Support\Facades\File;
 
 class AgentExporterTest extends TestCase

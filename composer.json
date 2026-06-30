@@ -1,5 +1,5 @@
 {
-    "name": "elvislopesdigital/neuronai-studio",
+    "name": "digitalelvis/neuronai-studio",
     "description": "NeuronAI Studio — visual AI agent builder for Laravel powered by Neuron AI",
     "keywords": [
         "ai",
@@ -10,12 +10,17 @@
         "neuronai-studio"
     ],
     "license": "MIT",
+    "homepage": "https://github.com/digitalelvis/neuronai-studio",
     "authors": [
         {
             "name": "Elvis Lopes",
-            "email": "elvis@example.com"
+            "email": "hello@digitalelvis.com"
         }
     ],
+    "support": {
+        "issues": "https://github.com/digitalelvis/neuronai-studio/issues",
+        "source": "https://github.com/digitalelvis/neuronai-studio"
+    },
     "require": {
         "php": "^8.2",
         "illuminate/console": "^11.0|^12.0",
@@ -34,21 +39,21 @@
     },
     "autoload": {
         "psr-4": {
-            "ElvisLopesDigital\\NeuronAIStudio\\": "src/"
+            "DigitalElvis\\NeuronAIStudio\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "ElvisLopesDigital\\NeuronAIStudio\\Tests\\": "tests/"
+            "DigitalElvis\\NeuronAIStudio\\Tests\\": "tests/"
         }
     },
     "extra": {
         "laravel": {
             "providers": [
-                "ElvisLopesDigital\\NeuronAIStudio\\NeuronAIStudioServiceProvider"
+                "DigitalElvis\\NeuronAIStudio\\NeuronAIStudioServiceProvider"
             ],
             "aliases": {
-                "NeuronAIStudio": "ElvisLopesDigital\\NeuronAIStudio\\Facades\\NeuronAIStudio"
+                "NeuronAIStudio": "DigitalElvis\\NeuronAIStudio\\Facades\\NeuronAIStudio"
             }
         }
     },

@@ -1,8 +1,8 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests;
+namespace DigitalElvis\NeuronAIStudio\Tests;
 
-use ElvisLopesDigital\NeuronAIStudio\Registry\WorkflowRegistry;
+use DigitalElvis\NeuronAIStudio\Registry\WorkflowRegistry;
 use Illuminate\Support\Facades\File;
 
 class WorkflowRegistryTest extends TestCase
@@ -18,8 +18,8 @@ class WorkflowRegistryTest extends TestCase
 
 namespace App\Neuron;
 
-use ElvisLopesDigital\NeuronAIStudio\Contracts\StudioWorkflow;
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
+use DigitalElvis\NeuronAIStudio\Contracts\StudioWorkflow;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
 
 class RegistryScanWorkflow implements StudioWorkflow
 {

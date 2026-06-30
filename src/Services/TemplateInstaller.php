@@ -1,11 +1,11 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Services;
+namespace DigitalElvis\NeuronAIStudio\Services;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Registry\TemplateRegistry;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\GraphValidator;
+use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
+use DigitalElvis\NeuronAIStudio\Registry\TemplateRegistry;
+use DigitalElvis\NeuronAIStudio\Runtime\GraphValidator;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 

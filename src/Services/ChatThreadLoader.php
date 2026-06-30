@@ -1,9 +1,9 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Services;
+namespace DigitalElvis\NeuronAIStudio\Services;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\StudioChatMessage;
-use ElvisLopesDigital\NeuronAIStudio\Support\ChatThreadKey;
+use DigitalElvis\NeuronAIStudio\Models\StudioChatMessage;
+use DigitalElvis\NeuronAIStudio\Support\ChatThreadKey;
 
 class ChatThreadLoader
 {

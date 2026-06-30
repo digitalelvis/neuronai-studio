@@ -75,8 +75,8 @@ Evaluators extend `NeuronAI\Evaluation\BaseEvaluator` directly and use `AgentRun
 ```php
 namespace App\Evaluators;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\AgentRunner;
+use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Runtime\AgentRunner;
 use NeuronAI\Evaluation\Assertions\StringContains;
 use NeuronAI\Evaluation\BaseEvaluator;
 use NeuronAI\Evaluation\Dataset\JsonDataset;

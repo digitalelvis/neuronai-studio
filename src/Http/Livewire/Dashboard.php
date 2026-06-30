@@ -1,13 +1,13 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Http\Livewire;
+namespace DigitalElvis\NeuronAIStudio\Http\Livewire;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Models\ToolDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Models\WorkflowTrace;
-use ElvisLopesDigital\NeuronAIStudio\Registry\ToolRegistry;
-use ElvisLopesDigital\NeuronAIStudio\Support\StudioLayout;
+use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Models\ToolDefinition;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
+use DigitalElvis\NeuronAIStudio\Registry\ToolRegistry;
+use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
 use Livewire\Component;
 
 class Dashboard extends Component
@@ -20,7 +20,7 @@ class Dashboard extends Component
             'agentCount' => AgentDefinition::count(),
             'workflowCount' => WorkflowDefinition::count(),
             'toolCount' => max(ToolDefinition::count(), $registryCount),
-            'mcpServerCount' => count(app(\ElvisLopesDigital\NeuronAIStudio\Registry\McpRegistry::class)->all()),
+            'mcpServerCount' => count(app(\DigitalElvis\NeuronAIStudio\Registry\McpRegistry::class)->all()),
             'recentTraces' => WorkflowTrace::with('workflow')->latest()->limit(10)->get(),
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
             breadcrumbs: [['label' => 'Dashboard']],

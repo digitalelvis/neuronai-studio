@@ -1,6 +1,6 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Runtime\Exceptions;
+namespace DigitalElvis\NeuronAIStudio\Runtime\Exceptions;
 
 use RuntimeException;
 

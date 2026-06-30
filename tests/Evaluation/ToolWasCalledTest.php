@@ -1,9 +1,9 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests\Evaluation;
+namespace DigitalElvis\NeuronAIStudio\Tests\Evaluation;
 
-use ElvisLopesDigital\NeuronAIStudio\Evaluation\ToolWasCalled;
-use ElvisLopesDigital\NeuronAIStudio\Tests\TestCase;
+use DigitalElvis\NeuronAIStudio\Evaluation\ToolWasCalled;
+use DigitalElvis\NeuronAIStudio\Tests\TestCase;
 
 class ToolWasCalledTest extends TestCase
 {

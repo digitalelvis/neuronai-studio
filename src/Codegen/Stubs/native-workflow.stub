@@ -2,7 +2,7 @@
 
 namespace {{ namespace }};
 
-use ElvisLopesDigital\NeuronAIStudio\Attributes\StudioGraph;
+use DigitalElvis\NeuronAIStudio\Attributes\StudioGraph;
 use NeuronAI\Workflow\Workflow;
 {{ nodeImports }}
 

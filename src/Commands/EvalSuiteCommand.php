@@ -1,11 +1,11 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Commands;
+namespace DigitalElvis\NeuronAIStudio\Commands;
 
-use ElvisLopesDigital\NeuronAIStudio\Evaluation\EloquentEvaluationOutput;
-use ElvisLopesDigital\NeuronAIStudio\Evaluation\SuiteEvaluator;
-use ElvisLopesDigital\NeuronAIStudio\Models\EvalRun;
-use ElvisLopesDigital\NeuronAIStudio\Models\EvalSuite;
+use DigitalElvis\NeuronAIStudio\Evaluation\EloquentEvaluationOutput;
+use DigitalElvis\NeuronAIStudio\Evaluation\SuiteEvaluator;
+use DigitalElvis\NeuronAIStudio\Models\EvalRun;
+use DigitalElvis\NeuronAIStudio\Models\EvalSuite;
 use Illuminate\Console\Command;
 use NeuronAI\Evaluation\Runner\EvaluatorRunner;
 use Throwable;

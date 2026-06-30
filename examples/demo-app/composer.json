@@ -1,12 +1,12 @@
 {
-    "name": "elvislopesdigital/neuronai-studio-demo",
+    "name": "digitalelvis/neuronai-studio-demo",
     "description": "Demo Laravel app for neuronai-studio package",
     "type": "project",
     "require": {
         "php": "^8.2",
         "laravel/framework": "^12.0",
         "neuron-core/neuron-laravel": "^1.0",
-        "elvislopesdigital/neuronai-studio": "@dev"
+        "digitalelvis/neuronai-studio": "@dev"
     },
     "repositories": [
         {

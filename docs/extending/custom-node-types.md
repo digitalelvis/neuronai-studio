@@ -22,7 +22,7 @@ flowchart LR
 In your `AppServiceProvider::boot()`:
 
 ```php
-use ElvisLopesDigital\NeuronAIStudio\Facades\NeuronAIStudio;
+use DigitalElvis\NeuronAIStudio\Facades\NeuronAIStudio;
 use App\Neuron\Nodes\SendEmailExecutor;
 
 NeuronAIStudio::registerNode('send_email', SendEmailExecutor::class, [
@@ -35,7 +35,7 @@ NeuronAIStudio::registerNode('send_email', SendEmailExecutor::class, [
 Also register the executor in `NodeExecutorRegistry` if not auto-wired:
 
 ```php
-use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorRegistry;
+use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorRegistry;
 
 $this->app->make(NodeExecutorRegistry::class)
     ->register('send_email', $this->app->make(SendEmailExecutor::class));
@@ -48,7 +48,7 @@ Extend the base executor pattern used by built-in nodes:
 ```php
 namespace App\Neuron\Nodes;
 
-use ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutor;
+use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutor;
 
 class SendEmailExecutor extends NodeExecutor
 {

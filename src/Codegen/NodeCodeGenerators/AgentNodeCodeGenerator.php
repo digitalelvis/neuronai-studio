@@ -1,6 +1,6 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Codegen\NodeCodeGenerators;
+namespace DigitalElvis\NeuronAIStudio\Codegen\NodeCodeGenerators;
 
 class AgentNodeCodeGenerator implements NodeCodeGeneratorInterface
 {
@@ -44,9 +44,9 @@ PHP;
             return [
                 'body' => $body,
                 'imports' => [
-                    'ElvisLopesDigital\\NeuronAIStudio\\Models\\AgentDefinition',
-                    'ElvisLopesDigital\\NeuronAIStudio\\Runtime\\AgentRunner',
-                    'ElvisLopesDigital\\NeuronAIStudio\\Runtime\\MessageFactory',
+                    'DigitalElvis\\NeuronAIStudio\\Models\\AgentDefinition',
+                    'DigitalElvis\\NeuronAIStudio\\Runtime\\AgentRunner',
+                    'DigitalElvis\\NeuronAIStudio\\Runtime\\MessageFactory',
                 ],
             ];
         }
@@ -80,7 +80,7 @@ PHP;
             'body' => $body,
             'imports' => [
                 'NeuronAI\\Agent',
-                'ElvisLopesDigital\\NeuronAIStudio\\Runtime\\MessageFactory',
+                'DigitalElvis\\NeuronAIStudio\\Runtime\\MessageFactory',
             ],
         ];
     }

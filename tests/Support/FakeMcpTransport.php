@@ -1,6 +1,6 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Tests\Support;
+namespace DigitalElvis\NeuronAIStudio\Tests\Support;
 
 use NeuronAI\MCP\McpTransportInterface;
 

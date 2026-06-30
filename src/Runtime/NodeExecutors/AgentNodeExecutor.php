@@ -1,12 +1,12 @@
 <?php
 
-namespace ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors;
+namespace DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors;
 
-use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\AgentRunner;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\GraphContext;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\MessageFactory;
-use ElvisLopesDigital\NeuronAIStudio\Runtime\StateTemplateInterpolator;
+use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Runtime\AgentRunner;
+use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
+use DigitalElvis\NeuronAIStudio\Runtime\MessageFactory;
+use DigitalElvis\NeuronAIStudio\Runtime\StateTemplateInterpolator;
 use NeuronAI\Workflow\WorkflowState;
 
 class AgentNodeExecutor implements NodeExecutorInterface
