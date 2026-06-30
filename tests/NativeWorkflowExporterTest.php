@@ -7,6 +7,7 @@ use DigitalElvis\NeuronAIStudio\Codegen\NativeWorkflowExporter;
 use DigitalElvis\NeuronAIStudio\Codegen\WorkflowClassImporter;
 use DigitalElvis\NeuronAIStudio\Codegen\WorkflowExporter;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
+use DigitalElvis\NeuronAIStudio\Registry\TemplateRegistry;
 use Illuminate\Support\Facades\File;
 
 class NativeWorkflowExporterTest extends TestCase
@@ -174,6 +175,36 @@ class NativeWorkflowExporterTest extends TestCase
         $this->assertFalse(is_dir($exportPath));
 
         @rmdir($exportPath);
+    }
+
+    public function test_lead_qualification_loop_export_contains_max_steps_guardrail(): void
+    {
+        $exportPath = $this->exportPath();
+        config([
+            'neuronai-studio.export_path' => $exportPath,
+            'neuronai-studio.export_namespace' => 'App\\Neuron',
+        ]);
+
+        $template = app(TemplateRegistry::class)->load('workflow', 'lead-qualification-loop');
+        $this->assertNotNull($template);
+
+        $workflow = WorkflowDefinition::make([
+            'name' => (string) ($template['meta']['name'] ?? 'Lead Qualification (Loop)'),
+            'slug' => 'lead-qualification-loop',
+            'graph' => $template['graph'],
+            'status' => 'draft',
+        ]);
+
+        $preview = app(NativeWorkflowExporter::class)->preview($workflow);
+
+        $this->assertStringContainsString('class Loop1Node extends Node', $preview);
+        $this->assertStringContainsString('MaxLoopIterationsException', $preview);
+        $this->assertStringContainsString('__loop_iterations', $preview);
+        $this->assertStringContainsString('LlmExtractEvent', $preview);
+        $this->assertStringContainsString('CondHasEmailEvent', $preview);
+        $this->assertMatchesRegularExpression('/\$maxSteps = \d+;/', $preview);
+
+        $this->cleanupExport($exportPath);
     }
 
     protected function cleanupExport(string $exportPath): void
