@@ -1,4 +1,5 @@
 import { fetchSse, jsonPostOptions } from '../utils/fetchSse';
+import { uploadAttachments } from '../utils/uploadAttachments';
 
 export class AgentSessionAdapter {
     constructor({ streamUrl, uploadUrl }) {
@@ -7,7 +8,7 @@ export class AgentSessionAdapter {
     }
 
     async *send(message, attachments = [], context = {}) {
-        const uploaded = await this.uploadAttachments(attachments);
+        const uploaded = await uploadAttachments(attachments, this.uploadUrl);
         const state = context?.state && typeof context.state === 'object' ? context.state : {};
         const payload = {
             message,
@@ -36,54 +37,4 @@ export class AgentSessionAdapter {
     }
 
     reset() {}
-
-    async uploadAttachments(attachments) {
-        if (!attachments?.length || !this.uploadUrl) {
-            return [];
-        }
-
-        const results = [];
-
-        for (const attachment of attachments) {
-            if (attachment.storageKey) {
-                results.push({
-                    type: attachment.type,
-                    mime_type: attachment.mimeType,
-                    storage_key: attachment.storageKey,
-                    name: attachment.name,
-                });
-                continue;
-            }
-
-            if (!attachment.file) {
-                continue;
-            }
-
-            const form = new FormData();
-            form.append('file', attachment.file);
-            form.append('type', attachment.type);
-
-            const response = await fetch(this.uploadUrl, {
-                method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') ?? '',
-                },
-                body: form,
-            });
-
-            if (!response.ok) {
-                throw new Error(`Upload failed for ${attachment.name}`);
-            }
-
-            const data = await response.json();
-            results.push({
-                type: attachment.type,
-                mime_type: data.mime_type,
-                storage_key: data.storage_key,
-                name: data.name,
-            });
-        }
-
-        return results;
-    }
 }

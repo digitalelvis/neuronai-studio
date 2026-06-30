@@ -1,6 +1,7 @@
 const INTERNAL_KEYS = ['__steps', '__current_node_id', '__workflow_trace_id'];
 const CONTENT_NODE_TYPES = new Set(['llm', 'agent', 'human', 'tool', 'mcp', 'rag']);
 const SKIP_NODE_TYPES = new Set(['set_state', 'condition', 'stop', 'delay']);
+const METADATA_OUTPUT_KEYS = new Set(['input', 'attachments', '__studio_thread_id', '__studio_current_step', '__workflowId']);
 const TRUNCATE_LENGTH = 500;
 
 function isInternalKey(key) {
@@ -25,6 +26,31 @@ function formatValue(value) {
     }
 
     return String(value);
+}
+
+function formatAttachmentSummary(attachments) {
+    if (!Array.isArray(attachments) || attachments.length === 0) {
+        return '';
+    }
+
+    const names = attachments
+        .map((attachment) => attachment?.name || attachment?.storage_key || 'attachment')
+        .filter(Boolean);
+
+    if (names.length === 0) {
+        return `${attachments.length} attachment(s)`;
+    }
+
+    return `Attached: ${names.join(', ')}`;
+}
+
+function resolveUserMessage(output, userMessage = '') {
+    const message = userMessage || output?.input || '';
+    if (message) {
+        return message;
+    }
+
+    return formatAttachmentSummary(output?.attachments);
 }
 
 function diffStateSnapshots(previous, current, userMessage) {
@@ -81,9 +107,48 @@ export function formatWorkflowData(output, compact = false) {
     }
 }
 
+export function buildWorkflowOutputFallback(output, userMessage = '') {
+    if (!output || typeof output !== 'object') {
+        return [];
+    }
+
+    const thread = [];
+    const message = resolveUserMessage(output, userMessage);
+
+    if (message) {
+        thread.push({
+            nodeId: '__start__',
+            nodeType: 'start',
+            label: '__start__',
+            content: message,
+        });
+    }
+
+    for (const [key, value] of Object.entries(output)) {
+        if (isInternalKey(key) || METADATA_OUTPUT_KEYS.has(key)) {
+            continue;
+        }
+
+        const formatted = formatValue(value);
+        if (!formatted || formatted === message) {
+            continue;
+        }
+
+        thread.push({
+            nodeId: key,
+            nodeType: 'output',
+            label: key,
+            content: formatted,
+            key,
+        });
+    }
+
+    return thread;
+}
+
 export function buildWorkflowPrettyThread(output, userMessage = '') {
     const thread = [];
-    const message = userMessage || output?.input || '';
+    const message = resolveUserMessage(output, userMessage);
 
     if (message) {
         thread.push({
@@ -130,7 +195,19 @@ export function buildWorkflowPrettyThread(output, userMessage = '') {
         previousSnapshot = snapshot;
     }
 
-    return thread;
+    const hasContentEntries = thread.some((entry) => entry.nodeType !== 'start');
+
+    if (hasContentEntries) {
+        return thread;
+    }
+
+    const fallback = buildWorkflowOutputFallback(output, userMessage);
+
+    if (thread.length === 1 && thread[0]?.nodeType === 'start' && fallback.length > 1) {
+        return [thread[0], ...fallback.slice(1)];
+    }
+
+    return fallback.length ? fallback : thread;
 }
 
 export function buildPartialWorkflowThread(stepEvents = [], userMessage = '', currentNodeId = null) {

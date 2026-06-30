@@ -163,6 +163,7 @@ export default function WorkflowEditorShell({ config }) {
                                 readOnly={readOnly}
                                 defaultProvider={config.defaultProvider ?? ''}
                                 defaultModel={config.defaultModel ?? ''}
+                                agents={config.agents || []}
                                 onGraphChange={(graph) => {
                                     window.__workflowGraph = graph;
                                     const saved = window.__NEURONAI_CANVAS_CONFIG?.savedGraph;

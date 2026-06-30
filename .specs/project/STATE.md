@@ -1,11 +1,18 @@
 # State
 
-**Last Updated:** 2026-06-24
-**Current Work:** workflow-json-io + workflow-code-bridge — complete
+**Last Updated:** 2026-06-30
+**Current Work:** Planejamento north star — agentes multimodais autônomos + grafos cíclicos (spec/design only)
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-003: Roadmap north star — cíclicos + multimodal autônomo (2026-06-30)
+
+**Decision:** Priorizar M1 com três features P0 (`workflow-cyclic-graphs`, `autonomous-multimodal-agents`, `workflow-rag`) antes de P1/P2. Spec e design documentados; `tasks.md` deliberadamente adiado.
+**Reason:** Estado atual é DAG-only, `RagNodeExecutor` stub, `GraphExecutionLoop` sem guardrail — bloqueia agentes autônomos com mídia em loops.
+**Trade-off:** Nove features planejadas aumentam superfície; M1 é mínimo viável para north star.
+**Impact:** Ver [.specs/project/ROADMAP.md](ROADMAP.md) para ordem, dependências e índice de documentação.
 
 ### AD-001: IIFE output for studio JS bundles (2026-06-24)
 
@@ -52,6 +59,8 @@ _None._
 
 ## Deferred Ideas
 
+- [ ] Autonomia multi-turn dentro de um único nó agent (múltiplas tool rounds sem sair do nó) — Captured during: autonomous-multimodal-agents planning
+- [ ] SSE em tempo real para `RunWorkflowJob` (broadcast vs polling) — Captured during: workflow-queue-runner planning
 - [ ] Remove redundant layout `<link>` tags for `studio-chat.css` / `workflow-canvas.css` now that styles are inlined in bundles — Captured during: studio-test-harness
 - [ ] Extract `StudioTestHarness.jsx` shell component (design doc) if Playground+Chat composition grows — Captured during: studio-test-harness
 

@@ -57,10 +57,14 @@ function NodeHandles({ nodeType }) {
 }
 
 export default function WorkflowNode({ id, data, selected }) {
-    const { readOnly } = useCanvasUi();
+    const { readOnly, agents } = useCanvasUi();
     const accent = categoryColor(data.category);
     const icon = ICONS[data.icon] || ICONS.circle;
     const executionClass = data.executionStatus ? ` ab-flow-node--${data.executionStatus}` : '';
+    const agentName =
+        data.nodeType === 'agent' && data.config?.agent_id
+            ? agents.find((agent) => String(agent.id) === String(data.config.agent_id))?.name
+            : null;
 
     const handleEdit = (event) => {
         event.stopPropagation();
@@ -94,6 +98,7 @@ export default function WorkflowNode({ id, data, selected }) {
             {data.nodeType === 'llm' && data.config?.model && (
                 <div className="ab-flow-node-meta">{data.config.model}</div>
             )}
+            {agentName && <div className="ab-flow-node-meta">{agentName}</div>}
             {data.nodeType === 'condition' && (
                 <div className="ab-flow-node-handles-labels">
                     <span className="ab-flow-handle-label ab-flow-handle-label-true">true</span>

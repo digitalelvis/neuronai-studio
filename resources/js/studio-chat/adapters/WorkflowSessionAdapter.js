@@ -1,9 +1,11 @@
 import { fetchSse, jsonPostOptions } from '../utils/fetchSse';
+import { uploadAttachments } from '../utils/uploadAttachments';
 
 export class WorkflowSessionAdapter {
-    constructor({ streamUrl, resumeUrlTemplate, onBeforeRun, syncCanvas = true }) {
+    constructor({ streamUrl, resumeUrlTemplate, uploadUrl, onBeforeRun, syncCanvas = true }) {
         this.streamUrl = streamUrl;
         this.resumeUrlTemplate = resumeUrlTemplate;
+        this.uploadUrl = uploadUrl;
         this.onBeforeRun = onBeforeRun;
         this.syncCanvas = syncCanvas;
         this.pendingResume = null;
@@ -11,7 +13,7 @@ export class WorkflowSessionAdapter {
 
     async *send(message, attachments = [], context = {}) {
         if (this.pendingResume) {
-            yield* this.resume(message);
+            yield* this.resume(message, attachments);
             return;
         }
 
@@ -19,11 +21,12 @@ export class WorkflowSessionAdapter {
             await this.onBeforeRun();
         }
 
+        const uploaded = await uploadAttachments(attachments, this.uploadUrl);
         const state = context?.state && typeof context.state === 'object' ? context.state : {};
         const payload = {
             message,
             state,
-            attachments,
+            attachments: uploaded,
         };
 
         if (context?.threadId) {
@@ -35,7 +38,7 @@ export class WorkflowSessionAdapter {
         );
     }
 
-    async *resume(message) {
+    async *resume(message, attachments = []) {
         if (!this.pendingResume) {
             throw new Error('No workflow trace awaiting input.');
         }
@@ -43,13 +46,20 @@ export class WorkflowSessionAdapter {
         const { traceId, nodeId } = this.pendingResume;
         this.pendingResume = null;
 
+        const uploaded = await uploadAttachments(attachments, this.uploadUrl);
         const url = this.resumeUrlTemplate.replace('__TRACE__', String(traceId));
 
+        const payload = {
+            message,
+            node_id: nodeId,
+        };
+
+        if (uploaded.length > 0) {
+            payload.attachments = uploaded;
+        }
+
         yield* this.consumeStream(
-            fetchSse(url, jsonPostOptions({
-                message,
-                node_id: nodeId,
-            })),
+            fetchSse(url, jsonPostOptions(payload)),
         );
     }
 

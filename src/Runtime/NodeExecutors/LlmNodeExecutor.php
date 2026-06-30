@@ -4,14 +4,15 @@ namespace ElvisLopesDigital\NeuronAIStudio\Runtime\NodeExecutors;
 
 use ElvisLopesDigital\NeuronAIStudio\Registry\ProviderRegistry;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\GraphContext;
+use ElvisLopesDigital\NeuronAIStudio\Runtime\MessageFactory;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\StateTemplateInterpolator;
-use NeuronAI\Chat\Messages\UserMessage;
 use NeuronAI\Workflow\WorkflowState;
 
 class LlmNodeExecutor implements NodeExecutorInterface
 {
     public function __construct(
         protected ProviderRegistry $providers,
+        protected MessageFactory $messages,
     ) {}
 
     public function execute(array $nodeConfig, WorkflowState $state, GraphContext $context): string
@@ -25,8 +26,11 @@ class LlmNodeExecutor implements NodeExecutorInterface
         );
         $outputKey = $data['output_key'] ?? 'llm_response';
 
+        $attachments = is_array($state->get('attachments')) ? $state->get('attachments') : [];
+        $userMessage = $this->messages->resolveMessageWithAttachments((string) $prompt, $attachments);
+
         $aiProvider = $this->providers->resolve($provider, $model);
-        $response = $aiProvider->chat(new UserMessage((string) $prompt));
+        $response = $aiProvider->chat($userMessage);
 
         $state->set($outputKey, $response->getContent());
 

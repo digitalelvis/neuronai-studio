@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Braces, Paperclip, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -31,6 +31,14 @@ export default function Composer({
     const [attachments, setAttachments] = useState([]);
     const [inputOpen, setInputOpen] = useState(false);
     const fileRef = useRef(null);
+    const previewUrlsRef = useRef([]);
+
+    useEffect(() => {
+        return () => {
+            previewUrlsRef.current.forEach((url) => URL.revokeObjectURL(url));
+            previewUrlsRef.current = [];
+        };
+    }, []);
 
     const hasCustomInput = enableInputJson && inputJson.trim() !== '{}' && inputJson.trim() !== '';
     const sendDisabled = disabled || (enableInputJson && Boolean(inputJsonError));
@@ -43,11 +51,6 @@ export default function Composer({
 
         onSend(text.trim(), attachments);
         setText('');
-        attachments.forEach((item) => {
-            if (item.previewUrl) {
-                URL.revokeObjectURL(item.previewUrl);
-            }
-        });
         setAttachments([]);
     };
 
@@ -59,14 +62,21 @@ export default function Composer({
     };
 
     const handleFiles = (files) => {
-        const next = Array.from(files).map((file) => ({
-            id: `${file.name}-${file.lastModified}`,
-            type: detectType(file),
-            name: file.name,
-            mimeType: file.type,
-            file,
-            previewUrl: file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
-        }));
+        const next = Array.from(files).map((file) => {
+            const previewUrl = file.type.startsWith('image/') ? URL.createObjectURL(file) : null;
+            if (previewUrl) {
+                previewUrlsRef.current.push(previewUrl);
+            }
+
+            return {
+                id: `${file.name}-${file.lastModified}`,
+                type: detectType(file),
+                name: file.name,
+                mimeType: file.type,
+                file,
+                previewUrl,
+            };
+        });
 
         setAttachments((current) => [...current, ...next]);
     };
@@ -100,6 +110,9 @@ export default function Composer({
                                 onClick={() => {
                                     if (attachment.previewUrl) {
                                         URL.revokeObjectURL(attachment.previewUrl);
+                                        previewUrlsRef.current = previewUrlsRef.current.filter(
+                                            (url) => url !== attachment.previewUrl,
+                                        );
                                     }
                                     setAttachments((current) => current.filter((item) => item.id !== attachment.id));
                                 }}

@@ -26,8 +26,11 @@ class LlmNodeCodeGenerator implements NodeCodeGeneratorInterface
             \$prompt = (string) \$state->get('input');
         }
 
+        \$attachments = is_array(\$state->get('attachments')) ? \$state->get('attachments') : [];
+        \$userMessage = app(MessageFactory::class)->resolveMessageWithAttachments(\$prompt, \$attachments);
+
         \$aiProvider = {$providerExpr};
-        \$response = \$aiProvider->chat(new UserMessage(\$prompt));
+        \$response = \$aiProvider->chat(\$userMessage);
         \$state->set({$outputKey}, \$response->getContent());
 
         {$return}
@@ -36,7 +39,7 @@ PHP;
         return [
             'body' => $body,
             'imports' => [
-                'NeuronAI\\Chat\\Messages\\UserMessage',
+                'ElvisLopesDigital\\NeuronAIStudio\\Runtime\\MessageFactory',
             ],
         ];
     }

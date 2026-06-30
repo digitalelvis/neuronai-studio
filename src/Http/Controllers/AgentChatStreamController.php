@@ -2,6 +2,7 @@
 
 namespace ElvisLopesDigital\NeuronAIStudio\Http\Controllers;
 
+use ElvisLopesDigital\NeuronAIStudio\Http\Controllers\Concerns\ValidatesChatAttachments;
 use ElvisLopesDigital\NeuronAIStudio\Models\AgentDefinition;
 use ElvisLopesDigital\NeuronAIStudio\Runtime\AgentRunner;
 use Illuminate\Http\Request;
@@ -14,10 +15,11 @@ use Throwable;
 
 class AgentChatStreamController
 {
+    use ValidatesChatAttachments;
+
     public function __invoke(Request $request, AgentDefinition $agent, AgentRunner $runner): StreamedResponse
     {
         $validated = $request->validate([
-            'message' => 'required|string',
             'thread_id' => 'nullable|uuid',
             'instructions' => 'nullable|string',
             'context' => 'nullable|array',
@@ -25,13 +27,10 @@ class AgentChatStreamController
             'parameters.temperature' => 'nullable|numeric|min:0|max:2',
             'parameters.top_p' => 'nullable|numeric|min:0|max:1',
             'parameters.max_tokens' => 'nullable|integer|min:1',
-            'attachments' => 'nullable|array',
-            'attachments.*.type' => 'required_with:attachments|string',
-            'attachments.*.mime_type' => 'nullable|string',
-            'attachments.*.storage_key' => 'required_with:attachments|string',
-            'attachments.*.name' => 'nullable|string',
         ]);
 
+        $chat = $this->validateChatPayload($request);
+        $validated = array_merge($validated, $chat);
         $validated['thread_id'] = $validated['thread_id'] ?? (string) Str::uuid();
 
         return response()->stream(function () use ($agent, $runner, $validated) {

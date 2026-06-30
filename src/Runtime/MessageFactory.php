@@ -14,6 +14,43 @@ use NeuronAI\Chat\Messages\UserMessage;
 
 class MessageFactory
 {
+    public const ATTACHMENT_ONLY_PROMPT = 'Analyze the attached file(s).';
+
+    /** @param  array<int, array<string, mixed>>  $attachments */
+    public function validateStoredAttachments(array $attachments): ?string
+    {
+        if ($attachments === []) {
+            return null;
+        }
+
+        $disk = (string) config('neuronai-studio.attachments.disk', 'local');
+
+        foreach ($attachments as $attachment) {
+            $storageKey = (string) ($attachment['storage_key'] ?? '');
+            if ($storageKey === '') {
+                return 'Each attachment must include a storage_key.';
+            }
+
+            if (! Storage::disk($disk)->exists($storageKey)) {
+                $name = (string) ($attachment['name'] ?? basename($storageKey));
+
+                return "Uploaded file not found for attachment [{$name}]. Please upload again.";
+            }
+        }
+
+        return null;
+    }
+
+    /** @param  array<int, array<string, mixed>>  $attachments */
+    public function resolveMessageWithAttachments(string $message, array $attachments = []): UserMessage
+    {
+        if ($message === '' && $attachments !== []) {
+            $message = self::ATTACHMENT_ONLY_PROMPT;
+        }
+
+        return $this->userMessage($message, $attachments);
+    }
+
     /** @param  array<int, array<string, mixed>>  $attachments */
     public function userMessage(string $message, array $attachments = []): UserMessage
     {
@@ -29,9 +66,13 @@ class MessageFactory
 
         foreach ($attachments as $attachment) {
             $block = $this->attachmentBlock($attachment);
-            if ($block !== null) {
-                $blocks[] = $block;
+            if ($block === null) {
+                $name = (string) ($attachment['name'] ?? $attachment['storage_key'] ?? 'attachment');
+
+                throw new \RuntimeException("Unable to read uploaded attachment [{$name}].");
             }
+
+            $blocks[] = $block;
         }
 
         if ($blocks === []) {

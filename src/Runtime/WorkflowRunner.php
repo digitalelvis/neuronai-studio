@@ -119,7 +119,7 @@ class WorkflowRunner
 
             $trace->update([
                 'status' => 'completed',
-                'output' => $finalState->all(),
+                'output' => $this->outputWithNativeSteps($finalState->all(), $middleware->steps, $workflow),
                 'checkpoint' => null,
                 'awaiting_node_id' => null,
                 'finished_at' => now(),
@@ -139,18 +139,18 @@ class WorkflowRunner
         }
     }
 
-    public function resume(WorkflowTrace $trace, string $nodeId, string $message, ?callable $emitter = null): WorkflowTrace
+    public function resume(WorkflowTrace $trace, string $nodeId, string $message, ?callable $emitter = null, array $attachments = []): WorkflowTrace
     {
         $workflow = $trace->workflow ?? WorkflowDefinition::findOrFail($trace->workflow_definition_id);
 
         if ($this->shouldRunNative($workflow) && is_array($trace->checkpoint['interrupt'] ?? null)) {
-            return $this->resumeNative($trace, $message, $emitter);
+            return $this->resumeNative($trace, $message, $emitter, $attachments);
         }
 
-        return $this->resumeInterpreted($trace, $nodeId, $message, $emitter);
+        return $this->resumeInterpreted($trace, $nodeId, $message, $emitter, $attachments);
     }
 
-    public function resumeInterpreted(WorkflowTrace $trace, string $nodeId, string $message, ?callable $emitter = null): WorkflowTrace
+    public function resumeInterpreted(WorkflowTrace $trace, string $nodeId, string $message, ?callable $emitter = null, array $attachments = []): WorkflowTrace
     {
         $workflow = $trace->workflow ?? WorkflowDefinition::findOrFail($trace->workflow_definition_id);
         $checkpoint = $trace->checkpoint ?? [];
@@ -169,6 +169,10 @@ class WorkflowRunner
         $stateData = is_array($checkpoint['state'] ?? null) ? $checkpoint['state'] : [];
         unset($stateData['__steps']);
         $stateData[$outputKey] = $message;
+
+        if ($attachments !== []) {
+            $stateData['attachments'] = $attachments;
+        }
 
         $state = new BuilderWorkflowState($graphContext, $trace->id, $stateData);
 
@@ -215,7 +219,7 @@ class WorkflowRunner
         }
     }
 
-    protected function resumeNative(WorkflowTrace $trace, string $message, ?callable $emitter = null): WorkflowTrace
+    protected function resumeNative(WorkflowTrace $trace, string $message, ?callable $emitter = null, array $attachments = []): WorkflowTrace
     {
         $workflow = $trace->workflow ?? WorkflowDefinition::findOrFail($trace->workflow_definition_id);
         $class = (string) $workflow->class_path;
@@ -223,6 +227,10 @@ class WorkflowRunner
         $outputKey = (string) ($checkpoint['output_key'] ?? 'human_response');
         $stateData = is_array($checkpoint['state'] ?? null) ? $checkpoint['state'] : [];
         $stateData[$outputKey] = $message;
+
+        if ($attachments !== []) {
+            $stateData['attachments'] = $attachments;
+        }
 
         $trace->update([
             'status' => 'running',
@@ -262,7 +270,7 @@ class WorkflowRunner
 
             $trace->update([
                 'status' => 'completed',
-                'output' => $finalState->all(),
+                'output' => $this->outputWithNativeSteps($finalState->all(), $middleware->steps, $workflow),
                 'checkpoint' => null,
                 'awaiting_node_id' => null,
                 'finished_at' => now(),
@@ -462,5 +470,36 @@ class WorkflowRunner
             'handle' => 'default',
             'duration_ms' => 0,
         ]);
+    }
+
+    /** @param  array<int, array<string, mixed>>  $steps */
+    protected function outputWithNativeSteps(array $output, array $steps, WorkflowDefinition $workflow): array
+    {
+        $output['__steps'] = $this->normalizeNativeSteps($steps, $workflow);
+
+        return $output;
+    }
+
+    /** @param  array<int, array<string, mixed>>  $steps
+     * @return array<int, array<string, mixed>>
+     */
+    protected function normalizeNativeSteps(array $steps, WorkflowDefinition $workflow): array
+    {
+        $graphContext = new GraphContext(
+            $workflow->graph['nodes'] ?? [],
+            $workflow->graph['edges'] ?? [],
+        );
+
+        return array_map(function (array $step) use ($graphContext) {
+            $nodeId = (string) ($step['node_id'] ?? '');
+            $nodeConfig = $graphContext->nodeConfig($nodeId);
+            $canvasType = (string) ($nodeConfig['type'] ?? '');
+
+            if ($canvasType !== '') {
+                $step['node_type'] = $canvasType;
+            }
+
+            return $step;
+        }, $steps);
     }
 }

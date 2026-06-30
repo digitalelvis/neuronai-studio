@@ -2,7 +2,12 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import { buildPartialWorkflowThread, buildWorkflowPrettyThread, TRUNCATE_LENGTH } from './utils/workflowOutput';
+import {
+    buildPartialWorkflowThread,
+    buildWorkflowOutputFallback,
+    buildWorkflowPrettyThread,
+    TRUNCATE_LENGTH,
+} from './utils/workflowOutput';
 
 function ThreadEntry({ entry }) {
     const [expanded, setExpanded] = useState(false);
@@ -61,7 +66,24 @@ export default function WorkflowThread({
             : buildPartialWorkflowThread(stepEvents, userMessage, currentNodeId);
 
     if (!thread.length) {
-        return <p className="text-sm text-muted-foreground">Running workflow…</p>;
+        if (streaming) {
+            return <p className="text-sm text-muted-foreground">Running workflow…</p>;
+        }
+
+        if (output) {
+            const fallback = buildWorkflowOutputFallback(output, userMessage);
+            if (fallback.length) {
+                return (
+                    <div className={cn('divide-y divide-border/60', className)}>
+                        {fallback.map((entry, index) => (
+                            <ThreadEntry key={`${entry.nodeId}-${entry.key ?? index}`} entry={entry} />
+                        ))}
+                    </div>
+                );
+            }
+        }
+
+        return <p className="text-sm text-muted-foreground">No workflow output.</p>;
     }
 
     return (

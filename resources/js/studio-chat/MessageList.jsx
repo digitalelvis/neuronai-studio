@@ -7,8 +7,16 @@ import WorkflowThread from './WorkflowThread';
 import { formatWorkflowData } from './utils/workflowOutput';
 
 function AttachmentPreview({ attachment }) {
-    if (attachment.type === 'image' && attachment.previewUrl) {
-        return <img src={attachment.previewUrl} alt={attachment.name} className="mt-2 max-h-32 rounded-md border border-border" />;
+    const src = attachment.previewUrl || attachment.url;
+
+    if (attachment.type === 'image' && src) {
+        return (
+            <img
+                src={src}
+                alt={attachment.name}
+                className="mt-2 max-h-32 rounded-md border border-border"
+            />
+        );
     }
 
     return (
