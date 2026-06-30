@@ -134,6 +134,11 @@ export default function WorkflowNode({ id, data, selected }) {
                     <span className="ab-flow-handle-label ab-flow-handle-label-exit">exit</span>
                 </div>
             )}
+            {data.nodeType === 'loop' && data.loopIteration && (
+                <div className="ab-flow-node-meta ab-flow-node-loop-iteration">
+                    {data.loopIteration.iteration} / {data.loopIteration.maxSteps}
+                </div>
+            )}
         </div>
     );
 }

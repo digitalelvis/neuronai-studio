@@ -303,6 +303,7 @@ export default forwardRef(function StudioChat({
                             userMessage: text,
                             stepEvents: undefined,
                             currentNodeId: null,
+                            toolEvents: toolMessages.length ? toolMessages : undefined,
                         },
                     });
                     onRunCompleted?.(packet.data);
