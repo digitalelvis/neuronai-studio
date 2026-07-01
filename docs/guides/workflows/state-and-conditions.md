@@ -8,8 +8,8 @@ Workflows share a mutable key-value **state** (`WorkflowState`) for the duration
 |--------|--------|---------------------|
 | Chat message (test harness) | `input` | Always set from the composer message on each run |
 | Playground "Initial state JSON" | Any top-level keys | Sent as `state` in the run request and merged at start |
-| **Agent** node | `output_key` (default: `agent_response`) | Agent response text |
-| **LLM** / **RAG** nodes | `output_key` | Node output |
+| **Agent** node | `output_key` (default: `agent_response`) | Agent response text, or validated array when `structured` is on |
+| **LLM** / **RAG** nodes | `output_key` | Node output (string, or validated array when `structured` is on) |
 | **Tool** / **MCP** nodes | `output_key` (default: `tool_result` / `mcp_result`) | Tool result payload |
 | **Human** node | `output_key` (default: `human_response`) | User reply when the run resumes |
 | **Set State** node | `key` from node config | Static `value` or copy from `from_key` |
@@ -97,16 +97,61 @@ flowchart TD
     AgentStd --> Stop
 ```
 
+## Dot notation
+
+Condition and Loop nodes resolve **State Key** with dot notation via `WorkflowStateValue` (Laravel `data_get`). Use this to read nested fields from structured output or from initial state objects.
+
+| State Key | State value | Resolved value |
+|-----------|-------------|----------------|
+| `lead.tier` | `{ "lead": { "tier": "gold" } }` | `gold` |
+| `lead.email` | `{ "lead": { "email": "a@b.com" } }` | `a@b.com` |
+| `input` | `{ "input": "hello" }` | `hello` |
+
+The canvas inspector shows a hint on Condition nodes: *"Use dot notation for nested values (e.g. lead.tier)."*
+
+Loop nodes use the same resolution for their exit condition **State Key**.
+
+> **Note:** `{{state_key}}` template placeholders in prompts and messages still match **top-level keys only** (`{{input}}`, `{{lead}}`). To inject a nested field into a prompt, use a Set State node to copy it to a flat key first, or reference the whole object (arrays are JSON-encoded).
+
+## Conditions on structured objects
+
+When an Agent or LLM node runs in [structured output mode](node-types/ai-nodes.md#structured-output), the validated result is stored as an associative array at `output_key`. Condition nodes can branch on any field using dot notation.
+
+Example: an LLM node writes structured output to `lead`, then a Condition routes on `lead.tier`:
+
+| Node | Config |
+|------|--------|
+| LLM | `structured: true`, `output_class: LeadProfile`, `output_key: lead` |
+| Condition | `state_key: lead.tier`, `operator: equals`, `value: gold` |
+
+Playground initial state is unchanged — the chat message still sets `input`. The structured object appears in state only after the LLM/Agent node completes.
+
+```mermaid
+flowchart TD
+    Start[Start] --> LLM["LLM structured → lead"]
+    LLM --> Cond{"lead.tier equals gold?"}
+    Cond -->|true| SetVIP["Set State: branch=vip"]
+    Cond -->|false| SetStd["Set State: branch=standard"]
+    SetVIP --> Stop[Stop]
+    SetStd --> Stop
+```
+
+If validation fails, the structured node step is marked failed and the Condition node never runs. See [Runtime & Traces](runtime-and-traces.md) for trace and SSE details.
+
 ### Limitations
 
-- Keys are **flat**. Use `tier`, not `user.tier`. Nested objects are stored as whole values.
+- Dot notation applies to **Condition** and **Loop** state keys only — not to `{{placeholder}}` interpolation.
 - The Condition node reads `WorkflowState` only; it does not read graph metadata or a separate "context" object.
+- Comparison uses loose equality (`==`) for `equals` / `not_equals`, same as flat keys.
 
 ## Related code
 
 - Initial state: `WorkflowRunner::buildInitialState()`
 - Interpolation: `StateTemplateInterpolator`
+- Dot notation: `WorkflowStateValue`
 - Condition evaluation: `ConditionNodeExecutor`
+- Loop exit condition: `LoopNodeExecutor`
+- Structured output: `LlmNodeExecutor`, `AgentNodeExecutor`, `StructuredOutputResolver`
 - Test harness: Playground "Initial state JSON" → `WorkflowSessionAdapter` → `state` request field
 
 ## See also
