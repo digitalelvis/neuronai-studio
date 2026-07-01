@@ -37,6 +37,45 @@ class AutonomousMultimodalAgentsTest extends TestCase
         $this->assertTrue(
             collect($workflow->graph['nodes'] ?? [])->contains(fn (array $n) => ($n['type'] ?? '') === 'agent'),
         );
+        $this->assertTrue(
+            collect($workflow->graph['nodes'] ?? [])->contains(fn (array $n) => ($n['type'] ?? '') === 'human'),
+        );
+    }
+
+    public function test_conversational_lead_qualification_pauses_and_resumes_until_email_found(): void
+    {
+        $agent = AgentDefinition::create([
+            'name' => 'Conversational Lead Agent',
+            'slug' => 'conversational-lead-agent',
+            'provider' => 'openai',
+            'model' => 'gpt-4o-mini',
+            'instructions' => 'Qualify leads.',
+        ]);
+
+        $workflow = WorkflowDefinition::create([
+            'name' => 'Conversational Lead Flow',
+            'slug' => 'conversational-lead-flow',
+            'graph' => $this->conversationalLeadGraph($agent->id),
+        ]);
+
+        $this->bindFakeAgentRunner(
+            new AssistantMessage('Thanks for your interest! What email address should we use to follow up?'),
+            new AssistantMessage("Name: Jane Doe\nEmail: jane@example.com\nInterest: Enterprise plan"),
+        );
+
+        $runner = app(WorkflowRunner::class);
+        $paused = $runner->run($workflow, ['message' => 'Hi, I want to learn more about your product.']);
+
+        $this->assertEquals('awaiting_input', $paused->status);
+        $this->assertEquals('human_collect', $paused->awaiting_node_id);
+        $this->assertStringContainsString('email', strtolower((string) ($paused->checkpoint['state']['lead_profile'] ?? '')));
+
+        $completed = $runner->resume($paused, 'human_collect', 'jane@example.com');
+
+        $this->assertEquals('completed', $completed->status);
+        $this->assertEquals('qualified', $completed->output['result'] ?? null);
+        $this->assertStringContainsString('jane@example.com', (string) ($completed->output['lead_profile'] ?? ''));
+        $this->assertStringContainsString('jane@example.com', (string) ($completed->output['lead_message'] ?? ''));
     }
 
     public function test_agent_node_emits_tool_events_during_workflow_run(): void
@@ -177,6 +216,62 @@ class AutonomousMultimodalAgentsTest extends TestCase
         $this->assertCount(1, $emitted);
         $this->assertSame('tool_call', $emitted[0]['event']);
         $this->assertSame('agent_1', $emitted[0]['data']['node_id']);
+    }
+
+    /** @return array<string, mixed> */
+    protected function conversationalLeadGraph(int $agentId): array
+    {
+        return [
+            'version' => 1,
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                ['id' => 'set_1', 'type' => 'set_state', 'position' => ['x' => 100, 'y' => 0], 'data' => [
+                    'key' => 'lead_message',
+                    'from_key' => 'input',
+                ]],
+                ['id' => 'loop_1', 'type' => 'loop', 'position' => ['x' => 200, 'y' => 0], 'data' => [
+                    'max_steps' => 10,
+                    'state_key' => 'lead_profile',
+                    'operator' => 'contains',
+                    'value' => '@',
+                ]],
+                ['id' => 'agent_qualify', 'type' => 'agent', 'position' => ['x' => 400, 'y' => 100], 'data' => [
+                    'agent_id' => $agentId,
+                    'message' => 'Conversation: {{lead_message}}',
+                    'output_key' => 'lead_profile',
+                ]],
+                ['id' => 'cond_has_email', 'type' => 'condition', 'position' => ['x' => 600, 'y' => 100], 'data' => [
+                    'state_key' => 'lead_profile',
+                    'operator' => 'contains',
+                    'value' => '@',
+                ]],
+                ['id' => 'human_collect', 'type' => 'human', 'position' => ['x' => 800, 'y' => 200], 'data' => [
+                    'prompt' => '{{lead_profile}}',
+                    'output_key' => 'human_response',
+                ]],
+                ['id' => 'set_append_message', 'type' => 'set_state', 'position' => ['x' => 800, 'y' => 300], 'data' => [
+                    'key' => 'lead_message',
+                    'append_from_key' => 'human_response',
+                ]],
+                ['id' => 'set_qualified', 'type' => 'set_state', 'position' => ['x' => 400, 'y' => 0], 'data' => [
+                    'key' => 'result',
+                    'value' => 'qualified',
+                ]],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 600, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'set_1', 'sourceHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'set_1', 'target' => 'loop_1', 'sourceHandle' => 'default'],
+                ['id' => 'e3', 'source' => 'loop_1', 'target' => 'agent_qualify', 'sourceHandle' => 'continue'],
+                ['id' => 'e4', 'source' => 'agent_qualify', 'target' => 'cond_has_email', 'sourceHandle' => 'default'],
+                ['id' => 'e5', 'source' => 'cond_has_email', 'target' => 'loop_1', 'sourceHandle' => 'true'],
+                ['id' => 'e6', 'source' => 'cond_has_email', 'target' => 'human_collect', 'sourceHandle' => 'false'],
+                ['id' => 'e7', 'source' => 'human_collect', 'target' => 'set_append_message', 'sourceHandle' => 'default'],
+                ['id' => 'e8', 'source' => 'set_append_message', 'target' => 'loop_1', 'sourceHandle' => 'default'],
+                ['id' => 'e9', 'source' => 'loop_1', 'target' => 'set_qualified', 'sourceHandle' => 'exit'],
+                ['id' => 'e10', 'source' => 'set_qualified', 'target' => 'stop_1', 'sourceHandle' => 'default'],
+            ],
+        ];
     }
 
     /** @return array<string, mixed> */
