@@ -2,7 +2,7 @@
 
 **Design**: `.specs/features/workflow-structured-output/design.md`
 **Spec**: `.specs/features/workflow-structured-output/spec.md`
-**Status**: Approved — M2 feature 4
+**Status**: Done — M2 feature 4 (T12 loop hint parcial; aguarda inspector loop M1)
 
 > **TESTING.md**: inexistente neste repositório. Matriz inferida dos padrões em `tests/`:
 >
