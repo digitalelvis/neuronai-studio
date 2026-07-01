@@ -4,6 +4,7 @@ namespace DigitalElvis\NeuronAIStudio\Tests;
 
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\MaxLoopIterationsException;
+use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\WorkflowExecutionException;
 use DigitalElvis\NeuronAIStudio\Runtime\GraphValidator;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
 use DigitalElvis\NeuronAIStudio\Services\TemplateInstaller;
@@ -82,7 +83,8 @@ class WorkflowLoopTest extends TestCase
         try {
             app(WorkflowRunner::class)->run($workflow, ['message' => 'run']);
             $this->fail('Expected MaxLoopIterationsException was not thrown.');
-        } catch (MaxLoopIterationsException $exception) {
+        } catch (WorkflowExecutionException $exception) {
+            $this->assertInstanceOf(MaxLoopIterationsException::class, $exception->getPrevious());
             $this->assertStringContainsString('Max loop iterations exceeded', $exception->getMessage());
         }
 
@@ -90,6 +92,7 @@ class WorkflowLoopTest extends TestCase
         $this->assertNotNull($trace);
         $this->assertEquals('failed', $trace->status);
         $this->assertStringContainsString('Max loop iterations exceeded', (string) $trace->error_message);
+        $this->assertGreaterThan(0, $trace->steps()->count(), 'Failed traces should persist partial step history.');
     }
 
     public function test_resume_after_human_inside_loop_body(): void

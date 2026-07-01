@@ -4,6 +4,7 @@ namespace DigitalElvis\NeuronAIStudio\Http\Controllers;
 
 use DigitalElvis\NeuronAIStudio\Http\Controllers\Concerns\ValidatesChatAttachments;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
+use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\WorkflowExecutionException;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -51,6 +52,15 @@ class WorkflowTraceResumeController
                     'trace_id' => $result->id,
                     'status' => $result->status,
                     'output' => $result->output,
+                ]);
+            } catch (WorkflowExecutionException $exception) {
+                $trace = $exception->trace;
+
+                $send('trace_failed', [
+                    'trace_id' => $trace->id,
+                    'status' => $trace->status,
+                    'message' => $exception->getMessage(),
+                    'error_message' => $trace->error_message,
                 ]);
             } catch (Throwable $exception) {
                 $send('trace_failed', [
