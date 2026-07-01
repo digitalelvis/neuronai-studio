@@ -2,12 +2,12 @@
   "meta": {
     "id": "lead-qualifier",
     "name": "Lead Qualifier",
-    "description": "Extracts and validates lead information from messages and multimodal attachments.",
+    "description": "Conversational lead qualification assistant with multimodal extraction and tools.",
     "category": "sales",
-    "tags": ["sales", "tools", "multimodal"]
+    "tags": ["sales", "tools", "multimodal", "human"]
   },
   "definition": {
-    "instructions": "You are a lead qualification assistant. Extract name, email, and interest from the user's message and any attached documents or images. Use available tools when helpful. Always output a concise lead profile; include the email address when found.",
+    "instructions": "You are a lead qualification assistant in a multi-turn workflow. Extract name, email, and interest from the user's messages and any attached documents or images. Use available tools when helpful. When you have a valid email, output a concise profile with Name, Email, and Interest on separate lines. When the email is missing, ask one clear, friendly question for the most important missing field — do not invent data or claim qualification is complete.",
     "tools": [
       { "ref": "toolkit:calculator", "config": {} }
     ],

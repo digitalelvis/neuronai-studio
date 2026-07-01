@@ -2,10 +2,10 @@
   "meta": {
     "id": "autonomous-lead-qualification",
     "name": "Autonomous Lead Qualification",
-    "description": "Agent-driven loop that qualifies leads from multimodal input until an email is found or max_steps is reached.",
+    "description": "Conversational agent loop that qualifies leads from multimodal input, asks for missing fields via human-in-the-loop, and completes when an email is found.",
     "complexity": "intermediate",
     "category": "sales",
-    "tags": ["agent", "loop", "multimodal", "tools"],
+    "tags": ["agent", "loop", "multimodal", "tools", "human"],
     "agents": ["lead-qualifier"]
   },
   "graph": {
@@ -31,7 +31,7 @@
         "type": "loop",
         "position": { "x": 420, "y": 220 },
         "data": {
-          "max_steps": 5,
+          "max_steps": 10,
           "state_key": "lead_profile",
           "operator": "contains",
           "value": "@"
@@ -43,8 +43,36 @@
         "position": { "x": 640, "y": 320 },
         "data": {
           "agent_ref": "lead-qualifier",
-          "message": "Extract lead information from this message and any attachments. Return name, email, and interest on separate lines.\n\nMessage: {{lead_message}}",
+          "message": "Qualify this lead from the conversation and any attachments.\n\nConversation:\n{{lead_message}}\n\nIf you can extract a valid email, respond with:\nName: ...\nEmail: ...\nInterest: ...\n\nIf the email is still missing, ask ONE friendly question for the most important missing field. Do not invent data.",
           "output_key": "lead_profile"
+        }
+      },
+      {
+        "id": "cond_has_email",
+        "type": "condition",
+        "position": { "x": 860, "y": 320 },
+        "data": {
+          "state_key": "lead_profile",
+          "operator": "contains",
+          "value": "@"
+        }
+      },
+      {
+        "id": "human_collect",
+        "type": "human",
+        "position": { "x": 1080, "y": 420 },
+        "data": {
+          "prompt": "{{lead_profile}}",
+          "output_key": "human_response"
+        }
+      },
+      {
+        "id": "set_append_message",
+        "type": "set_state",
+        "position": { "x": 1080, "y": 520 },
+        "data": {
+          "key": "lead_message",
+          "append_from_key": "human_response"
         }
       },
       {
@@ -61,31 +89,6 @@
         "type": "stop",
         "position": { "x": 860, "y": 120 },
         "data": {}
-      },
-      {
-        "id": "llm_ask_email",
-        "type": "llm",
-        "position": { "x": 860, "y": 220 },
-        "data": {
-          "prompt": "The lead profile is missing an email address after maximum parse attempts. Write a short, friendly message asking for their email.\n\nProfile so far:\n{{lead_profile}}",
-          "output_key": "follow_up_message"
-        }
-      },
-      {
-        "id": "stop_missing_email",
-        "type": "stop",
-        "position": { "x": 1060, "y": 220 },
-        "data": {}
-      },
-      {
-        "id": "cond_has_email",
-        "type": "condition",
-        "position": { "x": 640, "y": 120 },
-        "data": {
-          "state_key": "lead_profile",
-          "operator": "contains",
-          "value": "@"
-        }
       }
     ],
     "edges": [
@@ -111,8 +114,36 @@
         "targetHandle": "default"
       },
       {
-        "id": "edge_agent_loop",
+        "id": "edge_agent_cond",
         "source": "agent_qualify",
+        "target": "cond_has_email",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_cond_loop",
+        "source": "cond_has_email",
+        "target": "loop_1",
+        "sourceHandle": "true",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_cond_human",
+        "source": "cond_has_email",
+        "target": "human_collect",
+        "sourceHandle": "false",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_human_append",
+        "source": "human_collect",
+        "target": "set_append_message",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_append_loop",
+        "source": "set_append_message",
         "target": "loop_1",
         "sourceHandle": "default",
         "targetHandle": "default"
@@ -120,35 +151,14 @@
       {
         "id": "edge_loop_exit",
         "source": "loop_1",
-        "target": "cond_has_email",
-        "sourceHandle": "exit",
-        "targetHandle": "default"
-      },
-      {
-        "id": "edge_cond_qualified",
-        "source": "cond_has_email",
         "target": "set_qualified",
-        "sourceHandle": "true",
-        "targetHandle": "default"
-      },
-      {
-        "id": "edge_cond_ask",
-        "source": "cond_has_email",
-        "target": "llm_ask_email",
-        "sourceHandle": "false",
+        "sourceHandle": "exit",
         "targetHandle": "default"
       },
       {
         "id": "edge_set_stop",
         "source": "set_qualified",
         "target": "stop_qualified",
-        "sourceHandle": "default",
-        "targetHandle": "default"
-      },
-      {
-        "id": "edge_llm_stop",
-        "source": "llm_ask_email",
-        "target": "stop_missing_email",
         "sourceHandle": "default",
         "targetHandle": "default"
       }
