@@ -1,9 +1,9 @@
 # State
 
-**Last Updated:** 2026-06-30
+**Last Updated:** 2026-07-01
 **Development line:** `v0.2.x` (target release `v0.2.0`)
 **Latest published:** `v0.1.2` on `main`
-**Current Work:** M1 — `workflow-cyclic-graphs` (feature 1/3)
+**Current Work:** M1 — `workflow-cyclic-graphs` · M2 — `workflow-structured-output` (backend fases 1–3 ✅)
 
 ---
 
@@ -49,9 +49,25 @@ _None._
 
 | Feature | Status | Notas |
 |---------|--------|-------|
-| `workflow-cyclic-graphs` | 🔄 in progress | Próximo: spec → tasks → implementação nó `loop` |
+| `workflow-cyclic-graphs` | 🔄 in progress | Próximo: nó `loop` no registry/canvas + `max_steps` |
 | `autonomous-multimodal-agents` | 🟡 partial | Upload, `MessageFactory`, validação attachments, preview route — ver AMA abaixo |
 | `workflow-rag` | ⏳ planned | Depende de ciclos + executor real |
+
+## M2 progress snapshot
+
+| Feature | Status | Notas |
+|---------|--------|-------|
+| `workflow-structured-output` | 🔄 in progress | Backend T1–T9 ✅; próximo: canvas UI (T10–T13), integração T16 |
+| `workflow-tool-approval` | ⏳ planned | — |
+| `workflow-token-streaming` | ⏳ planned | — |
+
+### Structured output — entregue (fases 1–3)
+
+- [x] `structured_output_scan_paths`, `OutputClassRegistry`, `StructuredOutputResolver`
+- [x] `WorkflowStateValue` + dot notation em condition/loop
+- [x] `AgentRunner::structuredInline` + branch structured em `LlmNodeExecutor` / `AgentNodeExecutor`
+- [x] `StructuredOutputValidationException` + `validation_errors` no SSE/trace
+- [ ] Canvas inspector (T10–T13), round-trip T16, codegen T14–T15, docs T17
 
 ### AMA já entregue em `v0.1.2` (baseline para v0.2.0)
 

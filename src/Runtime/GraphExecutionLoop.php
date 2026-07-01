@@ -2,6 +2,7 @@
 
 namespace DigitalElvis\NeuronAIStudio\Runtime;
 
+use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\StructuredOutputValidationException;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorRegistry;
 use NeuronAI\Workflow\WorkflowState;
 
@@ -41,7 +42,23 @@ class GraphExecutionLoop
                 break;
             }
 
-            $handle = $this->executors->execute($nodeType, $nodeConfig, $state, $graphContext);
+            try {
+                $handle = $this->executors->execute($nodeType, $nodeConfig, $state, $graphContext);
+            } catch (StructuredOutputValidationException $exception) {
+                $durationMs = (int) ((microtime(true) - $startedAt) * 1000);
+
+                $state->emitStep('step_completed', [
+                    'node_id' => $nodeId,
+                    'node_type' => $nodeType,
+                    'handle' => 'failed',
+                    'duration_ms' => $durationMs,
+                    'validation_errors' => $exception->validationErrors,
+                    'failed' => true,
+                ]);
+
+                throw $exception;
+            }
+
             $durationMs = (int) ((microtime(true) - $startedAt) * 1000);
 
             $this->recordStep($state, $nodeId, $nodeType, $startedAt);
