@@ -6,7 +6,9 @@ use DigitalElvis\NeuronAIStudio\Attributes\StudioGraph;
 use DigitalElvis\NeuronAIStudio\Codegen\NativeWorkflowExporter;
 use DigitalElvis\NeuronAIStudio\Codegen\WorkflowClassImporter;
 use DigitalElvis\NeuronAIStudio\Codegen\WorkflowExporter;
+use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
+use DigitalElvis\NeuronAIStudio\Tests\Fixtures\Output\SampleLeadProfile;
 use Illuminate\Support\Facades\File;
 
 class NativeWorkflowExporterTest extends TestCase
@@ -150,6 +152,115 @@ class NativeWorkflowExporterTest extends TestCase
         $this->assertSame('Round Trip', $imported['name']);
         $this->assertSame('native', $imported['format']);
         $this->assertSame($graph['nodes'][1]['id'], $imported['graph']['nodes'][1]['id']);
+
+        $this->cleanupExport($exportPath);
+    }
+
+    /** @return array<string, mixed> */
+    protected function structuredLlmGraph(): array
+    {
+        return [
+            'version' => 1,
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                ['id' => 'llm_1', 'type' => 'llm', 'position' => ['x' => 100, 'y' => 0], 'data' => [
+                    'prompt' => 'Extract lead from {{input}}',
+                    'provider' => 'openai',
+                    'model' => 'gpt-4o-mini',
+                    'output_key' => 'lead',
+                    'structured' => true,
+                    'output_class' => SampleLeadProfile::class,
+                ]],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'llm_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'llm_1', 'target' => 'stop_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+            ],
+            'viewport' => ['x' => 0, 'y' => 0, 'zoom' => 1],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    protected function structuredAgentGraph(int $agentId): array
+    {
+        return [
+            'version' => 1,
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                ['id' => 'agent_1', 'type' => 'agent', 'position' => ['x' => 100, 'y' => 0], 'data' => [
+                    'agent_id' => $agentId,
+                    'message' => 'Extract lead from {{input}}',
+                    'output_key' => 'lead',
+                    'structured' => true,
+                    'output_class' => SampleLeadProfile::class,
+                ]],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'agent_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'agent_1', 'target' => 'stop_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+            ],
+            'viewport' => ['x' => 0, 'y' => 0, 'zoom' => 1],
+        ];
+    }
+
+    public function test_structured_llm_export_emits_structured_inline_and_output_class_import(): void
+    {
+        $exportPath = $this->exportPath();
+        config([
+            'neuronai-studio.export_path' => $exportPath,
+            'neuronai-studio.export_namespace' => 'App\\Neuron',
+        ]);
+
+        $workflow = WorkflowDefinition::make([
+            'name' => 'Structured LLM',
+            'slug' => 'structured-llm',
+            'graph' => $this->structuredLlmGraph(),
+            'status' => 'draft',
+        ]);
+
+        $preview = app(NativeWorkflowExporter::class)->preview($workflow);
+
+        $this->assertStringContainsString('use '.SampleLeadProfile::class.';', $preview);
+        $this->assertStringContainsString('structuredInline(', $preview);
+        $this->assertStringContainsString('SampleLeadProfile::class', $preview);
+        $this->assertStringContainsString('$result->structured', $preview);
+        $this->assertStringNotContainsString('->chat($userMessage)', $preview);
+
+        $this->cleanupExport($exportPath);
+    }
+
+    public function test_structured_agent_export_emits_structured_inline_and_output_class_import(): void
+    {
+        $exportPath = $this->exportPath();
+        config([
+            'neuronai-studio.export_path' => $exportPath,
+            'neuronai-studio.export_namespace' => 'App\\Neuron',
+        ]);
+
+        $agent = AgentDefinition::create([
+            'name' => 'Lead Agent',
+            'slug' => 'lead-agent-export',
+            'provider' => 'openai',
+            'model' => 'gpt-4o-mini',
+            'instructions' => 'Extract lead profiles.',
+        ]);
+
+        $workflow = WorkflowDefinition::make([
+            'name' => 'Structured Agent',
+            'slug' => 'structured-agent',
+            'graph' => $this->structuredAgentGraph($agent->id),
+            'status' => 'draft',
+        ]);
+
+        $preview = app(NativeWorkflowExporter::class)->preview($workflow);
+
+        $this->assertStringContainsString('use '.SampleLeadProfile::class.';', $preview);
+        $this->assertStringContainsString('structuredInline(', $preview);
+        $this->assertStringContainsString('SampleLeadProfile::class', $preview);
+        $this->assertStringContainsString('$response->structured', $preview);
+        $this->assertStringNotContainsString('->runInline(', $preview);
 
         $this->cleanupExport($exportPath);
     }
