@@ -50,9 +50,15 @@ Use loops when the same subgraph must run multiple times with shared state. Pair
 
 ## Autonomous Lead Qualification
 
-Template `autonomous-lead-qualification` replaces the loop-body LLM with the `lead-qualifier` agent (tools + memory). Attach PDFs or images in the test harness; the agent iterates until an email is extracted or the loop exits.
+Template `autonomous-lead-qualification` runs the `lead-qualifier` agent inside a loop with **human-in-the-loop**:
 
-Requires `workflow-cyclic-graphs` and multimodal attachment support (`state.attachments`, `MessageFactory`).
+1. You send an initial message (optionally with PDF/image attachments).
+2. The agent extracts a profile or asks for missing fields (typically email).
+3. If email is missing, the workflow **pauses** at a Human node and shows the agent's question in the harness.
+4. You reply in the composer; the workflow **resumes**, appends your answer to `lead_message`, and the agent tries again.
+5. When `lead_profile` contains `@`, the loop exits and the workflow completes as `qualified`.
+
+Requires cyclic graphs, multimodal attachments (`state.attachments`, `MessageFactory`), and harness resume support.
 
 ## File locations
 
