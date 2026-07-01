@@ -5,6 +5,7 @@ namespace DigitalElvis\NeuronAIStudio\Runtime\Nodes;
 use DigitalElvis\NeuronAIStudio\Runtime\BuilderWorkflowState;
 use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
 use DigitalElvis\NeuronAIStudio\Runtime\Events\GraphStepEvent;
+use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\StructuredOutputValidationException;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorRegistry;
 use NeuronAI\Workflow\Events\StopEvent;
 use NeuronAI\Workflow\Node;
@@ -48,7 +49,24 @@ class GraphStepExecutorNode extends Node
             return new StopEvent($state->all());
         }
 
-        $handle = $this->executors->execute($nodeType, $nodeConfig, $state, $this->graphContext);
+        try {
+            $handle = $this->executors->execute($nodeType, $nodeConfig, $state, $this->graphContext);
+        } catch (StructuredOutputValidationException $exception) {
+            $durationMs = (int) ((microtime(true) - $startedAt) * 1000);
+
+            if ($state instanceof BuilderWorkflowState) {
+                $state->emitStep('step_completed', [
+                    'node_id' => $nodeId,
+                    'node_type' => $nodeType,
+                    'handle' => 'failed',
+                    'duration_ms' => $durationMs,
+                    'validation_errors' => $exception->validationErrors,
+                    'failed' => true,
+                ]);
+            }
+
+            throw $exception;
+        }
 
         $durationMs = (int) ((microtime(true) - $startedAt) * 1000);
 
