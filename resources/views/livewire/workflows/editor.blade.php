@@ -34,6 +34,7 @@
             agents: @json($agentsForCanvas),
             tools: @json($toolsForCanvas),
             mcpServers: @json($mcpServersForCanvas),
+            outputClasses: @json($outputClassesForCanvas),
             providers: @json($providers),
             providerModels: @json($providerModels),
             defaultProvider: @json(config('neuronai-studio.default_provider')),
