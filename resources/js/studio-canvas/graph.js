@@ -25,6 +25,14 @@ export function edgeLabelForHandle(handle) {
         return 'false';
     }
 
+    if (handle === 'continue') {
+        return 'continue';
+    }
+
+    if (handle === 'exit') {
+        return 'exit';
+    }
+
     return undefined;
 }
 
@@ -35,6 +43,14 @@ export function edgeStyleForHandle(handle) {
 
     if (handle === 'false') {
         return { stroke: '#ef4444', strokeWidth: 2 };
+    }
+
+    if (handle === 'continue') {
+        return { stroke: '#3b82f6', strokeWidth: 2 };
+    }
+
+    if (handle === 'exit') {
+        return { stroke: '#a855f7', strokeWidth: 2 };
     }
 
     return { stroke: '#6366f1', strokeWidth: 2 };

@@ -9,6 +9,7 @@ class GraphValidator
 {
     public function __construct(
         protected NodeTypeRegistry $nodeTypes,
+        protected CycleDetector $cycleDetector,
     ) {}
 
     /** @return array{valid: bool, errors: array<string>} */
@@ -76,6 +77,8 @@ class GraphValidator
             }
         }
 
+        $errors = array_merge($errors, $this->validateCycles($nodes, $edges));
+
         if (empty($errors) && ! empty($startNodes)) {
             $startId = array_values($startNodes)[0]['id'];
             if (! $this->canReachStop($startId, $nodes, $edges)) {
@@ -89,6 +92,48 @@ class GraphValidator
         ];
     }
 
+    /**
+     * @param  array<int, array<string, mixed>>  $nodes
+     * @param  array<int, array<string, mixed>>  $edges
+     * @return array<int, string>
+     */
+    protected function validateCycles(array $nodes, array $edges): array
+    {
+        if (! $this->cycleDetector->hasCycle($nodes, $edges)) {
+            return [];
+        }
+
+        $errors = [];
+        $backEdges = $this->cycleDetector->backEdges($nodes, $edges);
+        $loopNodes = array_filter($nodes, fn ($n) => ($n['type'] ?? '') === 'loop');
+
+        if ($loopNodes === []) {
+            return ['Cyclic graph requires a loop node with max_steps.'];
+        }
+
+        $authorizedLoops = array_filter($loopNodes, function (array $node) {
+            $data = $node['data'] ?? [];
+
+            if (isset($data['max_steps'])) {
+                return (int) $data['max_steps'] > 0;
+            }
+
+            return (int) config('neuronai-studio.loop.default_max_steps', 10) > 0;
+        });
+
+        if ($authorizedLoops === []) {
+            $errors[] = 'Loop nodes in a cyclic graph must declare max_steps greater than 0.';
+        }
+
+        $unauthorized = $this->cycleDetector->unauthorizedBackEdges($backEdges, $nodes, $edges);
+
+        if ($unauthorized !== []) {
+            $errors[] = 'Cyclic graph requires a loop node with max_steps covering all back-edges.';
+        }
+
+        return $errors;
+    }
+
     protected function canReachStop(string $startId, array $nodes, array $edges): bool
     {
         $stopIds = collect($nodes)
@@ -96,12 +141,13 @@ class GraphValidator
             ->pluck('id')
             ->all();
 
+        $loopLimits = $this->loopVisitLimits($nodes);
         $adjacency = [];
         foreach ($edges as $edge) {
             $adjacency[$edge['source']][] = $edge['target'];
         }
 
-        $visited = [];
+        $visitCounts = [];
         $queue = [$startId];
 
         while ($queue) {
@@ -111,10 +157,12 @@ class GraphValidator
                 return true;
             }
 
-            if (isset($visited[$current])) {
+            $limit = $loopLimits[$current] ?? 1;
+            $visitCounts[$current] = ($visitCounts[$current] ?? 0) + 1;
+
+            if ($visitCounts[$current] > $limit) {
                 continue;
             }
-            $visited[$current] = true;
 
             foreach ($adjacency[$current] ?? [] as $next) {
                 $queue[] = $next;
@@ -122,6 +170,35 @@ class GraphValidator
         }
 
         return false;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $nodes
+     * @return array<string, int>
+     */
+    protected function loopVisitLimits(array $nodes): array
+    {
+        $limits = [];
+
+        foreach ($nodes as $node) {
+            if (($node['type'] ?? '') !== 'loop') {
+                continue;
+            }
+
+            $id = (string) ($node['id'] ?? '');
+            if ($id === '') {
+                continue;
+            }
+
+            $data = $node['data'] ?? [];
+            $maxSteps = isset($data['max_steps'])
+                ? max(1, (int) $data['max_steps'])
+                : max(1, (int) config('neuronai-studio.loop.default_max_steps', 10));
+
+            $limits[$id] = $maxSteps + 1;
+        }
+
+        return $limits;
     }
 
     public function assertValid(array $graph): void

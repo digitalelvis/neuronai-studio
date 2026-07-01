@@ -2,6 +2,33 @@
 
 Logic nodes control workflow branching and state manipulation.
 
+## Loop
+
+**Purpose:** Repeat a subgraph until an exit condition is met or `max_steps` is reached.
+
+| Config | Description |
+|--------|-------------|
+| `max_steps` | Maximum iterations before `MaxLoopIterationsException` (default from config) |
+| `state_key` | Key to read for exit condition (default: `input`) |
+| `operator` | Same operators as Condition (`not_empty`, `empty`, `equals`, `not_equals`, `contains`) |
+| `value` | Comparison value for `equals` / `contains` operators |
+
+The node has two output handles:
+
+| Handle | When |
+|--------|------|
+| `continue` | Exit condition is **not** met — follow the loop body |
+| `exit` | Exit condition **is** met — leave the loop |
+
+```mermaid
+flowchart LR
+    Loop[Loop] -->|continue| Body[LLM / Agent]
+    Body --> Loop
+    Loop -->|exit| After[Condition / Stop]
+```
+
+Back-edges into the loop body require a Loop node with `max_steps` > 0. `GraphValidator` rejects unauthorized cycles.
+
 ## Condition
 
 **Purpose:** Branch execution based on a workflow state value.
@@ -52,12 +79,13 @@ flowchart TD
 
 | Node | Inputs | Outputs |
 |------|--------|---------|
+| Loop | 1 | 2 (continue, exit) |
 | Condition | 1 | 2 (true, false) |
 | Set State | 1 | 1 |
 
 ## Related code
 
-- `ConditionNodeExecutor`, `SetStateNodeExecutor`
+- `LoopNodeExecutor`, `ConditionNodeExecutor`, `SetStateNodeExecutor`
 - `StateTemplateInterpolator` — for `{{key}}` in other nodes, not Condition evaluation
 
 ## See also

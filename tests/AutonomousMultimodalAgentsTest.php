@@ -1,0 +1,355 @@
+<?php
+
+namespace DigitalElvis\NeuronAIStudio\Tests;
+
+use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Models\StudioChatMessage;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
+use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
+use DigitalElvis\NeuronAIStudio\Runtime\AgentRunner;
+use DigitalElvis\NeuronAIStudio\Runtime\BuilderWorkflowState;
+use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
+use DigitalElvis\NeuronAIStudio\Runtime\GraphValidator;
+use DigitalElvis\NeuronAIStudio\Runtime\McpToolResolver;
+use DigitalElvis\NeuronAIStudio\Runtime\MessageFactory;
+use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\AgentNodeExecutor;
+use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorRegistry;
+use DigitalElvis\NeuronAIStudio\Runtime\ToolEventExtractor;
+use DigitalElvis\NeuronAIStudio\Runtime\ToolResolver;
+use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
+use DigitalElvis\NeuronAIStudio\Services\TemplateInstaller;
+use DigitalElvis\NeuronAIStudio\Support\ChatThreadKey;
+use Illuminate\Support\Facades\Storage;
+use NeuronAI\Chat\Messages\AssistantMessage;
+use NeuronAI\Testing\FakeAIProvider;
+
+class AutonomousMultimodalAgentsTest extends TestCase
+{
+    public function test_autonomous_lead_qualification_template_is_valid(): void
+    {
+        $workflow = app(TemplateInstaller::class)->installWorkflow('autonomous-lead-qualification');
+        $result = app(GraphValidator::class)->validate($workflow->graph);
+
+        $this->assertTrue($result['valid'], implode(' ', $result['errors']));
+        $this->assertTrue(
+            collect($workflow->graph['nodes'] ?? [])->contains(fn (array $n) => ($n['type'] ?? '') === 'loop'),
+        );
+        $this->assertTrue(
+            collect($workflow->graph['nodes'] ?? [])->contains(fn (array $n) => ($n['type'] ?? '') === 'agent'),
+        );
+        $this->assertTrue(
+            collect($workflow->graph['nodes'] ?? [])->contains(fn (array $n) => ($n['type'] ?? '') === 'human'),
+        );
+    }
+
+    public function test_conversational_lead_qualification_pauses_and_resumes_until_email_found(): void
+    {
+        $agent = AgentDefinition::create([
+            'name' => 'Conversational Lead Agent',
+            'slug' => 'conversational-lead-agent',
+            'provider' => 'openai',
+            'model' => 'gpt-4o-mini',
+            'instructions' => 'Qualify leads.',
+        ]);
+
+        $workflow = WorkflowDefinition::create([
+            'name' => 'Conversational Lead Flow',
+            'slug' => 'conversational-lead-flow',
+            'graph' => $this->conversationalLeadGraph($agent->id),
+        ]);
+
+        $this->bindFakeAgentRunner(
+            new AssistantMessage('Thanks for your interest! What email address should we use to follow up?'),
+            new AssistantMessage("Name: Jane Doe\nEmail: jane@example.com\nInterest: Enterprise plan"),
+        );
+
+        $runner = app(WorkflowRunner::class);
+        $paused = $runner->run($workflow, ['message' => 'Hi, I want to learn more about your product.']);
+
+        $this->assertEquals('awaiting_input', $paused->status);
+        $this->assertEquals('human_collect', $paused->awaiting_node_id);
+        $this->assertStringContainsString('email', strtolower((string) ($paused->checkpoint['state']['lead_profile'] ?? '')));
+
+        $completed = $runner->resume($paused, 'human_collect', 'jane@example.com');
+
+        $this->assertEquals('completed', $completed->status);
+        $this->assertEquals('qualified', $completed->output['result'] ?? null);
+        $this->assertStringContainsString('jane@example.com', (string) ($completed->output['lead_profile'] ?? ''));
+        $this->assertStringContainsString('jane@example.com', (string) ($completed->output['lead_message'] ?? ''));
+    }
+
+    public function test_agent_node_emits_tool_events_during_workflow_run(): void
+    {
+        $events = [];
+        $agent = AgentDefinition::create([
+            'name' => 'Tool Agent',
+            'slug' => 'tool-agent',
+            'provider' => 'openai',
+            'model' => 'gpt-4o-mini',
+            'instructions' => 'Use tools.',
+            'tools' => [['ref' => 'toolkit:calculator', 'config' => []]],
+        ]);
+
+        $workflow = WorkflowDefinition::create([
+            'name' => 'Tool Event Flow',
+            'slug' => 'tool-event-flow',
+            'graph' => [
+                'version' => 1,
+                'nodes' => [
+                    ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                    ['id' => 'agent_1', 'type' => 'agent', 'position' => ['x' => 200, 'y' => 0], 'data' => [
+                        'agent_id' => $agent->id,
+                        'output_key' => 'agent_response',
+                    ]],
+                    ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 400, 'y' => 0], 'data' => []],
+                ],
+                'edges' => [
+                    ['id' => 'e1', 'source' => 'start_1', 'target' => 'agent_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                    ['id' => 'e2', 'source' => 'agent_1', 'target' => 'stop_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ],
+            ],
+        ]);
+
+        $this->bindFakeAgentRunnerWithToolEvents(
+            new AssistantMessage('Done'),
+            [
+                ['name' => 'calculator', 'inputs' => ['expression' => '2+2'], 'result' => '4', 'type' => 'result'],
+            ],
+        );
+
+        app(WorkflowRunner::class)->run($workflow, ['message' => 'Calculate'], function (string $event, array $data) use (&$events) {
+            $events[] = $event;
+        });
+
+        $this->assertContains('tool_result', $events);
+    }
+
+    public function test_loop_agent_run_preserves_thread_and_attachments(): void
+    {
+        Storage::fake('local');
+        config(['neuronai-studio.attachments.disk' => 'local']);
+
+        $storageKey = 'neuronai-studio/attachments/test.jpg';
+        Storage::disk('local')->put(
+            $storageKey,
+            base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='),
+        );
+
+        $agent = AgentDefinition::create([
+            'name' => 'Loop Vision Agent',
+            'slug' => 'loop-vision-agent',
+            'provider' => 'openai',
+            'model' => 'gpt-4o',
+            'instructions' => 'Extract lead email from input.',
+        ]);
+
+        $workflow = WorkflowDefinition::create([
+            'name' => 'Loop Agent Multimodal',
+            'slug' => 'loop-agent-multimodal',
+            'graph' => $this->loopAgentGraph($agent->id),
+        ]);
+
+        $threadId = '550e8400-e29b-41d4-a716-446655440000';
+        $scopedKey = ChatThreadKey::forWorkflow($workflow->id, $threadId);
+
+        $this->bindFakeAgentRunner(
+            new AssistantMessage('Name: Jane\nEmail: jane@example.com'),
+            new AssistantMessage('Follow up'),
+        );
+
+        $trace = app(WorkflowRunner::class)->run($workflow, [
+            'message' => 'Qualify this lead',
+            'thread_id' => $threadId,
+            'attachments' => [
+                [
+                    'type' => 'image',
+                    'storage_key' => $storageKey,
+                    'mime_type' => 'image/png',
+                    'name' => 'lead-card.png',
+                ],
+            ],
+        ]);
+
+        $this->assertEquals('completed', $trace->status);
+        $this->assertSame($scopedKey, $trace->output['__studio_thread_id'] ?? null);
+        $this->assertIsArray($trace->output['attachments'] ?? null);
+        $this->assertStringContainsString('@', (string) ($trace->output['lead_profile'] ?? ''));
+        $this->assertGreaterThanOrEqual(2, StudioChatMessage::query()->where('thread_id', $scopedKey)->count());
+    }
+
+    public function test_agent_node_executor_emits_tool_events_to_state(): void
+    {
+        $emitted = [];
+        $agent = AgentDefinition::create([
+            'name' => 'Emit Agent',
+            'slug' => 'emit-agent',
+            'provider' => 'openai',
+            'model' => 'gpt-4o-mini',
+            'instructions' => 'Help.',
+        ]);
+
+        $registry = $this->createMock(ProviderRegistry::class);
+        $registry->method('resolve')->willReturn(new FakeAIProvider(new AssistantMessage('ok')));
+
+        $agentRunner = $this->createMock(AgentRunner::class);
+        $agentRunner->method('runInline')->willReturn(new \DigitalElvis\NeuronAIStudio\Runtime\AgentRunResult(
+            'ok',
+            [['name' => 'calculator', 'inputs' => ['expression' => '1+1'], 'result' => '2', 'type' => 'call']],
+        ));
+
+        $executor = new AgentNodeExecutor($agentRunner, new MessageFactory);
+        $context = new GraphContext([], []);
+        $state = new BuilderWorkflowState($context, 1, []);
+        $state->stepEmitter = function (string $event, array $data) use (&$emitted) {
+            $emitted[] = ['event' => $event, 'data' => $data];
+        };
+
+        $executor->execute([
+            'id' => 'agent_1',
+            'data' => [
+                'agent_id' => $agent->id,
+                'output_key' => 'agent_response',
+            ],
+        ], $state, $context);
+
+        $this->assertSame('ok', $state->get('agent_response'));
+        $this->assertCount(1, $emitted);
+        $this->assertSame('tool_call', $emitted[0]['event']);
+        $this->assertSame('agent_1', $emitted[0]['data']['node_id']);
+    }
+
+    /** @return array<string, mixed> */
+    protected function conversationalLeadGraph(int $agentId): array
+    {
+        return [
+            'version' => 1,
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                ['id' => 'set_1', 'type' => 'set_state', 'position' => ['x' => 100, 'y' => 0], 'data' => [
+                    'key' => 'lead_message',
+                    'from_key' => 'input',
+                ]],
+                ['id' => 'loop_1', 'type' => 'loop', 'position' => ['x' => 200, 'y' => 0], 'data' => [
+                    'max_steps' => 10,
+                    'state_key' => 'lead_profile',
+                    'operator' => 'contains',
+                    'value' => '@',
+                ]],
+                ['id' => 'agent_qualify', 'type' => 'agent', 'position' => ['x' => 400, 'y' => 100], 'data' => [
+                    'agent_id' => $agentId,
+                    'message' => 'Conversation: {{lead_message}}',
+                    'output_key' => 'lead_profile',
+                ]],
+                ['id' => 'cond_has_email', 'type' => 'condition', 'position' => ['x' => 600, 'y' => 100], 'data' => [
+                    'state_key' => 'lead_profile',
+                    'operator' => 'contains',
+                    'value' => '@',
+                ]],
+                ['id' => 'human_collect', 'type' => 'human', 'position' => ['x' => 800, 'y' => 200], 'data' => [
+                    'prompt' => '{{lead_profile}}',
+                    'output_key' => 'human_response',
+                ]],
+                ['id' => 'set_append_message', 'type' => 'set_state', 'position' => ['x' => 800, 'y' => 300], 'data' => [
+                    'key' => 'lead_message',
+                    'append_from_key' => 'human_response',
+                ]],
+                ['id' => 'set_qualified', 'type' => 'set_state', 'position' => ['x' => 400, 'y' => 0], 'data' => [
+                    'key' => 'result',
+                    'value' => 'qualified',
+                ]],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 600, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'set_1', 'sourceHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'set_1', 'target' => 'loop_1', 'sourceHandle' => 'default'],
+                ['id' => 'e3', 'source' => 'loop_1', 'target' => 'agent_qualify', 'sourceHandle' => 'continue'],
+                ['id' => 'e4', 'source' => 'agent_qualify', 'target' => 'cond_has_email', 'sourceHandle' => 'default'],
+                ['id' => 'e5', 'source' => 'cond_has_email', 'target' => 'loop_1', 'sourceHandle' => 'true'],
+                ['id' => 'e6', 'source' => 'cond_has_email', 'target' => 'human_collect', 'sourceHandle' => 'false'],
+                ['id' => 'e7', 'source' => 'human_collect', 'target' => 'set_append_message', 'sourceHandle' => 'default'],
+                ['id' => 'e8', 'source' => 'set_append_message', 'target' => 'loop_1', 'sourceHandle' => 'default'],
+                ['id' => 'e9', 'source' => 'loop_1', 'target' => 'set_qualified', 'sourceHandle' => 'exit'],
+                ['id' => 'e10', 'source' => 'set_qualified', 'target' => 'stop_1', 'sourceHandle' => 'default'],
+            ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    protected function loopAgentGraph(int $agentId): array
+    {
+        return [
+            'version' => 1,
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                ['id' => 'loop_1', 'type' => 'loop', 'position' => ['x' => 200, 'y' => 0], 'data' => [
+                    'max_steps' => 3,
+                    'state_key' => 'lead_profile',
+                    'operator' => 'contains',
+                    'value' => '@',
+                ]],
+                ['id' => 'agent_1', 'type' => 'agent', 'position' => ['x' => 400, 'y' => 100], 'data' => [
+                    'agent_id' => $agentId,
+                    'message' => 'Extract email from: {{input}}',
+                    'output_key' => 'lead_profile',
+                ]],
+                ['id' => 'set_done', 'type' => 'set_state', 'position' => ['x' => 400, 'y' => 0], 'data' => [
+                    'key' => 'result',
+                    'value' => 'qualified',
+                ]],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 600, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'loop_1', 'sourceHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'loop_1', 'target' => 'agent_1', 'sourceHandle' => 'continue'],
+                ['id' => 'e3', 'source' => 'agent_1', 'target' => 'loop_1', 'sourceHandle' => 'default'],
+                ['id' => 'e4', 'source' => 'loop_1', 'target' => 'set_done', 'sourceHandle' => 'exit'],
+                ['id' => 'e5', 'source' => 'set_done', 'target' => 'stop_1', 'sourceHandle' => 'default'],
+            ],
+        ];
+    }
+
+    protected function bindFakeAgentRunner(AssistantMessage ...$responses): AgentRunner
+    {
+        $registry = $this->createMock(ProviderRegistry::class);
+        $registry->method('resolve')->willReturn(new FakeAIProvider(...$responses));
+
+        $toolResolver = $this->createMock(ToolResolver::class);
+        $toolResolver->method('resolveMany')->willReturn([]);
+
+        $runner = new AgentRunner(
+            $registry,
+            $toolResolver,
+            $this->createMock(McpToolResolver::class),
+            new ToolEventExtractor,
+            new MessageFactory,
+        );
+
+        $this->app->instance(AgentRunner::class, $runner);
+        $this->app->make(NodeExecutorRegistry::class)->register(
+            'agent',
+            new AgentNodeExecutor($runner, new MessageFactory),
+        );
+
+        return $runner;
+    }
+
+    /**
+     * @param  array<int, array{name: string, inputs: array<string, mixed>, result: string|null, type: string}>  $toolEvents
+     */
+    protected function bindFakeAgentRunnerWithToolEvents(AssistantMessage $response, array $toolEvents): AgentRunner
+    {
+        $agentRunner = $this->createMock(AgentRunner::class);
+        $agentRunner->method('runInline')->willReturn(new \DigitalElvis\NeuronAIStudio\Runtime\AgentRunResult(
+            $response->getContent(),
+            $toolEvents,
+        ));
+
+        $this->app->instance(AgentRunner::class, $agentRunner);
+        $this->app->make(NodeExecutorRegistry::class)->register(
+            'agent',
+            new AgentNodeExecutor($agentRunner, new MessageFactory),
+        );
+
+        return $agentRunner;
+    }
+}

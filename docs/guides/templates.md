@@ -30,6 +30,7 @@ Repeating the same workflow template creates a new workflow. Agents referenced b
 | `support-assistant` | Support Assistant |
 | `intent-classifier` | Intent Classifier |
 | `knowledge-agent` | Knowledge Agent |
+| `lead-qualifier` | Lead Qualifier (tools + multimodal) |
 
 ### Workflows
 
@@ -37,7 +38,27 @@ Repeating the same workflow template creates a new workflow. Agents referenced b
 |----|------------|-------------|
 | `basic-agent-chat` | Basic | Single agent chat flow |
 | `lead-qualification` | Intermediate | LLM extraction + condition branching |
+| `lead-qualification-loop` | Intermediate | LLM extraction in a cyclic loop until email found |
+| `autonomous-lead-qualification` | Intermediate | Agent + tools + attachments in a loop |
 | `support-rag-hitl` | Advanced | Intent routing, RAG, human-in-the-loop |
+
+## Lead Qualification (loop)
+
+Template `lead-qualification-loop` demonstrates cyclic graphs: an LLM extracts lead data, loops until `lead_profile` contains `@` or `max_steps` is reached, then branches to agent follow-up or a missing-email prompt.
+
+Use loops when the same subgraph must run multiple times with shared state. Pair with `max_steps` guardrails — see [Logic Nodes](workflows/node-types/logic-nodes.md).
+
+## Autonomous Lead Qualification
+
+Template `autonomous-lead-qualification` runs the `lead-qualifier` agent inside a loop with **human-in-the-loop**:
+
+1. You send an initial message (optionally with PDF/image attachments).
+2. The agent extracts a profile or asks for missing fields (typically email).
+3. If email is missing, the workflow **pauses** at a Human node and shows the agent's question in the harness.
+4. You reply in the composer; the workflow **resumes**, appends your answer to `lead_message`, and the agent tries again.
+5. When `lead_profile` contains `@`, the loop exits and the workflow completes as `qualified`.
+
+Requires cyclic graphs, multimodal attachments (`state.attachments`, `MessageFactory`), and harness resume support.
 
 ## File locations
 

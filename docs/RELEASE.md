@@ -164,6 +164,20 @@ For future releases:
 4. Verify Packagist shows the new version (auto-update webhook).
 5. Back-merge `main` → `v0.2.x`.
 
+## v0.2.x development line
+
+Active development targets **v0.2.0** (M1 milestone) on branch `v0.2.x`:
+
+| Area | Status in v0.2.x |
+|------|------------------|
+| Cyclic workflow graphs (`loop` node) | P0 + P1 (runtime, canvas, codegen, harness iteration badge) |
+| Autonomous multimodal agents | Partial → AMA-03–07, AMA-10 in progress |
+| Workflow RAG (real executor) | Planned — `RagNodeExecutor` remains stub until KnowledgeBase ships |
+
+Feature branches (e.g. `feat/workflow-cyclic-graphs`) merge into `v0.2.x`. Release `v0.2.0` when M1 acceptance criteria pass: template `autonomous-lead-qualification` executable in the test harness with loop, agent tools, and attachments.
+
+Consumers on `v0.1.x` can stay on `main` / latest `v0.1.*` tag until ready to adopt cyclic graphs and breaking harness changes.
+
 ## Troubleshooting
 
 | Issue | Cause | Fix |
