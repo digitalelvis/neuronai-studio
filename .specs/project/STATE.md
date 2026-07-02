@@ -1,6 +1,6 @@
 # State
 
-**Last Updated:** 2026-07-01
+**Last Updated:** 2026-07-02
 **Development line:** `v0.2.x` (target release `v0.2.0`)
 **Latest published:** `v0.1.2` on `main`
 **Current Work:** M1 — `workflow-cyclic-graphs` · M2 — `workflow-structured-output` ✅ · M3 — `workflow-queue-runner` ✅
@@ -41,7 +41,7 @@
 
 ## Active Blockers
 
-- **workflow-rag:** `KnowledgeBase` model, ingest pipeline, and Studio CRUD not implemented — blocks real RAG upstream of agent in M1 completion criteria (optional path).
+- **workflow-rag (codegen/docs):** falta apenas Fatia 3 — `RagNodeCodeGenerator` + docs `docs/`. Backend (Fatia 1) e Studio UI (Fatia 2) entregues.
 
 ---
 
@@ -51,7 +51,21 @@
 |---------|--------|-------|
 | `workflow-cyclic-graphs` | 🔄 in progress | Próximo: nó `loop` no registry/canvas + `max_steps` |
 | `autonomous-multimodal-agents` | 🟡 partial | Upload, `MessageFactory`, validação attachments, preview route — ver AMA abaixo |
-| `workflow-rag` | ⏳ planned | Depende de ciclos + executor real |
+| `workflow-rag` | 🔄 in progress | Fatia 1 (backend) ✅ + Fatia 2 (Studio UI) ✅ — CRUD KB, ingest, RagFields inspector + debug search. Falta Fatia 3 (codegen/docs) |
+
+### workflow-rag — Fatia 1 (backend) entregue
+
+- [x] Migrations `knowledge_bases` + `knowledge_documents`
+- [x] Models `KnowledgeBase` (defaults provider/model/driver) + `KnowledgeDocument` (status ingest)
+- [x] Config `rag`: drivers vector store, providers/modelos embeddings, retrieval + chunk defaults
+- [x] `EmbeddingsFactory` + `VectorStoreFactory` extensíveis (`extend()`), default `file`/`openai`
+- [x] `DocumentIngestService` (load → split → embed → persist + status) e `RagRetrievalService` (top_k, threshold, `toContext`)
+- [x] `RagNodeExecutor` real → `rag_context` {query, results, context, top_score}
+- [x] `StateTemplateInterpolator` com dot notation (`{{rag_context.context}}`)
+- [x] 15 testes novos (ingest, retrieval, executor, interpolator) — suíte 203 verde
+- [x] Fatia 2: CRUD Studio (`KnowledgeBases\Index`/`Edit`) + ingest UI (upload + texto) + `RagFields` inspector no canvas + debug search (`KnowledgeBaseSearchController`) + exposição KBs ao canvas + nav link
+- [x] Fatia 2: 10 testes novos (CRUD/ingest/preview, search controller, exposição canvas) — suíte 213 verde
+- [ ] Fatia 3: `RagNodeCodeGenerator` + docs
 
 ## M2 progress snapshot
 

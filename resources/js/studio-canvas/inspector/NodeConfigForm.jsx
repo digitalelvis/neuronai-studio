@@ -11,12 +11,15 @@ import {
 } from '@/components/ui/select';
 import ProviderModelFields from './ProviderModelFields';
 import StructuredOutputFields from './shared/StructuredOutputFields';
+import RagFields from './shared/RagFields';
 
 export default function NodeConfigForm({
     node,
     agents,
     tools,
     mcpServers,
+    knowledgeBases = [],
+    ragSearchUrlTemplate = '',
     outputClasses = [],
     providers = {},
     providerModels = {},
@@ -346,6 +349,16 @@ export default function NodeConfigForm({
                         />
                     </div>
                 </>
+            )}
+
+            {node.type === 'rag' && (
+                <RagFields
+                    data={data}
+                    knowledgeBases={knowledgeBases}
+                    ragSearchUrlTemplate={ragSearchUrlTemplate}
+                    readOnly={readOnly}
+                    onChange={(patch) => onUpdate?.({ ...data, ...patch })}
+                />
             )}
 
             {canRemove && (
