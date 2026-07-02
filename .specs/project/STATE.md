@@ -1,9 +1,9 @@
 # State
 
-**Last Updated:** 2026-06-30
+**Last Updated:** 2026-07-01
 **Development line:** `v0.2.x` (target release `v0.2.0`)
 **Latest published:** `v0.1.2` on `main`
-**Current Work:** M1 — finishing AMA + docs; `workflow-rag` deferred
+**Current Work:** M1 — `workflow-cyclic-graphs` · M2 — `workflow-structured-output` (backend fases 1–3 ✅)
 
 ---
 
@@ -49,11 +49,27 @@
 
 | Feature | Status | Notas |
 |---------|--------|-------|
-| `workflow-cyclic-graphs` | ✅ P0 + P1 done | Loop runtime, canvas, codegen (`LoopNodeCodeGenerator`), harness iteration badge, docs T20–T21 |
-| `autonomous-multimodal-agents` | 🟡 mostly done | AMA-03–07, AMA-10 implemented; AMA-09 docs partial |
-| `workflow-rag` | ⏳ blocked | Stub executor only; full spec requires KnowledgeBase + ingest |
+| `workflow-cyclic-graphs` | 🔄 in progress | Próximo: nó `loop` no registry/canvas + `max_steps` |
+| `autonomous-multimodal-agents` | 🟡 partial | Upload, `MessageFactory`, validação attachments, preview route — ver AMA abaixo |
+| `workflow-rag` | ⏳ planned | Depende de ciclos + executor real |
 
-### AMA entregue em v0.2.x (esta sessão + baseline v0.1.2)
+## M2 progress snapshot
+
+| Feature | Status | Notas |
+|---------|--------|-------|
+| `workflow-structured-output` | 🔄 in progress | Backend T1–T9 ✅; próximo: canvas UI (T10–T13), integração T16 |
+| `workflow-tool-approval` | ⏳ planned | — |
+| `workflow-token-streaming` | ⏳ planned | — |
+
+### Structured output — entregue (fases 1–3)
+
+- [x] `structured_output_scan_paths`, `OutputClassRegistry`, `StructuredOutputResolver`
+- [x] `WorkflowStateValue` + dot notation em condition/loop
+- [x] `AgentRunner::structuredInline` + branch structured em `LlmNodeExecutor` / `AgentNodeExecutor`
+- [x] `StructuredOutputValidationException` + `validation_errors` no SSE/trace
+- [ ] Canvas inspector (T10–T13), round-trip T16, codegen T14–T15, docs T17
+
+### AMA já entregue em `v0.1.2` (baseline para v0.2.0)
 
 - [x] AMA-01 — attachments no workflow stream + `state.attachments` entre iterações
 - [x] AMA-02 — `MessageFactory` em `AgentNodeExecutor` e `LlmNodeExecutor`

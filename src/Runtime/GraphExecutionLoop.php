@@ -2,7 +2,7 @@
 
 namespace DigitalElvis\NeuronAIStudio\Runtime;
 
-use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\MaxLoopIterationsException;
+use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\StructuredOutputValidationException;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorRegistry;
 use RuntimeException;
 
@@ -61,12 +61,16 @@ class GraphExecutionLoop
 
             try {
                 $handle = $this->executors->execute($nodeType, $nodeConfig, $state, $graphContext);
-            } catch (MaxLoopIterationsException $exception) {
-                $state->emitStep('trace_failed', [
-                    'message' => $exception->getMessage(),
-                    'node_id' => $exception->nodeId,
-                    'iteration' => $exception->iteration,
-                    'max_steps' => $exception->maxSteps,
+            } catch (StructuredOutputValidationException $exception) {
+                $durationMs = (int) ((microtime(true) - $startedAt) * 1000);
+
+                $state->emitStep('step_completed', [
+                    'node_id' => $nodeId,
+                    'node_type' => $nodeType,
+                    'handle' => 'failed',
+                    'duration_ms' => $durationMs,
+                    'validation_errors' => $exception->validationErrors,
+                    'failed' => true,
                 ]);
 
                 throw $exception;

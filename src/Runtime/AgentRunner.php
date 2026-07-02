@@ -7,11 +7,14 @@ use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
 use DigitalElvis\NeuronAIStudio\Support\ChatThreadKey;
 use DigitalElvis\NeuronAIStudio\Support\PlaygroundContext;
 use DigitalElvis\NeuronAIStudio\Support\ProviderParameters;
+use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\StructuredOutputValidationException;
 use Illuminate\Support\Str;
 use Generator;
 use NeuronAI\Chat\Messages\AssistantMessage;
 use NeuronAI\Chat\Messages\Stream\Chunks\StreamChunk;
 use NeuronAI\Chat\Messages\UserMessage;
+use NeuronAI\Exceptions\AgentException;
+use NeuronAI\Exceptions\ProviderException;
 use NeuronAI\Testing\FakeAIProvider;
 
 class AgentRunner
@@ -81,6 +84,48 @@ class AgentRunner
         $events = $this->toolEvents->fromChatHistory($agent->getChatHistory());
 
         return new AgentRunResult($content, $events);
+    }
+
+    public function structuredInline(
+        array $config,
+        string|UserMessage $message,
+        string $outputClass,
+        ?AgentDefinition $definition = null,
+        ?string $threadKey = null,
+        bool $fake = false,
+    ): AgentRunResult {
+        try {
+            $agent = $this->makeAgent($definition, $config, $threadKey, $fake);
+            $userMessage = $message instanceof UserMessage ? $message : new UserMessage($message);
+            $result = $agent->structured($userMessage, $outputClass);
+            $events = $this->toolEvents->fromChatHistory($agent->getChatHistory());
+
+            return new AgentRunResult(
+                toolEvents: $events,
+                structured: $this->normalizeStructuredOutput($result),
+            );
+        } catch (AgentException $exception) {
+            throw StructuredOutputValidationException::fromAgentException($exception);
+        } catch (ProviderException $exception) {
+            throw new StructuredOutputValidationException(
+                $exception->getMessage(),
+                [$exception->getMessage()],
+                $exception,
+            );
+        }
+    }
+
+    protected function normalizeStructuredOutput(mixed $result): array
+    {
+        if (is_array($result)) {
+            return $result;
+        }
+
+        if (is_object($result)) {
+            return json_decode(json_encode($result, JSON_THROW_ON_ERROR), true, 512, JSON_THROW_ON_ERROR);
+        }
+
+        return ['value' => $result];
     }
 
     /**

@@ -1,5 +1,7 @@
 <?php
 
+$exportPath = env('NEURONAI_STUDIO_EXPORT_PATH', app_path('Neuron'));
+
 return [
 
     /*
@@ -24,7 +26,7 @@ return [
 
     'export_namespace' => env('NEURONAI_STUDIO_EXPORT_NAMESPACE', 'App\\Neuron'),
 
-    'export_path' => env('NEURONAI_STUDIO_EXPORT_PATH', app_path('Neuron')),
+    'export_path' => $exportPath,
 
     /*
     |--------------------------------------------------------------------------
@@ -126,6 +128,10 @@ return [
     'tool_scan_paths' => [
         app_path('Neuron/Tools'),
     ],
+
+    'structured_output_scan_paths' => is_dir($exportPath.DIRECTORY_SEPARATOR.'Output')
+        ? [$exportPath.DIRECTORY_SEPARATOR.'Output']
+        : [],
 
     'workflow_scan_paths' => [
         app_path('Neuron'),

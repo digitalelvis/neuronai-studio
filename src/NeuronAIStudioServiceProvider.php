@@ -10,6 +10,7 @@ use DigitalElvis\NeuronAIStudio\Commands\MakeToolCommand;
 use DigitalElvis\NeuronAIStudio\Http\Middleware\EnsureNeuronAIStudioAuthorized;
 use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\NodeTypeRegistry;
+use DigitalElvis\NeuronAIStudio\Registry\OutputClassRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\ToolRegistry;
 use DigitalElvis\NeuronAIStudio\Runtime\McpToolResolver;
@@ -48,6 +49,10 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
 
         $this->app->singleton(ToolRegistry::class, function () {
             return new ToolRegistry;
+        });
+
+        $this->app->singleton(OutputClassRegistry::class, function () {
+            return new OutputClassRegistry;
         });
 
         $this->app->singleton(McpRegistry::class, function () {
