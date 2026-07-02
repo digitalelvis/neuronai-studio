@@ -13,6 +13,7 @@ export default function NodeEditSheet({
     agents = [],
     tools = [],
     mcpServers = [],
+    outputClasses = [],
     providers = {},
     providerModels = {},
     defaultProvider = '',
@@ -40,6 +41,7 @@ export default function NodeEditSheet({
                         agents={agents}
                         tools={tools}
                         mcpServers={mcpServers}
+                        outputClasses={outputClasses}
                         providers={providers}
                         providerModels={providerModels}
                         defaultProvider={defaultProvider}

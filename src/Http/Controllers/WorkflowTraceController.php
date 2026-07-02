@@ -62,6 +62,7 @@ class WorkflowTraceController
         return [
             'id' => $trace->id,
             'status' => $trace->status,
+            'awaiting_node_id' => $trace->awaiting_node_id,
             'input_preview' => is_string($inputPreview) ? mb_substr($inputPreview, 0, 120) : null,
             'started_at' => $trace->started_at?->toIso8601String(),
             'finished_at' => $trace->finished_at?->toIso8601String(),

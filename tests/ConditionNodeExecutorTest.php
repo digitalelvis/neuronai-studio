@@ -73,6 +73,27 @@ class ConditionNodeExecutorTest extends TestCase
         ));
     }
 
+    public function test_equals_operator_with_dot_notation_state_key(): void
+    {
+        $this->assertSame('true', $this->runCondition(
+            ['state_key' => 'lead.tier', 'operator' => 'equals', 'value' => 'gold'],
+            ['lead' => ['tier' => 'gold', 'email' => 'user@example.com']],
+        ));
+
+        $this->assertSame('false', $this->runCondition(
+            ['state_key' => 'lead.tier', 'operator' => 'equals', 'value' => 'gold'],
+            ['lead' => ['tier' => 'silver']],
+        ));
+    }
+
+    public function test_nested_dot_notation_for_email(): void
+    {
+        $this->assertSame('true', $this->runCondition(
+            ['state_key' => 'lead.email', 'operator' => 'contains', 'value' => '@example.com'],
+            ['lead' => ['email' => 'user@example.com']],
+        ));
+    }
+
     public function test_not_equals_operator(): void
     {
         $this->assertSame('true', $this->runCondition(
@@ -138,15 +159,32 @@ class ConditionNodeExecutorTest extends TestCase
         $this->assertEquals('false_branch', $trace->output['branch'] ?? null);
     }
 
+    public function test_workflow_routes_true_branch_with_dot_notation_state_key(): void
+    {
+        $workflow = WorkflowDefinition::create([
+            'name' => 'Condition Dot Notation Flow',
+            'slug' => 'condition-dot-notation-flow',
+            'graph' => $this->conditionBranchGraph('lead.tier'),
+        ]);
+
+        $trace = app(WorkflowRunner::class)->run($workflow, [
+            'message' => 'run',
+            'state' => ['lead' => ['tier' => 'gold']],
+        ]);
+
+        $this->assertEquals('completed', $trace->status);
+        $this->assertEquals('true_branch', $trace->output['branch'] ?? null);
+    }
+
     /** @return array<string, mixed> */
-    protected function conditionBranchGraph(): array
+    protected function conditionBranchGraph(string $stateKey = 'tier'): array
     {
         return [
             'version' => 1,
             'nodes' => [
                 ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
                 ['id' => 'cond_1', 'type' => 'condition', 'position' => ['x' => 200, 'y' => 0], 'data' => [
-                    'state_key' => 'tier',
+                    'state_key' => $stateKey,
                     'operator' => 'equals',
                     'value' => 'gold',
                 ]],

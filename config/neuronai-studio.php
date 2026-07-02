@@ -1,5 +1,7 @@
 <?php
 
+$exportPath = env('NEURONAI_STUDIO_EXPORT_PATH', app_path('Neuron'));
+
 return [
 
     /*
@@ -24,7 +26,7 @@ return [
 
     'export_namespace' => env('NEURONAI_STUDIO_EXPORT_NAMESPACE', 'App\\Neuron'),
 
-    'export_path' => env('NEURONAI_STUDIO_EXPORT_PATH', app_path('Neuron')),
+    'export_path' => $exportPath,
 
     /*
     |--------------------------------------------------------------------------
@@ -89,6 +91,12 @@ return [
 
     'queue_connection' => env('NEURONAI_STUDIO_QUEUE_CONNECTION'),
 
+    'async_runs_enabled' => env('NEURONAI_STUDIO_ASYNC_RUNS_ENABLED', false),
+
+    'queue_tries' => (int) env('NEURONAI_STUDIO_QUEUE_TRIES', 1),
+
+    'queue_backoff' => (int) env('NEURONAI_STUDIO_QUEUE_BACKOFF', 30),
+
     /*
     |--------------------------------------------------------------------------
     | Inspector Integration
@@ -126,6 +134,10 @@ return [
     'tool_scan_paths' => [
         app_path('Neuron/Tools'),
     ],
+
+    'structured_output_scan_paths' => is_dir($exportPath.DIRECTORY_SEPARATOR.'Output')
+        ? [$exportPath.DIRECTORY_SEPARATOR.'Output']
+        : [],
 
     'workflow_scan_paths' => [
         app_path('Neuron'),

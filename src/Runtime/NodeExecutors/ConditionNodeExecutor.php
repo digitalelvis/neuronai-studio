@@ -3,6 +3,7 @@
 namespace DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors;
 
 use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
+use DigitalElvis\NeuronAIStudio\Runtime\WorkflowStateValue;
 use NeuronAI\Workflow\WorkflowState;
 
 class ConditionNodeExecutor implements NodeExecutorInterface
@@ -13,7 +14,7 @@ class ConditionNodeExecutor implements NodeExecutorInterface
         $key = $data['state_key'] ?? 'input';
         $operator = $data['operator'] ?? 'not_empty';
         $value = $data['value'] ?? null;
-        $stateValue = $state->get($key);
+        $stateValue = WorkflowStateValue::get($state, $key);
 
         $result = match ($operator) {
             'equals' => $stateValue == $value,

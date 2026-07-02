@@ -8,6 +8,7 @@ use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
 use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\NodeTypeRegistry;
+use DigitalElvis\NeuronAIStudio\Registry\OutputClassRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\ToolRegistry;
 use DigitalElvis\NeuronAIStudio\Runtime\GraphValidator;
@@ -254,6 +255,14 @@ class Editor extends Component
                 ->all(),
             'mcpServersForCanvas' => collect(app(McpRegistry::class)->labels(includeDisabled: false))
                 ->map(fn (string $label, string $slug) => ['slug' => $slug, 'label' => $label])
+                ->values()
+                ->all(),
+            'outputClassesForCanvas' => collect(app(OutputClassRegistry::class)->all())
+                ->map(fn (array $outputClass) => [
+                    'class' => $outputClass['class'],
+                    'label' => $outputClass['label'],
+                    'properties' => $outputClass['properties'] ?? [],
+                ])
                 ->values()
                 ->all(),
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(

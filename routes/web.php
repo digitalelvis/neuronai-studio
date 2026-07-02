@@ -3,9 +3,11 @@
 use DigitalElvis\NeuronAIStudio\Http\Controllers\AgentChatStreamController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\AgentChatThreadController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\AttachmentController;
+use DigitalElvis\NeuronAIStudio\Http\Controllers\WorkflowRunController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\WorkflowStreamController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\WorkflowTraceController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\WorkflowTraceResumeController;
+use DigitalElvis\NeuronAIStudio\Http\Controllers\WorkflowTraceResumeJsonController;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\Agents\Edit;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\Agents\Index as AgentsIndex;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\Agents\Playground;
@@ -64,6 +66,7 @@ Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
             Route::get('/{workflow}/edit', Editor::class)->name('edit');
             Route::match(['GET', 'POST'], '/{workflow}/trace/stream', WorkflowStreamController::class)->name('trace.stream');
             Route::post('/traces/{trace}/resume/stream', WorkflowTraceResumeController::class)->name('traces.resume.stream');
+            Route::post('/traces/{trace}/resume', WorkflowTraceResumeJsonController::class)->name('traces.resume');
             Route::get('/{workflow}/traces', Traces::class)->name('traces');
             Route::get('/{workflow}/traces/list', [WorkflowTraceController::class, 'index'])->name('traces.index');
             Route::get('/traces/{trace}', TraceDetail::class)->name('traces.show');
@@ -73,6 +76,7 @@ Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
             Route::redirect('/runs/{trace}', '/traces/{trace}', 301)->name('runs.show');
             Route::post('/runs/{trace}/resume/stream', WorkflowTraceResumeController::class)->name('runs.resume.stream');
             Route::match(['GET', 'POST'], '/{workflow}/run/stream', WorkflowStreamController::class)->name('run.stream');
+            Route::post('/{workflow}/run', WorkflowRunController::class)->name('run');
         });
 
         Route::get('/templates', TemplatesIndex::class)->name('templates.index');

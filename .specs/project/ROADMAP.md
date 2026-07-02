@@ -4,7 +4,7 @@
 
 **Development line:** `v0.2.x` → release alvo `v0.2.0`  
 **Última publicação:** `v0.1.2` (`main`)  
-**Última atualização:** 2026-06-30
+**Última atualização:** 2026-07-01
 
 ---
 
@@ -25,17 +25,22 @@ Grafos cíclicos + agentes multimodais + RAG real. Entrega o padrão end-to-end 
 **Etapa atual (v0.2.x):** Feature 1 — `workflow-cyclic-graphs`  
 Próximos passos: `tasks.md` → nó `loop` no registry/canvas → `GraphExecutionLoop` + `max_steps` → validação de ciclos → template `lead-qualification-loop`.
 
-### M2 — Capacidades de agente no workflow (P1) `planned`
+### M2 — Capacidades de agente no workflow (P1) `in progress`
 
 Structured output, aprovação de tools e streaming de tokens no harness.
 
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
-| 4 | `workflow-structured-output` | planned | [spec](../features/workflow-structured-output/spec.md) |
+| 4 | `workflow-structured-output` | **in progress** (backend fases 1–3 ✅) | [spec](../features/workflow-structured-output/spec.md) · [tasks](../features/workflow-structured-output/tasks.md) |
 | 5 | `workflow-tool-approval` | planned | [spec](../features/workflow-tool-approval/spec.md) |
 | 6 | `workflow-token-streaming` | planned | [spec](../features/workflow-token-streaming/spec.md) |
 
-### M3 — Escala e resiliência (P2) `planned`
+**Etapa atual (v0.2.x):** Feature 4 — `workflow-structured-output`  
+**Concluído:** T1–T9 (registry, resolver, dot notation, `AgentRunner::structuredInline`, executors LLM/agent, erros de validação no trace).  
+**Próximos passos:** Fase 4 canvas (T10–T13) → T16 integração round-trip → Fase 5 codegen → docs (T17).  
+**Nota:** Backend testável via graph JSON manual (`structured` + `output_class`); UI e retry em loop dependem de fases 4 e `workflow-cyclic-graphs`, respectivamente.
+
+### M3 — Escala e resiliência (P2) `in progress`
 
 Paralelismo, checkpoints generalizados e execução assíncrona.
 
@@ -43,7 +48,7 @@ Paralelismo, checkpoints generalizados e execução assíncrona.
 |-------|---------|--------|------|
 | 7 | `workflow-parallel-execution` | planned | [spec](../features/workflow-parallel-execution/spec.md) |
 | 8 | `workflow-checkpoints-persistence` | planned | [spec](../features/workflow-checkpoints-persistence/spec.md) |
-| 9 | `workflow-queue-runner` | planned | [spec](../features/workflow-queue-runner/spec.md) |
+| 9 | `workflow-queue-runner` | **done** | [spec](../features/workflow-queue-runner/spec.md) · [tasks](../features/workflow-queue-runner/tasks.md) |
 
 ---
 
@@ -66,11 +71,14 @@ flowchart TD
     AMA[autonomous-multimodal-agents]
     RAG[workflow-rag]
     STH[studio-test-harness]
+    SO[workflow-structured-output]
 
     CG --> AMA
     STH --> AMA
     RAG -.-> AMA
     CG -.-> RAG
+    CG -.-> SO
+    SO -.-> CG
 ```
 
 ---

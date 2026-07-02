@@ -7,6 +7,7 @@ use DigitalElvis\NeuronAIStudio\Runtime\AgentRunner;
 use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
 use DigitalElvis\NeuronAIStudio\Runtime\MessageFactory;
 use DigitalElvis\NeuronAIStudio\Runtime\StateTemplateInterpolator;
+use DigitalElvis\NeuronAIStudio\Runtime\StructuredOutput\StructuredOutputResolver;
 use NeuronAI\Workflow\WorkflowState;
 
 class AgentNodeExecutor implements NodeExecutorInterface
@@ -14,6 +15,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
     public function __construct(
         protected AgentRunner $agentRunner,
         protected MessageFactory $messages,
+        protected StructuredOutputResolver $outputResolver,
     ) {}
 
     public function execute(array $nodeConfig, WorkflowState $state, GraphContext $context): string
@@ -34,14 +36,32 @@ class AgentNodeExecutor implements NodeExecutorInterface
         $threadKey = $state->get('__studio_thread_id');
         $threadKey = is_string($threadKey) && $threadKey !== '' ? $threadKey : null;
 
-        if (isset($data['agent_id'])) {
-            $agent = AgentDefinition::findOrFail($data['agent_id']);
+        $definition = isset($data['agent_id']) ? AgentDefinition::findOrFail($data['agent_id']) : null;
+
+        if ($data['structured'] ?? false) {
+            $outputClass = $this->outputResolver->resolve((string) ($data['output_class'] ?? ''));
+            $config = $definition !== null
+                ? [
+                    'provider' => $definition->provider,
+                    'model' => $definition->model,
+                    'instructions' => $definition->instructions,
+                    'tools' => $definition->tools ?? [],
+                ]
+                : $data;
+
+            $response = $this->agentRunner->structuredInline($config, $userMessage, $outputClass, $definition, $threadKey);
+            $state->set($outputKey, $response->structured);
+
+            return 'default';
+        }
+
+        if ($definition !== null) {
             $response = $this->agentRunner->runInline([
-                'provider' => $agent->provider,
-                'model' => $agent->model,
-                'instructions' => $agent->instructions,
-                'tools' => $agent->tools ?? [],
-            ], $userMessage, $agent, $threadKey);
+                'provider' => $definition->provider,
+                'model' => $definition->model,
+                'instructions' => $definition->instructions,
+                'tools' => $definition->tools ?? [],
+            ], $userMessage, $definition, $threadKey);
         } else {
             $response = $this->agentRunner->runInline($data, $userMessage, null, $threadKey);
         }
