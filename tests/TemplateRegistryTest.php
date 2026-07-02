@@ -54,4 +54,53 @@ class TemplateRegistryTest extends TestCase
         $this->assertSame('Support Assistant', $template['meta']['name']);
         $this->assertIsArray($template['definition']);
     }
+
+    public function test_builtin_templates_load_when_config_paths_point_elsewhere(): void
+    {
+        config()->set('neuronai-studio.template_paths', [
+            'agent' => sys_get_temp_dir().'/nonexistent-agents',
+            'workflow' => sys_get_temp_dir().'/nonexistent-workflows',
+        ]);
+
+        $registry = app(TemplateRegistry::class);
+
+        $this->assertCount(15, $registry->all());
+        $this->assertNotNull($registry->load('agent', 'support-assistant'));
+        $this->assertNotNull($registry->load('workflow', 'basic-agent-chat'));
+    }
+
+    public function test_config_template_paths_are_merged_with_builtins(): void
+    {
+        $customDir = sys_get_temp_dir().'/neuronai-studio-custom-agent-templates';
+
+        if (! is_dir($customDir)) {
+            mkdir($customDir, 0777, true);
+        }
+
+        $customPath = $customDir.'/custom-agent.json';
+        file_put_contents($customPath, json_encode([
+            'meta' => [
+                'id' => 'custom-test-agent',
+                'name' => 'Custom Test Agent',
+                'description' => 'From app config path',
+                'category' => 'test',
+                'tags' => [],
+            ],
+            'definition' => [
+                'instructions' => 'You are a test agent.',
+                'tools' => [],
+            ],
+        ], JSON_THROW_ON_ERROR));
+
+        config()->set('neuronai-studio.template_paths.agent', $customDir);
+
+        $registry = app(TemplateRegistry::class);
+        $ids = collect($registry->all('agent'))->pluck('id')->all();
+
+        $this->assertContains('custom-test-agent', $ids);
+        $this->assertContains('support-assistant', $ids);
+
+        @unlink($customPath);
+        @rmdir($customDir);
+    }
 }

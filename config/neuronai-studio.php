@@ -156,9 +156,11 @@ return [
 
     'templates_enabled' => env('NEURONAI_STUDIO_TEMPLATES_ENABLED', true),
 
+    // Package built-in templates always load from the package source. These paths
+    // are optional extras (e.g. app-specific templates in resources/templates/).
     'template_paths' => [
-        'agent' => dirname(__DIR__).'/resources/templates/agents',
-        'workflow' => dirname(__DIR__).'/resources/templates/workflows',
+        'agent' => env('NEURONAI_STUDIO_AGENT_TEMPLATE_PATH'),
+        'workflow' => env('NEURONAI_STUDIO_WORKFLOW_TEMPLATE_PATH'),
     ],
 
     /*
