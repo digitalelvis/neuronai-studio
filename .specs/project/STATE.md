@@ -65,6 +65,7 @@
 - [x] 15 testes novos (ingest, retrieval, executor, interpolator) — suíte 203 verde
 - [x] Fatia 2: CRUD Studio (`KnowledgeBases\Index`/`Edit`) + ingest UI (upload + texto) + `RagFields` inspector no canvas + debug search (`KnowledgeBaseSearchController`) + exposição KBs ao canvas + nav link
 - [x] Fatia 2: 10 testes novos (CRUD/ingest/preview, search controller, exposição canvas) — suíte 213 verde
+- [x] `rag-knowledge-base-tool` — aba RAG em tools/create, `KnowledgeBaseTool`, `ToolResolver` branch `type: rag`
 - [ ] Fatia 3: `RagNodeCodeGenerator` + docs
 
 ## M2 progress snapshot

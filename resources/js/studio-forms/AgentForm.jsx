@@ -10,6 +10,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { collectLivewireErrors, formatLivewireErrorSummary } from '@/lib/livewireErrors';
 
 const categoryLabels = {
     builtin: 'Built-in Toolkits',
@@ -91,6 +92,12 @@ export default function AgentForm({ config }) {
                 selectedMcpSlugs,
                 mcpAdvanced,
             });
+
+            const validationErrors = collectLivewireErrors(config.wireId);
+            if (Object.keys(validationErrors).length > 0) {
+                setError(formatLivewireErrorSummary(validationErrors) || 'Please fix the validation errors.');
+                return;
+            }
         } catch (saveError) {
             setError(saveError instanceof Error ? saveError.message : 'Save failed.');
         } finally {
