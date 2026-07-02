@@ -59,6 +59,31 @@ Agents are stored in the `agent_definitions` table (prefix configurable). Key fi
 - `tools` — JSON array of tool binding references
 - `memory_config` — reserved for future memory features
 
+## Knowledge Bases
+
+Knowledge bases store embedded document chunks for retrieval in workflows and RAG tools.
+
+| Route | Purpose |
+|-------|---------|
+| `/neuronai-studio/knowledge-bases` | List knowledge bases |
+| `/neuronai-studio/knowledge-bases/create` | Create knowledge base |
+| `/neuronai-studio/knowledge-bases/{id}/edit` | Edit metadata, ingest documents, preview search |
+
+Each knowledge base configures:
+
+- **Embeddings provider/model** — e.g. OpenAI `text-embedding-3-small`
+- **Vector store driver** — `file` (local disk) or `memory` (tests)
+- **Retrieval defaults** — `top_k`, similarity `threshold`
+
+Ingest PDFs or pasted text on the edit screen. Documents are chunked, embedded, and indexed for the **RAG** workflow node and the **RAG tool** type (`KnowledgeBaseTool`).
+
+Workflow integration:
+
+1. RAG node retrieves chunks → writes `rag_context` (or custom `output_key`)
+2. Agent node message template references `{{ rag_context.context }}`
+
+See [AI Nodes — RAG](../workflows/node-types/ai-nodes.md#rag) and [Configuration](../../reference/configuration.md#rag).
+
 ## Next steps
 
 - [Creating Agents](creating-agents.md)

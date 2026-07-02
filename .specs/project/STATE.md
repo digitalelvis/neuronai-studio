@@ -3,7 +3,7 @@
 **Last Updated:** 2026-07-02
 **Development line:** `v0.2.x` (target release `v0.2.0`)
 **Latest published:** `v0.1.2` on `main`
-**Current Work:** M1 — `workflow-cyclic-graphs` · M2 — `workflow-structured-output` ✅ · M3 — `workflow-queue-runner` ✅
+**Current Work:** Sprint M1 fechada — preparar release `v0.2.0` (PR `v0.2.x` → `main`)
 
 ---
 
@@ -41,7 +41,7 @@
 
 ## Active Blockers
 
-- **workflow-rag (codegen/docs):** falta apenas Fatia 3 — `RagNodeCodeGenerator` + docs `docs/`. Backend (Fatia 1) e Studio UI (Fatia 2) entregues.
+- Nenhum blocker ativo para `v0.2.0`.
 
 ---
 
@@ -49,9 +49,9 @@
 
 | Feature | Status | Notas |
 |---------|--------|-------|
-| `workflow-cyclic-graphs` | 🔄 in progress | Próximo: nó `loop` no registry/canvas + `max_steps` |
-| `autonomous-multimodal-agents` | 🟡 partial | Upload, `MessageFactory`, validação attachments, preview route — ver AMA abaixo |
-| `workflow-rag` | 🔄 in progress | Fatia 1 (backend) ✅ + Fatia 2 (Studio UI) ✅ — CRUD KB, ingest, RagFields inspector + debug search. Falta Fatia 3 (codegen/docs) |
+| `workflow-cyclic-graphs` | ✅ done | P0 + P1 entregues |
+| `autonomous-multimodal-agents` | ✅ done | AMA-09 docs entregue |
+| `workflow-rag` | ✅ done | Fatia 1–3 (backend, UI, codegen, docs) |
 
 ### workflow-rag — Fatia 1 (backend) entregue
 
@@ -66,7 +66,7 @@
 - [x] Fatia 2: CRUD Studio (`KnowledgeBases\Index`/`Edit`) + ingest UI (upload + texto) + `RagFields` inspector no canvas + debug search (`KnowledgeBaseSearchController`) + exposição KBs ao canvas + nav link
 - [x] Fatia 2: 10 testes novos (CRUD/ingest/preview, search controller, exposição canvas) — suíte 213 verde
 - [x] `rag-knowledge-base-tool` — aba RAG em tools/create, `KnowledgeBaseTool`, `ToolResolver` branch `type: rag`
-- [ ] Fatia 3: `RagNodeCodeGenerator` + docs
+- [x] Fatia 3: `RagNodeCodeGenerator` + docs
 
 ## M2 progress snapshot
 
@@ -111,7 +111,7 @@
 - [x] AMA-06 — template `autonomous-lead-qualification` + agent `lead-qualifier`
 - [x] AMA-07 — `tool_call` / `tool_result` SSE no harness + canvas `loop_iteration`
 - [x] AMA-10 — `AutonomousMultimodalAgentsTest` (loop + agent + attachments + tools)
-- [ ] AMA-09 — documentação padrão autonomous agent (parcial em overview/templates)
+- [x] AMA-09 — documentação padrão autonomous agent (overview, ai-nodes, attachments, threads, runtime, quickstart)
 
 ---
 
@@ -142,7 +142,9 @@
 | workflow-queue-runner | 2026-07-01 | 0.2.x   | ✅ Done |
 | multimodal-attachments (partial AMA) | 2026-06-30 | 0.1.2 | ✅ Done |
 | workflow-cyclic-graphs (P0+P1) | 2026-06-30 | 0.2.x | ✅ Done |
-| autonomous-multimodal-agents (core) | 2026-06-30 | 0.2.x | ✅ Done |
+| autonomous-multimodal-agents | 2026-07-02 | 0.2.x | ✅ Done |
+| workflow-rag | 2026-07-02 | 0.2.x | ✅ Done |
+| rag-knowledge-base-tool | 2026-07-02 | 0.2.x | ✅ Done |
 
 ---
 
@@ -152,7 +154,6 @@
 - [ ] SSE em tempo real para `RunWorkflowJob` (broadcast vs polling)
 - [ ] Remove redundant layout `<link>` tags for bundle-inlined CSS
 - [ ] Extract `StudioTestHarness.jsx` shell component if composition grows
-- [ ] `workflow-rag` full stack (KnowledgeBase, ingest, real `RagNodeExecutor`)
 
 ---
 
@@ -161,6 +162,6 @@
 - [x] `workflow-cyclic-graphs` P0 + P1 (T1–T19)
 - [x] Docs T20–T21 + `docs/RELEASE.md` v0.2.x section
 - [x] AMA-03–07, AMA-10
-- [ ] `workflow-rag` — KnowledgeBase + executor real
-- [ ] AMA-09 — docs dedicated autonomous-agent guide sections
+- [x] `workflow-rag` — KnowledgeBase + executor real + codegen + docs
+- [x] AMA-09 — docs dedicated autonomous-agent guide sections
 - [ ] Configurar branch protection para `v0.2.x` no GitHub (espelhar `v0.0.x`)

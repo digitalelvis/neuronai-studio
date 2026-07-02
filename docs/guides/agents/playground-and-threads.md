@@ -73,6 +73,19 @@ NEURONAI_STUDIO_CHAT_HISTORY_CONTEXT_WINDOW=150000
 
 Set this ~5–10% below your model's token limit to leave room for the system prompt and tool payloads.
 
+## Workflow threads
+
+Workflow runs use a similar persistence model with a per-trace thread ID stored in state as `__studio_thread_id`:
+
+| Context | Thread scope | Loader |
+|---------|--------------|--------|
+| Playground | Per agent + user-selected UUID | `ChatThreadLoader` |
+| Workflow harness | Per trace/run, stable across loop iterations | `AgentRunner` via `__studio_thread_id` |
+
+When an **Agent** node executes inside a loop, subsequent iterations load prior messages for the same thread — enabling multi-turn qualification or refinement without manual state stitching.
+
+Configure the same context window via `NEURONAI_STUDIO_CHAT_HISTORY_CONTEXT_WINDOW`; it applies to agent history loaded during workflow runs.
+
 ### Related code
 
 - `ChatThreadLoader` — loads and trims history
@@ -87,3 +100,4 @@ Workflows use a similar chat UI (`StudioTestHarness`) but route through `Workflo
 
 - [Attachments](attachments.md) — send images, PDFs, and more
 - [Creating Agents](creating-agents.md) — configure tools for richer playground sessions
+- [Autonomous agents in workflows](../workflows/overview.md#autonomous-agents-in-workflows)

@@ -1,6 +1,6 @@
 # RAG em Workflows — Design
 
-> **Status de implementação:** **Fatia 1** (backend) entregue — models, migrations, `EmbeddingsFactory`, `VectorStoreFactory`, `RagRetrievalService`, `DocumentIngestService`, `RagNodeExecutor` real e dot-notation no `StateTemplateInterpolator`. **Fatia 2** (Studio UI) entregue — CRUD Livewire de knowledge bases, ingest (upload + texto) via `WithFileUploads`, `RagFields` inspector no canvas com binding `knowledge_base_id`/query/top_k/threshold/output_key + debug search (`KnowledgeBaseSearchController`), exposição de KBs ao canvas. Suíte 213 verde (10 testes novos). **Fatia 3** (`RagNodeCodeGenerator`, docs `docs/`) ainda **não implementada** — marcada como _planejado_ abaixo.
+> **Status de implementação:** **Fatia 1** (backend) ✅ · **Fatia 2** (Studio UI) ✅ · **Fatia 3** (codegen + docs) ✅
 
 ## Visão de arquitetura
 
@@ -142,22 +142,13 @@ Rotas sob o prefixo/middleware do Studio (`neuronai-studio.knowledge-bases.*`):
 
 O executor já emite step `rag_query` (query, knowledge_base_id, chunk_count, top_score) no harness via SSE. Broadcast dedicado permanece fora de escopo.
 
-## Impacto em codegen ⏳ Fatia 3 (planejado)
+## Impacto em codegen ✅ Fatia 3
 
-- `RagNodeCodeGenerator` — referenciar classe `RAG` exportada ou inline `RetrievalNode` pattern. _(planejado)_
-- `NativeWorkflowExporter` — opcional export de `KnowledgeBase` companion class. _(planejado)_
-- `config/neuronai-studio.php` — ✅ Fatia 1: seção `rag` adicionada (default_vector_store `file`, `storage_path`, `vector_stores`, default embeddings `openai`/`text-embedding-3-small`, providers `embeddings`, `retrieval` top_k/threshold, `chunk` max_words/overlap_words).
+- `RagNodeCodeGenerator` — emite lookup de `KnowledgeBase`, `RagRetrievalService::search/toContext`, dot-notation via `StateTemplateInterpolator`.
+- `NativeWorkflowExporter` — export de nó RAG com opções `top_k`/`threshold` do inspector.
+- `config/neuronai-studio.php` — seção `rag` (default_vector_store `file`, `storage_path`, `vector_stores`, default embeddings `openai`/`text-embedding-3-small`, providers `embeddings`, `retrieval` top_k/threshold, `chunk` max_words/overlap_words).
 
-## Integração NeuronAI (neuron-rag-specialist)
-
-- `RAG` class com `embeddings()`, `vectorStore()`, retrieval via `retrieve()` / vector search.
-- Vector stores: Pinecone, Chroma, etc. via `VectorStoreFactory`.
-- Document loaders para PDF/texto no ingest.
-- Modo retrieval-only: usar APIs de search sem `chat()` — alimentar agent downstream com contexto concatenado.
-
-## Plano de documentação ⏳ Fatia 3 (planejado)
-
-_Arquivos em `docs/` ainda não escritos._
+## Plano de documentação ✅ Fatia 3
 
 | Arquivo | Outline |
 |---------|---------|
@@ -167,7 +158,7 @@ _Arquivos em `docs/` ainda não escritos._
 | `guides/workflows/runtime-and-traces.md` | `## Metadados RAG em traces` |
 | `reference/database-schema.md` | Tabelas KB |
 | `reference/configuration.md` | `rag.vector_stores`, embeddings |
-| `getting-started/quickstart-first-workflow.md` | Tutorial RAG |
+| `getting-started/quickstart-first-workflow.md` | Tutorial RAG + autonomous loop |
 
 ## Dependências
 

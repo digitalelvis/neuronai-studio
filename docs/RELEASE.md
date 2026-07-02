@@ -168,15 +168,17 @@ For future releases:
 
 Active development targets **v0.2.0** (M1 milestone) on branch `v0.2.x`:
 
-| Area | Status in v0.2.x |
+| Area | Status in v0.2.0 |
 |------|------------------|
-| Cyclic workflow graphs (`loop` node) | P0 + P1 (runtime, canvas, codegen, harness iteration badge) |
-| Autonomous multimodal agents | Partial → AMA-03–07, AMA-10 in progress |
-| Workflow RAG (real executor) | Planned — `RagNodeExecutor` remains stub until KnowledgeBase ships |
+| Cyclic workflow graphs (`loop` node) | ✅ Done — runtime, canvas, codegen, harness iteration badge |
+| Autonomous multimodal agents | ✅ Done — attachments, thread memory, tool SSE, AMA-09 docs |
+| Workflow RAG | ✅ Done — KnowledgeBase CRUD, ingest, real `RagNodeExecutor`, codegen, docs |
+| Structured output | ✅ Done — backend, canvas, codegen, docs |
+| Queue runner | ✅ Done — async run/resume API, polling, docs |
 
-Feature branches (e.g. `feat/workflow-cyclic-graphs`) merge into `v0.2.x`. Release `v0.2.0` when M1 acceptance criteria pass: template `autonomous-lead-qualification` executable in the test harness with loop, agent tools, and attachments.
+Release `v0.2.0` when M1 acceptance criteria pass: template `autonomous-lead-qualification` executable in the test harness with loop, agent tools, attachments, and optional RAG upstream.
 
-Consumers on `v0.1.x` can stay on `main` / latest `v0.1.*` tag until ready to adopt cyclic graphs and breaking harness changes.
+Consumers on `v0.1.x` can stay on latest `v0.1.*` tag until ready to adopt cyclic graphs and harness changes.
 
 ## Troubleshooting
 

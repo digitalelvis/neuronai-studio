@@ -7,6 +7,7 @@ use DigitalElvis\NeuronAIStudio\Codegen\NativeWorkflowExporter;
 use DigitalElvis\NeuronAIStudio\Codegen\WorkflowClassImporter;
 use DigitalElvis\NeuronAIStudio\Codegen\WorkflowExporter;
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Models\KnowledgeBase;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
 use DigitalElvis\NeuronAIStudio\Registry\TemplateRegistry;
 use DigitalElvis\NeuronAIStudio\Tests\Fixtures\Output\SampleLeadProfile;
@@ -314,6 +315,59 @@ class NativeWorkflowExporterTest extends TestCase
         $this->assertStringContainsString('LlmExtractEvent', $preview);
         $this->assertStringContainsString('CondHasEmailEvent', $preview);
         $this->assertMatchesRegularExpression('/\$maxSteps = \d+;/', $preview);
+
+        $this->cleanupExport($exportPath);
+    }
+
+    public function test_rag_export_emits_retrieval_service_and_knowledge_base_lookup(): void
+    {
+        $exportPath = $this->exportPath();
+        config([
+            'neuronai-studio.export_path' => $exportPath,
+            'neuronai-studio.export_namespace' => 'App\\Neuron',
+        ]);
+
+        $kb = KnowledgeBase::create([
+            'name' => 'Export KB',
+            'embeddings_provider' => 'openai',
+            'vector_store_driver' => 'memory',
+            'retrieval_defaults' => ['top_k' => 3],
+        ]);
+
+        $graph = [
+            'version' => 1,
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                ['id' => 'rag_1', 'type' => 'rag', 'position' => ['x' => 100, 'y' => 0], 'data' => [
+                    'knowledge_base_id' => $kb->id,
+                    'query' => 'Find docs for {{input}}',
+                    'top_k' => 4,
+                    'threshold' => 0.35,
+                    'output_key' => 'rag_context',
+                ]],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'rag_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'rag_1', 'target' => 'stop_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+            ],
+            'viewport' => ['x' => 0, 'y' => 0, 'zoom' => 1],
+        ];
+
+        $workflow = WorkflowDefinition::make([
+            'name' => 'RAG Flow',
+            'slug' => 'rag-flow',
+            'graph' => $graph,
+            'status' => 'draft',
+        ]);
+
+        $preview = app(NativeWorkflowExporter::class)->preview($workflow);
+
+        $this->assertStringContainsString('KnowledgeBase::findOrFail('.$kb->id.')', $preview);
+        $this->assertStringContainsString('RagRetrievalService::class', $preview);
+        $this->assertStringContainsString('StateTemplateInterpolator::interpolate', $preview);
+        $this->assertStringContainsString("'chunk_count' => count(\$results)", $preview);
+        $this->assertStringNotContainsString('Configure a RAG class export', $preview);
 
         $this->cleanupExport($exportPath);
     }

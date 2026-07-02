@@ -49,6 +49,7 @@ sequenceDiagram
 | `loop_iteration` | Loop node incremented (`iteration`, `max_steps`, `node_id`) |
 | `tool_call` | Agent node invoked a tool |
 | `tool_result` | Tool returned a result during agent step |
+| `rag_query` | RAG node completed retrieval (`query`, `knowledge_base_id`, `chunk_count`, `top_score`) |
 | `human_input_required` | Workflow paused at Human node |
 | `trace_completed` | Run finished successfully |
 | `trace_failed` | Execution failure |
@@ -163,6 +164,22 @@ Pass structured context at run start:
 ```
 
 Reference keys in node templates with `{{tier}}`, `{{customer_id}}`, etc.
+
+## Attachments and thread propagation
+
+During autonomous workflow runs (loops with Agent nodes):
+
+| State key | Set by | Purpose |
+|-----------|--------|---------|
+| `input` | Harness composer | Latest user message per send/resume |
+| `attachments` | Harness upload API | Multimodal files (images, PDF, etc.) |
+| `__studio_thread_id` | Workflow runner | Stable thread for agent memory across iterations |
+
+Attachments persist in workflow state between loop iterations until the run completes. Agent nodes pass them to `MessageFactory` alongside the interpolated message template.
+
+Trace steps for agent nodes may include thread references and attachment counts. RAG steps include retrieval metadata (`chunk_count`, `top_score`) in SSE `rag_query` events and trace payloads.
+
+See [Attachments](../agents/attachments.md#workflow-test-harness) and [Playground & Threads](../agents/playground-and-threads.md#workflow-threads).
 
 ## Related code
 

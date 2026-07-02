@@ -29,6 +29,23 @@ Previous context: {{rag_context}}
 
 ![Agent node inspector](../../../assets/screenshots/workflows-inspector-agent.png)
 
+### Attachments and thread memory in workflows
+
+When an Agent node runs inside a workflow (especially within a **Loop**), the runtime:
+
+1. Reads `state.attachments` uploaded in the test harness composer
+2. Builds a multimodal `UserMessage` via `MessageFactory`
+3. Reuses `__studio_thread_id` so agent memory persists across loop iterations
+
+Example message template combining user input and prior structured output:
+
+```
+Customer inquiry: {{input}}
+Extracted profile: {{lead_profile}}
+```
+
+Attach a PDF or image in the harness before sending — the same attachment array survives between loop iterations until the run completes. Tool calls during agent steps emit `tool_call` / `tool_result` SSE events. See [Autonomous agents in workflows](../overview.md#autonomous-agents-in-workflows) and [Attachments](../../agents/attachments.md#workflow-test-harness).
+
 ## LLM
 
 **Purpose:** Direct LLM call without a full agent definition.
@@ -124,13 +141,45 @@ Structured mode is compatible with agent tool bindings — the agent still runs 
 
 ## RAG
 
-**Purpose:** Retrieval-augmented generation step.
+**Purpose:** Retrieve relevant chunks from a studio **Knowledge Base** and write structured context to workflow state for downstream Agent or LLM nodes.
 
 | Config | Description |
 |--------|-------------|
-| `output_key` | State key for retrieved context |
+| `knowledge_base_id` | Database ID of the knowledge base (required) |
+| `query` | Search query template with `{{state_key}}` or dot notation (e.g. `{{ rag_context.query }}`). Falls back to `input` when empty |
+| `top_k` | Max chunks to retrieve (overrides KB defaults) |
+| `threshold` | Minimum similarity score (overrides KB defaults) |
+| `output_key` | State key for retrieval payload (default: `rag_context`) |
 
-> **Note:** RAG node execution is a placeholder in the current studio runtime. Configure the node structure for future RAG integration or export to PHP where full RAG pipelines are implemented.
+### Output shape
+
+The node writes an associative array to `output_key`:
+
+```json
+{
+  "query": "refund policy",
+  "results": [{ "content": "...", "score": 0.82, "metadata": {} }],
+  "context": "Chunk 1 text...\n\nChunk 2 text...",
+  "knowledge_base_id": 1,
+  "chunk_count": 2,
+  "top_score": 0.82
+}
+```
+
+Downstream nodes consume retrieved text via dot notation in templates:
+
+```
+Use this documentation to answer the customer:
+{{ rag_context.context }}
+```
+
+The canvas inspector binds a knowledge base, query, retrieval limits, and includes a **debug search** preview against live indexed documents.
+
+### Knowledge bases
+
+Create and ingest documents under **Knowledge Bases** in the studio (`/neuronai-studio/knowledge-bases`). Upload PDFs or paste text; ingestion chunks, embeds, and indexes content into the configured vector store driver.
+
+See [Agents Overview](../../agents/overview.md#knowledge-bases) and [Configuration](../../../reference/configuration.md#rag).
 
 ## AI node comparison
 
@@ -140,7 +189,7 @@ Structured mode is compatible with agent tool bindings — the agent still runs 
 | LLM | No | No | Simple text generation |
 | Tool | Single tool | No | Deterministic tool call |
 | MCP | Single MCP tool | No | External MCP capability |
-| RAG | No | No | Context retrieval (future) |
+| RAG | No | No | Knowledge-base retrieval upstream of agents |
 
 ```mermaid
 flowchart TD

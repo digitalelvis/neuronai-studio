@@ -138,6 +138,33 @@ Classes must have public properties annotated with `NeuronAI\StructuredOutput\Sc
 | `attachments.max_size_kb` | `NEURONAI_STUDIO_ATTACHMENTS_MAX_KB` | `10240` | Max upload size |
 | `attachments.allowed_mimes` | — | images, audio, video, pdf, text | Allowed MIME types |
 
+In workflow runs, attachments uploaded in the test harness are stored in `state.attachments` and passed to Agent/LLM nodes via `MessageFactory`. The same array persists across loop iterations for autonomous agent patterns.
+
+## RAG
+
+| Key | Env | Default | Description |
+|-----|-----|---------|-------------|
+| `rag.default_vector_store` | `NEURONAI_STUDIO_RAG_VECTOR_STORE` | `file` | Default vector store driver |
+| `rag.storage_path` | `NEURONAI_STUDIO_RAG_STORAGE_PATH` | `storage/app/neuronai-studio/rag` | Root path for file-based stores |
+| `rag.default_embeddings_provider` | `NEURONAI_STUDIO_RAG_EMBEDDINGS_PROVIDER` | `openai` | Default embeddings provider |
+| `rag.default_embeddings_model` | `NEURONAI_STUDIO_RAG_EMBEDDINGS_MODEL` | `text-embedding-3-small` | Default embeddings model |
+| `rag.retrieval.top_k` | `NEURONAI_STUDIO_RAG_TOP_K` | `5` | Default chunks to retrieve |
+| `rag.retrieval.threshold` | `NEURONAI_STUDIO_RAG_THRESHOLD` | `null` | Default minimum similarity score |
+| `rag.chunk.max_words` | `NEURONAI_STUDIO_RAG_CHUNK_MAX_WORDS` | `200` | Ingest chunk size |
+| `rag.chunk.overlap_words` | `NEURONAI_STUDIO_RAG_CHUNK_OVERLAP_WORDS` | `20` | Chunk overlap |
+
+Register custom vector stores or embeddings providers at runtime:
+
+```php
+use DigitalElvis\NeuronAIStudio\Runtime\Rag\VectorStoreFactory;
+use DigitalElvis\NeuronAIStudio\Runtime\Rag\EmbeddingsFactory;
+
+VectorStoreFactory::extend('pinecone', fn () => /* ... */);
+EmbeddingsFactory::extend('custom', fn () => /* ... */);
+```
+
+Each knowledge base may override provider, model, and vector store driver independently of these defaults.
+
 ## See also
 
 - [Publish Tags](publish-tags.md)

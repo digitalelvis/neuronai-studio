@@ -10,20 +10,20 @@
 
 ## Milestones
 
-### M1 — Fundação autônoma (P0) `in progress`
+### M1 — Fundação autônoma (P0) `done`
 
 Grafos cíclicos + agentes multimodais + RAG real. Entrega o padrão end-to-end para loops com agent, attachments e knowledge base.
 
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
 | 1 | `workflow-cyclic-graphs` | **done** (P0+P1) | [spec](../features/workflow-cyclic-graphs/spec.md) · [design](../features/workflow-cyclic-graphs/design.md) · [tasks](../features/workflow-cyclic-graphs/tasks.md) |
-| 2 | `autonomous-multimodal-agents` | **mostly done** | [spec](../features/autonomous-multimodal-agents/spec.md) · [design](../features/autonomous-multimodal-agents/design.md) |
-| 3 | `workflow-rag` | **blocked** (stub) | [spec](../features/workflow-rag/spec.md) |
+| 2 | `autonomous-multimodal-agents` | **done** | [spec](../features/autonomous-multimodal-agents/spec.md) · [design](../features/autonomous-multimodal-agents/design.md) |
+| 3 | `workflow-rag` | **done** | [spec](../features/workflow-rag/spec.md) · [design](../features/workflow-rag/design.md) |
+| 3b | `rag-knowledge-base-tool` | **done** | [spec](../features/rag-knowledge-base-tool/spec.md) · [design](../features/rag-knowledge-base-tool/design.md) |
 
 **Critério de conclusão M1:** Template `autonomous-lead-qualification` executável no test harness com loop, agent com tools, anexo PDF/imagem, e opcionalmente nó RAG upstream.
 
-**Etapa atual (v0.2.x):** Feature 3 — `workflow-rag` (KnowledgeBase + executor real) ou polish AMA-09 docs antes de tag `v0.2.0`.  
-**Próximo passo:** Implementar `KnowledgeBase` + `RagNodeExecutor` real, ou release `v0.2.0` sem RAG upstream se critério opcional for aceito.
+**Etapa atual:** M1 concluído — publicar `v0.2.0`. Próximo foco: M2 Feature 5 (`workflow-tool-approval`).
 
 ### M2 — Capacidades de agente no workflow (P1) `in progress`
 
@@ -31,14 +31,14 @@ Structured output, aprovação de tools e streaming de tokens no harness.
 
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
-| 4 | `workflow-structured-output` | **in progress** (backend fases 1–3 ✅) | [spec](../features/workflow-structured-output/spec.md) · [tasks](../features/workflow-structured-output/tasks.md) |
+| 4 | `workflow-structured-output` | **done** (T1–T17; T12 parcial) | [spec](../features/workflow-structured-output/spec.md) · [tasks](../features/workflow-structured-output/tasks.md) |
 | 5 | `workflow-tool-approval` | planned | [spec](../features/workflow-tool-approval/spec.md) |
 | 6 | `workflow-token-streaming` | planned | [spec](../features/workflow-token-streaming/spec.md) |
 
-**Etapa atual (v0.2.x):** Feature 4 — `workflow-structured-output`  
-**Concluído:** T1–T9 (registry, resolver, dot notation, `AgentRunner::structuredInline`, executors LLM/agent, erros de validação no trace).  
-**Próximos passos:** Fase 4 canvas (T10–T13) → T16 integração round-trip → Fase 5 codegen → docs (T17).  
-**Nota:** Backend testável via graph JSON manual (`structured` + `output_class`); UI e retry em loop dependem de fases 4 e `workflow-cyclic-graphs`, respectivamente.
+**Etapa atual (v0.2.x):** Feature 5 — `workflow-tool-approval` (próxima após fechar M1)  
+**Concluído (Feature 4):** T1–T17 — registry, resolver, dot notation, `AgentRunner::structuredInline`, executors LLM/agent, erros de validação no trace, canvas inspector, round-trip, codegen e docs.  
+**Próximos passos:** Iniciar `workflow-tool-approval` → depois `workflow-token-streaming`.  
+**Nota:** T12 parcial — hint dot notation (`lead.tier`) só no condition; loop sem inspector aguarda polish M1.
 
 ### M3 — Escala e resiliência (P2) `in progress`
 
@@ -64,6 +64,30 @@ Expor agentes e workflows para clients externos (Vercel AI SDK, AG-UI) via endpo
 
 ---
 
+## Próximas tarefas (ordem de execução)
+
+Fila derivada do estado real (ver [STATE.md](STATE.md)).
+
+### Sprint atual — publicar `v0.2.0`
+
+1. ~~`workflow-rag` Fatia 3~~ ✅
+2. ~~AMA-09 docs~~ ✅
+3. PR `v0.2.x` → `main` + tag `v0.2.0`
+4. Governança — branch protection para `v0.2.x` no GitHub
+
+### Próximo — completar M2
+
+5. `workflow-tool-approval` (Feature 5)
+6. `workflow-token-streaming` (Feature 6)
+
+### Depois — M3 e M4
+
+7. `workflow-parallel-execution` (Feature 7)
+8. `workflow-checkpoints-persistence` (Feature 8)
+9. `stream-adapters` (Feature 10) — SA-14 pode aguardar token streaming
+
+---
+
 ## Features concluídas
 
 | Feature | Status | Version |
@@ -72,6 +96,12 @@ Expor agentes e workflows para clients externos (Vercel AI SDK, AG-UI) via endpo
 | `workflow-json-io` | ✅ done | 0.1.x |
 | `workflow-code-bridge` | ✅ done | 0.1.x |
 | Multimodal attachments (AMA partial) | ✅ done | 0.1.2 |
+| `workflow-cyclic-graphs` (P0+P1) | ✅ done | 0.2.x |
+| `autonomous-multimodal-agents` (core) | ✅ done | 0.2.x |
+| `workflow-structured-output` | ✅ done | 0.2.x |
+| `workflow-queue-runner` | ✅ done | 0.2.x |
+| `workflow-rag` | ✅ done | 0.2.x |
+| `rag-knowledge-base-tool` | ✅ done | 0.2.x |
 
 ---
 
