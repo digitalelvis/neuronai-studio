@@ -88,8 +88,28 @@ Configure the prefix with `NEURONAI_STUDIO_ROUTE_PREFIX` in `.env`.
 | `NEURONAI_STUDIO_DEFAULT_MODEL` | `gpt-4o-mini` | Default model in agent forms |
 | `NEURONAI_STUDIO_EXPORT_NAMESPACE` | `App\Neuron` | Namespace for exported PHP classes |
 | `NEURONAI_STUDIO_EXPORT_PATH` | `app/Neuron` | Directory for exported files |
+| `NEURONAI_STUDIO_ASYNC_RUNS_ENABLED` | `false` | Run workflows in background via queue jobs |
+| `NEURONAI_STUDIO_QUEUE` | `default` | Queue name for workflow jobs |
+| `NEURONAI_STUDIO_QUEUE_CONNECTION` | — | Optional queue connection override |
+| `NEURONAI_STUDIO_QUEUE_TRIES` | `1` | Max job attempts |
+| `NEURONAI_STUDIO_QUEUE_BACKOFF` | `30` | Retry delay in seconds |
 
 See [Configuration](../reference/configuration.md) for the full list.
+
+### Async workflow runs (optional)
+
+To execute workflows outside the synchronous test harness SSE path, enable async runs and start a queue worker:
+
+```env
+NEURONAI_STUDIO_ASYNC_RUNS_ENABLED=true
+NEURONAI_STUDIO_QUEUE=default
+```
+
+```bash
+php artisan queue:work --queue=default
+```
+
+Poll trace status at `GET /neuronai-studio/traces/{id}/json`. Details: [Runtime & Traces](../guides/workflows/runtime-and-traces.md#queue-runner).
 
 ## Publish tags reference
 

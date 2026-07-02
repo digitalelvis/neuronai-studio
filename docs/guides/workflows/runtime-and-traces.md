@@ -100,6 +100,57 @@ Export trace JSON:
 /neuronai-studio/traces/{id}/json
 ```
 
+## Queue runner
+
+When async runs are enabled, workflows can execute in a Laravel queue worker instead of blocking the HTTP request. The test harness still uses synchronous SSE by default; async mode is API-first for production integrations and long-running graphs.
+
+### Flow
+
+1. `POST /workflows/{id}/run` — creates a trace with `status: queued` and dispatches `RunWorkflowJob`
+2. Poll `GET /workflows/traces/{id}/json` until the trace reaches a terminal state (`completed`, `failed`, or `awaiting_input`)
+3. For human-in-the-loop, `POST /workflows/traces/{id}/resume` enqueues `ResumeWorkflowJob` and returns `status: queued`; poll again until terminal
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant API as WorkflowRunController
+    participant Q as Laravel Queue
+    participant Job as RunWorkflowJob
+    participant Trace as WorkflowTrace
+
+    Client->>API: POST /workflows/{id}/run
+    API->>Trace: status=queued
+    API->>Q: dispatch RunWorkflowJob
+    API-->>Client: 202 trace_id, status=queued
+    Q->>Job: handle
+    Job->>Trace: status=running → completed|failed|awaiting_input
+    Client->>Trace: GET /traces/{id}/json (poll)
+```
+
+### v1 behavior
+
+- Jobs run with `emitter: null` — no SSE events during background execution
+- Status polling via the existing trace JSON endpoint covers progress for v1
+- Synchronous stream endpoints (`/run/stream`, `/resume/stream`) remain unchanged when `async_runs_enabled` is `false`
+
+### Enable async runs
+
+```env
+NEURONAI_STUDIO_ASYNC_RUNS_ENABLED=true
+NEURONAI_STUDIO_QUEUE=default
+NEURONAI_STUDIO_QUEUE_CONNECTION=
+NEURONAI_STUDIO_QUEUE_TRIES=1
+NEURONAI_STUDIO_QUEUE_BACKOFF=30
+```
+
+Run a queue worker in production:
+
+```bash
+php artisan queue:work --queue=default
+```
+
+See [Configuration](../../reference/configuration.md) and [Installation](../../getting-started/installation.md).
+
 ## Initial state JSON
 
 Pass structured context at run start:
@@ -118,6 +169,8 @@ Reference keys in node templates with `{{tier}}`, `{{customer_id}}`, etc.
 - `WorkflowRunner`, `GraphExecutionLoop`, `GraphInterpreterWorkflow`
 - `WorkflowTrace`, `WorkflowTraceStep` models
 - `WorkflowStreamController`, `WorkflowTraceController`
+- `WorkflowRunController`, `WorkflowTraceResumeJsonController`
+- `RunWorkflowJob`, `ResumeWorkflowJob`
 
 ## See also
 

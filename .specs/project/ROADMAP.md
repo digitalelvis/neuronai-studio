@@ -40,7 +40,7 @@ Structured output, aprovação de tools e streaming de tokens no harness.
 **Próximos passos:** Fase 4 canvas (T10–T13) → T16 integração round-trip → Fase 5 codegen → docs (T17).  
 **Nota:** Backend testável via graph JSON manual (`structured` + `output_class`); UI e retry em loop dependem de fases 4 e `workflow-cyclic-graphs`, respectivamente.
 
-### M3 — Escala e resiliência (P2) `planned`
+### M3 — Escala e resiliência (P2) `in progress`
 
 Paralelismo, checkpoints generalizados e execução assíncrona.
 
@@ -48,7 +48,7 @@ Paralelismo, checkpoints generalizados e execução assíncrona.
 |-------|---------|--------|------|
 | 7 | `workflow-parallel-execution` | planned | [spec](../features/workflow-parallel-execution/spec.md) |
 | 8 | `workflow-checkpoints-persistence` | planned | [spec](../features/workflow-checkpoints-persistence/spec.md) |
-| 9 | `workflow-queue-runner` | planned | [spec](../features/workflow-queue-runner/spec.md) |
+| 9 | `workflow-queue-runner` | **done** | [spec](../features/workflow-queue-runner/spec.md) · [tasks](../features/workflow-queue-runner/tasks.md) |
 
 ---
 

@@ -79,6 +79,24 @@ Place JSON workflow files in `workflow_json_paths`:
 | 4 | Restrict webhook hosts and MCP allowlists |
 | 5 | Configure production gate for studio access |
 | 6 | Remove or protect `/neuronai-studio` routes in production |
+| 7 | Enable async runs and run a queue worker when using background workflow execution |
+
+### Workers
+
+For long-running or production workflow execution outside the test harness SSE path:
+
+```env
+NEURONAI_STUDIO_ASYNC_RUNS_ENABLED=true
+NEURONAI_STUDIO_QUEUE=workflows
+```
+
+Start a worker (adjust queue name and connection to match your config):
+
+```bash
+php artisan queue:work --queue=workflows
+```
+
+Clients dispatch runs via `POST /workflows/{id}/run`, poll `GET /workflows/traces/{id}/json`, and resume HITL via `POST /workflows/traces/{id}/resume`. See [Runtime & Traces](workflows/runtime-and-traces.md#queue-runner).
 
 ## CLI example
 
