@@ -1,6 +1,6 @@
 # State
 
-**Last Updated:** 2026-07-01
+**Last Updated:** 2026-07-02
 **Development line:** `v0.2.x` (target release `v0.2.0`)
 **Latest published:** `v0.1.2` on `main`
 **Current Work:** M1 — `workflow-cyclic-graphs` · M2 — `workflow-structured-output` ✅ · M3 — `workflow-queue-runner` ✅
@@ -41,7 +41,7 @@
 
 ## Active Blockers
 
-- **workflow-rag (UI):** Studio CRUD para knowledge bases + ingest UI + `RagInspector` ainda não implementados (Fatia 2). Backend real já entregue (Fatia 1).
+- **workflow-rag (codegen/docs):** falta apenas Fatia 3 — `RagNodeCodeGenerator` + docs `docs/`. Backend (Fatia 1) e Studio UI (Fatia 2) entregues.
 
 ---
 
@@ -51,7 +51,7 @@
 |---------|--------|-------|
 | `workflow-cyclic-graphs` | 🔄 in progress | Próximo: nó `loop` no registry/canvas + `max_steps` |
 | `autonomous-multimodal-agents` | 🟡 partial | Upload, `MessageFactory`, validação attachments, preview route — ver AMA abaixo |
-| `workflow-rag` | 🔄 in progress | Fatia 1 (backend) ✅ — models, factories, ingest/retrieval, executor real, testes. Falta UI + codegen/docs |
+| `workflow-rag` | 🔄 in progress | Fatia 1 (backend) ✅ + Fatia 2 (Studio UI) ✅ — CRUD KB, ingest, RagFields inspector + debug search. Falta Fatia 3 (codegen/docs) |
 
 ### workflow-rag — Fatia 1 (backend) entregue
 
@@ -63,7 +63,8 @@
 - [x] `RagNodeExecutor` real → `rag_context` {query, results, context, top_score}
 - [x] `StateTemplateInterpolator` com dot notation (`{{rag_context.context}}`)
 - [x] 15 testes novos (ingest, retrieval, executor, interpolator) — suíte 203 verde
-- [ ] Fatia 2: CRUD Studio + ingest UI + `RagInspector`
+- [x] Fatia 2: CRUD Studio (`KnowledgeBases\Index`/`Edit`) + ingest UI (upload + texto) + `RagFields` inspector no canvas + debug search (`KnowledgeBaseSearchController`) + exposição KBs ao canvas + nav link
+- [x] Fatia 2: 10 testes novos (CRUD/ingest/preview, search controller, exposição canvas) — suíte 213 verde
 - [ ] Fatia 3: `RagNodeCodeGenerator` + docs
 
 ## M2 progress snapshot

@@ -1,6 +1,6 @@
 # RAG em Workflows — Design
 
-> **Status de implementação (Fatia 1 — backend):** entregue models, migrations, `EmbeddingsFactory`, `VectorStoreFactory`, `RagRetrievalService`, `DocumentIngestService`, `RagNodeExecutor` real e dot-notation no `StateTemplateInterpolator` (suíte 203 verde). **Fatia 2** (CRUD Studio, ingest UI, `RagInspector`, `RagNode`, rotas API) e **Fatia 3** (`RagNodeCodeGenerator`, docs `docs/`) ainda **não implementadas** — marcadas como _planejado_ abaixo.
+> **Status de implementação:** **Fatia 1** (backend) entregue — models, migrations, `EmbeddingsFactory`, `VectorStoreFactory`, `RagRetrievalService`, `DocumentIngestService`, `RagNodeExecutor` real e dot-notation no `StateTemplateInterpolator`. **Fatia 2** (Studio UI) entregue — CRUD Livewire de knowledge bases, ingest (upload + texto) via `WithFileUploads`, `RagFields` inspector no canvas com binding `knowledge_base_id`/query/top_k/threshold/output_key + debug search (`KnowledgeBaseSearchController`), exposição de KBs ao canvas. Suíte 213 verde (10 testes novos). **Fatia 3** (`RagNodeCodeGenerator`, docs `docs/`) ainda **não implementada** — marcada como _planejado_ abaixo.
 
 ## Visão de arquitetura
 
@@ -42,8 +42,11 @@ flowchart LR
 | `RagNodeExecutor` | `src/Runtime/NodeExecutors/RagNodeExecutor.php` — stub substituído | ✅ Fatia 1 |
 | `EmbeddingsFactory` | `src/Runtime/Rag/EmbeddingsFactory.php` | ✅ Fatia 1 |
 | `VectorStoreFactory` | `src/Runtime/Rag/VectorStoreFactory.php` | ✅ Fatia 1 |
-| `KnowledgeBaseController` | `src/Http/Controllers/KnowledgeBaseController.php` | ⏳ Fatia 2 (planejado) |
-| `KnowledgeIngestController` | `src/Http/Controllers/KnowledgeIngestController.php` | ⏳ Fatia 2 (planejado) |
+| `KnowledgeBases\Index` (Livewire) | `src/Http/Livewire/KnowledgeBases/Index.php` | ✅ Fatia 2 |
+| `KnowledgeBases\Edit` (Livewire, ingest via `WithFileUploads`) | `src/Http/Livewire/KnowledgeBases/Edit.php` | ✅ Fatia 2 |
+| `KnowledgeBaseSearchController` (debug search JSON p/ canvas) | `src/Http/Controllers/KnowledgeBaseSearchController.php` | ✅ Fatia 2 |
+
+> **Nota de convenção:** o Studio faz CRUD via componentes Livewire (padrão agents/tools/mcp), não controllers REST. Ingest é tratado no próprio `KnowledgeBases\Edit` (upload de arquivo → `DocumentIngestService::ingestFile`; texto colado → `ingestText`). Só o debug search do canvas usa um controller fino (React precisa de endpoint HTTP).
 
 ### RagNodeExecutor ✅ Fatia 1
 
@@ -94,16 +97,19 @@ $state->set($outputKey, [
 - `retrieval_defaults` (top_k, threshold)
 - `metadata`, `source`, `class_path` (paridade AgentDefinition)
 
-## Componentes frontend ⏳ Fatia 2 (planejado)
+## Componentes frontend ✅ Fatia 2
 
-_Nenhum destes foi implementado ainda; permanecem no plano da Fatia 2._
+O CRUD de knowledge bases é Blade + Livewire (não React), seguindo o padrão de MCP servers. Apenas o inspector do nó `rag` no canvas é React.
 
 | Componente | Caminho | Status |
 |------------|---------|--------|
-| Knowledge bases index | `resources/js/studio-forms/KnowledgeBases/` | ⏳ planejado |
-| Rag inspector | `resources/js/studio-canvas/inspectors/RagInspector.jsx` | ⏳ planejado |
-| Rag node | `resources/js/studio-canvas/nodes/RagNode.jsx` | ⏳ planejado |
-| Ingest UI | upload + status na KB edit page | ⏳ planejado |
+| KB index (lista + filtro + delete) | `resources/views/livewire/knowledge-bases/index.blade.php` | ✅ Fatia 2 |
+| KB edit (metadata + ingest + docs + preview) | `resources/views/livewire/knowledge-bases/edit.blade.php` | ✅ Fatia 2 |
+| Rag inspector (binding KB/query/top_k/threshold/output_key + preview) | `resources/js/studio-canvas/inspector/shared/RagFields.jsx` | ✅ Fatia 2 |
+| Rag config no `NodeConfigForm` | `resources/js/studio-canvas/inspector/NodeConfigForm.jsx` (bloco `rag`) | ✅ Fatia 2 |
+| Nav link + header action | `layouts/app.blade.php`, `partials/header-actions/new-knowledge-base.blade.php` | ✅ Fatia 2 |
+
+> O nó `rag` no canvas reusa `WorkflowNode` (label via `node_types` config); não foi necessário um `RagNode.jsx` dedicado. KBs são expostas ao canvas via `knowledgeBasesForCanvas` no `Workflows\Editor` + `knowledgeBases`/`ragSearchUrlTemplate` no config do editor.
 
 ## Migrações ✅ Fatia 1
 
@@ -121,18 +127,20 @@ Schema::create('knowledge_documents', ...);
 // chunk_count, status, error, metadata
 ```
 
-## API ⏳ Fatia 2 (planejado)
+## API ✅ Fatia 2
 
-_Rotas ainda não implementadas — planejadas para a Fatia 2 junto ao CRUD/ingest UI._
+Rotas sob o prefixo/middleware do Studio (`neuronai-studio.knowledge-bases.*`):
 
-| Método | Path | Propósito |
-|--------|------|-----------|
-| GET/POST | `/knowledge-bases` | CRUD |
-| POST | `/knowledge-bases/{id}/ingest` | Upload + chunk + embed |
-| GET | `/knowledge-bases/{id}/documents` | Lista documentos |
-| POST | `/knowledge-bases/{id}/search` | Debug search (inspector) |
+| Método | Path | Propósito | Status |
+|--------|------|-----------|--------|
+| GET | `/knowledge-bases` | Lista (Livewire `Index`) | ✅ |
+| GET | `/knowledge-bases/create` | Criar (Livewire `Edit`) | ✅ |
+| GET | `/knowledge-bases/{knowledgeBase}/edit` | Editar + ingest + preview (Livewire `Edit`) | ✅ |
+| POST | `/knowledge-bases/{knowledgeBase}/search` | Debug search JSON (canvas inspector) | ✅ |
 
-SSE workflow: `step_completed` inclui `rag_meta: { chunk_count, top_score }`. _(Executor já emite step `rag_query` com esses metadados; wiring SSE é da Fatia 2.)_
+> Ingest/upload/lista de documentos são ações Livewire dentro do `Edit` (`ingestUpload`, `ingestManualText`, `deleteDocument`, `runSearch`), não rotas REST dedicadas. `top_k`/`threshold`/`storage_path` seguem defaults do `config('neuronai-studio.rag')`.
+
+O executor já emite step `rag_query` (query, knowledge_base_id, chunk_count, top_score) no harness via SSE. Broadcast dedicado permanece fora de escopo.
 
 ## Impacto em codegen ⏳ Fatia 3 (planejado)
 
