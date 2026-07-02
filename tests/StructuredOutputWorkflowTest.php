@@ -6,6 +6,7 @@ use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
 use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
 use DigitalElvis\NeuronAIStudio\Runtime\AgentRunner;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\StructuredOutputValidationException;
+use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\WorkflowExecutionException;
 use DigitalElvis\NeuronAIStudio\Runtime\McpToolResolver;
 use DigitalElvis\NeuronAIStudio\Runtime\MessageFactory;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\LlmNodeExecutor;
@@ -100,8 +101,11 @@ class StructuredOutputWorkflowTest extends TestCase
             });
 
             $this->fail('Expected StructuredOutputValidationException was not thrown.');
-        } catch (StructuredOutputValidationException) {
-            // expected
+        } catch (WorkflowExecutionException $exception) {
+            $this->assertInstanceOf(
+                StructuredOutputValidationException::class,
+                $exception->getPrevious(),
+            );
         }
 
         $failedStep = collect($events)->first(
