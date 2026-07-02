@@ -192,6 +192,53 @@ export default function NodeConfigForm({
                 </>
             )}
 
+            {node.type === 'loop' && (
+                <>
+                    <div className="space-y-2">
+                        <Label>Max Steps</Label>
+                        <Input
+                            type="number"
+                            min={1}
+                            value={data.max_steps ?? 10}
+                            onChange={(e) => updateField('max_steps', Number(e.target.value))}
+                            disabled={readOnly}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            Maximum iterations before the loop exits with an error.
+                        </p>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Exit Condition — State Key</Label>
+                        <Input
+                            value={data.state_key ?? 'input'}
+                            onChange={(e) => updateField('state_key', e.target.value)}
+                            disabled={readOnly}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Exit Condition — Operator</Label>
+                        <Select value={data.operator ?? 'not_empty'} onValueChange={(value) => updateField('operator', value)} disabled={readOnly}>
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="not_empty">is not empty</SelectItem>
+                                <SelectItem value="empty">is empty</SelectItem>
+                                <SelectItem value="equals">equals</SelectItem>
+                                <SelectItem value="not_equals">does not equal</SelectItem>
+                                <SelectItem value="contains">contains</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    {['equals', 'not_equals', 'contains'].includes(data.operator) && (
+                        <div className="space-y-2">
+                            <Label>Exit Condition — Value</Label>
+                            <Input value={data.value ?? ''} onChange={(e) => updateField('value', e.target.value)} disabled={readOnly} />
+                        </div>
+                    )}
+                </>
+            )}
+
             {node.type === 'tool' && (
                 <>
                     <div className="space-y-2">

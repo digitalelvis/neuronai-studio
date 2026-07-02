@@ -41,7 +41,7 @@
 
 ## Active Blockers
 
-_None._
+- **workflow-rag:** `KnowledgeBase` model, ingest pipeline, and Studio CRUD not implemented — blocks real RAG upstream of agent in M1 completion criteria (optional path).
 
 ---
 
@@ -71,12 +71,15 @@ _None._
 
 ### AMA já entregue em `v0.1.2` (baseline para v0.2.0)
 
+- [x] AMA-01 — attachments no workflow stream + `state.attachments` entre iterações
 - [x] AMA-02 — `MessageFactory` em `AgentNodeExecutor` e `LlmNodeExecutor`
-- [x] AMA-01 parcial — attachments no workflow stream + resume + `state.attachments`
-- [x] Upload/preview (`AttachmentController` store + show route)
-- [x] Codegen agent/llm com `MessageFactory`
-- [ ] AMA-03 — thread estável em loops (aguarda `workflow-cyclic-graphs`)
-- [ ] AMA-04–07, AMA-10 — template autonomous-lead-qualification, tool events no harness
+- [x] AMA-03 — `__studio_thread_id` estável em loops (teste integração)
+- [x] AMA-04 — agent com tools + memory via `AgentRunner::runInline`
+- [x] AMA-05 — `output_key` alimenta condition/loop (state compartilhado)
+- [x] AMA-06 — template `autonomous-lead-qualification` + agent `lead-qualifier`
+- [x] AMA-07 — `tool_call` / `tool_result` SSE no harness + canvas `loop_iteration`
+- [x] AMA-10 — `AutonomousMultimodalAgentsTest` (loop + agent + attachments + tools)
+- [ ] AMA-09 — documentação padrão autonomous agent (parcial em overview/templates)
 
 ---
 
@@ -103,8 +106,10 @@ _None._
 | -------------------- | ---------- | ------- | ------- |
 | studio-test-harness  | 2026-06-24 | 0.1.x   | ✅ Done |
 | workflow-json-io     | 2026-06-24 | 0.1.x   | ✅ Done |
-| workflow-code-bridge | 2026-06-24 | 0.1.x   | ✅ Done |
+| workflow-code-bridge   | 2026-06-24 | 0.1.x   | ✅ Done |
 | multimodal-attachments (partial AMA) | 2026-06-30 | 0.1.2 | ✅ Done |
+| workflow-cyclic-graphs (P0+P1) | 2026-06-30 | 0.2.x | ✅ Done |
+| autonomous-multimodal-agents (core) | 2026-06-30 | 0.2.x | ✅ Done |
 
 ---
 
@@ -114,11 +119,15 @@ _None._
 - [ ] SSE em tempo real para `RunWorkflowJob` (broadcast vs polling)
 - [ ] Remove redundant layout `<link>` tags for bundle-inlined CSS
 - [ ] Extract `StudioTestHarness.jsx` shell component if composition grows
+- [ ] `workflow-rag` full stack (KnowledgeBase, ingest, real `RagNodeExecutor`)
 
 ---
 
 ## Todos
 
-- [ ] `workflow-cyclic-graphs`: gerar `tasks.md` e iniciar implementação
-- [ ] Atualizar `docs/RELEASE.md` consumidores: linha ativa `v0.2.x`
+- [x] `workflow-cyclic-graphs` P0 + P1 (T1–T19)
+- [x] Docs T20–T21 + `docs/RELEASE.md` v0.2.x section
+- [x] AMA-03–07, AMA-10
+- [ ] `workflow-rag` — KnowledgeBase + executor real
+- [ ] AMA-09 — docs dedicated autonomous-agent guide sections
 - [ ] Configurar branch protection para `v0.2.x` no GitHub (espelhar `v0.0.x`)

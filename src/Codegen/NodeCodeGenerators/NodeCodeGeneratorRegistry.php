@@ -14,6 +14,7 @@ class NodeCodeGeneratorRegistry
             new LlmNodeCodeGenerator,
             new AgentNodeCodeGenerator,
             new ConditionNodeCodeGenerator,
+            new LoopNodeCodeGenerator,
             new ToolNodeCodeGenerator,
             new McpNodeCodeGenerator,
             new RagNodeCodeGenerator,

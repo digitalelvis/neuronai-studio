@@ -18,6 +18,7 @@ use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\AgentNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\ConditionNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\DelayNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\HumanNodeExecutor;
+use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\LoopNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\LlmNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorRegistry;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\McpNodeExecutor;
@@ -166,6 +167,7 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
             'delay' => DelayNodeExecutor::class,
             'mcp' => McpNodeExecutor::class,
             'human' => HumanNodeExecutor::class,
+            'loop' => LoopNodeExecutor::class,
         ];
 
         foreach ($types as $type => $executorClass) {

@@ -303,6 +303,7 @@ export default forwardRef(function StudioChat({
                             userMessage: text,
                             stepEvents: undefined,
                             currentNodeId: null,
+                            toolEvents: toolMessages.length ? toolMessages : undefined,
                         },
                     });
                     onRunCompleted?.(packet.data);
@@ -321,12 +322,23 @@ export default forwardRef(function StudioChat({
                 if (packet.event === 'trace_failed' || packet.event === 'error') {
                     traceFinished = true;
                     const message = packet.data?.message ?? 'Trace failed.';
+                    const traceId = packet.data?.trace_id ?? null;
                     setError(message);
-                    updateMessage(assistantId, {
+                    updateMessage(assistantId, (current) => ({
                         content: message,
                         streaming: false,
-                        meta: { status: 'failed' },
-                    });
+                        meta: {
+                            ...current.meta,
+                            status: 'failed',
+                            traceId,
+                            toolEvents: toolMessages.length ? toolMessages : current.meta?.toolEvents,
+                        },
+                    }));
+                    if (traceId) {
+                        window.dispatchEvent(
+                            new CustomEvent('workflow-view-trace', { detail: { traceId } }),
+                        );
+                    }
                     window.dispatchEvent(new CustomEvent('workflow-trace-finished'));
                 }
             }

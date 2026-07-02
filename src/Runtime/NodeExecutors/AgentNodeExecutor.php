@@ -4,6 +4,7 @@ namespace DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors;
 
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use DigitalElvis\NeuronAIStudio\Runtime\AgentRunner;
+use DigitalElvis\NeuronAIStudio\Runtime\BuilderWorkflowState;
 use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
 use DigitalElvis\NeuronAIStudio\Runtime\MessageFactory;
 use DigitalElvis\NeuronAIStudio\Runtime\StateTemplateInterpolator;
@@ -20,6 +21,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
 
     public function execute(array $nodeConfig, WorkflowState $state, GraphContext $context): string
     {
+        $nodeId = (string) ($nodeConfig['id'] ?? 'agent');
         $data = $nodeConfig['data'] ?? [];
         $outputKey = $data['output_key'] ?? 'agent_response';
         $rawMessage = array_key_exists('message', $data)
@@ -67,6 +69,18 @@ class AgentNodeExecutor implements NodeExecutorInterface
         }
 
         $state->set($outputKey, $response->content);
+
+        if ($state instanceof BuilderWorkflowState) {
+            foreach ($response->toolEvents as $event) {
+                $eventName = ($event['type'] ?? '') === 'result' ? 'tool_result' : 'tool_call';
+                $state->emitStep($eventName, [
+                    'node_id' => $nodeId,
+                    'name' => $event['name'] ?? 'tool',
+                    'inputs' => is_array($event['inputs'] ?? null) ? $event['inputs'] : [],
+                    'result' => $event['result'] ?? null,
+                ]);
+            }
+        }
 
         return 'default';
     }

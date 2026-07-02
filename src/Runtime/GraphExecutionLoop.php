@@ -4,7 +4,7 @@ namespace DigitalElvis\NeuronAIStudio\Runtime;
 
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\StructuredOutputValidationException;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorRegistry;
-use NeuronAI\Workflow\WorkflowState;
+use RuntimeException;
 
 class GraphExecutionLoop
 {
@@ -17,7 +17,18 @@ class GraphExecutionLoop
         GraphContext $graphContext,
         BuilderWorkflowState $state,
     ): BuilderWorkflowState {
+        $globalMaxSteps = max(1, (int) config('neuronai-studio.loop.global_max_steps', 1000));
+        $executedSteps = 0;
+
         while ($nodeId !== '') {
+            $executedSteps++;
+
+            if ($executedSteps > $globalMaxSteps) {
+                throw new RuntimeException(
+                    "Workflow execution exceeded global max steps ({$globalMaxSteps}).",
+                );
+            }
+
             $nodeConfig = $graphContext->nodeConfig($nodeId);
             if ($nodeConfig === []) {
                 break;
@@ -27,9 +38,15 @@ class GraphExecutionLoop
             $nodeType = (string) ($nodeConfig['type'] ?? 'unknown');
             $startedAt = microtime(true);
 
+            $iteration = null;
+            if ($nodeType === 'loop') {
+                $iteration = (int) $state->get("__loop_iterations.{$nodeId}", 0) + 1;
+            }
+
             $state->emitStep('step_started', [
                 'node_id' => $nodeId,
                 'node_type' => $nodeType,
+                'iteration' => $iteration,
             ]);
 
             if ($nodeType === 'stop') {
@@ -63,12 +80,18 @@ class GraphExecutionLoop
 
             $this->recordStep($state, $nodeId, $nodeType, $startedAt);
 
-            $state->emitStep('step_completed', [
+            $completedPayload = [
                 'node_id' => $nodeId,
                 'node_type' => $nodeType,
                 'handle' => $handle,
                 'duration_ms' => $durationMs,
-            ]);
+            ];
+
+            if ($nodeType === 'loop') {
+                $completedPayload['iteration'] = (int) $state->get("__loop_iterations.{$nodeId}", 0);
+            }
+
+            $state->emitStep('step_completed', $completedPayload);
 
             $nextNodeId = $graphContext->targetForHandle($nodeId, $handle) ?? '';
             $state->set('__current_node_id', $nextNodeId);

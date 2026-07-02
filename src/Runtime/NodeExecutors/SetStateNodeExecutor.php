@@ -17,6 +17,17 @@ class SetStateNodeExecutor implements NodeExecutorInterface
             $value = $state->get($data['from_key']);
         }
 
+        if (($data['append_from_key'] ?? null) !== null) {
+            $append = $state->get($data['append_from_key']);
+            $current = $state->get($key, '');
+            $segments = array_filter([
+                is_string($current) ? trim($current) : (string) $current,
+                is_string($append) ? trim($append) : (is_scalar($append) ? (string) $append : ''),
+            ], fn (string $segment) => $segment !== '');
+
+            $value = implode("\n", $segments);
+        }
+
         $state->set($key, $value);
 
         return 'default';

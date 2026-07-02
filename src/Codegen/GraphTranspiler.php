@@ -79,6 +79,23 @@ class GraphTranspiler
                 $returnType = count($returnTypes) === 1
                     ? $returnTypes[0]
                     : implode('|', $returnTypes);
+            } elseif ($type === 'loop') {
+                foreach (['continue', 'exit'] as $handle) {
+                    $targetId = $context->targetForHandle($id, $handle);
+                    if ($targetId === null) {
+                        continue;
+                    }
+
+                    $eventName = $this->eventClassName($targetId);
+
+                    $branchReturns[$handle] = $eventName;
+                    $events[$targetId] = ['id' => $targetId, 'className' => $eventName];
+                }
+
+                $returnTypes = array_values(array_unique($branchReturns));
+                $returnType = count($returnTypes) === 1
+                    ? $returnTypes[0]
+                    : implode('|', $returnTypes);
             } elseif ($type === 'stop') {
                 $returnType = 'StopEvent';
             } else {

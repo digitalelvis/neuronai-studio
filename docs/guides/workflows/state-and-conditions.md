@@ -14,7 +14,18 @@ Workflows share a mutable key-value **state** (`WorkflowState`) for the duration
 | **Human** node | `output_key` (default: `human_response`) | User reply when the run resumes |
 | **Set State** node | `key` from node config | Static `value` or copy from `from_key` |
 
-Internal keys such as `__workflow_run_id`, `__current_node_id`, and `__steps` are reserved for runtime bookkeeping.
+Internal keys such as `__workflow_run_id`, `__current_node_id`, `__steps`, `__studio_thread_id`, and `__loop_iterations` are reserved for runtime bookkeeping.
+
+## Loop iterations
+
+Each Loop node tracks its iteration count in state:
+
+| Key | Description |
+|-----|-------------|
+| `__loop_iterations.{node_id}` | Current iteration for a specific loop node |
+| `__loop_iterations` | Map of all loop node IDs → iteration counts |
+
+Iteration counters increment on every visit to the Loop node. When `iteration > max_steps`, the runtime throws `MaxLoopIterationsException`.
 
 ## State template interpolation
 
