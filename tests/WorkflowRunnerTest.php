@@ -3,6 +3,7 @@
 namespace DigitalElvis\NeuronAIStudio\Tests;
 
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
+use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
 
 class WorkflowRunnerTest extends TestCase
@@ -90,5 +91,40 @@ class WorkflowRunnerTest extends TestCase
         $output = $outputWithSteps->invoke($runner, ['agent_response' => 'Done'], $steps, $workflow);
         $this->assertArrayHasKey('__steps', $output);
         $this->assertSame('agent', $output['__steps'][0]['node_type']);
+    }
+
+    public function test_run_existing_trace_completes(): void
+    {
+        $workflow = WorkflowDefinition::create([
+            'name' => 'Queued Set State Flow',
+            'slug' => 'queued-set-state-flow',
+            'graph' => [
+                'version' => 1,
+                'nodes' => [
+                    ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                    ['id' => 'set_1', 'type' => 'set_state', 'position' => ['x' => 200, 'y' => 0], 'data' => ['key' => 'greeting', 'value' => 'Hello']],
+                    ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 400, 'y' => 0], 'data' => []],
+                ],
+                'edges' => [
+                    ['id' => 'e1', 'source' => 'start_1', 'target' => 'set_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                    ['id' => 'e2', 'source' => 'set_1', 'target' => 'stop_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ],
+            ],
+        ]);
+
+        $trace = WorkflowTrace::create([
+            'workflow_definition_id' => $workflow->id,
+            'status' => 'queued',
+            'input' => ['input' => 'test'],
+            'started_at' => null,
+        ]);
+
+        $result = app(WorkflowRunner::class)->runExistingTrace($trace, $workflow, ['input' => 'test']);
+
+        $this->assertSame($trace->id, $result->id);
+        $this->assertSame('completed', $result->status);
+        $this->assertNotNull($result->started_at);
+        $this->assertSame('Hello', $result->output['greeting'] ?? null);
+        $this->assertSame(1, WorkflowTrace::count());
     }
 }

@@ -3,6 +3,7 @@
 namespace DigitalElvis\NeuronAIStudio\Tests;
 
 use DigitalElvis\NeuronAIStudio\Runtime\BuilderWorkflowState;
+use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\MaxLoopIterationsException;
 use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\LoopNodeExecutor;
 
@@ -55,7 +56,7 @@ class LoopNodeExecutorTest extends TestCase
         ));
     }
 
-    public function test_max_steps_forces_exit_even_when_condition_not_met(): void
+    public function test_exceeding_max_steps_throws_guardrail_exception(): void
     {
         $stateData = ['lead' => ['tier' => 'silver']];
         $nodeData = [
@@ -66,8 +67,10 @@ class LoopNodeExecutorTest extends TestCase
         ];
 
         $this->assertSame('continue', $this->runLoop($nodeData, $stateData));
-        $this->assertSame('exit', $this->runLoop($nodeData, array_merge($stateData, [
-            '__loop_iterations.loop_1' => 1,
-        ])));
+
+        $this->expectException(MaxLoopIterationsException::class);
+        $this->runLoop($nodeData, array_merge($stateData, [
+            '__loop_iterations.loop_1' => 2,
+        ]));
     }
 }

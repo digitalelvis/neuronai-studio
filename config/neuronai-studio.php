@@ -91,6 +91,12 @@ return [
 
     'queue_connection' => env('NEURONAI_STUDIO_QUEUE_CONNECTION'),
 
+    'async_runs_enabled' => env('NEURONAI_STUDIO_ASYNC_RUNS_ENABLED', false),
+
+    'queue_tries' => (int) env('NEURONAI_STUDIO_QUEUE_TRIES', 1),
+
+    'queue_backoff' => (int) env('NEURONAI_STUDIO_QUEUE_BACKOFF', 30),
+
     /*
     |--------------------------------------------------------------------------
     | Inspector Integration

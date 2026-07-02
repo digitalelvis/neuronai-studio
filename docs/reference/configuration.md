@@ -42,8 +42,11 @@ Credentials are **not** stored here — they come from `config/neuron.php`.
 
 | Key | Env | Default | Description |
 |-----|-----|---------|-------------|
-| `queue` | `NEURONAI_STUDIO_QUEUE` | `default` | Queue name (reserved for future async runs) |
+| `async_runs_enabled` | `NEURONAI_STUDIO_ASYNC_RUNS_ENABLED` | `false` | Enable async workflow runs via queue jobs (SSE harness remains default when false) |
+| `queue` | `NEURONAI_STUDIO_QUEUE` | `default` | Queue name for `RunWorkflowJob` and `ResumeWorkflowJob` |
 | `queue_connection` | `NEURONAI_STUDIO_QUEUE_CONNECTION` | `null` | Queue connection override |
+| `queue_tries` | `NEURONAI_STUDIO_QUEUE_TRIES` | `1` | Max attempts for workflow queue jobs |
+| `queue_backoff` | `NEURONAI_STUDIO_QUEUE_BACKOFF` | `30` | Seconds before retry after failure |
 
 ## Inspector
 
@@ -57,6 +60,33 @@ Credentials are **not** stored here — they come from `config/neuron.php`.
 |-----|---------|-------------|
 | `tools` | calculator, calendar | Built-in toolkit registry |
 | `tool_scan_paths` | `app/Neuron/Tools` | Paths to scan for PHP Tool classes |
+
+## Structured output
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `structured_output_scan_paths` | `{export_path}/Output` when directory exists, else `[]` | Paths to scan for PHP output classes with `SchemaProperty` attributes |
+
+Classes discovered here populate the **Output class** dropdown on Agent and LLM nodes in the workflow canvas. Each path can be absolute or relative to the application base path.
+
+Default behavior:
+
+```php
+'structured_output_scan_paths' => is_dir($exportPath.'/Output')
+    ? [$exportPath.'/Output']
+    : [],
+```
+
+Add extra scan paths when output classes live outside the export directory:
+
+```php
+'structured_output_scan_paths' => [
+    app_path('Neuron/Output'),
+    app_path('DTOs/AgentOutput'),
+],
+```
+
+Classes must have public properties annotated with `NeuronAI\StructuredOutput\SchemaProperty`. Abstract classes and classes without schema properties are ignored.
 
 ## Workflows
 

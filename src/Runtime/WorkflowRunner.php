@@ -3,6 +3,8 @@
 namespace DigitalElvis\NeuronAIStudio\Runtime;
 
 use DigitalElvis\NeuronAIStudio\Codegen\WorkflowClassImporter;
+use DigitalElvis\NeuronAIStudio\Jobs\ResumeWorkflowJob;
+use DigitalElvis\NeuronAIStudio\Jobs\RunWorkflowJob;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowTraceStep;
@@ -13,6 +15,7 @@ use NeuronAI\Workflow\Interrupt\WorkflowInterrupt;
 use NeuronAI\Workflow\Persistence\InMemoryPersistence;
 use NeuronAI\Workflow\Workflow;
 use NeuronAI\Workflow\WorkflowState;
+use RuntimeException;
 use Throwable;
 
 class WorkflowRunner
@@ -34,11 +37,90 @@ class WorkflowRunner
     }
 
     /** @param  array<string, mixed>  $input */
-    protected function runInterpreted(WorkflowDefinition $workflow, array $input = [], ?callable $emitter = null): WorkflowTrace
+    public function runExistingTrace(WorkflowTrace $trace, WorkflowDefinition $workflow, array $input = [], ?callable $emitter = null): WorkflowTrace
+    {
+        if (! in_array($trace->status, ['queued', 'running'], true)) {
+            throw new \InvalidArgumentException(sprintf(
+                'Workflow trace must be queued or running to execute, got "%s".',
+                $trace->status,
+            ));
+        }
+
+        $updates = [];
+
+        if ($trace->started_at === null) {
+            $updates['started_at'] = now();
+        }
+
+        if ($trace->status === 'queued') {
+            $updates['status'] = 'running';
+        }
+
+        if ($updates !== []) {
+            $trace->update($updates);
+            $trace = $trace->fresh();
+        }
+
+        if ($this->shouldRunNative($workflow)) {
+            return $this->runNative($workflow, $input, $emitter, $trace);
+        }
+
+        return $this->runInterpreted($workflow, $input, $emitter, $trace);
+    }
+
+    /** @param  array<string, mixed>  $input */
+    public function dispatch(WorkflowDefinition $workflow, array $input = []): WorkflowTrace
+    {
+        if (! config('neuronai-studio.async_runs_enabled')) {
+            throw new RuntimeException(
+                'Async workflow runs are disabled. Enable async_runs_enabled in neuronai-studio config or use the synchronous stream endpoint.',
+            );
+        }
+
+        $trace = WorkflowTrace::create([
+            'workflow_definition_id' => $workflow->id,
+            'status' => 'queued',
+            'input' => $input,
+            'started_at' => null,
+        ]);
+
+        RunWorkflowJob::dispatch($trace->id, $workflow->id, $input);
+
+        return $trace->fresh();
+    }
+
+    /** @param  array<int, array<string, mixed>>  $attachments */
+    public function dispatchResume(WorkflowTrace $trace, string $nodeId, string $message, array $attachments = []): WorkflowTrace
+    {
+        if (! config('neuronai-studio.async_runs_enabled')) {
+            throw new RuntimeException(
+                'Async workflow runs are disabled. Enable async_runs_enabled in neuronai-studio config or use the synchronous stream endpoint.',
+            );
+        }
+
+        if ($trace->status !== 'awaiting_input') {
+            throw new \InvalidArgumentException(sprintf(
+                'Workflow trace must be awaiting_input to resume asynchronously, got "%s".',
+                $trace->status,
+            ));
+        }
+
+        $trace->update([
+            'status' => 'queued',
+            'finished_at' => null,
+        ]);
+
+        ResumeWorkflowJob::dispatch($trace->id, $nodeId, $message, $attachments);
+
+        return $trace->fresh();
+    }
+
+    /** @param  array<string, mixed>  $input */
+    protected function runInterpreted(WorkflowDefinition $workflow, array $input = [], ?callable $emitter = null, ?WorkflowTrace $existingTrace = null): WorkflowTrace
     {
         $this->validator->assertValid($workflow->graph);
 
-        $trace = WorkflowTrace::create([
+        $trace = $existingTrace ?? WorkflowTrace::create([
             'workflow_definition_id' => $workflow->id,
             'status' => 'running',
             'input' => $input,
@@ -72,11 +154,11 @@ class WorkflowRunner
     }
 
     /** @param  array<string, mixed>  $input */
-    protected function runNative(WorkflowDefinition $workflow, array $input = [], ?callable $emitter = null): WorkflowTrace
+    protected function runNative(WorkflowDefinition $workflow, array $input = [], ?callable $emitter = null, ?WorkflowTrace $existingTrace = null): WorkflowTrace
     {
         $class = (string) $workflow->class_path;
 
-        $trace = WorkflowTrace::create([
+        $trace = $existingTrace ?? WorkflowTrace::create([
             'workflow_definition_id' => $workflow->id,
             'status' => 'running',
             'input' => $input,

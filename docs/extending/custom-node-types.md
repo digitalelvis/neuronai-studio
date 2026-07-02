@@ -66,6 +66,25 @@ class SendEmailExecutor extends NodeExecutor
 }
 ```
 
+### Structured output in custom executors
+
+To validate LLM responses against a typed output class in a custom AI node, inject `StructuredOutputResolver` and `AgentRunner`, then branch on the `structured` flag in node config:
+
+```php
+use DigitalElvis\NeuronAIStudio\Runtime\AgentRunner;
+use DigitalElvis\NeuronAIStudio\Runtime\StructuredOutput\StructuredOutputResolver;
+
+if ($nodeData['structured'] ?? false) {
+    $class = $this->outputResolver->resolve((string) ($nodeData['output_class'] ?? ''));
+    $result = $this->agentRunner->structuredInline($config, $userMessage, $class);
+    $state->set($outputKey, $result->structured);
+} else {
+    // plain text path
+}
+```
+
+Register output classes under `structured_output_scan_paths` so they appear in the canvas picker, or accept a fully qualified class name in node JSON. See [AI Nodes — Structured output](../guides/workflows/node-types/ai-nodes.md#structured-output).
+
 ## Canvas configuration
 
 Custom node fields appear in the inspector when you extend the React inspector components. For server-only nodes, users can edit raw JSON in the graph data until UI support is added.

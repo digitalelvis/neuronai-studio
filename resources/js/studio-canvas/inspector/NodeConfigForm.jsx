@@ -10,12 +10,14 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import ProviderModelFields from './ProviderModelFields';
+import StructuredOutputFields from './shared/StructuredOutputFields';
 
 export default function NodeConfigForm({
     node,
     agents,
     tools,
     mcpServers,
+    outputClasses = [],
     providers = {},
     providerModels = {},
     defaultProvider = '',
@@ -81,6 +83,24 @@ export default function NodeConfigForm({
                             disabled={readOnly}
                         />
                     </div>
+                    <div className="space-y-2">
+                        <Label>Output Key</Label>
+                        <Input
+                            value={data.output_key ?? 'agent_response'}
+                            onChange={(e) => updateField('output_key', e.target.value)}
+                            disabled={readOnly}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            State key where the agent response is stored.
+                        </p>
+                    </div>
+                    <StructuredOutputFields
+                        structured={Boolean(data.structured)}
+                        outputClass={data.output_class ?? ''}
+                        outputClasses={outputClasses}
+                        readOnly={readOnly}
+                        onChange={(patch) => onUpdate?.({ ...data, ...patch })}
+                    />
                 </>
             )}
 
@@ -116,6 +136,13 @@ export default function NodeConfigForm({
                             State key where the LLM response is stored.
                         </p>
                     </div>
+                    <StructuredOutputFields
+                        structured={Boolean(data.structured)}
+                        outputClass={data.output_class ?? ''}
+                        outputClasses={outputClasses}
+                        readOnly={readOnly}
+                        onChange={(patch) => onUpdate?.({ ...data, ...patch })}
+                    />
                 </>
             )}
 
@@ -165,7 +192,7 @@ export default function NodeConfigForm({
                             disabled={readOnly}
                         />
                         <p className="text-xs text-muted-foreground">
-                            Key in workflow state. Defaults to input.
+                            Key in workflow state. Use dot notation for nested values (e.g. lead.tier).
                         </p>
                     </div>
                     <div className="space-y-2">

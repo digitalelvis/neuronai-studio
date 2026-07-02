@@ -12,6 +12,7 @@ use DigitalElvis\NeuronAIStudio\Runtime\McpToolResolver;
 use DigitalElvis\NeuronAIStudio\Runtime\MessageFactory;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\AgentNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorRegistry;
+use DigitalElvis\NeuronAIStudio\Runtime\StructuredOutput\StructuredOutputResolver;
 use DigitalElvis\NeuronAIStudio\Runtime\ToolEventExtractor;
 use DigitalElvis\NeuronAIStudio\Runtime\ToolResolver;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
@@ -130,7 +131,7 @@ class WorkflowChatThreadTest extends TestCase
         $this->app->instance(AgentRunner::class, $runner);
         $this->app->make(NodeExecutorRegistry::class)->register(
             'agent',
-            new AgentNodeExecutor($runner, new MessageFactory),
+            new AgentNodeExecutor($runner, new MessageFactory, app(StructuredOutputResolver::class)),
         );
     }
 }

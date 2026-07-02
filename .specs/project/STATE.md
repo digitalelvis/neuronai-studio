@@ -3,7 +3,7 @@
 **Last Updated:** 2026-07-01
 **Development line:** `v0.2.x` (target release `v0.2.0`)
 **Latest published:** `v0.1.2` on `main`
-**Current Work:** M1 — `workflow-cyclic-graphs` · M2 — `workflow-structured-output` (backend fases 1–3 ✅)
+**Current Work:** M1 — `workflow-cyclic-graphs` · M2 — `workflow-structured-output` ✅ · M3 — `workflow-queue-runner` ✅
 
 ---
 
@@ -57,17 +57,34 @@
 
 | Feature | Status | Notas |
 |---------|--------|-------|
-| `workflow-structured-output` | 🔄 in progress | Backend T1–T9 ✅; próximo: canvas UI (T10–T13), integração T16 |
+| `workflow-structured-output` | ✅ done | T1–T17 ✅; T12 parcial — hint dot notation só no condition (loop sem inspector) |
 | `workflow-tool-approval` | ⏳ planned | — |
 | `workflow-token-streaming` | ⏳ planned | — |
 
-### Structured output — entregue (fases 1–3)
+### Structured output — entregue
 
 - [x] `structured_output_scan_paths`, `OutputClassRegistry`, `StructuredOutputResolver`
 - [x] `WorkflowStateValue` + dot notation em condition/loop
 - [x] `AgentRunner::structuredInline` + branch structured em `LlmNodeExecutor` / `AgentNodeExecutor`
 - [x] `StructuredOutputValidationException` + `validation_errors` no SSE/trace
-- [ ] Canvas inspector (T10–T13), round-trip T16, codegen T14–T15, docs T17
+- [x] Canvas inspector (T10–T13), round-trip T16, codegen T14–T15, docs T17
+- [ ] T12 parcial — hint `lead.tier` no condition; loop aguarda inspector M1
+
+## M3 progress snapshot
+
+| Feature | Status | Notas |
+|---------|--------|-------|
+| `workflow-queue-runner` | ✅ done | T1–T11 ✅ — `RunWorkflowJob`, `ResumeWorkflowJob`, async run/resume API, polling, docs |
+
+### Queue runner — entregue
+
+- [x] `async_runs_enabled`, `queue_tries`, `queue_backoff` config
+- [x] `WorkflowRunner::runExistingTrace`, `dispatch`, `dispatchResume`
+- [x] `RunWorkflowJob`, `ResumeWorkflowJob` com `failed()` handler
+- [x] `POST /workflows/{id}/run` → 202 queued; `POST /traces/{id}/resume` → 202 queued
+- [x] Polling via `GET /traces/{id}/json` (`queued`, `running`, `awaiting_node_id`)
+- [x] E2E tests + docs (runtime-and-traces, export-and-production, configuration, installation)
+- [ ] SSE/broadcast em tempo real para jobs (deferred — polling v1)
 
 ### AMA já entregue em `v0.1.2` (baseline para v0.2.0)
 
@@ -106,7 +123,8 @@
 | -------------------- | ---------- | ------- | ------- |
 | studio-test-harness  | 2026-06-24 | 0.1.x   | ✅ Done |
 | workflow-json-io     | 2026-06-24 | 0.1.x   | ✅ Done |
-| workflow-code-bridge   | 2026-06-24 | 0.1.x   | ✅ Done |
+| workflow-code-bridge | 2026-06-24 | 0.1.x   | ✅ Done |
+| workflow-queue-runner | 2026-07-01 | 0.2.x   | ✅ Done |
 | multimodal-attachments (partial AMA) | 2026-06-30 | 0.1.2 | ✅ Done |
 | workflow-cyclic-graphs (P0+P1) | 2026-06-30 | 0.2.x | ✅ Done |
 | autonomous-multimodal-agents (core) | 2026-06-30 | 0.2.x | ✅ Done |

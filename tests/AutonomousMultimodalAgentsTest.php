@@ -14,6 +14,7 @@ use DigitalElvis\NeuronAIStudio\Runtime\McpToolResolver;
 use DigitalElvis\NeuronAIStudio\Runtime\MessageFactory;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\AgentNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorRegistry;
+use DigitalElvis\NeuronAIStudio\Runtime\StructuredOutput\StructuredOutputResolver;
 use DigitalElvis\NeuronAIStudio\Runtime\ToolEventExtractor;
 use DigitalElvis\NeuronAIStudio\Runtime\ToolResolver;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
@@ -197,7 +198,7 @@ class AutonomousMultimodalAgentsTest extends TestCase
             [['name' => 'calculator', 'inputs' => ['expression' => '1+1'], 'result' => '2', 'type' => 'call']],
         ));
 
-        $executor = new AgentNodeExecutor($agentRunner, new MessageFactory);
+        $executor = new AgentNodeExecutor($agentRunner, new MessageFactory, app(StructuredOutputResolver::class));
         $context = new GraphContext([], []);
         $state = new BuilderWorkflowState($context, 1, []);
         $state->stepEmitter = function (string $event, array $data) use (&$emitted) {
@@ -327,7 +328,7 @@ class AutonomousMultimodalAgentsTest extends TestCase
         $this->app->instance(AgentRunner::class, $runner);
         $this->app->make(NodeExecutorRegistry::class)->register(
             'agent',
-            new AgentNodeExecutor($runner, new MessageFactory),
+            new AgentNodeExecutor($runner, new MessageFactory, app(StructuredOutputResolver::class)),
         );
 
         return $runner;
@@ -347,7 +348,7 @@ class AutonomousMultimodalAgentsTest extends TestCase
         $this->app->instance(AgentRunner::class, $agentRunner);
         $this->app->make(NodeExecutorRegistry::class)->register(
             'agent',
-            new AgentNodeExecutor($agentRunner, new MessageFactory),
+            new AgentNodeExecutor($agentRunner, new MessageFactory, app(StructuredOutputResolver::class)),
         );
 
         return $agentRunner;
