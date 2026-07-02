@@ -4,7 +4,7 @@
 
 **Development line:** `v0.2.x` → release alvo `v0.2.0`  
 **Última publicação:** `v0.1.2` (`main`)  
-**Última atualização:** 2026-07-01
+**Última atualização:** 2026-07-02
 
 ---
 
@@ -49,6 +49,18 @@ Paralelismo, checkpoints generalizados e execução assíncrona.
 | 7 | `workflow-parallel-execution` | planned | [spec](../features/workflow-parallel-execution/spec.md) |
 | 8 | `workflow-checkpoints-persistence` | planned | [spec](../features/workflow-checkpoints-persistence/spec.md) |
 | 9 | `workflow-queue-runner` | **done** | [spec](../features/workflow-queue-runner/spec.md) · [tasks](../features/workflow-queue-runner/tasks.md) |
+
+### M4 — Integração externa (P1) `planned`
+
+Expor agentes e workflows para clients externos (Vercel AI SDK, AG-UI) via endpoints de streaming no package, sem alterar o harness interno.
+
+| Ordem | Feature | Status | Spec |
+|-------|---------|--------|------|
+| 10 | `stream-adapters` | planned | [spec](../features/stream-adapters/spec.md) |
+
+**Critério de conclusão M4:** Host app consome agente via `useChat` (Vercel) e workflow via client AG-UI usando rotas configuráveis do package; workflow com Human node pausa e retoma via endpoint `resume/{protocol}`; catálogo e Connect Panel documentam URLs e snippets.
+
+**Dependências:** SA-14 (tokens em workflow externo) opcionalmente aguarda `workflow-token-streaming`.
 
 ---
 
@@ -110,6 +122,12 @@ Mapeamento feature → arquivos `docs/` a criar/atualizar na implementação.
 | `workflow-parallel-execution` | `guides/workflows/node-types/logic-nodes.md`, `guides/workflows/overview.md`, `guides/workflows/runtime-and-traces.md`, `guides/workflows/human-in-the-loop.md`, `extending/custom-node-types.md` |
 | `workflow-checkpoints-persistence` | `guides/workflows/runtime-and-traces.md`, `guides/workflows/human-in-the-loop.md`, `reference/database-schema.md`, `reference/configuration.md`, `extending/custom-node-types.md` |
 | `workflow-queue-runner` | `guides/workflows/runtime-and-traces.md`, `guides/export-and-production.md`, `reference/configuration.md`, `reference/artisan-commands.md`, `getting-started/installation.md` |
+
+### M4
+
+| Feature | Documentos |
+|---------|------------|
+| `stream-adapters` | `guides/integration/stream-adapters.md`, `guides/integration/vercel-ai-sdk.md`, `guides/integration/ag-ui.md`, `reference/configuration.md`, `getting-started/installation.md`, `guides/agents/playground-and-threads.md` |
 
 ---
 
