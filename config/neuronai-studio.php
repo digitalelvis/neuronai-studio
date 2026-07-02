@@ -297,6 +297,125 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | RAG (Knowledge Bases & Retrieval)
+    |--------------------------------------------------------------------------
+    |
+    | Drivers are pluggable: the packaged default is the zero-infra file store.
+    | Register extra vector stores or embeddings providers at runtime via
+    | VectorStoreFactory::extend() / EmbeddingsFactory::extend(), or override
+    | the lists below. Every knowledge base may pick its own driver/model, so
+    | these values only act as defaults.
+    |
+    */
+
+    'rag' => [
+
+        // Vector store driver used when a knowledge base does not specify one.
+        'default_vector_store' => env('NEURONAI_STUDIO_RAG_VECTOR_STORE', 'file'),
+
+        // Root directory for file-based vector stores (one file per knowledge base).
+        'storage_path' => env('NEURONAI_STUDIO_RAG_STORAGE_PATH', storage_path('app/neuronai-studio/rag')),
+
+        // Vector store drivers surfaced in the UI. Built-in resolvers: file, memory.
+        // Additional drivers (pinecone, qdrant, chroma, pgvector, ...) can be enabled
+        // by registering a resolver via VectorStoreFactory::extend().
+        'vector_stores' => [
+            'file' => [
+                'label' => 'File (local disk)',
+                'description' => 'Persists embeddings to disk. Zero infra, ideal for local/dev.',
+            ],
+            'memory' => [
+                'label' => 'In-memory',
+                'description' => 'Volatile store, resets each request. Useful for tests.',
+            ],
+        ],
+
+        // Embeddings provider used when a knowledge base does not specify one.
+        'default_embeddings_provider' => env('NEURONAI_STUDIO_RAG_EMBEDDINGS_PROVIDER', 'openai'),
+
+        // Model used when a knowledge base (and its provider) does not specify one.
+        'default_embeddings_model' => env('NEURONAI_STUDIO_RAG_EMBEDDINGS_MODEL', 'text-embedding-3-small'),
+
+        // Embeddings providers surfaced in the UI. `key_env` resolves the API key
+        // (falls back to config/neuron.php). `models` is the predefined list; devs
+        // may always type a custom model or register a custom provider resolver.
+        'embeddings' => [
+            'openai' => [
+                'label' => 'OpenAI',
+                'key_env' => 'OPENAI_API_KEY',
+                'default_model' => 'text-embedding-3-small',
+                'dimensions' => (int) env('NEURONAI_STUDIO_RAG_OPENAI_DIMENSIONS', 1536),
+                'models' => [
+                    'text-embedding-3-small',
+                    'text-embedding-3-large',
+                    'text-embedding-ada-002',
+                ],
+            ],
+            'gemini' => [
+                'label' => 'Gemini',
+                'key_env' => 'GEMINI_API_KEY',
+                'default_model' => 'text-embedding-004',
+                'models' => [
+                    'text-embedding-004',
+                    'gemini-embedding-001',
+                ],
+            ],
+            'ollama' => [
+                'label' => 'Ollama',
+                'url' => env('OLLAMA_URL', 'http://localhost:11434/api'),
+                'default_model' => 'nomic-embed-text',
+                'models' => [
+                    'nomic-embed-text',
+                    'mxbai-embed-large',
+                    'all-minilm',
+                ],
+            ],
+            'voyage' => [
+                'label' => 'Voyage',
+                'key_env' => 'VOYAGE_API_KEY',
+                'default_model' => 'voyage-3-lite',
+                'models' => [
+                    'voyage-3',
+                    'voyage-3-lite',
+                    'voyage-finance-2',
+                ],
+            ],
+            'cohere' => [
+                'label' => 'Cohere',
+                'key_env' => 'COHERE_API_KEY',
+                'default_model' => 'embed-multilingual-v3.0',
+                'models' => [
+                    'embed-english-v3.0',
+                    'embed-multilingual-v3.0',
+                ],
+            ],
+            'mistral' => [
+                'label' => 'Mistral',
+                'key_env' => 'MISTRAL_API_KEY',
+                'default_model' => 'mistral-embed',
+                'models' => [
+                    'mistral-embed',
+                ],
+            ],
+        ],
+
+        // Default retrieval strategy applied when a knowledge base / node omits it.
+        'retrieval' => [
+            'top_k' => (int) env('NEURONAI_STUDIO_RAG_TOP_K', 5),
+            'threshold' => env('NEURONAI_STUDIO_RAG_THRESHOLD') !== null
+                ? (float) env('NEURONAI_STUDIO_RAG_THRESHOLD')
+                : null,
+        ],
+
+        // Default chunking strategy for ingestion (word-based sentence splitter).
+        'chunk' => [
+            'max_words' => (int) env('NEURONAI_STUDIO_RAG_CHUNK_MAX_WORDS', 200),
+            'overlap_words' => (int) env('NEURONAI_STUDIO_RAG_CHUNK_OVERLAP_WORDS', 20),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Attachments (Studio Chat)
     |--------------------------------------------------------------------------
     */

@@ -8,8 +8,8 @@ class StateTemplateInterpolator
 {
     public static function interpolate(string $template, WorkflowState $state): string
     {
-        return preg_replace_callback('/\{\{(\w+)\}\}/', function (array $matches) use ($state) {
-            $value = $state->get($matches[1]);
+        return preg_replace_callback('/\{\{\s*([\w.]+)\s*\}\}/', function (array $matches) use ($state) {
+            $value = WorkflowStateValue::get($state, $matches[1]);
 
             if (is_array($value)) {
                 return json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';

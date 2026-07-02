@@ -41,7 +41,7 @@
 
 ## Active Blockers
 
-- **workflow-rag:** `KnowledgeBase` model, ingest pipeline, and Studio CRUD not implemented — blocks real RAG upstream of agent in M1 completion criteria (optional path).
+- **workflow-rag (UI):** Studio CRUD para knowledge bases + ingest UI + `RagInspector` ainda não implementados (Fatia 2). Backend real já entregue (Fatia 1).
 
 ---
 
@@ -51,7 +51,20 @@
 |---------|--------|-------|
 | `workflow-cyclic-graphs` | 🔄 in progress | Próximo: nó `loop` no registry/canvas + `max_steps` |
 | `autonomous-multimodal-agents` | 🟡 partial | Upload, `MessageFactory`, validação attachments, preview route — ver AMA abaixo |
-| `workflow-rag` | ⏳ planned | Depende de ciclos + executor real |
+| `workflow-rag` | 🔄 in progress | Fatia 1 (backend) ✅ — models, factories, ingest/retrieval, executor real, testes. Falta UI + codegen/docs |
+
+### workflow-rag — Fatia 1 (backend) entregue
+
+- [x] Migrations `knowledge_bases` + `knowledge_documents`
+- [x] Models `KnowledgeBase` (defaults provider/model/driver) + `KnowledgeDocument` (status ingest)
+- [x] Config `rag`: drivers vector store, providers/modelos embeddings, retrieval + chunk defaults
+- [x] `EmbeddingsFactory` + `VectorStoreFactory` extensíveis (`extend()`), default `file`/`openai`
+- [x] `DocumentIngestService` (load → split → embed → persist + status) e `RagRetrievalService` (top_k, threshold, `toContext`)
+- [x] `RagNodeExecutor` real → `rag_context` {query, results, context, top_score}
+- [x] `StateTemplateInterpolator` com dot notation (`{{rag_context.context}}`)
+- [x] 15 testes novos (ingest, retrieval, executor, interpolator) — suíte 203 verde
+- [ ] Fatia 2: CRUD Studio + ingest UI + `RagInspector`
+- [ ] Fatia 3: `RagNodeCodeGenerator` + docs
 
 ## M2 progress snapshot
 

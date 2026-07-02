@@ -14,6 +14,10 @@ use DigitalElvis\NeuronAIStudio\Registry\OutputClassRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\ToolRegistry;
 use DigitalElvis\NeuronAIStudio\Runtime\McpToolResolver;
+use DigitalElvis\NeuronAIStudio\Runtime\Rag\DocumentIngestService;
+use DigitalElvis\NeuronAIStudio\Runtime\Rag\EmbeddingsFactory;
+use DigitalElvis\NeuronAIStudio\Runtime\Rag\RagRetrievalService;
+use DigitalElvis\NeuronAIStudio\Runtime\Rag\VectorStoreFactory;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\AgentNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\ConditionNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\DelayNodeExecutor;
@@ -65,6 +69,28 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
 
         $this->app->singleton(NodeExecutorRegistry::class, function ($app) {
             return new NodeExecutorRegistry;
+        });
+
+        $this->app->singleton(EmbeddingsFactory::class, function () {
+            return new EmbeddingsFactory;
+        });
+
+        $this->app->singleton(VectorStoreFactory::class, function () {
+            return new VectorStoreFactory;
+        });
+
+        $this->app->singleton(RagRetrievalService::class, function ($app) {
+            return new RagRetrievalService(
+                $app->make(EmbeddingsFactory::class),
+                $app->make(VectorStoreFactory::class),
+            );
+        });
+
+        $this->app->singleton(DocumentIngestService::class, function ($app) {
+            return new DocumentIngestService(
+                $app->make(EmbeddingsFactory::class),
+                $app->make(VectorStoreFactory::class),
+            );
         });
 
         $this->app->singleton(Registry\TemplateRegistry::class, function () {

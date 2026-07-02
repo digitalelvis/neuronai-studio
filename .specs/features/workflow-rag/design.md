@@ -1,5 +1,7 @@
 # RAG em Workflows — Design
 
+> **Status de implementação (Fatia 1 — backend):** entregue models, migrations, `EmbeddingsFactory`, `VectorStoreFactory`, `RagRetrievalService`, `DocumentIngestService`, `RagNodeExecutor` real e dot-notation no `StateTemplateInterpolator` (suíte 203 verde). **Fatia 2** (CRUD Studio, ingest UI, `RagInspector`, `RagNode`, rotas API) e **Fatia 3** (`RagNodeCodeGenerator`, docs `docs/`) ainda **não implementadas** — marcadas como _planejado_ abaixo.
+
 ## Visão de arquitetura
 
 ```mermaid
@@ -31,33 +33,58 @@ flowchart LR
 
 ## Componentes backend (PHP)
 
-| Componente | Caminho |
-|------------|---------|
-| `KnowledgeBase` model | `src/Models/KnowledgeBase.php` |
-| `KnowledgeDocument` model | `src/Models/KnowledgeDocument.php` |
-| `RagRetrievalService` | `src/Runtime/Rag/RagRetrievalService.php` |
-| `DocumentIngestService` | `src/Runtime/Rag/DocumentIngestService.php` |
-| `RagNodeExecutor` | `src/Runtime/NodeExecutors/RagNodeExecutor.php` — substituir stub |
-| `KnowledgeBaseController` | `src/Http/Controllers/KnowledgeBaseController.php` |
-| `KnowledgeIngestController` | `src/Http/Controllers/KnowledgeIngestController.php` |
-| `VectorStoreFactory` | `src/Runtime/Rag/VectorStoreFactory.php` |
-| `EmbeddingsFactory` | `src/Runtime/Rag/EmbeddingsFactory.php` |
+| Componente | Caminho | Status |
+|------------|---------|--------|
+| `KnowledgeBase` model | `src/Models/KnowledgeBase.php` | ✅ Fatia 1 |
+| `KnowledgeDocument` model | `src/Models/KnowledgeDocument.php` | ✅ Fatia 1 |
+| `RagRetrievalService` | `src/Runtime/Rag/RagRetrievalService.php` | ✅ Fatia 1 |
+| `DocumentIngestService` | `src/Runtime/Rag/DocumentIngestService.php` | ✅ Fatia 1 |
+| `RagNodeExecutor` | `src/Runtime/NodeExecutors/RagNodeExecutor.php` — stub substituído | ✅ Fatia 1 |
+| `EmbeddingsFactory` | `src/Runtime/Rag/EmbeddingsFactory.php` | ✅ Fatia 1 |
+| `VectorStoreFactory` | `src/Runtime/Rag/VectorStoreFactory.php` | ✅ Fatia 1 |
+| `KnowledgeBaseController` | `src/Http/Controllers/KnowledgeBaseController.php` | ⏳ Fatia 2 (planejado) |
+| `KnowledgeIngestController` | `src/Http/Controllers/KnowledgeIngestController.php` | ⏳ Fatia 2 (planejado) |
 
-### RagNodeExecutor
+### RagNodeExecutor ✅ Fatia 1
+
+Implementado em `src/Runtime/NodeExecutors/RagNodeExecutor.php`. Requer `knowledge_base_id` (lança `RuntimeException` se ausente). O `query` faz fallback para `state.input` quando vazio e é interpolado. Além de `query`/`results`/`knowledge_base_id`, o executor também grava `context` (chunks concatenados via `toContext()`), `chunk_count` e `top_score`. Emite um step `rag_query` quando o state é `BuilderWorkflowState`.
 
 ```php
+$outputKey = $data['output_key'] ?? 'rag_context';
+$rawQuery = $data['query'] ?? '';
+if ($rawQuery === '') {
+    $rawQuery = (string) $state->get('input', '');
+}
+$query = StateTemplateInterpolator::interpolate($rawQuery, $state);
+
+if (empty($data['knowledge_base_id'])) {
+    throw new RuntimeException('RAG node requires a knowledge_base_id.');
+}
 $kb = KnowledgeBase::findOrFail($data['knowledge_base_id']);
-$query = StateTemplateInterpolator::interpolate($data['query'] ?? '', $state);
+
 $results = $this->retrieval->search($kb, $query, [
-    'top_k' => $data['top_k'] ?? 5,
+    'top_k' => $data['top_k'] ?? null,
     'threshold' => $data['threshold'] ?? null,
 ]);
+$context = $this->retrieval->toContext($results);
+$topScore = $results !== [] ? (float) $results[0]['score'] : 0.0;
+
 $state->set($outputKey, [
     'query' => $query,
     'results' => $results,
-    'knowledge_base_id' => $kb->id,
+    'context' => $context,
+    'knowledge_base_id' => $kb->getKey(),
+    'chunk_count' => count($results),
+    'top_score' => $topScore,
 ]);
+// BuilderWorkflowState → emitStep('rag_query', {...})
 ```
+
+> **Consumo downstream:** o agent lê o contexto recuperado via interpolação com dot-notation, ex. `{{ rag_context.context }}` no prompt/query — habilitado pelo aprimoramento do `StateTemplateInterpolator` (ver abaixo).
+
+### StateTemplateInterpolator (dot-notation) ✅ Fatia 1
+
+`StateTemplateInterpolator::interpolate()` agora aceita dot-notation e espaços em volta do placeholder (ex. `{{ rag_context.context }}`) resolvendo via `WorkflowStateValue::get`. Compatível com placeholders simples existentes (`{{ input }}`).
 
 ### KnowledgeBase (campos principais)
 
@@ -67,27 +94,36 @@ $state->set($outputKey, [
 - `retrieval_defaults` (top_k, threshold)
 - `metadata`, `source`, `class_path` (paridade AgentDefinition)
 
-## Componentes frontend
+## Componentes frontend ⏳ Fatia 2 (planejado)
 
-| Componente | Caminho |
-|------------|---------|
-| Knowledge bases index | `resources/js/studio-forms/KnowledgeBases/` |
-| Rag inspector | `resources/js/studio-canvas/inspectors/RagInspector.jsx` |
-| Rag node | `resources/js/studio-canvas/nodes/RagNode.jsx` |
-| Ingest UI | upload + status na KB edit page |
+_Nenhum destes foi implementado ainda; permanecem no plano da Fatia 2._
 
-## Migrações
+| Componente | Caminho | Status |
+|------------|---------|--------|
+| Knowledge bases index | `resources/js/studio-forms/KnowledgeBases/` | ⏳ planejado |
+| Rag inspector | `resources/js/studio-canvas/inspectors/RagInspector.jsx` | ⏳ planejado |
+| Rag node | `resources/js/studio-canvas/nodes/RagNode.jsx` | ⏳ planejado |
+| Ingest UI | upload + status na KB edit page | ⏳ planejado |
+
+## Migrações ✅ Fatia 1
+
+As tabelas usam nomes **sem prefixo** (`knowledge_bases` / `knowledge_documents`), seguindo a convenção das migrations existentes `agent_definitions` / `workflow_definitions` (que não aplicam `table_prefix`).
 
 ```php
 // knowledge_bases
-Schema::create('neuronai_studio_knowledge_bases', ...);
+Schema::create('knowledge_bases', ...);
+// name, slug (unique), description, embeddings_provider, embeddings_model,
+// vector_store_driver, vector_store_config, retrieval_defaults, metadata, source, class_path
 
-// knowledge_documents  
-Schema::create('neuronai_studio_knowledge_documents', ...);
-// knowledge_base_id, storage_key, mime, chunk_count, status, error
+// knowledge_documents
+Schema::create('knowledge_documents', ...);
+// knowledge_base_id (fk cascade), name, source_type, storage_key, mime,
+// chunk_count, status, error, metadata
 ```
 
-## API
+## API ⏳ Fatia 2 (planejado)
+
+_Rotas ainda não implementadas — planejadas para a Fatia 2 junto ao CRUD/ingest UI._
 
 | Método | Path | Propósito |
 |--------|------|-----------|
@@ -96,13 +132,13 @@ Schema::create('neuronai_studio_knowledge_documents', ...);
 | GET | `/knowledge-bases/{id}/documents` | Lista documentos |
 | POST | `/knowledge-bases/{id}/search` | Debug search (inspector) |
 
-SSE workflow: `step_completed` inclui `rag_meta: { chunk_count, top_score }`.
+SSE workflow: `step_completed` inclui `rag_meta: { chunk_count, top_score }`. _(Executor já emite step `rag_query` com esses metadados; wiring SSE é da Fatia 2.)_
 
-## Impacto em codegen
+## Impacto em codegen ⏳ Fatia 3 (planejado)
 
-- `RagNodeCodeGenerator` — referenciar classe `RAG` exportada ou inline `RetrievalNode` pattern.
-- `NativeWorkflowExporter` — opcional export de `KnowledgeBase` companion class.
-- `config/neuronai-studio.php` — drivers vector store permitidos.
+- `RagNodeCodeGenerator` — referenciar classe `RAG` exportada ou inline `RetrievalNode` pattern. _(planejado)_
+- `NativeWorkflowExporter` — opcional export de `KnowledgeBase` companion class. _(planejado)_
+- `config/neuronai-studio.php` — ✅ Fatia 1: seção `rag` adicionada (default_vector_store `file`, `storage_path`, `vector_stores`, default embeddings `openai`/`text-embedding-3-small`, providers `embeddings`, `retrieval` top_k/threshold, `chunk` max_words/overlap_words).
 
 ## Integração NeuronAI (neuron-rag-specialist)
 
@@ -111,7 +147,9 @@ SSE workflow: `step_completed` inclui `rag_meta: { chunk_count, top_score }`.
 - Document loaders para PDF/texto no ingest.
 - Modo retrieval-only: usar APIs de search sem `chat()` — alimentar agent downstream com contexto concatenado.
 
-## Plano de documentação
+## Plano de documentação ⏳ Fatia 3 (planejado)
+
+_Arquivos em `docs/` ainda não escritos._
 
 | Arquivo | Outline |
 |---------|---------|
