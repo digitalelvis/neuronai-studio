@@ -12,6 +12,15 @@
                     @if ($tool->type === 'builder')
                         <x-neuronai-studio::ui.description-item term="Tool Name"><code>{{ $tool->config['tool_name'] ?? '' }}</code></x-neuronai-studio::ui.description-item>
                         <x-neuronai-studio::ui.description-item term="Class"><code>{{ $tool->config['class_path'] ?? 'Not exported yet' }}</code></x-neuronai-studio::ui.description-item>
+                    @elseif ($tool->type === 'rag')
+                        <x-neuronai-studio::ui.description-item term="Tool Name"><code>{{ $tool->config['tool_name'] ?? '' }}</code></x-neuronai-studio::ui.description-item>
+                        <x-neuronai-studio::ui.description-item term="Knowledge Base ID">{{ $tool->config['knowledge_base_id'] ?? '—' }}</x-neuronai-studio::ui.description-item>
+                        @if (! empty($tool->config['top_k']))
+                            <x-neuronai-studio::ui.description-item term="Top K">{{ $tool->config['top_k'] }}</x-neuronai-studio::ui.description-item>
+                        @endif
+                        @if (isset($tool->config['threshold']) && $tool->config['threshold'] !== '')
+                            <x-neuronai-studio::ui.description-item term="Threshold">{{ $tool->config['threshold'] }}</x-neuronai-studio::ui.description-item>
+                        @endif
                     @else
                         <x-neuronai-studio::ui.description-item term="Method">{{ $tool->config['method'] ?? 'GET' }}</x-neuronai-studio::ui.description-item>
                         <x-neuronai-studio::ui.description-item term="URL"><code>{{ $tool->config['url'] ?? '' }}</code></x-neuronai-studio::ui.description-item>

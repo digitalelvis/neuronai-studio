@@ -5,7 +5,6 @@ namespace DigitalElvis\NeuronAIStudio\Runtime\Rag;
 use Closure;
 use DigitalElvis\NeuronAIStudio\Models\KnowledgeBase;
 use InvalidArgumentException;
-use NeuronAI\RAG\VectorStore\FileVectorStore;
 use NeuronAI\RAG\VectorStore\MemoryVectorStore;
 use NeuronAI\RAG\VectorStore\VectorStoreInterface;
 
@@ -65,7 +64,7 @@ class VectorStoreFactory
             $directory = (string) ($kb->vector_store_config['directory']
                 ?? config('neuronai-studio.rag.storage_path', storage_path('app/neuronai-studio/rag')));
 
-            return new FileVectorStore(
+            return new StudioFileVectorStore(
                 directory: $directory,
                 topK: $this->topK($kb, $options),
                 name: $kb->slug ?: (string) $kb->getKey(),

@@ -19,7 +19,7 @@ class Show extends Component
 
     public function getGeneratedPreviewProperty(): string
     {
-        if ($this->tool->type === 'webhook') {
+        if (in_array($this->tool->type, ['webhook', 'rag'], true)) {
             return '';
         }
 
