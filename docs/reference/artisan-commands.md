@@ -101,3 +101,13 @@ php artisan neuron:install
 ```
 
 Configure LLM provider credentials through Neuron Laravel's config.
+
+## Queue worker (async workflow runs)
+
+When `NEURONAI_STUDIO_ASYNC_RUNS_ENABLED=true`, workflow runs and HITL resumes are processed by Laravel queue jobs. A worker must be running:
+
+```bash
+php artisan queue:work --queue=default
+```
+
+Use the queue name from `NEURONAI_STUDIO_QUEUE` (default `default`). See [Runtime & Traces](../guides/workflows/runtime-and-traces.md#queue-runner).

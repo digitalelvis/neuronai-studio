@@ -42,8 +42,11 @@ Credentials are **not** stored here — they come from `config/neuron.php`.
 
 | Key | Env | Default | Description |
 |-----|-----|---------|-------------|
-| `queue` | `NEURONAI_STUDIO_QUEUE` | `default` | Queue name (reserved for future async runs) |
+| `async_runs_enabled` | `NEURONAI_STUDIO_ASYNC_RUNS_ENABLED` | `false` | Enable async workflow runs via queue jobs (SSE harness remains default when false) |
+| `queue` | `NEURONAI_STUDIO_QUEUE` | `default` | Queue name for `RunWorkflowJob` and `ResumeWorkflowJob` |
 | `queue_connection` | `NEURONAI_STUDIO_QUEUE_CONNECTION` | `null` | Queue connection override |
+| `queue_tries` | `NEURONAI_STUDIO_QUEUE_TRIES` | `1` | Max attempts for workflow queue jobs |
+| `queue_backoff` | `NEURONAI_STUDIO_QUEUE_BACKOFF` | `30` | Seconds before retry after failure |
 
 ## Inspector
 
