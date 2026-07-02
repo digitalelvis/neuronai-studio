@@ -96,6 +96,13 @@ class DocumentIngestService
         try {
             $chunks = $chunker();
 
+            if ($chunks === []) {
+                throw new \RuntimeException(
+                    'No text chunks were extracted from the document. '
+                    .'Check the file format, PDF text extraction (pdftotext), or try pasting plain text.'
+                );
+            }
+
             foreach ($chunks as $chunk) {
                 $chunk->sourceType = $record->source_type;
                 $chunk->sourceName = $record->name;

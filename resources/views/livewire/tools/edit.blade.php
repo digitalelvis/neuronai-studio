@@ -3,6 +3,7 @@
         window.__NEURONAI_TOOL_BUILDER_CONFIG = {
             wireId: @json($this->getId()),
             cancelUrl: @json(route('neuronai-studio.tools.index')),
+            knowledgeBases: @json($knowledgeBases),
             initial: {
                 toolKind: @json($toolKind),
                 name: @json($name),
@@ -13,6 +14,9 @@
                 headersJson: @json($headersJson),
                 invokeBody: @json($invokeBody),
                 inputSchema: @json($inputSchema),
+                knowledgeBaseId: @json($knowledgeBaseId),
+                topK: @json($topK),
+                threshold: @json($threshold),
             },
         };
     </script>

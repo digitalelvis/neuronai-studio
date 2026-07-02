@@ -4,6 +4,7 @@ namespace DigitalElvis\NeuronAIStudio\Runtime;
 
 use DigitalElvis\NeuronAIStudio\Models\ToolDefinition;
 use DigitalElvis\NeuronAIStudio\Registry\ToolRegistry;
+use DigitalElvis\NeuronAIStudio\Tools\KnowledgeBaseTool;
 use DigitalElvis\NeuronAIStudio\Tools\WebhookTool;
 use Illuminate\Support\Str;
 use NeuronAI\MCP\McpConnector;
@@ -132,6 +133,10 @@ class ToolResolver
 
         if (in_array($definition->type, ['builder', 'codegen'], true) && ! empty($definition->config['class_path'])) {
             return $this->resolveClass($definition->config['class_path'], $definition->config);
+        }
+
+        if ($definition->type === 'rag') {
+            return KnowledgeBaseTool::fromDefinition($definition);
         }
 
         return WebhookTool::fromDefinition($definition);
