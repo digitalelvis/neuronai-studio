@@ -212,6 +212,8 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
         Livewire::component('neuronai-studio.tools.edit', Http\Livewire\Tools\Edit::class);
         Livewire::component('neuronai-studio.tools.show', Http\Livewire\Tools\Show::class);
         Livewire::component('neuronai-studio.tools.registry', Http\Livewire\Tools\RegistryShow::class);
+        Livewire::component('neuronai-studio.knowledge-bases.index', Http\Livewire\KnowledgeBases\Index::class);
+        Livewire::component('neuronai-studio.knowledge-bases.edit', Http\Livewire\KnowledgeBases\Edit::class);
         Livewire::component('neuronai-studio.mcp-servers.index', Http\Livewire\McpServers\Index::class);
         Livewire::component('neuronai-studio.mcp-servers.edit', Http\Livewire\McpServers\Edit::class);
         Livewire::component('neuronai-studio.workflows.index', Http\Livewire\Workflows\Index::class);
