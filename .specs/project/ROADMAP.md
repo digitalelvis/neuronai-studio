@@ -16,14 +16,14 @@ Grafos cíclicos + agentes multimodais + RAG real. Entrega o padrão end-to-end 
 
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
-| 1 | `workflow-cyclic-graphs` | **in progress** | [spec](../features/workflow-cyclic-graphs/spec.md) · [design](../features/workflow-cyclic-graphs/design.md) |
-| 2 | `autonomous-multimodal-agents` | **partial** (baseline `v0.1.2`) | [spec](../features/autonomous-multimodal-agents/spec.md) · [design](../features/autonomous-multimodal-agents/design.md) |
-| 3 | `workflow-rag` | planned | [spec](../features/workflow-rag/spec.md) |
+| 1 | `workflow-cyclic-graphs` | **done** (P0+P1) | [spec](../features/workflow-cyclic-graphs/spec.md) · [design](../features/workflow-cyclic-graphs/design.md) · [tasks](../features/workflow-cyclic-graphs/tasks.md) |
+| 2 | `autonomous-multimodal-agents` | **mostly done** | [spec](../features/autonomous-multimodal-agents/spec.md) · [design](../features/autonomous-multimodal-agents/design.md) |
+| 3 | `workflow-rag` | **blocked** (stub) | [spec](../features/workflow-rag/spec.md) |
 
 **Critério de conclusão M1:** Template `autonomous-lead-qualification` executável no test harness com loop, agent com tools, anexo PDF/imagem, e opcionalmente nó RAG upstream.
 
-**Etapa atual (v0.2.x):** Feature 1 — `workflow-cyclic-graphs`  
-Próximos passos: `tasks.md` → nó `loop` no registry/canvas → `GraphExecutionLoop` + `max_steps` → validação de ciclos → template `lead-qualification-loop`.
+**Etapa atual (v0.2.x):** Feature 3 — `workflow-rag` (KnowledgeBase + executor real) ou polish AMA-09 docs antes de tag `v0.2.0`.  
+**Próximo passo:** Implementar `KnowledgeBase` + `RagNodeExecutor` real, ou release `v0.2.0` sem RAG upstream se critério opcional for aceito.
 
 ### M2 — Capacidades de agente no workflow (P1) `planned`
 

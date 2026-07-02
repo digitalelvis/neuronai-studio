@@ -14,6 +14,7 @@ const ICONS = {
     wrench: '🔧',
     search: '🔍',
     clock: '⏱',
+    repeat: '↻',
     circle: '●',
 };
 
@@ -42,6 +43,28 @@ function NodeHandles({ nodeType }) {
                     position={Position.Right}
                     id="false"
                     className="ab-flow-handle ab-flow-handle-false"
+                    style={{ top: '65%' }}
+                />
+            </>
+        );
+    }
+
+    if (nodeType === 'loop') {
+        return (
+            <>
+                <Handle type="target" position={Position.Left} id="default" className="ab-flow-handle" />
+                <Handle
+                    type="source"
+                    position={Position.Right}
+                    id="continue"
+                    className="ab-flow-handle ab-flow-handle-continue"
+                    style={{ top: '35%' }}
+                />
+                <Handle
+                    type="source"
+                    position={Position.Right}
+                    id="exit"
+                    className="ab-flow-handle ab-flow-handle-exit"
                     style={{ top: '65%' }}
                 />
             </>
@@ -103,6 +126,17 @@ export default function WorkflowNode({ id, data, selected }) {
                 <div className="ab-flow-node-handles-labels">
                     <span className="ab-flow-handle-label ab-flow-handle-label-true">true</span>
                     <span className="ab-flow-handle-label ab-flow-handle-label-false">false</span>
+                </div>
+            )}
+            {data.nodeType === 'loop' && (
+                <div className="ab-flow-node-handles-labels">
+                    <span className="ab-flow-handle-label ab-flow-handle-label-continue">continue</span>
+                    <span className="ab-flow-handle-label ab-flow-handle-label-exit">exit</span>
+                </div>
+            )}
+            {data.nodeType === 'loop' && data.loopIteration && (
+                <div className="ab-flow-node-meta ab-flow-node-loop-iteration">
+                    {data.loopIteration.iteration} / {data.loopIteration.maxSteps}
                 </div>
             )}
         </div>

@@ -43,12 +43,15 @@ sequenceDiagram
 
 | Event | Description |
 |-------|-------------|
-| `step_start` | Node execution begins |
-| `step_complete` | Node finished with output |
-| `token` | Streaming text from agent/LLM nodes |
-| `error` | Execution failure |
-| `human_required` | Workflow paused at Human node |
-| `done` | Run complete |
+| `thread` | Workflow chat thread ID for the run |
+| `step_started` | Node execution begins |
+| `step_completed` | Node finished with handle and duration |
+| `loop_iteration` | Loop node incremented (`iteration`, `max_steps`, `node_id`) |
+| `tool_call` | Agent node invoked a tool |
+| `tool_result` | Tool returned a result during agent step |
+| `human_input_required` | Workflow paused at Human node |
+| `trace_completed` | Run finished successfully |
+| `trace_failed` | Execution failure |
 
 ## Trace records
 

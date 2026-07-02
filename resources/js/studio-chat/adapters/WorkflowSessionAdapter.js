@@ -65,7 +65,15 @@ export class WorkflowSessionAdapter {
 
     async *consumeStream(stream) {
         for await (const packet of stream) {
-            if (this.syncCanvas && ['step_started', 'step_completed', 'trace_completed', 'trace_failed'].includes(packet.event)) {
+            const canvasEvents = [
+                'step_started',
+                'step_completed',
+                'loop_iteration',
+                'trace_completed',
+                'trace_failed',
+            ];
+
+            if (this.syncCanvas && canvasEvents.includes(packet.event)) {
                 window.dispatchEvent(
                     new CustomEvent('canvas-execution-event', {
                         detail: { event: packet.event, ...(typeof packet.data === 'object' ? packet.data : {}) },

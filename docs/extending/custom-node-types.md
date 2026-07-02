@@ -74,9 +74,19 @@ Custom node fields appear in the inspector when you extend the React inspector c
 
 See the registered types in `NeuronAIStudioServiceProvider::registerNodeTypes()`:
 
-- start, stop, agent, llm, condition, set_state, tool, rag, delay, mcp, human
+- start, stop, agent, llm, condition, set_state, loop, tool, rag, delay, mcp, human
 
 Use these as reference implementations in `src/Runtime/NodeExecutors/`.
+
+### Nodes with guardrails
+
+The **Loop** node is the canonical example of a guardrailed node type:
+
+- `max_steps` per node prevents unbounded cycles
+- `loop.global_max_steps` caps total executions
+- `GraphValidator` requires authorized back-edges to pass through a Loop node
+
+When adding custom nodes that can repeat or recurse, follow the same pattern: explicit limits, validation at save time, and a dedicated exception at runtime.
 
 ## Configuration
 

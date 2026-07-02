@@ -1,0 +1,168 @@
+{
+  "meta": {
+    "id": "autonomous-lead-qualification",
+    "name": "Autonomous Lead Qualification",
+    "description": "Conversational agent loop that qualifies leads from multimodal input, asks for missing fields via human-in-the-loop, and completes when an email is found.",
+    "complexity": "intermediate",
+    "category": "sales",
+    "tags": ["agent", "loop", "multimodal", "tools", "human"],
+    "agents": ["lead-qualifier"]
+  },
+  "graph": {
+    "version": 1,
+    "nodes": [
+      {
+        "id": "start_1",
+        "type": "start",
+        "position": { "x": 80, "y": 220 },
+        "data": {}
+      },
+      {
+        "id": "set_1",
+        "type": "set_state",
+        "position": { "x": 240, "y": 220 },
+        "data": {
+          "key": "lead_message",
+          "from_key": "input"
+        }
+      },
+      {
+        "id": "loop_1",
+        "type": "loop",
+        "position": { "x": 420, "y": 220 },
+        "data": {
+          "max_steps": 10,
+          "state_key": "lead_profile",
+          "operator": "contains",
+          "value": "@"
+        }
+      },
+      {
+        "id": "agent_qualify",
+        "type": "agent",
+        "position": { "x": 640, "y": 320 },
+        "data": {
+          "agent_ref": "lead-qualifier",
+          "message": "Qualify this lead from the conversation and any attachments.\n\nConversation:\n{{lead_message}}\n\nIf you can extract a valid email, respond with:\nName: ...\nEmail: ...\nInterest: ...\n\nIf the email is still missing, ask ONE friendly question for the most important missing field. Do not invent data.",
+          "output_key": "lead_profile"
+        }
+      },
+      {
+        "id": "cond_has_email",
+        "type": "condition",
+        "position": { "x": 860, "y": 320 },
+        "data": {
+          "state_key": "lead_profile",
+          "operator": "contains",
+          "value": "@"
+        }
+      },
+      {
+        "id": "human_collect",
+        "type": "human",
+        "position": { "x": 1080, "y": 420 },
+        "data": {
+          "prompt": "{{lead_profile}}",
+          "output_key": "human_response"
+        }
+      },
+      {
+        "id": "set_append_message",
+        "type": "set_state",
+        "position": { "x": 1080, "y": 520 },
+        "data": {
+          "key": "lead_message",
+          "append_from_key": "human_response"
+        }
+      },
+      {
+        "id": "set_qualified",
+        "type": "set_state",
+        "position": { "x": 640, "y": 120 },
+        "data": {
+          "key": "result",
+          "value": "qualified"
+        }
+      },
+      {
+        "id": "stop_qualified",
+        "type": "stop",
+        "position": { "x": 860, "y": 120 },
+        "data": {}
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge_start_set",
+        "source": "start_1",
+        "target": "set_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_set_loop",
+        "source": "set_1",
+        "target": "loop_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_loop_continue",
+        "source": "loop_1",
+        "target": "agent_qualify",
+        "sourceHandle": "continue",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_agent_cond",
+        "source": "agent_qualify",
+        "target": "cond_has_email",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_cond_loop",
+        "source": "cond_has_email",
+        "target": "loop_1",
+        "sourceHandle": "true",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_cond_human",
+        "source": "cond_has_email",
+        "target": "human_collect",
+        "sourceHandle": "false",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_human_append",
+        "source": "human_collect",
+        "target": "set_append_message",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_append_loop",
+        "source": "set_append_message",
+        "target": "loop_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_loop_exit",
+        "source": "loop_1",
+        "target": "set_qualified",
+        "sourceHandle": "exit",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_set_stop",
+        "source": "set_qualified",
+        "target": "stop_qualified",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      }
+    ],
+    "viewport": { "x": 0, "y": 0, "zoom": 1 }
+  }
+}

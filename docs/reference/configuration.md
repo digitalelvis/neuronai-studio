@@ -65,6 +65,13 @@ Credentials are **not** stored here — they come from `config/neuron.php`.
 | `workflow_scan_paths` | `app/Neuron`, `app/Neuron/Workflows` | PHP workflow class scan paths |
 | `workflow_json_paths` | `workflows/` | JSON workflow import paths |
 
+### Loop defaults
+
+| Key | Env | Default | Description |
+|-----|-----|---------|-------------|
+| `loop.default_max_steps` | — | `10` | Default `max_steps` when a Loop node omits the field |
+| `loop.global_max_steps` | — | `1000` | Hard cap on total node executions per run |
+
 ## Templates
 
 | Key | Env | Default | Description |
