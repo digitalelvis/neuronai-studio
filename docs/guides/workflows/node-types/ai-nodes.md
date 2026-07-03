@@ -13,6 +13,7 @@ AI nodes invoke language models, agents, tools, and MCP connectors within a work
 | `output_key` | State key for the response (default: `agent_response`) |
 | `structured` | When `true`, validate and store typed output instead of plain text |
 | `output_class` | FQCN or short name of a PHP output class (required when `structured` is on) |
+| `require_tool_approval` | Optional per-node override. Pause for human approval before the agent runs any tool (see [Tool approval](#tool-approval)) |
 
 Example message:
 
@@ -20,6 +21,28 @@ Example message:
 Customer inquiry: {{input}}
 Previous context: {{rag_context}}
 ```
+
+### Tool approval
+
+Agent nodes can require a human to approve tool calls before they execute. Approval is enabled either on the [agent definition](../../agents/creating-agents.md#tool-approval) (**Require tool approval**) or per node via the `require_tool_approval` override in the node data.
+
+When enabled and the model requests a tool:
+
+1. The runtime applies the NeuronAI `ToolApproval` middleware to the agent.
+2. Execution pauses **before** the tool runs; the trace status becomes `awaiting_tool_approval`.
+3. The test harness renders an inline **Approve / Reject** card with the pending tool name and arguments.
+4. Approving runs the tool and continues; rejecting skips it and (optionally) routes to a `rejected` handle.
+
+Wire an optional `rejected` handle from the Agent node to branch execution when a tool is rejected:
+
+```mermaid
+flowchart TD
+    Start[Start] --> Agent[Agent Node]
+    Agent -->|default| Next[Continue]
+    Agent -->|rejected| Halt[Rejection branch]
+```
+
+The node override precedes the agent definition flag: when `require_tool_approval` is present in the node data it wins; otherwise the agent's own setting applies. See [Human-in-the-Loop → Tool approval](../human-in-the-loop.md#tool-approval) and [Runtime & Traces](../runtime-and-traces.md#tool-approval-pause-awaiting_tool_approval).
 
 <!-- SCREENSHOT: workflows-inspector-agent -->
 > **Screenshot pending:** Agent node inspector fields.
@@ -207,6 +230,7 @@ flowchart TD
 
 - `AgentNodeExecutor`, `LlmNodeExecutor`, `ToolNodeExecutor`, `McpNodeExecutor`, `RagNodeExecutor`
 - `StructuredOutputResolver`, `OutputClassRegistry`, `AgentRunner::structuredInline`
+- `ToolApprovalRequiredException`, `AgentRunner` (`ToolApproval` middleware, `resumeInlineApproval`)
 
 ## See also
 

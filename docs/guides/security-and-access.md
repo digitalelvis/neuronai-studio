@@ -71,6 +71,21 @@ An empty array allows all commands.
 
 HTTP MCP servers use `token_env` to reference bearer tokens from `.env` — never hardcode secrets in config files.
 
+## Approving sensitive tools
+
+Agents can call tools that perform destructive or high-impact actions (deleting files, transferring money, sending emails). **Tool approval** adds a human gate: when enabled on an agent (or overridden on a workflow Agent node), execution pauses before any tool runs and requires an explicit approve/reject decision in the workflow test harness.
+
+| Control | Recommendation |
+|---------|----------------|
+| Destructive tools | Enable **Require tool approval** on agents that can delete, pay, or externally message |
+| Review payload | Inspect the tool name and arguments in the approval card before approving |
+| Rejections | Wire a `rejected` handle on the Agent node so denied actions branch to a safe path instead of silently continuing |
+| Tool implementation | Use class-based tools — the paused interrupt is serialized into the checkpoint and inline `Closure` callbacks cannot be serialized |
+
+> Approval currently gates **all** tools an agent requests (there is no per-tool allowlist yet), so enable it for agents whose entire tool surface warrants oversight.
+
+See [Human-in-the-Loop → Tool approval](workflows/human-in-the-loop.md#tool-approval) and [Creating Agents → Tool approval](agents/creating-agents.md#tool-approval).
+
 ## Production recommendations
 
 | Control | Recommendation |
@@ -81,6 +96,7 @@ HTTP MCP servers use `token_env` to reference bearer tokens from `.env` — neve
 | MCP stdio | Keep command allowlist minimal |
 | Attachments | Use dedicated disk with size limits |
 | API keys | Keep in `config/neuron.php` / `.env` only |
+| Sensitive tools | Require tool approval for destructive agent actions |
 
 ## File uploads
 

@@ -58,9 +58,53 @@ Downstream nodes reference the reply with `{{human_response}}` in templates.
 
 ![Human-in-the-loop](../../assets/screenshots/workflows-hitl.png)
 
+## Tool approval
+
+Tool approval is a HITL variant scoped to **agent tool calls** rather than a dedicated Human node. When an Agent node has approval enabled, the workflow pauses right before a tool runs and waits for a human to approve or reject it.
+
+### Tool approval vs Human node
+
+| Aspect | Human node | Tool approval |
+|--------|-----------|---------------|
+| Trigger | Graph reaches a `human` node | Agent node's model requests a tool |
+| Trace status | `awaiting_input` | `awaiting_tool_approval` |
+| SSE event | `human_input_required` | `tool_approval_required` |
+| Resume input | Free-text reply (`message`) | Decision (`approval: approve\|reject`) + optional feedback |
+| UI | Composer text reply | Inline **Approve / Reject** card (no modal) |
+| Reject routing | n/a | Optional `rejected` handle on the agent node |
+
+### Enabling it
+
+Turn on **Require tool approval** on the [Agent definition](../agents/creating-agents.md#tool-approval), or override it per node with `require_tool_approval` in the agent node data. See [AI Nodes](node-types/ai-nodes.md#tool-approval) for node configuration.
+
+### Flow
+
+```mermaid
+sequenceDiagram
+    participant UI as StudioChat
+    participant Runner as WorkflowRunner
+    participant Agent as AgentNodeExecutor
+    participant TA as ToolApproval middleware
+
+    UI->>Runner: run/stream
+    Runner->>Agent: execute agent node
+    Agent->>TA: tool call pending
+    TA-->>Runner: ToolApprovalRequiredException
+    Runner-->>UI: SSE tool_approval_required (pending_tools)
+    Note over UI: Inline card — Approve / Reject
+    UI->>Runner: resume { approval }
+    Runner-->>UI: SSE tool_approval_resolved + continues from same node
+```
+
+In the test harness, the pending tools and their arguments render in an inline `ToolApprovalCard`. Approving runs the tool and continues; rejecting skips it (optionally routing to the `rejected` handle) and forwards your feedback to the agent.
+
+> **Serialization note:** the paused agent's interrupt is serialized into the checkpoint, so Studio tools should be **class-based**. Tools built with inline `Closure` callbacks cannot be serialized across the pause.
+
+See [Runtime & Traces](runtime-and-traces.md#tool-approval-pause-awaiting_tool_approval) for the checkpoint shape and resume payload.
+
 ## Checkpoint storage
 
-Checkpoints are stored on the trace record. The runtime uses `HumanInputRequiredException` to signal the pause without marking the trace as failed.
+Checkpoints are stored on the trace record. The runtime uses `HumanInputRequiredException` to signal the pause without marking the trace as failed. Tool approval uses `ToolApprovalRequiredException` and the `awaiting_tool_approval` status.
 
 ## Template example
 
@@ -76,8 +120,9 @@ This workflow combines intent classification, RAG retrieval, and human approval 
 
 - `HumanNodeExecutor`
 - `HumanInputRequiredException`
+- `ToolApprovalRequiredException`, `AgentNodeExecutor`, `AgentRunner`
 - `WorkflowTraceResumeController`
-- `WorkflowThread.jsx` (resume UI)
+- `WorkflowThread.jsx`, `ToolApprovalCard.jsx` (resume UI)
 
 ## See also
 

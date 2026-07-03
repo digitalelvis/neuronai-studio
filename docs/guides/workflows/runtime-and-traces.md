@@ -51,8 +51,53 @@ sequenceDiagram
 | `tool_result` | Tool returned a result during agent step |
 | `rag_query` | RAG node completed retrieval (`query`, `knowledge_base_id`, `chunk_count`, `top_score`) |
 | `human_input_required` | Workflow paused at Human node |
+| `tool_approval_required` | Agent node paused before running a tool (`node_id`, `pending_tools`, `message`) |
+| `tool_approval_resolved` | Approval decision applied on resume (`approved: bool`) |
 | `trace_completed` | Run finished successfully |
 | `trace_failed` | Execution failure |
+
+## Tool approval pause (`awaiting_tool_approval`)
+
+When an Agent node has [tool approval](human-in-the-loop.md#tool-approval) enabled and the model requests a tool, the runner pauses **before** the tool executes and persists a distinct `awaiting_tool_approval` status (separate from the Human node's `awaiting_input`).
+
+The checkpoint stores everything needed to resume from the same node without re-running earlier steps:
+
+```php
+[
+    'status' => 'awaiting_tool_approval',
+    'awaiting_node_id' => 'agent_1',
+    'checkpoint' => [
+        'state' => [/* state snapshot */],
+        'node_id' => 'agent_1',
+        'pending_tools' => [
+            ['name' => 'delete_file', 'arguments' => ['path' => '/tmp/report.txt'], 'call_id' => 'call_1'],
+        ],
+        'interrupt' => '/* serialized NeuronAI WorkflowInterrupt */',
+    ],
+]
+```
+
+### Resume payload
+
+Resume with an approval decision instead of a chat message:
+
+```
+POST /neuronai-studio/workflows/traces/{id}/resume/stream
+```
+
+```json
+{
+  "node_id": "agent_1",
+  "approval": "approve",
+  "message": "optional feedback (used on reject)"
+}
+```
+
+- `approval: "approve"` — the tool runs and the node continues on `default`.
+- `approval: "reject"` — the tool is skipped with the rejection feedback; if the Agent node has a `rejected` handle wired, execution routes there, otherwise it continues on `default`.
+- `message` is optional; when rejecting it is forwarded to the model as the user's instruction.
+
+Async resume (`POST /workflows/traces/{id}/resume`) accepts the same `approval` field and enqueues `ResumeWorkflowJob`.
 
 ## Trace records
 
