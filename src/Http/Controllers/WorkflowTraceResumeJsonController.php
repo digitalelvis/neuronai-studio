@@ -20,7 +20,7 @@ class WorkflowTraceResumeJsonController
             ], 501);
         }
 
-        if ($trace->status !== 'awaiting_input') {
+        if (! in_array($trace->status, ['awaiting_input', 'awaiting_tool_approval'], true)) {
             return response()->json([
                 'message' => 'Trace is not awaiting human input.',
             ], 422);
@@ -28,9 +28,12 @@ class WorkflowTraceResumeJsonController
 
         $validated = $request->validate([
             'node_id' => 'nullable|string',
+            'approval' => 'nullable|in:approve,reject',
         ]);
 
-        $chat = $this->validateChatPayload($request);
+        $approval = $validated['approval'] ?? null;
+
+        $chat = $this->validateChatPayload($request, requireContent: $approval === null);
         $validated = array_merge($validated, $chat);
 
         $nodeId = (string) ($validated['node_id'] ?? $trace->awaiting_node_id ?? '');
@@ -46,6 +49,7 @@ class WorkflowTraceResumeJsonController
             $nodeId,
             $validated['message'],
             $validated['attachments'] ?? [],
+            $approval,
         );
 
         return response()->json([

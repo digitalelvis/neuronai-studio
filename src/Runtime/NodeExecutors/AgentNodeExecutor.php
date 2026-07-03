@@ -5,6 +5,7 @@ namespace DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors;
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use DigitalElvis\NeuronAIStudio\Runtime\AgentRunner;
 use DigitalElvis\NeuronAIStudio\Runtime\BuilderWorkflowState;
+use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ToolApprovalRequiredException;
 use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
 use DigitalElvis\NeuronAIStudio\Runtime\MessageFactory;
 use DigitalElvis\NeuronAIStudio\Runtime\StateTemplateInterpolator;
@@ -40,6 +41,17 @@ class AgentNodeExecutor implements NodeExecutorInterface
 
         $definition = isset($data['agent_id']) ? AgentDefinition::findOrFail($data['agent_id']) : null;
 
+        $resume = $state->get('__tool_approval_resume');
+        if (is_array($resume) && ($resume['node_id'] ?? null) === $nodeId) {
+            $state->set('__tool_approval_resume', null);
+
+            return $this->resumeApproval($nodeId, (string) $outputKey, $data, $definition, $threadKey, $resume, $state, $context);
+        }
+
+        $requireApproval = array_key_exists('require_tool_approval', $data)
+            ? (bool) $data['require_tool_approval']
+            : (bool) ($definition?->require_tool_approval ?? false);
+
         if ($data['structured'] ?? false) {
             $outputClass = $this->outputResolver->resolve((string) ($data['output_class'] ?? ''));
             $config = $definition !== null
@@ -57,31 +69,96 @@ class AgentNodeExecutor implements NodeExecutorInterface
             return 'default';
         }
 
-        if ($definition !== null) {
-            $response = $this->agentRunner->runInline([
+        try {
+            if ($definition !== null) {
+                $response = $this->agentRunner->runInline([
+                    'provider' => $definition->provider,
+                    'model' => $definition->model,
+                    'instructions' => $definition->instructions,
+                    'tools' => $definition->tools ?? [],
+                    'require_tool_approval' => $requireApproval,
+                ], $userMessage, $definition, $threadKey);
+            } else {
+                $response = $this->agentRunner->runInline(
+                    array_merge($data, ['require_tool_approval' => $requireApproval]),
+                    $userMessage,
+                    null,
+                    $threadKey,
+                );
+            }
+        } catch (ToolApprovalRequiredException $exception) {
+            throw new ToolApprovalRequiredException($nodeId, $exception->pendingTools, $exception->approvalMessage, $exception->serializedInterrupt);
+        }
+
+        $state->set($outputKey, $response->content);
+        $this->emitToolEvents($nodeId, $response->toolEvents, $state);
+
+        return 'default';
+    }
+
+    /**
+     * Resume a paused agent node after a human tool-approval decision.
+     *
+     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>  $resume
+     */
+    protected function resumeApproval(
+        string $nodeId,
+        string $outputKey,
+        array $data,
+        ?AgentDefinition $definition,
+        ?string $threadKey,
+        array $resume,
+        WorkflowState $state,
+        GraphContext $context,
+    ): string {
+        $decision = (string) ($resume['decision'] ?? 'approve');
+        $serialized = (string) ($resume['interrupt'] ?? '');
+        $feedback = is_string($resume['feedback'] ?? null) && $resume['feedback'] !== '' ? $resume['feedback'] : null;
+
+        $config = $definition !== null
+            ? [
                 'provider' => $definition->provider,
                 'model' => $definition->model,
                 'instructions' => $definition->instructions,
                 'tools' => $definition->tools ?? [],
-            ], $userMessage, $definition, $threadKey);
-        } else {
-            $response = $this->agentRunner->runInline($data, $userMessage, null, $threadKey);
+                'require_tool_approval' => true,
+            ]
+            : array_merge($data, ['require_tool_approval' => true]);
+
+        try {
+            $response = $this->agentRunner->resumeInlineApproval($config, $serialized, $decision, $feedback, $definition, $threadKey);
+        } catch (ToolApprovalRequiredException $exception) {
+            throw new ToolApprovalRequiredException($nodeId, $exception->pendingTools, $exception->approvalMessage, $exception->serializedInterrupt);
         }
 
         $state->set($outputKey, $response->content);
+        $this->emitToolEvents($nodeId, $response->toolEvents, $state);
 
-        if ($state instanceof BuilderWorkflowState) {
-            foreach ($response->toolEvents as $event) {
-                $eventName = ($event['type'] ?? '') === 'result' ? 'tool_result' : 'tool_call';
-                $state->emitStep($eventName, [
-                    'node_id' => $nodeId,
-                    'name' => $event['name'] ?? 'tool',
-                    'inputs' => is_array($event['inputs'] ?? null) ? $event['inputs'] : [],
-                    'result' => $event['result'] ?? null,
-                ]);
-            }
+        if ($decision === 'reject' && $context->targetForHandle($nodeId, 'rejected') !== null) {
+            return 'rejected';
         }
 
         return 'default';
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $toolEvents
+     */
+    protected function emitToolEvents(string $nodeId, array $toolEvents, WorkflowState $state): void
+    {
+        if (! $state instanceof BuilderWorkflowState) {
+            return;
+        }
+
+        foreach ($toolEvents as $event) {
+            $eventName = ($event['type'] ?? '') === 'result' ? 'tool_result' : 'tool_call';
+            $state->emitStep($eventName, [
+                'node_id' => $nodeId,
+                'name' => $event['name'] ?? 'tool',
+                'inputs' => is_array($event['inputs'] ?? null) ? $event['inputs'] : [],
+                'result' => $event['result'] ?? null,
+            ]);
+        }
     }
 }

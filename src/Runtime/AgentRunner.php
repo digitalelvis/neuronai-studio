@@ -8,14 +8,20 @@ use DigitalElvis\NeuronAIStudio\Support\ChatThreadKey;
 use DigitalElvis\NeuronAIStudio\Support\PlaygroundContext;
 use DigitalElvis\NeuronAIStudio\Support\ProviderParameters;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\StructuredOutputValidationException;
+use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ToolApprovalRequiredException;
 use Illuminate\Support\Str;
 use Generator;
+use NeuronAI\Agent\Events\ToolCallEvent;
+use NeuronAI\Agent\Middleware\ToolApproval;
 use NeuronAI\Chat\Messages\AssistantMessage;
 use NeuronAI\Chat\Messages\Stream\Chunks\StreamChunk;
 use NeuronAI\Chat\Messages\UserMessage;
 use NeuronAI\Exceptions\AgentException;
 use NeuronAI\Exceptions\ProviderException;
 use NeuronAI\Testing\FakeAIProvider;
+use NeuronAI\Workflow\Interrupt\ApprovalRequest;
+use NeuronAI\Workflow\Interrupt\WorkflowInterrupt;
+use NeuronAI\Workflow\Persistence\InMemoryPersistence;
 
 class AgentRunner
 {
@@ -36,6 +42,7 @@ class AgentRunner
             'model' => $definition->model,
             'instructions' => $definition->instructions,
             'tools' => $definition->tools ?? [],
+            'require_tool_approval' => (bool) $definition->require_tool_approval,
         ], $message, $definition, fake: $fake);
     }
 
@@ -48,6 +55,7 @@ class AgentRunner
             'model' => $definition->model,
             'instructions' => $definition->instructions,
             'tools' => $definition->tools ?? [],
+            'require_tool_approval' => (bool) $definition->require_tool_approval,
         ]);
     }
 
@@ -80,7 +88,92 @@ class AgentRunner
         $agent = $this->makeAgent($definition, $config, $threadKey, $fake);
         $userMessage = $message instanceof UserMessage ? $message : new UserMessage($message);
         $handler = $agent->chat($userMessage);
-        $content = $handler->getMessage()->getContent();
+
+        try {
+            $content = $handler->getMessage()->getContent();
+        } catch (WorkflowInterrupt $interrupt) {
+            throw $this->toolApprovalException($interrupt);
+        }
+
+        $events = $this->toolEvents->fromChatHistory($agent->getChatHistory());
+
+        return new AgentRunResult($content, $events);
+    }
+
+    /**
+     * Translate a NeuronAI ToolApproval interrupt into a Studio-level exception
+     * carrying the tools awaiting human approval. Non-approval interrupts bubble up.
+     */
+    protected function toolApprovalException(WorkflowInterrupt $interrupt): WorkflowInterrupt|ToolApprovalRequiredException
+    {
+        $request = $interrupt->getRequest();
+
+        if (! $request instanceof ApprovalRequest) {
+            return $interrupt;
+        }
+
+        $approvedIds = array_map(static fn ($action) => $action->id, $request->getActions());
+        $event = $interrupt->getEvent();
+        $pendingTools = [];
+
+        if ($event instanceof ToolCallEvent) {
+            foreach ($event->toolCallMessage->getTools() as $tool) {
+                if (! in_array($tool->getCallId(), $approvedIds, true)) {
+                    continue;
+                }
+
+                $pendingTools[] = [
+                    'name' => $tool->getName(),
+                    'arguments' => $tool->getInputs(),
+                    'call_id' => $tool->getCallId(),
+                ];
+            }
+        }
+
+        return new ToolApprovalRequiredException('', $pendingTools, $request->getMessage(), serialize($interrupt));
+    }
+
+    /**
+     * Resume an agent that paused for tool approval by restoring the persisted
+     * NeuronAI interrupt, applying the human decision, and re-running the node.
+     *
+     * @param  array<string, mixed>  $config
+     */
+    public function resumeInlineApproval(
+        array $config,
+        string $serializedInterrupt,
+        string $decision,
+        ?string $feedback = null,
+        ?AgentDefinition $definition = null,
+        ?string $threadKey = null,
+    ): AgentRunResult {
+        $agent = $this->makeAgent($definition, $config, $threadKey);
+
+        /** @var WorkflowInterrupt $interrupt */
+        $interrupt = unserialize($serializedInterrupt);
+        $request = $interrupt->getRequest();
+
+        if ($request instanceof ApprovalRequest) {
+            foreach ($request->getActions() as $action) {
+                $decision === 'reject'
+                    ? $action->reject($feedback)
+                    : $action->approve($feedback);
+            }
+        }
+
+        $persistence = new InMemoryPersistence;
+        $resumeToken = 'studio_tool_approval';
+        $persistence->save($resumeToken, $interrupt);
+        $agent->setPersistence($persistence, $resumeToken);
+
+        $handler = $agent->chat([], $request);
+
+        try {
+            $content = $handler->getMessage()->getContent();
+        } catch (WorkflowInterrupt $reinterrupt) {
+            throw $this->toolApprovalException($reinterrupt);
+        }
+
         $events = $this->toolEvents->fromChatHistory($agent->getChatHistory());
 
         return new AgentRunResult($content, $events);
@@ -171,7 +264,7 @@ class AgentRunner
 
         $tools = $this->toolResolver->resolveMany($config['tools'] ?? []);
 
-        return new DynamicAgent(
+        $agent = new DynamicAgent(
             $provider,
             $definition,
             (string) ($config['instructions'] ?? 'You are a helpful AI assistant.'),
@@ -179,6 +272,12 @@ class AgentRunner
             $this->mcpToolResolver,
             $threadKey,
         );
+
+        if (($config['require_tool_approval'] ?? false) === true) {
+            $agent->addGlobalMiddleware(new ToolApproval);
+        }
+
+        return $agent;
     }
 
     /**
