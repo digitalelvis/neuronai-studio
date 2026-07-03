@@ -7,13 +7,16 @@ use DigitalElvis\NeuronAIStudio\Commands\EvaluationsCommand;
 use DigitalElvis\NeuronAIStudio\Commands\ExportCommand;
 use DigitalElvis\NeuronAIStudio\Commands\InstallCommand;
 use DigitalElvis\NeuronAIStudio\Commands\MakeToolCommand;
+use DigitalElvis\NeuronAIStudio\Commands\PurgeCheckpointsCommand;
 use DigitalElvis\NeuronAIStudio\Http\Middleware\EnsureNeuronAIStudioAuthorized;
 use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\NodeTypeRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\OutputClassRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\ToolRegistry;
+use DigitalElvis\NeuronAIStudio\Runtime\Checkpoint\CheckpointService;
 use DigitalElvis\NeuronAIStudio\Runtime\McpToolResolver;
+use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\CheckpointingExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\Rag\DocumentIngestService;
 use DigitalElvis\NeuronAIStudio\Runtime\Rag\EmbeddingsFactory;
 use DigitalElvis\NeuronAIStudio\Runtime\Rag\RagRetrievalService;
@@ -69,6 +72,10 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
 
         $this->app->singleton(NodeExecutorRegistry::class, function ($app) {
             return new NodeExecutorRegistry;
+        });
+
+        $this->app->singleton(CheckpointService::class, function () {
+            return new CheckpointService;
         });
 
         $this->app->singleton(EmbeddingsFactory::class, function () {
@@ -196,9 +203,21 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
             'loop' => LoopNodeExecutor::class,
         ];
 
+        // Node types whose expensive execution can be skipped on resume when the
+        // node opts in via `data.checkpoint: true`.
+        $checkpointable = ['agent', 'llm', 'rag', 'tool'];
+        $checkpoints = $this->app->make(CheckpointService::class);
+
         foreach ($types as $type => $executorClass) {
             $registry->register($type, $executorClass);
-            $executors->register($type, $this->app->make($executorClass));
+
+            $executor = $this->app->make($executorClass);
+
+            if (in_array($type, $checkpointable, true)) {
+                $executor = new CheckpointingExecutor($executor, $checkpoints);
+            }
+
+            $executors->register($type, $executor);
         }
     }
 
@@ -236,6 +255,7 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
                 MakeToolCommand::class,
                 EvaluationsCommand::class,
                 EvalSuiteCommand::class,
+                PurgeCheckpointsCommand::class,
             ]);
         }
     }
