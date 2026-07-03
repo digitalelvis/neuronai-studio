@@ -84,6 +84,42 @@ class TemplateInstallerTest extends TestCase
         $this->assertStringContainsString('{{ rag_context.context }}', $agentNode['data']['message'] ?? '');
     }
 
+    public function test_install_parallel_support_triage_is_valid_and_wires_fork_join(): void
+    {
+        $workflow = app(TemplateInstaller::class)->installWorkflow('parallel-support-triage');
+
+        $result = app(GraphValidator::class)->validate($workflow->graph);
+        $this->assertTrue($result['valid'], implode(' ', $result['errors']));
+
+        $nodes = collect($workflow->graph['nodes'] ?? []);
+
+        $this->assertNotNull($nodes->first(fn (array $node) => ($node['type'] ?? '') === 'fork'));
+        $this->assertNotNull($nodes->first(fn (array $node) => ($node['type'] ?? '') === 'join'));
+
+        $checkpointed = $nodes->filter(fn (array $node) => ($node['data']['checkpoint'] ?? false) === true);
+        $this->assertGreaterThanOrEqual(3, $checkpointed->count());
+
+        $composer = AgentDefinition::where('slug', 'support-triage-composer')->first();
+        $this->assertNotNull($composer);
+
+        $agentNode = $nodes->first(fn (array $node) => ($node['type'] ?? '') === 'agent');
+        $this->assertNotNull($agentNode);
+        $this->assertSame($composer->id, $agentNode['data']['agent_id'] ?? null);
+        $this->assertArrayNotHasKey('agent_ref', $agentNode['data'] ?? []);
+    }
+
+    public function test_install_parallel_triage_hitl_is_valid_with_human_branch(): void
+    {
+        $workflow = app(TemplateInstaller::class)->installWorkflow('parallel-triage-hitl');
+
+        $result = app(GraphValidator::class)->validate($workflow->graph);
+        $this->assertTrue($result['valid'], implode(' ', $result['errors']));
+
+        $nodes = collect($workflow->graph['nodes'] ?? []);
+        $this->assertNotNull($nodes->first(fn (array $node) => ($node['type'] ?? '') === 'human'));
+        $this->assertNotNull($nodes->first(fn (array $node) => ($node['type'] ?? '') === 'fork'));
+    }
+
     public function test_install_workflow_reuses_existing_agents(): void
     {
         $installer = app(TemplateInstaller::class);

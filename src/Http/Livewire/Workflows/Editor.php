@@ -111,7 +111,7 @@ class Editor extends Component
         ]);
 
         $payload = array_merge($validated, [
-            'slug' => Str::slug($this->name),
+            'slug' => $this->resolveSlug($this->workflow),
             'graph' => $this->graph,
             'source' => 'studio',
             'locked' => false,
@@ -125,6 +125,28 @@ class Editor extends Component
         }
 
         session()->flash('success', 'Workflow saved.');
+    }
+
+    protected function resolveSlug(?WorkflowDefinition $existing = null): string
+    {
+        if ($existing?->exists && $existing->name === $this->name) {
+            return $existing->slug;
+        }
+
+        $baseSlug = Str::slug($this->name);
+        $slug = $baseSlug;
+        $counter = 1;
+
+        while (
+            WorkflowDefinition::where('slug', $slug)
+                ->when($existing?->exists, fn ($query) => $query->where('id', '!=', $existing->id))
+                ->exists()
+        ) {
+            $slug = "{$baseSlug}-{$counter}";
+            $counter++;
+        }
+
+        return $slug;
     }
 
     public function validateGraph(GraphValidator $validator): void

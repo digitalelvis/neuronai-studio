@@ -18,6 +18,7 @@ class AgentDefinition extends Model
         'model',
         'instructions',
         'tools',
+        'require_tool_approval',
         'memory_config',
         'metadata',
     ];
@@ -26,6 +27,7 @@ class AgentDefinition extends Model
     {
         return [
             'tools' => 'array',
+            'require_tool_approval' => 'boolean',
             'memory_config' => 'array',
             'metadata' => 'array',
         ];

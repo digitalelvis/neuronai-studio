@@ -78,6 +78,7 @@ class GraphValidator
         }
 
         $errors = array_merge($errors, $this->validateCycles($nodes, $edges));
+        $errors = array_merge($errors, $this->validateParallel($nodes, $edges));
 
         if (empty($errors) && ! empty($startNodes)) {
             $startId = array_values($startNodes)[0]['id'];
@@ -132,6 +133,93 @@ class GraphValidator
         }
 
         return $errors;
+    }
+
+    /**
+     * Validates fork/join pairing (PE-04):
+     *  - a fork must reach a join via its default handle,
+     *  - a fork must declare at least one branch edge (non-default handle),
+     *  - a join must be referenced by at least one fork.
+     *
+     * @param  array<int, array<string, mixed>>  $nodes
+     * @param  array<int, array<string, mixed>>  $edges
+     * @return array<int, string>
+     */
+    protected function validateParallel(array $nodes, array $edges): array
+    {
+        $errors = [];
+
+        $typeById = [];
+        foreach ($nodes as $node) {
+            $id = (string) ($node['id'] ?? '');
+            if ($id !== '') {
+                $typeById[$id] = (string) ($node['type'] ?? '');
+            }
+        }
+
+        $forkIds = array_keys(array_filter($typeById, fn (string $type) => $type === 'fork'));
+        $joinIds = array_keys(array_filter($typeById, fn (string $type) => $type === 'join'));
+
+        if ($forkIds === [] && $joinIds === []) {
+            return [];
+        }
+
+        $pairedJoins = [];
+
+        foreach ($forkIds as $forkId) {
+            $defaultTarget = null;
+            $branchCount = 0;
+
+            foreach ($edges as $edge) {
+                if (($edge['source'] ?? null) !== $forkId) {
+                    continue;
+                }
+
+                $handle = (string) ($edge['sourceHandle'] ?? 'default');
+
+                if ($handle === 'default') {
+                    $defaultTarget = $edge['target'] ?? null;
+                } else {
+                    $branchCount++;
+                }
+            }
+
+            $joinFromData = ($this->nodeData($nodes, $forkId)['join'] ?? null) ?: null;
+            $joinTarget = is_string($defaultTarget) && $defaultTarget !== '' ? $defaultTarget : $joinFromData;
+
+            if (! is_string($joinTarget) || ($typeById[$joinTarget] ?? '') !== 'join') {
+                $errors[] = "Fork node {$forkId} must connect to a join node via the default handle.";
+            } else {
+                $pairedJoins[$joinTarget] = true;
+            }
+
+            if ($branchCount < 1) {
+                $errors[] = "Fork node {$forkId} must declare at least one branch edge.";
+            }
+        }
+
+        foreach ($joinIds as $joinId) {
+            if (! isset($pairedJoins[$joinId])) {
+                $errors[] = "Join node {$joinId} has no paired fork node.";
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $nodes
+     * @return array<string, mixed>
+     */
+    protected function nodeData(array $nodes, string $nodeId): array
+    {
+        foreach ($nodes as $node) {
+            if ((string) ($node['id'] ?? '') === $nodeId) {
+                return is_array($node['data'] ?? null) ? $node['data'] : [];
+            }
+        }
+
+        return [];
     }
 
     protected function canReachStop(string $startId, array $nodes, array $edges): bool

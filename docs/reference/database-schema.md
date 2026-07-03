@@ -19,6 +19,7 @@ Configure with `NEURONAI_STUDIO_TABLE_PREFIX`.
 | `agent_mcp_server` | Agent ↔ MCP server pivot with filters |
 | `workflow_traces` | Workflow execution records |
 | `workflow_trace_steps` | Per-step input/output timeline |
+| `workflow_checkpoints` | Opt-in per-node result cache and native workflow interrupts |
 | `chat_messages` | Persisted agent playground messages |
 | `eval_suites` | Agent evaluation datasets and judge config |
 | `eval_runs` | Evaluation execution records |
@@ -34,6 +35,7 @@ erDiagram
     mcp_servers ||--o{ agent_mcp_server : exposes
     workflow_definitions ||--o{ workflow_traces : produces
     workflow_traces ||--o{ workflow_trace_steps : contains
+    workflow_traces ||--o{ workflow_checkpoints : caches
     agent_definitions ||--o{ chat_messages : threads
     agent_definitions ||--o{ eval_suites : has
     agent_definitions ||--o{ eval_suites : judges
@@ -58,8 +60,27 @@ erDiagram
 
 ### workflow_traces
 
-- `status` — running, completed, failed, waiting_for_human
-- `checkpoint` — serialized state for HITL resume
+- `status` — running, completed, failed, awaiting_input, awaiting_tool_approval
+- `checkpoint` — serialized state for HITL / tool-approval / parallel-branch resume
+
+### workflow_checkpoints
+
+Backs two features:
+
+- **Node checkpoints** (`data.checkpoint: true`) — cache an expensive node's state change so a
+  resumed run skips re-execution.
+- **Native workflow interrupts** — `EloquentPersistence` stores serialized NeuronAI
+  `WorkflowInterrupt` payloads for exported/native workflows.
+
+Columns:
+
+- `workflow_trace_id` — nullable FK to `workflow_traces` (null for native workflows), cascade delete
+- `workflow_key` — identifies native workflow checkpoints (nullable)
+- `node_id`, `iteration` — scope a checkpoint to a node and (for loops) an iteration
+- `input_hash` — `sha256` of the node's input state; a change invalidates the cache
+- `state_payload` — JSON state change (node checkpoint) or serialized interrupt (native)
+- `expires_at` — TTL expiry; purged by `neuronai-studio:checkpoints:purge`
+- Unique on (`workflow_trace_id`, `node_id`, `iteration`)
 
 ### eval_suites
 

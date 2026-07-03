@@ -15,6 +15,7 @@ class MigrationTest extends TestCase
         $this->assertTrue(\Schema::hasTable('workflow_definitions'));
         $this->assertTrue(\Schema::hasTable(StudioTables::name('workflow_traces')));
         $this->assertTrue(\Schema::hasTable(StudioTables::name('workflow_trace_steps')));
+        $this->assertTrue(\Schema::hasTable(StudioTables::name('workflow_checkpoints')));
         $this->assertTrue(\Schema::hasTable('mcp_servers'));
         $this->assertTrue(\Schema::hasTable('agent_mcp_server'));
     }

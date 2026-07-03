@@ -26,6 +26,7 @@ class ResumeWorkflowJob implements ShouldQueue
         public string $nodeId,
         public string $message,
         public array $attachments = [],
+        public ?string $approval = null,
     ) {
         $this->onQueue((string) config('neuronai-studio.queue', 'default'));
 
@@ -55,6 +56,7 @@ class ResumeWorkflowJob implements ShouldQueue
             $this->message,
             emitter: null,
             attachments: $this->attachments,
+            approval: $this->approval,
         );
     }
 

@@ -9,6 +9,8 @@ use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowTraceStep;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\HumanInputRequiredException;
+use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ParallelBranchInterruptException;
+use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ToolApprovalRequiredException;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\WorkflowExecutionException;
 use DigitalElvis\NeuronAIStudio\Support\ChatThreadKey;
 use NeuronAI\Workflow\Interrupt\WorkflowInterrupt;
@@ -90,7 +92,7 @@ class WorkflowRunner
     }
 
     /** @param  array<int, array<string, mixed>>  $attachments */
-    public function dispatchResume(WorkflowTrace $trace, string $nodeId, string $message, array $attachments = []): WorkflowTrace
+    public function dispatchResume(WorkflowTrace $trace, string $nodeId, string $message, array $attachments = [], ?string $approval = null): WorkflowTrace
     {
         if (! config('neuronai-studio.async_runs_enabled')) {
             throw new RuntimeException(
@@ -98,9 +100,12 @@ class WorkflowRunner
             );
         }
 
-        if ($trace->status !== 'awaiting_input') {
+        $requiredStatus = $approval !== null ? 'awaiting_tool_approval' : 'awaiting_input';
+
+        if ($trace->status !== $requiredStatus) {
             throw new \InvalidArgumentException(sprintf(
-                'Workflow trace must be awaiting_input to resume asynchronously, got "%s".',
+                'Workflow trace must be %s to resume asynchronously, got "%s".',
+                $requiredStatus,
                 $trace->status,
             ));
         }
@@ -110,7 +115,7 @@ class WorkflowRunner
             'finished_at' => null,
         ]);
 
-        ResumeWorkflowJob::dispatch($trace->id, $nodeId, $message, $attachments);
+        ResumeWorkflowJob::dispatch($trace->id, $nodeId, $message, $attachments, $approval);
 
         return $trace->fresh();
     }
@@ -145,6 +150,10 @@ class WorkflowRunner
             return $this->finalizeTrace($trace, $finalState);
         } catch (HumanInputRequiredException $exception) {
             return $this->pauseForHumanInput($trace, $exception, $state, $emitter);
+        } catch (ParallelBranchInterruptException $exception) {
+            return $this->pauseForParallelInterrupt($trace, $exception, $state, $emitter);
+        } catch (ToolApprovalRequiredException $exception) {
+            return $this->pauseForToolApproval($trace, $exception, $state, $emitter);
         } catch (Throwable $exception) {
             throw new WorkflowExecutionException(
                 $this->finalizeFailedTrace($trace, $state, $exception),
@@ -216,19 +225,27 @@ class WorkflowRunner
         }
     }
 
-    public function resume(WorkflowTrace $trace, string $nodeId, string $message, ?callable $emitter = null, array $attachments = []): WorkflowTrace
+    public function resume(WorkflowTrace $trace, string $nodeId, string $message, ?callable $emitter = null, array $attachments = [], ?string $approval = null): WorkflowTrace
     {
         $workflow = $trace->workflow ?? WorkflowDefinition::findOrFail($trace->workflow_definition_id);
 
-        if ($this->shouldRunNative($workflow) && is_array($trace->checkpoint['interrupt'] ?? null)) {
+        if ($approval === null && $this->shouldRunNative($workflow) && is_array($trace->checkpoint['interrupt'] ?? null)) {
             return $this->resumeNative($trace, $message, $emitter, $attachments);
         }
 
-        return $this->resumeInterpreted($trace, $nodeId, $message, $emitter, $attachments);
+        return $this->resumeInterpreted($trace, $nodeId, $message, $emitter, $attachments, $approval);
     }
 
-    public function resumeInterpreted(WorkflowTrace $trace, string $nodeId, string $message, ?callable $emitter = null, array $attachments = []): WorkflowTrace
+    public function resumeInterpreted(WorkflowTrace $trace, string $nodeId, string $message, ?callable $emitter = null, array $attachments = [], ?string $approval = null): WorkflowTrace
     {
+        if ($approval !== null) {
+            return $this->resumeToolApproval($trace, $nodeId, $approval, $message, $emitter);
+        }
+
+        if (($trace->checkpoint['kind'] ?? null) === 'parallel') {
+            return $this->resumeParallel($trace, $message, $emitter, $attachments);
+        }
+
         $workflow = $trace->workflow ?? WorkflowDefinition::findOrFail($trace->workflow_definition_id);
         $checkpoint = $trace->checkpoint ?? [];
         $nodeConfig = (new GraphContext(
@@ -285,6 +302,144 @@ class WorkflowRunner
             return $this->finalizeTrace($trace, $finalState);
         } catch (HumanInputRequiredException $exception) {
             return $this->pauseForHumanInput($trace, $exception, $state, $emitter);
+        } catch (ParallelBranchInterruptException $exception) {
+            return $this->pauseForParallelInterrupt($trace, $exception, $state, $emitter);
+        } catch (ToolApprovalRequiredException $exception) {
+            return $this->pauseForToolApproval($trace, $exception, $state, $emitter);
+        } catch (Throwable $exception) {
+            throw new WorkflowExecutionException(
+                $this->finalizeFailedTrace($trace, $state, $exception),
+                $exception,
+            );
+        }
+    }
+
+    protected function resumeParallel(
+        WorkflowTrace $trace,
+        string $message,
+        ?callable $emitter = null,
+        array $attachments = [],
+    ): WorkflowTrace {
+        $workflow = $trace->workflow ?? WorkflowDefinition::findOrFail($trace->workflow_definition_id);
+        $checkpoint = $trace->checkpoint ?? [];
+        $parallel = is_array($checkpoint['parallel'] ?? null) ? $checkpoint['parallel'] : [];
+
+        $graphContext = new GraphContext(
+            $workflow->graph['nodes'] ?? [],
+            $workflow->graph['edges'] ?? [],
+        );
+
+        $forkId = (string) ($parallel['fork_id'] ?? '');
+
+        $stateData = is_array($checkpoint['state'] ?? null) ? $checkpoint['state'] : [];
+        unset($stateData['__steps']);
+
+        $stateData['__parallel_resume'] = [
+            'fork_id' => $forkId,
+            'join_id' => (string) ($parallel['join_id'] ?? ''),
+            'completed' => is_array($parallel['completed'] ?? null) ? $parallel['completed'] : [],
+            'completed_outputs' => is_array($parallel['completed_outputs'] ?? null) ? $parallel['completed_outputs'] : [],
+            'pending' => [
+                'branch_id' => (string) ($parallel['pending_branch'] ?? ''),
+                'node_id' => (string) ($parallel['pending_node'] ?? ''),
+                'output_key' => (string) ($parallel['output_key'] ?? 'human_response'),
+                'response' => $message,
+                'state' => is_array($parallel['pending_state'] ?? null) ? $parallel['pending_state'] : [],
+            ],
+        ];
+
+        if ($attachments !== []) {
+            $stateData['attachments'] = $attachments;
+        }
+
+        $state = new BuilderWorkflowState($graphContext, $trace->id, $stateData);
+
+        if ($emitter !== null) {
+            $state->stepEmitter = fn (string $event, array $data) => $emitter($event, array_merge($data, [
+                'trace_id' => $trace->id,
+            ]));
+        }
+
+        $trace->update([
+            'status' => 'running',
+            'awaiting_node_id' => null,
+        ]);
+
+        try {
+            $state->set('__current_node_id', $forkId);
+            $finalState = $this->executionLoop->runFromNode($forkId, $graphContext, $state);
+
+            return $this->finalizeTrace($trace, $finalState);
+        } catch (HumanInputRequiredException $exception) {
+            return $this->pauseForHumanInput($trace, $exception, $state, $emitter);
+        } catch (ParallelBranchInterruptException $exception) {
+            return $this->pauseForParallelInterrupt($trace, $exception, $state, $emitter);
+        } catch (ToolApprovalRequiredException $exception) {
+            return $this->pauseForToolApproval($trace, $exception, $state, $emitter);
+        } catch (Throwable $exception) {
+            throw new WorkflowExecutionException(
+                $this->finalizeFailedTrace($trace, $state, $exception),
+                $exception,
+            );
+        }
+    }
+
+    protected function resumeToolApproval(
+        WorkflowTrace $trace,
+        string $nodeId,
+        string $approval,
+        string $feedback,
+        ?callable $emitter,
+    ): WorkflowTrace {
+        $workflow = $trace->workflow ?? WorkflowDefinition::findOrFail($trace->workflow_definition_id);
+        $checkpoint = $trace->checkpoint ?? [];
+
+        $graphContext = new GraphContext(
+            $workflow->graph['nodes'] ?? [],
+            $workflow->graph['edges'] ?? [],
+        );
+
+        $nodeId = $nodeId !== '' ? $nodeId : (string) ($checkpoint['node_id'] ?? $trace->awaiting_node_id ?? '');
+
+        $stateData = is_array($checkpoint['state'] ?? null) ? $checkpoint['state'] : [];
+        unset($stateData['__steps']);
+        $stateData['__tool_approval_resume'] = [
+            'node_id' => $nodeId,
+            'decision' => $approval,
+            'feedback' => $feedback,
+            'interrupt' => (string) ($checkpoint['interrupt'] ?? ''),
+        ];
+
+        $state = new BuilderWorkflowState($graphContext, $trace->id, $stateData);
+
+        if ($emitter !== null) {
+            $state->stepEmitter = fn (string $event, array $data) => $emitter($event, array_merge($data, [
+                'trace_id' => $trace->id,
+            ]));
+        }
+
+        $trace->update([
+            'status' => 'running',
+            'awaiting_node_id' => null,
+        ]);
+
+        if ($emitter !== null) {
+            $emitter('tool_approval_resolved', [
+                'trace_id' => $trace->id,
+                'node_id' => $nodeId,
+                'approved' => $approval !== 'reject',
+            ]);
+        }
+
+        try {
+            $state->set('__current_node_id', $nodeId);
+            $finalState = $this->executionLoop->runFromNode($nodeId, $graphContext, $state);
+
+            return $this->finalizeTrace($trace, $finalState);
+        } catch (HumanInputRequiredException $exception) {
+            return $this->pauseForHumanInput($trace, $exception, $state, $emitter);
+        } catch (ToolApprovalRequiredException $exception) {
+            return $this->pauseForToolApproval($trace, $exception, $state, $emitter);
         } catch (Throwable $exception) {
             throw new WorkflowExecutionException(
                 $this->finalizeFailedTrace($trace, $state, $exception),
@@ -513,6 +668,84 @@ class WorkflowRunner
                 'node_id' => $exception->nodeId,
                 'prompt' => $exception->prompt,
                 'output_key' => $exception->outputKey,
+            ]);
+        }
+
+        return $trace->fresh(['steps']);
+    }
+
+    protected function pauseForParallelInterrupt(
+        WorkflowTrace $trace,
+        ParallelBranchInterruptException $exception,
+        ?BuilderWorkflowState $state,
+        ?callable $emitter,
+    ): WorkflowTrace {
+        $trace->update([
+            'status' => 'awaiting_input',
+            'awaiting_node_id' => $exception->pendingNodeId,
+            'checkpoint' => [
+                'state' => $state?->all() ?? [],
+                'node_id' => $exception->forkId,
+                'kind' => 'parallel',
+                'output_key' => $exception->outputKey,
+                'parallel' => [
+                    'fork_id' => $exception->forkId,
+                    'join_id' => $exception->joinId,
+                    'pending_branch' => $exception->branchId,
+                    'pending_node' => $exception->pendingNodeId,
+                    'output_key' => $exception->outputKey,
+                    'pending_state' => $exception->pendingState,
+                    'completed' => $exception->completedResults,
+                    'completed_outputs' => $exception->completedOutputs,
+                ],
+            ],
+            'finished_at' => null,
+        ]);
+
+        if ($emitter !== null) {
+            $emitter('parallel_interrupt', [
+                'trace_id' => $trace->id,
+                'fork_id' => $exception->forkId,
+                'branch_id' => $exception->branchId,
+                'node_id' => $exception->pendingNodeId,
+                'reason' => $exception->reason,
+            ]);
+
+            $emitter('human_input_required', [
+                'trace_id' => $trace->id,
+                'node_id' => $exception->pendingNodeId,
+                'prompt' => $exception->prompt,
+                'output_key' => $exception->outputKey,
+            ]);
+        }
+
+        return $trace->fresh(['steps']);
+    }
+
+    protected function pauseForToolApproval(
+        WorkflowTrace $trace,
+        ToolApprovalRequiredException $exception,
+        ?BuilderWorkflowState $state,
+        ?callable $emitter,
+    ): WorkflowTrace {
+        $trace->update([
+            'status' => 'awaiting_tool_approval',
+            'awaiting_node_id' => $exception->nodeId,
+            'checkpoint' => [
+                'state' => $state?->all() ?? [],
+                'node_id' => $exception->nodeId,
+                'pending_tools' => $exception->pendingTools,
+                'interrupt' => $exception->serializedInterrupt,
+            ],
+            'finished_at' => null,
+        ]);
+
+        if ($emitter !== null) {
+            $emitter('tool_approval_required', [
+                'trace_id' => $trace->id,
+                'node_id' => $exception->nodeId,
+                'pending_tools' => $exception->pendingTools,
+                'message' => $exception->approvalMessage,
             ]);
         }
 
