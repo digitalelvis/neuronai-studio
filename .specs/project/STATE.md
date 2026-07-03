@@ -177,6 +177,15 @@
 - [x] PE-09: `WorkflowParallelExecutionTest` (merge, human interrupt + resume parcial, validator) + `NativeWorkflowExporterTest` (ParallelEvent compila) — 4 testes, suíte 254 verde
 - [ ] PE-08 parcial: preview de resultados agregados no inspector do join (deferred); tool approval dentro de branch não dividido por branch
 
+### M3 template pack + slug fix — entregue (2026-07-03)
+
+- [x] Templates de referência (providers reais, sem fake): `parallel-support-triage` (intermediate — fork → 3 branches LLM sentiment/facts/priority → join → agente compositor, todos com `checkpoint: true`) e `parallel-triage-hitl` (advanced — mesma base + branch `human` que pausa via `parallel_interrupt`, resume reusa checkpoints das branches concluídas)
+- [x] Agente `support-triage-composer` (sintetiza análises paralelas + nota do revisor em triage summary + resposta sugerida)
+- [x] Fix `Editor::resolveSlug` — auto-save do canvas (`saveGraphBeforeRun` → `save()`) não regrava o slug quando o nome não mudou; quando muda, gera slug único excluindo o próprio id (evita `UniqueConstraintViolationException` em `workflow_definitions.slug`)
+- [x] Docs `guides/templates.md` (tabelas + seção "Parallel Support Triage" com input de exemplo e resultado esperado)
+- [x] Testes: `TemplateRegistryTest` (18 templates), `TemplateInstallerTest` (2 novos — install/valida fork/join + HITL), `WorkflowEditorSaveTest` (2 novos — slug estável / dedupe) — suíte 258 verde
+- [ ] Não commitados no fix: `resources/**/*.css` (artefatos de build minificado, fora de escopo)
+
 ### Queue runner — entregue
 
 - [x] `async_runs_enabled`, `queue_tries`, `queue_backoff` config
@@ -222,6 +231,13 @@
 **Problem:** Retomar apenas a branch pendente perdia as branches que ainda não tinham iniciado (as posteriores ao interrupt na ordem sequencial).
 **Solution:** No resume, o `ForkNodeExecutor` itera todas as branches: pula as concluídas (do checkpoint), retoma a pendente com o input injetado, e roda as não iniciadas do zero.
 **Prevents:** Perda silenciosa de resultados de branch em workflows com >1 branch e HITL.
+
+### L-004: Slug do workflow não pode ser recalculado em todo save (2026-07-03)
+
+**Context:** Auto-save do canvas antes de rodar teste (`saveGraphBeforeRun` → `Editor::save()`), com dois workflows de mesmo nome (ex.: dois installs do mesmo template).
+**Problem:** `save()` fazia `slug = Str::slug($this->name)` sempre, sobrescrevendo o sufixo de dedupe (`-1`) → `UNIQUE constraint failed: workflow_definitions.slug`.
+**Solution:** `Editor::resolveSlug` mantém o slug atual quando o nome não muda; quando muda, gera slug único ignorando o próprio id.
+**Prevents:** Colisão de slug ao testar/salvar workflows com nomes duplicados (comum com templates reinstalados).
 
 ---
 

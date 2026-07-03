@@ -58,6 +58,7 @@ Paralelismo, checkpoints generalizados e execução assíncrona.
 **Etapa atual (v0.2.x):** M3 concluído — Features 7 (`workflow-parallel-execution`), 8 (`workflow-checkpoints-persistence`) e 9 (`workflow-queue-runner`) **done**. Próximo foco: M4 (`stream-adapters`).
 **Feature 8 — entregue (CP-01..08):** `CheckpointService` + tabela `workflow_checkpoints` + model, `CheckpointingExecutor` (decorator opt-in em agent/llm/rag/tool com invalidação por `input_hash` e escopo por iteração de loop), `EloquentPersistence` para interrupts de workflows nativos, config `checkpoints.enabled/ttl` + comando `checkpoints:purge`, 10 testes.
 **Feature 7 — entregue (PE-01..09):** `ForkNodeExecutor`/`JoinNodeExecutor`/`ParallelBranchRunner` (runtime interpretado, estado isolado por branch), `ParallelBranchInterruptException` + resume parcial no `WorkflowRunner`, `GraphValidator` fork/join pairing, codegen `ParallelEvent` subclass, canvas fork/join + inspector + rebuild bundle, SSE `branch_started`/`branch_completed`/`parallel_interrupt`, 4 testes novos.
+**M3 — template pack + fix (2026-07-03):** templates de referência `parallel-support-triage` (intermediate) e `parallel-triage-hitl` (advanced) + agente `support-triage-composer` (caso real de triagem de suporte com providers reais, fork/join + checkpoints + HITL em branch); fix `Editor::resolveSlug` (auto-save do canvas não regrava slug quando o nome não muda → evita `UNIQUE workflow_definitions.slug`); docs `guides/templates.md`; suíte 258 verde.
 
 ### M4 — Integração externa (P1) `planned`
 
