@@ -1,5 +1,48 @@
 # Changelog
 
+# [0.2.0](https://github.com/digitalelvis/neuronai-studio/compare/v0.1.2...v0.2.0) (2026-07-03)
+
+
+### Bug Fixes
+
+* **ci:** disable composer audit block for Laravel 11 matrix installs ([173dac1](https://github.com/digitalelvis/neuronai-studio/commit/173dac1cca240adfec21dbde53654668ea4e3e45))
+* **ci:** disable composer block-insecure for matrix dependency installs ([1cdb3c6](https://github.com/digitalelvis/neuronai-studio/commit/1cdb3c63c0b4e50deb018b65df31f3c64450e6ee))
+* **rag:** handle missing store file and empty PDF ingest ([d84cf10](https://github.com/digitalelvis/neuronai-studio/commit/d84cf10449c739fa17aece349df2b57e8f87a3bc))
+* **runtime:** persist partial trace steps when workflow runs fail ([5d49e3a](https://github.com/digitalelvis/neuronai-studio/commit/5d49e3a67c05a17730ab25bb95509265199cc5f1))
+* **templates:** always load package built-in template paths ([2586795](https://github.com/digitalelvis/neuronai-studio/commit/2586795ac558d415fa34e0e2ec26e4b064d05826))
+* **workflows:** reconcile loop guardrail and structured output with cyclic graphs ([51668f2](https://github.com/digitalelvis/neuronai-studio/commit/51668f2298ff01f4a0aede2b03ed15ac6d106b02)), closes [#8](https://github.com/digitalelvis/neuronai-studio/issues/8)
+
+
+### Features
+
+* **canvas:** add StructuredOutputFields inspector component ([55d3477](https://github.com/digitalelvis/neuronai-studio/commit/55d34774cbed6612b7daaceec905f3128c53a281))
+* **canvas:** open trace detail when workflow runs fail ([2974621](https://github.com/digitalelvis/neuronai-studio/commit/297462179a0691a6bdacd7bef055fe4271ea3f32))
+* **canvas:** show loop iteration badge and harness tool events ([d2677c5](https://github.com/digitalelvis/neuronai-studio/commit/d2677c59a5e665fd1cd80450324e381d95342a23))
+* **canvas:** structured output toggles on LLM and agent nodes ([1e276d6](https://github.com/digitalelvis/neuronai-studio/commit/1e276d69e47e54991937a0642e0a508204288add))
+* **codegen:** emit loop continue/exit branches in native export ([da55ffd](https://github.com/digitalelvis/neuronai-studio/commit/da55ffd978b0e10830f2661aab9c69dd201188a2))
+* **codegen:** emit structured output for agent nodes ([fa4c2c8](https://github.com/digitalelvis/neuronai-studio/commit/fa4c2c845ab7e877f6b403828893fdc9ac2576ed))
+* **codegen:** emit structured() for LLM nodes ([a27f503](https://github.com/digitalelvis/neuronai-studio/commit/a27f503ca00081230732cff2f538ab979fe5e347))
+* **rag:** add Studio knowledge base CRUD and rag canvas inspector ([6236d0d](https://github.com/digitalelvis/neuronai-studio/commit/6236d0d4a00ec3e21c9bbb848b5fc7fe5c817430))
+* **rag:** complete M1 sprint with codegen, docs, and release prep ([d5a8265](https://github.com/digitalelvis/neuronai-studio/commit/d5a82659e6e846718a5a2c07bd698f93a1f8e8cb))
+* **rag:** implement workflow RAG backend (slice 1) ([048ea36](https://github.com/digitalelvis/neuronai-studio/commit/048ea36e58a38edcb7070089e2be753b81f33e00))
+* **runtime:** stream tool_call and tool_result from agent nodes ([a2e39b1](https://github.com/digitalelvis/neuronai-studio/commit/a2e39b1d0f055780baf29c5d10c91adeab4aa16b))
+* **runtime:** support templated human prompts and state append ([08d9186](https://github.com/digitalelvis/neuronai-studio/commit/08d91865cfb106d8d95a645c11bd993cc6927e34))
+* **studio:** expose output classes to workflow canvas config ([787790a](https://github.com/digitalelvis/neuronai-studio/commit/787790a86ec24cb16a82b032fdffc6225050424b))
+* **templates:** add autonomous lead qualification workflow ([ea6a9d4](https://github.com/digitalelvis/neuronai-studio/commit/ea6a9d42146b3d29377993a34778770e86930592))
+* **templates:** add rag-knowledge-qna workflow starter ([b00c538](https://github.com/digitalelvis/neuronai-studio/commit/b00c5385c435b1d21ba06ae905ed88f0939935e3))
+* **templates:** make autonomous lead qualification conversational ([38096f2](https://github.com/digitalelvis/neuronai-studio/commit/38096f2cc9f4452a8b53bf3c4aa9ba5ce2cf8a8f))
+* **tools:** add RAG knowledge base tool type in Studio ([2070f7f](https://github.com/digitalelvis/neuronai-studio/commit/2070f7f586919060baf73e4d144ea3469fbc6b81))
+* **workflow-editor:** fix multimodal test output and agent canvas labels ([9810556](https://github.com/digitalelvis/neuronai-studio/commit/9810556bf981be1ac972247552c493f1433bcd81))
+* **workflows:** add controlled cyclic graphs with loop node ([677b127](https://github.com/digitalelvis/neuronai-studio/commit/677b127af7d00d52c036ad23f54cfdd26249ebfc))
+* **workflows:** add OutputClassRegistry for structured output classes ([e843e30](https://github.com/digitalelvis/neuronai-studio/commit/e843e307e2b9c5fa62e6e1a1e7e545a1c5aafe71))
+* **workflows:** add structured output backend executors (phase 3) ([d38bc1a](https://github.com/digitalelvis/neuronai-studio/commit/d38bc1a5e903565fbc77e95fb3d8737d09505b13))
+* **workflows:** add structured_output_scan_paths config ([a260792](https://github.com/digitalelvis/neuronai-studio/commit/a26079223a7b8d6a90dd7acff7f4eaaa76c30e7e))
+* **workflows:** add StructuredOutputResolver ([a10cc31](https://github.com/digitalelvis/neuronai-studio/commit/a10cc312c07d18eaeebd4c0c572508fdd9a47e84))
+* **workflows:** add WorkflowStateValue dot-notation helper ([e14fbd0](https://github.com/digitalelvis/neuronai-studio/commit/e14fbd083d072e9e05cb079941b789b0c3b62674))
+* **workflows:** run and resume workflows via queue jobs ([eaf9ae9](https://github.com/digitalelvis/neuronai-studio/commit/eaf9ae9df574424e6b90a17782d9a0339438b3e8))
+* **workflows:** support dot notation in condition and loop nodes ([9891586](https://github.com/digitalelvis/neuronai-studio/commit/9891586615ddb280a4677652f4c467b023b68701))
+* **workflows:** surface structured output validation errors in traces ([c984a79](https://github.com/digitalelvis/neuronai-studio/commit/c984a798f2e3d27148271f9991162dffbf15800b))
+
 ## [0.1.2](https://github.com/digitalelvis/neuronai-studio/compare/v0.1.1...v0.1.2) (2026-06-29)
 
 ## [0.1.1](https://github.com/digitalelvis/neuronai-studio/compare/v0.1.0...v0.1.1) (2026-06-29)
