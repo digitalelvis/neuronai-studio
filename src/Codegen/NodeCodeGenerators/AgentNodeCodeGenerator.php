@@ -51,6 +51,7 @@ PHP;
         {$return}
 PHP;
             } else {
+                $approvalLine = $this->approvalConfigLine($data, hasDefinition: true);
                 $body = <<<PHP
         {$messageSetup}
 
@@ -59,7 +60,7 @@ PHP;
             'provider' => \$agent->provider,
             'model' => \$agent->model,
             'instructions' => \$agent->instructions,
-            'tools' => \$agent->tools ?? [],
+            'tools' => \$agent->tools ?? [],{$approvalLine}
         ], \$userMessage, \$agent, {$threadKey});
 
         \$state->set({$outputKey}, \$response->content);
@@ -109,13 +110,18 @@ PHP;
             ];
         }
 
+        $requireApproval = (bool) ($data['require_tool_approval'] ?? false);
+        $approvalSetup = $requireApproval
+            ? "\n        \$agent->addGlobalMiddleware(new ToolApproval());\n"
+            : '';
+
         $body = <<<PHP
         {$messageSetup}
 
         \$agent = Agent::make()
             ->setProvider({$providerExpr})
             ->addSystemTip({$instructions});
-
+{$approvalSetup}
         \$response = \$agent->chat(\$userMessage);
         \$state->set({$outputKey}, \$response->getContent());
 
@@ -124,15 +130,38 @@ PHP;
 
         return [
             'body' => $body,
-            'imports' => [
+            'imports' => array_values(array_filter([
                 'NeuronAI\\Agent',
                 'DigitalElvis\\NeuronAIStudio\\Runtime\\MessageFactory',
-            ],
+                $requireApproval ? 'NeuronAI\\Agent\\Middleware\\ToolApproval' : null,
+            ])),
         ];
     }
 
     protected function exportConfigValue(string $value): string
     {
         return var_export($value, true);
+    }
+
+    /**
+     * Build the `require_tool_approval` config entry for `runInline`.
+     *
+     * When the node carries an explicit override we emit a literal; otherwise
+     * the flag is read from the resolved AgentDefinition at runtime so the
+     * generated code honours per-agent approval settings.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    protected function approvalConfigLine(array $data, bool $hasDefinition): string
+    {
+        if (array_key_exists('require_tool_approval', $data)) {
+            return "\n            'require_tool_approval' => ".var_export((bool) $data['require_tool_approval'], true).',';
+        }
+
+        if ($hasDefinition) {
+            return "\n            'require_tool_approval' => (bool) \$agent->require_tool_approval,";
+        }
+
+        return '';
     }
 }

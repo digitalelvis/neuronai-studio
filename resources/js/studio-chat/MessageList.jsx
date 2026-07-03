@@ -4,6 +4,7 @@ import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
 import WorkflowThread from './WorkflowThread';
+import ToolApprovalCard from './ToolApprovalCard';
 import { formatWorkflowData } from './utils/workflowOutput';
 
 function AttachmentPreview({ attachment }) {
@@ -98,7 +99,13 @@ function WorkflowAssistantContent({ message, viewMode }) {
     );
 }
 
-export default function MessageList({ messages, mode = 'agent', viewMode = 'pretty' }) {
+export default function MessageList({
+    messages,
+    mode = 'agent',
+    viewMode = 'pretty',
+    onToolApproval,
+    approvalDisabled = false,
+}) {
     if (!messages.length) {
         return (
             <div className="flex flex-col items-center justify-center py-16 text-center">
@@ -126,6 +133,11 @@ export default function MessageList({ messages, mode = 'agent', viewMode = 'pret
                         {message.meta?.status === 'awaiting_input' && (
                             <Badge variant="outline" className="text-[10px]">
                                 Awaiting input
+                            </Badge>
+                        )}
+                        {message.meta?.status === 'awaiting_tool_approval' && (
+                            <Badge variant="outline" className="text-[10px]">
+                                Tool approval
                             </Badge>
                         )}
                         {message.meta?.status === 'completed' && (
@@ -173,6 +185,13 @@ export default function MessageList({ messages, mode = 'agent', viewMode = 'pret
                                 <AttachmentPreview key={attachment.id} attachment={attachment} />
                             ))}
                         </div>
+                    )}
+                    {message.meta?.status === 'awaiting_tool_approval' && (
+                        <ToolApprovalCard
+                            message={message}
+                            disabled={approvalDisabled}
+                            onDecision={onToolApproval}
+                        />
                     )}
                     {message.meta?.toolEvents?.map((tool, index) => (
                         <ToolEventBlock key={`${message.id}-tool-${index}`} tool={tool} />
