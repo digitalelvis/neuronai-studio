@@ -1,13 +1,20 @@
 # State
 
-**Last Updated:** 2026-07-02
+**Last Updated:** 2026-07-03
 **Development line:** `v0.2.x` (target release `v0.2.1+`)
 **Latest published:** `v0.2.0` on `main`
-**Current Work:** M2 — `workflow-tool-approval` (próxima feature)
+**Current Work:** M2 — `workflow-token-streaming` (próxima feature)
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-005: Tool approval via NeuronAI `ToolApproval` middleware (2026-07-03)
+
+**Decision:** Reusar o middleware `NeuronAI\Agent\Middleware\ToolApproval` no `DynamicAgent`; converter o `WorkflowInterrupt`/`ApprovalRequest` do agente em `ToolApprovalRequiredException` na camada `AgentRunner`, seguindo o padrão de pausa do Human node.
+**Reason:** Evita reimplementar detecção de tool call; mantém pausa/checkpoint consistentes com `pauseForHumanInput` e status `awaiting_input`.
+**Trade-off:** Slices 1–2 aprovam **todas** as tools (config vazio). Slice 2 persiste o `WorkflowInterrupt` serializado no checkpoint e restaura para resume real; UI/codegen ficam para slice 3.
+**Impact:** `require_tool_approval` no `AgentDefinition` + override no nó agent; novo status `awaiting_tool_approval` no trace (coluna string, sem migration); SSE `tool_approval_required` + `tool_approval_resolved`; resume `approve|reject` via `POST .../resume/stream` (sync) e `.../resume` (async job); handle `rejected` opcional no nó agent. Nota: tools com callback `Closure` quebram a serialização do interrupt — Studio usa tools baseadas em classe.
 
 ### AD-004: Linha de desenvolvimento v0.2.x (2026-06-30)
 
@@ -73,8 +80,36 @@
 | Feature | Status | Notas |
 |---------|--------|-------|
 | `workflow-structured-output` | ✅ done | T1–T17 ✅; T12 parcial — hint dot notation só no condition (loop sem inspector) |
-| `workflow-tool-approval` | ⏳ planned | — |
+| `workflow-tool-approval` | ✅ done | Slices 1–3 ✅ (backend, resume/API, UI+codegen+docs) |
 | `workflow-token-streaming` | ⏳ planned | — |
+
+### workflow-tool-approval — Slice 1 (backend) entregue
+
+- [x] `ToolApprovalRequiredException` (node_id, pending_tools, message)
+- [x] `require_tool_approval` no `AgentDefinition` (migration + cast/fillable) + override no nó agent (`data.require_tool_approval`)
+- [x] `AgentRunner` aplica `ToolApproval` middleware quando habilitado; `runInline` converte `WorkflowInterrupt`/`ApprovalRequest` → `ToolApprovalRequiredException`
+- [x] `AgentNodeExecutor` anexa `node_id` do grafo à exceção
+- [x] `WorkflowRunner::pauseForToolApproval` → status `awaiting_tool_approval` + checkpoint `{ state, node_id, pending_tools, interrupt }` + SSE `tool_approval_required` (interpreted `run`/`resume`)
+- [x] 5 testes novos (exceção, runner pausa/regressão, workflow pausa/regressão) — suíte 231 verde
+
+### workflow-tool-approval — Slice 2 (resume + API/SSE) entregue
+
+- [x] `ToolApprovalRequiredException` carrega `serializedInterrupt`; `AgentRunner::toolApprovalException` serializa o `WorkflowInterrupt` para resume real
+- [x] `AgentRunner::resumeInlineApproval` — restaura o interrupt via `InMemoryPersistence`, aplica decisão (`approve`/`reject`) nas `Action`s e resume o agente (`chat([], $request)`)
+- [x] `AgentNodeExecutor` consome marker `__tool_approval_resume` do state → resume o nó + roteia handle `rejected` opcional
+- [x] `WorkflowRunner::resumeInterpreted` aceita `approval`; `resumeToolApproval` reidrata o state do checkpoint, emite SSE `tool_approval_resolved` e re-executa o nó via `GraphExecutionLoop::runFromNode`
+- [x] Controllers sync/async aceitam `approval: approve|reject` (message opcional); `dispatchResume`/`ResumeWorkflowJob` propagam `approval`
+- [x] 2 testes novos (approve → completa; reject → handle `rejected`) — suíte 233 verde
+
+### workflow-tool-approval — Slice 3 (UI + codegen + docs) entregue
+
+- [x] TA-06: `WorkflowSessionAdapter` guarda `pendingApproval` no SSE `tool_approval_required` + `resumeApproval(decision, feedback)` → `POST .../resume/stream` com `{ approval, message? }`
+- [x] TA-06: `StudioChat` trata `tool_approval_required` (card inline) + `handleToolApproval` consome resume stream; loop de packets extraído em `consumeAssistantStream` (reuso send/resume)
+- [x] TA-06: `ToolApprovalCard.jsx` — tools pendentes + args + Approve/Reject + feedback opcional (sem modal); `MessageList` renderiza card + badge `Tool approval`
+- [x] TA-08: `AgentNodeCodeGenerator` — path agent_id passa `require_tool_approval` (override literal ou `(bool) $agent->require_tool_approval`) ao `runInline`; path inline aplica `$agent->addGlobalMiddleware(new ToolApproval())` + import
+- [x] Rebuild `studio-chat.bundle.js` (Vite IIFE)
+- [x] Docs: human-in-the-loop (Tool approval vs Human), ai-nodes (approval no agent node), creating-agents (flag + export), runtime-and-traces (status/SSE/resume payload), security-and-access (aprovar tools sensíveis)
+- [x] 2 testes codegen novos (`NativeWorkflowExporterTest`) — suíte 235 verde
 
 ### Structured output — entregue
 
@@ -145,6 +180,7 @@
 | autonomous-multimodal-agents | 2026-07-02 | 0.2.x | ✅ Done |
 | workflow-rag | 2026-07-02 | 0.2.x | ✅ Done |
 | rag-knowledge-base-tool | 2026-07-02 | 0.2.x | ✅ Done |
+| workflow-tool-approval | 2026-07-03 | 0.2.x | ✅ Done |
 
 ---
 

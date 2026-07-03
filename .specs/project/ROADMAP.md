@@ -4,7 +4,7 @@
 
 **Development line:** `v0.2.x` (target release `v0.2.1+`)  
 **Latest published:** `v0.2.0` on `main`  
-**Última atualização:** 2026-07-02
+**Última atualização:** 2026-07-03
 
 ---
 
@@ -23,7 +23,7 @@ Grafos cíclicos + agentes multimodais + RAG real. Entrega o padrão end-to-end 
 
 **Critério de conclusão M1:** Template `autonomous-lead-qualification` executável no test harness com loop, agent com tools, anexo PDF/imagem, e opcionalmente nó RAG upstream.
 
-**Etapa atual:** M1 concluído — publicar `v0.2.0`. Próximo foco: M2 Feature 5 (`workflow-tool-approval`).
+**Etapa atual:** M1 concluído — publicar `v0.2.0`. M2 Feature 5 (`workflow-tool-approval`) concluída; próximo foco: M2 Feature 6 (`workflow-token-streaming`).
 
 ### M2 — Capacidades de agente no workflow (P1) `in progress`
 
@@ -32,12 +32,15 @@ Structured output, aprovação de tools e streaming de tokens no harness.
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
 | 4 | `workflow-structured-output` | **done** (T1–T17; T12 parcial) | [spec](../features/workflow-structured-output/spec.md) · [tasks](../features/workflow-structured-output/tasks.md) |
-| 5 | `workflow-tool-approval` | planned | [spec](../features/workflow-tool-approval/spec.md) |
+| 5 | `workflow-tool-approval` | **done** (slices 1–3: backend, resume/API, UI+codegen+docs) | [spec](../features/workflow-tool-approval/spec.md) · [tasks](../features/workflow-tool-approval/tasks.md) |
 | 6 | `workflow-token-streaming` | planned | [spec](../features/workflow-token-streaming/spec.md) |
 
-**Etapa atual (v0.2.x):** Feature 5 — `workflow-tool-approval` (próxima após fechar M1)  
+**Etapa atual (v0.2.x):** Feature 5 — `workflow-tool-approval` **concluída** (slices 1–3). Próximo foco: Feature 6 (`workflow-token-streaming`).  
 **Concluído (Feature 4):** T1–T17 — registry, resolver, dot notation, `AgentRunner::structuredInline`, executors LLM/agent, erros de validação no trace, canvas inspector, round-trip, codegen e docs.  
-**Próximos passos:** Iniciar `workflow-tool-approval` → depois `workflow-token-streaming`.  
+**Feature 5 — slice 1 entregue (T1–T6):** `ToolApprovalRequiredException`, config `require_tool_approval` (AgentDefinition + override no nó), `ToolApproval` middleware no `AgentRunner`, `WorkflowRunner::pauseForToolApproval` → status `awaiting_tool_approval` + SSE `tool_approval_required`, 5 testes backend.  
+**Feature 5 — slice 2 entregue (TA-05, TA-07):** interrupt serializado no checkpoint + `AgentRunner::resumeInlineApproval`, resume `approve|reject` via `WorkflowRunner::resumeToolApproval` + SSE `tool_approval_resolved`, handle `rejected` opcional no nó agent, controllers sync/async + `ResumeWorkflowJob` aceitam `approval`, 2 testes novos (suíte 233 verde).  
+**Feature 5 — slice 3 entregue (TA-06, TA-08, docs):** `ToolApprovalCard` inline (sem modal) + `WorkflowSessionAdapter.resumeApproval` + `StudioChat` (`consumeAssistantStream`); `AgentNodeCodeGenerator` aplica `require_tool_approval`/`ToolApproval` no export; docs (HITL, ai-nodes, creating-agents, runtime-and-traces, security); rebuild `studio-chat.bundle.js`; 2 testes codegen (suíte 235 verde).  
+**Próximos passos:** `workflow-token-streaming`.  
 **Nota:** T12 parcial — hint dot notation (`lead.tier`) só no condition; loop sem inspector aguarda polish M1.
 
 ### M3 — Escala e resiliência (P2) `in progress`
