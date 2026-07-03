@@ -45,15 +45,19 @@ Structured output, aprovação de tools e streaming de tokens no harness.
 **Próximos passos:** M3/M4.  
 **Nota:** T12 parcial — hint dot notation (`lead.tier`) só no condition; loop sem inspector aguarda polish M1.
 
-### M3 — Escala e resiliência (P2) `in progress`
+### M3 — Escala e resiliência (P2) `done`
 
 Paralelismo, checkpoints generalizados e execução assíncrona.
 
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
-| 7 | `workflow-parallel-execution` | planned | [spec](../features/workflow-parallel-execution/spec.md) |
-| 8 | `workflow-checkpoints-persistence` | planned | [spec](../features/workflow-checkpoints-persistence/spec.md) |
+| 7 | `workflow-parallel-execution` | **done** (PE-01..09; runtime interpretado, PE-08 preview parcial) | [spec](../features/workflow-parallel-execution/spec.md) · [design](../features/workflow-parallel-execution/design.md) · [tasks](../features/workflow-parallel-execution/tasks.md) |
+| 8 | `workflow-checkpoints-persistence` | **done** (CP-01..08) | [spec](../features/workflow-checkpoints-persistence/spec.md) · [design](../features/workflow-checkpoints-persistence/design.md) · [tasks](../features/workflow-checkpoints-persistence/tasks.md) |
 | 9 | `workflow-queue-runner` | **done** | [spec](../features/workflow-queue-runner/spec.md) · [tasks](../features/workflow-queue-runner/tasks.md) |
+
+**Etapa atual (v0.2.x):** M3 concluído — Features 7 (`workflow-parallel-execution`), 8 (`workflow-checkpoints-persistence`) e 9 (`workflow-queue-runner`) **done**. Próximo foco: M4 (`stream-adapters`).
+**Feature 8 — entregue (CP-01..08):** `CheckpointService` + tabela `workflow_checkpoints` + model, `CheckpointingExecutor` (decorator opt-in em agent/llm/rag/tool com invalidação por `input_hash` e escopo por iteração de loop), `EloquentPersistence` para interrupts de workflows nativos, config `checkpoints.enabled/ttl` + comando `checkpoints:purge`, 10 testes.
+**Feature 7 — entregue (PE-01..09):** `ForkNodeExecutor`/`JoinNodeExecutor`/`ParallelBranchRunner` (runtime interpretado, estado isolado por branch), `ParallelBranchInterruptException` + resume parcial no `WorkflowRunner`, `GraphValidator` fork/join pairing, codegen `ParallelEvent` subclass, canvas fork/join + inspector + rebuild bundle, SSE `branch_started`/`branch_completed`/`parallel_interrupt`, 4 testes novos.
 
 ### M4 — Integração externa (P1) `planned`
 
@@ -87,8 +91,8 @@ Fila derivada do estado real (ver [STATE.md](STATE.md)).
 
 ### Depois — M3 e M4
 
-7. `workflow-parallel-execution` (Feature 7)
-8. `workflow-checkpoints-persistence` (Feature 8)
+7. ~~`workflow-parallel-execution` (Feature 7)~~ ✅
+8. ~~`workflow-checkpoints-persistence` (Feature 8)~~ ✅
 9. `stream-adapters` (Feature 10) — SA-14 pode aguardar token streaming
 
 ---
@@ -107,6 +111,10 @@ Fila derivada do estado real (ver [STATE.md](STATE.md)).
 | `workflow-queue-runner` | ✅ done | 0.2.x |
 | `workflow-rag` | ✅ done | 0.2.x |
 | `rag-knowledge-base-tool` | ✅ done | 0.2.x |
+| `workflow-tool-approval` | ✅ done | 0.2.x |
+| `workflow-token-streaming` | ✅ done | 0.2.x |
+| `workflow-checkpoints-persistence` | ✅ done | 0.2.x |
+| `workflow-parallel-execution` | ✅ done | 0.2.x |
 
 ---
 
@@ -168,6 +176,6 @@ Mapeamento feature → arquivos `docs/` a criar/atualizar na implementação.
 
 ## Decisões em aberto (ver [STATE.md](STATE.md))
 
-- Runtime interpretado vs native Neuron para execução paralela
+- ~~Runtime interpretado vs native Neuron para execução paralela~~ → **resolvido (AD-007):** runtime interpretado (branches sequenciais, estado isolado); codegen nativo emite `ParallelEvent` para export
 - SSE/broadcast vs polling para queue runner v1
 - Escopo de autonomia multi-turn **dentro** de um único nó agent vs entre iterações do loop

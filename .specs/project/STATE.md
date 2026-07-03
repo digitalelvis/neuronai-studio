@@ -3,11 +3,25 @@
 **Last Updated:** 2026-07-03
 **Development line:** `v0.2.x` (target release `v0.2.1+`)
 **Latest published:** `v0.2.0` on `main`
-**Current Work:** M2 — `workflow-token-streaming` (slices 1–2 entregues; feature completa)
+**Current Work:** M3 concluído — `workflow-checkpoints-persistence` (Feature 8) e `workflow-parallel-execution` (Feature 7) entregues. Próximo: M4 (`stream-adapters`).
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-007: Runtime interpretado para execução paralela (2026-07-03)
+
+**Decision:** Fork/Join usam runtime **interpretado** — `ForkNodeExecutor` roda cada branch sequencialmente em um `BuilderWorkflowState` isolado (clone) até o join, e `JoinNodeExecutor` mescla os resultados por branch id. O codegen nativo emite uma subclasse `ParallelEvent` válida para export, mas a orquestração concorrente via `AsyncExecutor` do Neuron não é exercida em runtime pelo Studio.
+**Reason:** Isolamento de estado por branch + resume parcial (reusar o mecanismo de checkpoint/HITL) são mais simples e determinísticos sob o loop interpretado; evita dependência do Amp/AsyncExecutor no caminho do harness.
+**Trade-off:** Sem paralelismo real de I/O no runtime interpretado (branches independentes mas sequenciais); aprovação de tool dentro de branch não é dividida por branch (só Human interrupt).
+**Impact:** `ParallelBranchRunner`, `ForkNodeExecutor`/`JoinNodeExecutor`, `ParallelBranchInterruptException`, checkpoint `kind: parallel` no `WorkflowRunner`, `GraphValidator::validateParallel`, SSE `branch_started`/`branch_completed`/`parallel_interrupt`.
+
+### AD-006: Checkpoints como decorator opt-in + EloquentPersistence (2026-07-03)
+
+**Decision:** Generalizar checkpoints com um `CheckpointService` + tabela `neuronai_studio_workflow_checkpoints`. Nós caros (agent/llm/rag/tool) optam via `data.checkpoint: true` e são embrulhados por um decorator `CheckpointingExecutor`. Workflows nativos usam `EloquentPersistence` (implementa `SerializablePersistenceInterface`) para persistir `WorkflowInterrupt`.
+**Reason:** Evita re-executar chamadas de provider caras no resume sem acoplar a lógica de cache a cada executor; mantém o checkpoint per-trace do Human/ToolApproval intacto.
+**Trade-off:** Chave `sha256(trace_id|node_id|iteration|input_hash)` guarda apenas o diff de estado do nó (mesclado no hit); mudanças em chaves voláteis internas são ignoradas no hash para não invalidar indevidamente.
+**Impact:** `CheckpointService`, `CheckpointingExecutor`, `WorkflowCheckpoint` model, migration nullable FK + `workflow_key`, config `checkpoints.enabled/ttl`, comando `checkpoints:purge`, `EloquentPersistence`.
 
 ### AD-005: Tool approval via NeuronAI `ToolApproval` middleware (2026-07-03)
 
@@ -141,6 +155,27 @@
 | Feature | Status | Notas |
 |---------|--------|-------|
 | `workflow-queue-runner` | ✅ done | T1–T11 ✅ — `RunWorkflowJob`, `ResumeWorkflowJob`, async run/resume API, polling, docs |
+| `workflow-checkpoints-persistence` | ✅ done | CP-01..08 ✅ — service + decorator + EloquentPersistence + purge |
+| `workflow-parallel-execution` | ✅ done | PE-01..09 ✅ — fork/join runtime, branch resume, codegen, canvas (PE-08 preview parcial) |
+
+### workflow-checkpoints-persistence — entregue (CP-01..08)
+
+- [x] CP-05: migration `neuronai_studio_workflow_checkpoints` (FK nullable + `workflow_key`, `input_hash`, `state_payload`, `expires_at`, unique node/iteration) + `WorkflowCheckpoint` model + config `checkpoints.enabled/ttl`
+- [x] CP-01/CP-06: `CheckpointService` — chave `sha256(trace_id|node_id|iteration|input_hash)`, hash do input (exclui chaves voláteis) → invalidação, lookup/store/forget, TTL + `purgeExpired`
+- [x] CP-02/CP-03: `CheckpointingExecutor` (decorator) embrulha agent/llm/rag/tool com `data.checkpoint: true`; hit mescla o diff de estado e pula o executor interno; escopo por iteração de loop
+- [x] CP-04: `EloquentPersistence` (`PersistenceInterface` + `SerializablePersistenceInterface`) persiste `WorkflowInterrupt` de workflows nativos via `workflow_key` + node `__native_interrupt`
+- [x] CP-05: `PurgeCheckpointsCommand` (`neuronai-studio:checkpoints:purge`)
+- [x] CP-08: `CheckpointServiceTest` + `EloquentPersistenceTest` + fixture `SampleInterruptNode` + `MigrationTest` (10 testes) — suíte 250 verde
+
+### workflow-parallel-execution — entregue (PE-01..09)
+
+- [x] PE-01/PE-04: node types `fork`/`join` (config + executors + registry); `GraphValidator::validateParallel` (fork→join default, ≥1 branch, join pareado)
+- [x] PE-02/PE-03: `ForkNodeExecutor` roda branches via `ParallelBranchRunner` em estado isolado até o join; `GraphExecutionLoop::runFromNode` com `stopAtNodeId`; `JoinNodeExecutor` mescla `{ branchId: result }` em `output_key`
+- [x] PE-05/PE-06: `ParallelBranchInterruptException` + checkpoint `kind: parallel`; `WorkflowRunner::pauseForParallelInterrupt`/`resumeParallel` retoma só a branch pendente, re-executa branches não iniciadas e reusa concluídas; SSE `parallel_interrupt`
+- [x] PE-07: `GraphTranspiler` + `Fork/JoinNodeCodeGenerator` + stub `native-parallel-event` emitem subclasse `ParallelEvent`; fork retorna `new XParallelEvent([...])`, branches retornam `StopEvent(result:)`, join lê `getAllResults()`
+- [x] PE-01/PE-08: canvas fork (handle por branch) + inspector branch editor / join `output_key`; rebuild `workflow-canvas.bundle.js`
+- [x] PE-09: `WorkflowParallelExecutionTest` (merge, human interrupt + resume parcial, validator) + `NativeWorkflowExporterTest` (ParallelEvent compila) — 4 testes, suíte 254 verde
+- [ ] PE-08 parcial: preview de resultados agregados no inspector do join (deferred); tool approval dentro de branch não dividido por branch
 
 ### Queue runner — entregue
 
@@ -181,6 +216,13 @@
 **Problem:** `Storage::url()` apontava para `/storage/...` (403) em disco `local` privado.
 **Solution:** `GET /studio/attachments/file?storage_key=` + manter blob preview no composer.
 
+### L-003: Resume de fork deve reprocessar branches não iniciadas (2026-07-03)
+
+**Context:** Interrupt (Human node) dentro de uma branch paralela.
+**Problem:** Retomar apenas a branch pendente perdia as branches que ainda não tinham iniciado (as posteriores ao interrupt na ordem sequencial).
+**Solution:** No resume, o `ForkNodeExecutor` itera todas as branches: pula as concluídas (do checkpoint), retoma a pendente com o input injetado, e roda as não iniciadas do zero.
+**Prevents:** Perda silenciosa de resultados de branch em workflows com >1 branch e HITL.
+
 ---
 
 ## Features Completed
@@ -197,6 +239,9 @@
 | workflow-rag | 2026-07-02 | 0.2.x | ✅ Done |
 | rag-knowledge-base-tool | 2026-07-02 | 0.2.x | ✅ Done |
 | workflow-tool-approval | 2026-07-03 | 0.2.x | ✅ Done |
+| workflow-token-streaming | 2026-07-03 | 0.2.x | ✅ Done |
+| workflow-checkpoints-persistence | 2026-07-03 | 0.2.x | ✅ Done |
+| workflow-parallel-execution | 2026-07-03 | 0.2.x | ✅ Done |
 
 ---
 
