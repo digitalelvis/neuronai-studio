@@ -304,6 +304,16 @@ return [
             'icon' => 'repeat',
             'category' => 'logic',
         ],
+        'fork' => [
+            'label' => 'Fork',
+            'icon' => 'git-fork',
+            'category' => 'logic',
+        ],
+        'join' => [
+            'label' => 'Join',
+            'icon' => 'git-merge',
+            'category' => 'logic',
+        ],
     ],
 
     /*

@@ -24,7 +24,9 @@ use DigitalElvis\NeuronAIStudio\Runtime\Rag\VectorStoreFactory;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\AgentNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\ConditionNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\DelayNodeExecutor;
+use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\ForkNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\HumanNodeExecutor;
+use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\JoinNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\LoopNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\LlmNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorRegistry;
@@ -201,6 +203,8 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
             'mcp' => McpNodeExecutor::class,
             'human' => HumanNodeExecutor::class,
             'loop' => LoopNodeExecutor::class,
+            'fork' => ForkNodeExecutor::class,
+            'join' => JoinNodeExecutor::class,
         ];
 
         // Node types whose expensive execution can be skipped on resume when the
