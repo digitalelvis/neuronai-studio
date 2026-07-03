@@ -143,6 +143,21 @@ export default function MessageList({ messages, mode = 'agent', viewMode = 'pret
                                 Failed
                             </Badge>
                         )}
+                        {message.meta?.traceId && message.meta?.status === 'failed' && mode === 'workflow' && (
+                            <button
+                                type="button"
+                                className="text-[10px] text-primary underline-offset-2 hover:underline"
+                                onClick={() =>
+                                    window.dispatchEvent(
+                                        new CustomEvent('workflow-view-trace', {
+                                            detail: { traceId: message.meta.traceId },
+                                        }),
+                                    )
+                                }
+                            >
+                                View trace #{message.meta.traceId}
+                            </button>
+                        )}
                     </div>
                     {message.role === 'assistant' && mode === 'workflow' ? (
                         <WorkflowAssistantContent message={message} viewMode={viewMode} />

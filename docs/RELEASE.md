@@ -13,23 +13,23 @@ Operational guide for versioning and publishing `digitalelvis/neuronai-studio` o
 
 ## Day-to-day development
 
-1. Branch from the active development line (currently `v0.0.x`):
+1. Branch from the active development line (currently `v0.2.x`):
 
    ```bash
-   git checkout v0.0.x
+   git checkout v0.2.x
    git pull
    git checkout -b feat/my-feature
    ```
 
 2. Commit using [Conventional Commits](https://conventionalcommits.org) (`feat(studio):`, `fix(canvas):`, etc.).
 
-3. Open a PR targeting `v0.0.x`. CI must pass before merge.
+3. Open a PR targeting `v0.2.x`. CI must pass before merge.
 
 ## Standard release
 
-1. Ensure `v0.0.x` is stable and CI is green.
+1. Ensure `v0.2.x` is stable and CI is green.
 
-2. Open a PR from `v0.0.x` → `main`. Title example: `release: v0.1.0`.
+2. Open a PR from `v0.2.x` → `main`. Title example: `release: v0.2.0`.
 
 3. Merge the PR. The Release workflow will:
    - Analyze commits since the last tag
@@ -41,10 +41,10 @@ Operational guide for versioning and publishing `digitalelvis/neuronai-studio` o
 
 4. Packagist picks up the new tag automatically (when auto-update is enabled).
 
-5. Back-merge `main` into `v0.0.x` to sync the changelog:
+5. Back-merge `main` into `v0.2.x` to sync the changelog:
 
    ```bash
-   git checkout v0.0.x
+   git checkout v0.2.x
    git pull
    git merge main
    git push
@@ -67,7 +67,7 @@ Operational guide for versioning and publishing `digitalelvis/neuronai-studio` o
 4. Backport to active development branches:
 
    ```bash
-   git checkout v0.0.x
+   git checkout v0.2.x
    git merge main
    git push
    ```
@@ -104,7 +104,7 @@ Repository → Settings → Branches → Add rule:
 - Require status checks to pass: `test` (from CI workflow)
 - Do not allow bypassing (recommended)
 
-**`v0.0.x`** (or current development line)
+**`v0.2.x`** (or current development line)
 
 - Require a pull request before merging
 - Require status checks to pass: `test`
@@ -158,11 +158,27 @@ Tag **`v0.1.1`** is published with the `digitalelvis/neuronai-studio` vendor. Su
 
 For future releases:
 
-1. Merge `v0.0.x` → `main` via PR.
+1. Merge `v0.2.x` → `main` via PR.
 2. Release workflow creates the next semver tag (or run `npm run release:dry` locally to preview).
 3. Verify tag and GitHub Release appear on the repository.
 4. Verify Packagist shows the new version (auto-update webhook).
-5. Back-merge `main` → `v0.0.x`.
+5. Back-merge `main` → `v0.2.x`.
+
+## v0.2.x development line
+
+Active development targets **v0.2.0** (M1 milestone) on branch `v0.2.x`:
+
+| Area | Status in v0.2.0 |
+|------|------------------|
+| Cyclic workflow graphs (`loop` node) | ✅ Done — runtime, canvas, codegen, harness iteration badge |
+| Autonomous multimodal agents | ✅ Done — attachments, thread memory, tool SSE, AMA-09 docs |
+| Workflow RAG | ✅ Done — KnowledgeBase CRUD, ingest, real `RagNodeExecutor`, codegen, docs |
+| Structured output | ✅ Done — backend, canvas, codegen, docs |
+| Queue runner | ✅ Done — async run/resume API, polling, docs |
+
+Release `v0.2.0` when M1 acceptance criteria pass: template `autonomous-lead-qualification` executable in the test harness with loop, agent tools, attachments, and optional RAG upstream.
+
+Consumers on `v0.1.x` can stay on latest `v0.1.*` tag until ready to adopt cyclic graphs and harness changes.
 
 ## Troubleshooting
 

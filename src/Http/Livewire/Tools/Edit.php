@@ -5,6 +5,7 @@ namespace DigitalElvis\NeuronAIStudio\Http\Livewire\Tools;
 use DigitalElvis\NeuronAIStudio\Codegen\ToolClassGenerator;
 use DigitalElvis\NeuronAIStudio\Codegen\ToolClassImporter;
 use DigitalElvis\NeuronAIStudio\Codegen\ToolExporter;
+use DigitalElvis\NeuronAIStudio\Models\KnowledgeBase;
 use DigitalElvis\NeuronAIStudio\Models\ToolDefinition;
 use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
 use Illuminate\Support\Str;
@@ -33,6 +34,12 @@ class Edit extends Component
     /** @var array<int, array{name: string, type: string, description: string, required: bool}> */
     public array $inputSchema = [];
 
+    public ?int $knowledgeBaseId = null;
+
+    public ?int $topK = null;
+
+    public ?float $threshold = null;
+
     public function mount(?ToolDefinition $tool = null): void
     {
         $this->tool = $tool;
@@ -51,11 +58,24 @@ class Edit extends Component
             return;
         }
 
-        $this->toolKind = request('kind', 'builder') === 'webhook' ? 'webhook' : 'builder';
-        $this->inputSchema = [
-            ['name' => 'example', 'type' => 'string', 'description' => 'Example argument', 'required' => true],
-        ];
-        $this->invokeBody = "return 'Result for: '.\$example;";
+        $kind = request('kind', 'builder');
+
+        if ($kind === 'webhook') {
+            $this->toolKind = 'webhook';
+        } elseif ($kind === 'rag') {
+            $this->toolKind = 'rag';
+            $this->toolName = 'search_knowledge_base';
+            $this->description = 'Search the linked knowledge base for relevant documents.';
+        } else {
+            $this->toolKind = 'builder';
+        }
+
+        if ($this->toolKind === 'builder') {
+            $this->inputSchema = [
+                ['name' => 'example', 'type' => 'string', 'description' => 'Example argument', 'required' => true],
+            ];
+            $this->invokeBody = "return 'Result for: '.\$example;";
+        }
     }
 
     protected function loadFromDefinition(ToolDefinition $tool): void
@@ -71,6 +91,13 @@ class Edit extends Component
             $this->method = $tool->config['method'] ?? 'GET';
             $this->url = $tool->config['url'] ?? '';
             $this->headersJson = json_encode($tool->config['headers'] ?? [], JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        } elseif ($tool->type === 'rag') {
+            $this->toolKind = 'rag';
+            $this->knowledgeBaseId = isset($tool->config['knowledge_base_id'])
+                ? (int) $tool->config['knowledge_base_id']
+                : null;
+            $this->topK = isset($tool->config['top_k']) ? (int) $tool->config['top_k'] : null;
+            $this->threshold = isset($tool->config['threshold']) ? (float) $tool->config['threshold'] : null;
         } else {
             $this->toolKind = 'builder';
         }
@@ -126,6 +153,12 @@ class Edit extends Component
             return;
         }
 
+        if ($this->toolKind === 'rag') {
+            $this->saveRag();
+
+            return;
+        }
+
         $this->saveBuilder($exporter);
     }
 
@@ -141,6 +174,15 @@ class Edit extends Component
         $this->headersJson = (string) ($payload['headersJson'] ?? '{}');
         $this->invokeBody = (string) ($payload['invokeBody'] ?? '');
         $this->inputSchema = $payload['inputSchema'] ?? [];
+        $this->knowledgeBaseId = isset($payload['knowledgeBaseId']) && $payload['knowledgeBaseId'] !== ''
+            ? (int) $payload['knowledgeBaseId']
+            : null;
+        $this->topK = isset($payload['topK']) && $payload['topK'] !== '' && $payload['topK'] !== null
+            ? (int) $payload['topK']
+            : null;
+        $this->threshold = isset($payload['threshold']) && $payload['threshold'] !== '' && $payload['threshold'] !== null
+            ? (float) $payload['threshold']
+            : null;
 
         $this->save($exporter);
     }
@@ -250,6 +292,57 @@ class Edit extends Component
         $this->redirect(route('neuronai-studio.tools.show', $this->tool));
     }
 
+    protected function saveRag(): void
+    {
+        $validated = $this->validate([
+            'name' => 'required|string|max:255',
+            'toolName' => 'required|string|max:255|regex:/^[a-z0-9_]+$/',
+            'description' => 'required|string',
+            'knowledgeBaseId' => 'required|integer|exists:knowledge_bases,id',
+            'topK' => 'nullable|integer|min:1|max:100',
+            'threshold' => 'nullable|numeric|min:0|max:1',
+        ]);
+
+        $config = [
+            'tool_name' => $validated['toolName'],
+            'knowledge_base_id' => $validated['knowledgeBaseId'],
+        ];
+
+        if ($validated['topK'] !== null) {
+            $config['top_k'] = $validated['topK'];
+        }
+
+        if ($validated['threshold'] !== null) {
+            $config['threshold'] = $validated['threshold'];
+        }
+
+        $payload = [
+            'name' => $validated['name'],
+            'slug' => Str::slug($validated['name']),
+            'type' => 'rag',
+            'description' => $validated['description'],
+            'input_schema' => [
+                [
+                    'name' => 'query',
+                    'type' => 'string',
+                    'description' => 'Natural language search query',
+                    'required' => true,
+                ],
+            ],
+            'config' => $config,
+        ];
+
+        if ($this->tool?->exists) {
+            $this->tool->update($payload);
+        } else {
+            $this->tool = ToolDefinition::create($payload);
+        }
+
+        session()->flash('success', 'RAG knowledge base tool saved successfully.');
+
+        $this->redirect(route('neuronai-studio.tools.show', $this->tool));
+    }
+
     public function exportPhp(ToolExporter $exporter): void
     {
         if (! $this->tool?->exists) {
@@ -282,7 +375,13 @@ class Edit extends Component
 
     public function render()
     {
-        return view('neuronai-studio::livewire.tools.edit')
+        $knowledgeBases = KnowledgeBase::query()
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
+        return view('neuronai-studio::livewire.tools.edit', [
+            'knowledgeBases' => $knowledgeBases,
+        ])
             ->layout('neuronai-studio::layouts.app', StudioLayout::params(
                 breadcrumbs: [
                     ['label' => 'Tools', 'url' => route('neuronai-studio.tools.index')],

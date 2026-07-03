@@ -61,6 +61,29 @@ class TemplateInstallerTest extends TestCase
         $this->assertTrue($result['valid'], implode(' ', $result['errors']));
     }
 
+    public function test_install_rag_knowledge_qna_workflow_is_valid_and_wires_agent(): void
+    {
+        $workflow = app(TemplateInstaller::class)->installWorkflow('rag-knowledge-qna');
+
+        $result = app(GraphValidator::class)->validate($workflow->graph);
+        $this->assertTrue($result['valid'], implode(' ', $result['errors']));
+
+        $nodes = collect($workflow->graph['nodes'] ?? []);
+
+        $ragNode = $nodes->first(fn (array $node) => ($node['type'] ?? '') === 'rag');
+        $this->assertNotNull($ragNode);
+        $this->assertSame('rag_context', $ragNode['data']['output_key'] ?? null);
+
+        $knowledgeAgent = AgentDefinition::where('slug', 'knowledge-agent')->first();
+        $this->assertNotNull($knowledgeAgent);
+
+        $agentNode = $nodes->first(fn (array $node) => ($node['type'] ?? '') === 'agent');
+        $this->assertNotNull($agentNode);
+        $this->assertSame($knowledgeAgent->id, $agentNode['data']['agent_id'] ?? null);
+        $this->assertArrayNotHasKey('agent_ref', $agentNode['data'] ?? []);
+        $this->assertStringContainsString('{{ rag_context.context }}', $agentNode['data']['message'] ?? '');
+    }
+
     public function test_install_workflow_reuses_existing_agents(): void
     {
         $installer = app(TemplateInstaller::class);

@@ -23,6 +23,8 @@ Configure with `NEURONAI_STUDIO_TABLE_PREFIX`.
 | `eval_suites` | Agent evaluation datasets and judge config |
 | `eval_runs` | Evaluation execution records |
 | `eval_run_items` | Per-case results (input, output, pass/fail) |
+| `knowledge_bases` | RAG knowledge base metadata (embeddings, vector store, retrieval defaults) |
+| `knowledge_documents` | Ingested documents per knowledge base (status, chunk count, storage key) |
 
 ## Entity relationships
 
@@ -37,6 +39,7 @@ erDiagram
     agent_definitions ||--o{ eval_suites : judges
     eval_suites ||--o{ eval_runs : produces
     eval_runs ||--o{ eval_run_items : contains
+    knowledge_bases ||--o{ knowledge_documents : contains
 ```
 
 ## Key columns
@@ -65,6 +68,21 @@ erDiagram
 - `slug` — unique per agent
 - `dataset` — JSON array of test cases (`input`, `reference`, `context`, `_assertions`, `tool`)
 - `judge_config` — deprecated inline judge provider/model/instructions (prefer `judge_agent_definition_id`)
+
+### knowledge_bases
+
+- `slug` — unique identifier
+- `embeddings_provider`, `embeddings_model` — embedding configuration
+- `vector_store_driver`, `vector_store_config` — vector store selection and options
+- `retrieval_defaults` — JSON with default `top_k` and `threshold`
+
+### knowledge_documents
+
+- `knowledge_base_id` — parent knowledge base (cascade delete)
+- `source_type` — `upload` or `text`
+- `storage_key` — path on configured disk for uploaded files
+- `status` — `pending`, `processing`, `ready`, `failed`
+- `chunk_count` — number of indexed chunks after ingest
 
 ### eval_runs
 

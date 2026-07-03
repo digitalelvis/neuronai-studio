@@ -4,7 +4,9 @@ namespace DigitalElvis\NeuronAIStudio\Http\Controllers;
 
 use DigitalElvis\NeuronAIStudio\Http\Controllers\Concerns\ValidatesChatAttachments;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
+use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\WorkflowExecutionException;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
+use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\StructuredOutputValidationException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -81,6 +83,11 @@ class WorkflowStreamController
                     'trace_id' => $trace->id,
                     'status' => $trace->status,
                     'output' => $trace->output,
+                ]);
+            } catch (StructuredOutputValidationException $exception) {
+                $send('trace_failed', [
+                    'message' => $exception->getMessage(),
+                    'validation_errors' => $exception->validationErrors,
                 ]);
             } catch (Throwable $exception) {
                 $send('trace_failed', [

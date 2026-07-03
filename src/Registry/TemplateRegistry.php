@@ -86,48 +86,48 @@ class TemplateRegistry
     /** @return array<int, array<string, mixed>> */
     protected function scanType(string $type): array
     {
-        $path = $this->pathFor($type);
+        $entriesById = [];
 
-        if (! is_dir($path)) {
-            return [];
-        }
-
-        $entries = [];
-
-        foreach ((new Finder)->files()->in($path)->name('*.json') as $file) {
-            $parsed = $this->parseFile($file->getRealPath());
-
-            if ($parsed === null) {
+        foreach ($this->pathsFor($type) as $path) {
+            if (! is_dir($path)) {
                 continue;
             }
 
-            $meta = $parsed['meta'];
-            $id = (string) ($meta['id'] ?? '');
+            foreach ((new Finder)->files()->in($path)->name('*.json') as $file) {
+                $parsed = $this->parseFile($file->getRealPath());
 
-            if ($id === '') {
-                continue;
+                if ($parsed === null) {
+                    continue;
+                }
+
+                $meta = $parsed['meta'];
+                $id = (string) ($meta['id'] ?? '');
+
+                if ($id === '') {
+                    continue;
+                }
+
+                $entry = [
+                    'id' => $id,
+                    'type' => $type,
+                    'name' => (string) ($meta['name'] ?? Str::headline($id)),
+                    'description' => (string) ($meta['description'] ?? ''),
+                    'category' => (string) ($meta['category'] ?? ''),
+                    'tags' => is_array($meta['tags'] ?? null) ? $meta['tags'] : [],
+                    'path' => $file->getRealPath(),
+                ];
+
+                if ($type === 'workflow') {
+                    $entry['complexity'] = (string) ($meta['complexity'] ?? '');
+                    $entry['agents'] = is_array($meta['agents'] ?? null) ? $meta['agents'] : [];
+                    $entry['node_types'] = $this->nodeTypesFromGraph($parsed['graph'] ?? []);
+                }
+
+                $entriesById[$id] = $entry;
             }
-
-            $entry = [
-                'id' => $id,
-                'type' => $type,
-                'name' => (string) ($meta['name'] ?? Str::headline($id)),
-                'description' => (string) ($meta['description'] ?? ''),
-                'category' => (string) ($meta['category'] ?? ''),
-                'tags' => is_array($meta['tags'] ?? null) ? $meta['tags'] : [],
-                'path' => $file->getRealPath(),
-            ];
-
-            if ($type === 'workflow') {
-                $entry['complexity'] = (string) ($meta['complexity'] ?? '');
-                $entry['agents'] = is_array($meta['agents'] ?? null) ? $meta['agents'] : [];
-                $entry['node_types'] = $this->nodeTypesFromGraph($parsed['graph'] ?? []);
-            }
-
-            $entries[] = $entry;
         }
 
-        return $entries;
+        return array_values($entriesById);
     }
 
     /** @return array<string, mixed>|null */
@@ -182,14 +182,22 @@ class TemplateRegistry
         return array_values(array_unique($types));
     }
 
-    protected function pathFor(string $type): string
+    /** @return array<int, string> */
+    protected function pathsFor(string $type): array
     {
+        $paths = [$this->packagePathFor($type)];
+
         $configured = config("neuronai-studio.template_paths.{$type}");
 
-        if (is_string($configured) && $configured !== '') {
-            return $configured;
+        if (is_string($configured) && $configured !== '' && ! in_array($configured, $paths, true)) {
+            $paths[] = $configured;
         }
 
+        return $paths;
+    }
+
+    protected function packagePathFor(string $type): string
+    {
         return dirname(__DIR__, 2)."/resources/templates/{$type}s";
     }
 

@@ -10,12 +10,17 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import ProviderModelFields from './ProviderModelFields';
+import StructuredOutputFields from './shared/StructuredOutputFields';
+import RagFields from './shared/RagFields';
 
 export default function NodeConfigForm({
     node,
     agents,
     tools,
     mcpServers,
+    knowledgeBases = [],
+    ragSearchUrlTemplate = '',
+    outputClasses = [],
     providers = {},
     providerModels = {},
     defaultProvider = '',
@@ -81,6 +86,24 @@ export default function NodeConfigForm({
                             disabled={readOnly}
                         />
                     </div>
+                    <div className="space-y-2">
+                        <Label>Output Key</Label>
+                        <Input
+                            value={data.output_key ?? 'agent_response'}
+                            onChange={(e) => updateField('output_key', e.target.value)}
+                            disabled={readOnly}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            State key where the agent response is stored.
+                        </p>
+                    </div>
+                    <StructuredOutputFields
+                        structured={Boolean(data.structured)}
+                        outputClass={data.output_class ?? ''}
+                        outputClasses={outputClasses}
+                        readOnly={readOnly}
+                        onChange={(patch) => onUpdate?.({ ...data, ...patch })}
+                    />
                 </>
             )}
 
@@ -116,6 +139,13 @@ export default function NodeConfigForm({
                             State key where the LLM response is stored.
                         </p>
                     </div>
+                    <StructuredOutputFields
+                        structured={Boolean(data.structured)}
+                        outputClass={data.output_class ?? ''}
+                        outputClasses={outputClasses}
+                        readOnly={readOnly}
+                        onChange={(patch) => onUpdate?.({ ...data, ...patch })}
+                    />
                 </>
             )}
 
@@ -165,7 +195,7 @@ export default function NodeConfigForm({
                             disabled={readOnly}
                         />
                         <p className="text-xs text-muted-foreground">
-                            Key in workflow state. Defaults to input.
+                            Key in workflow state. Use dot notation for nested values (e.g. lead.tier).
                         </p>
                     </div>
                     <div className="space-y-2">
@@ -186,6 +216,53 @@ export default function NodeConfigForm({
                     {['equals', 'not_equals', 'contains'].includes(data.operator) && (
                         <div className="space-y-2">
                             <Label>Value</Label>
+                            <Input value={data.value ?? ''} onChange={(e) => updateField('value', e.target.value)} disabled={readOnly} />
+                        </div>
+                    )}
+                </>
+            )}
+
+            {node.type === 'loop' && (
+                <>
+                    <div className="space-y-2">
+                        <Label>Max Steps</Label>
+                        <Input
+                            type="number"
+                            min={1}
+                            value={data.max_steps ?? 10}
+                            onChange={(e) => updateField('max_steps', Number(e.target.value))}
+                            disabled={readOnly}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            Maximum iterations before the loop exits with an error.
+                        </p>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Exit Condition — State Key</Label>
+                        <Input
+                            value={data.state_key ?? 'input'}
+                            onChange={(e) => updateField('state_key', e.target.value)}
+                            disabled={readOnly}
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Exit Condition — Operator</Label>
+                        <Select value={data.operator ?? 'not_empty'} onValueChange={(value) => updateField('operator', value)} disabled={readOnly}>
+                            <SelectTrigger>
+                                <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="not_empty">is not empty</SelectItem>
+                                <SelectItem value="empty">is empty</SelectItem>
+                                <SelectItem value="equals">equals</SelectItem>
+                                <SelectItem value="not_equals">does not equal</SelectItem>
+                                <SelectItem value="contains">contains</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    {['equals', 'not_equals', 'contains'].includes(data.operator) && (
+                        <div className="space-y-2">
+                            <Label>Exit Condition — Value</Label>
                             <Input value={data.value ?? ''} onChange={(e) => updateField('value', e.target.value)} disabled={readOnly} />
                         </div>
                     )}
@@ -272,6 +349,16 @@ export default function NodeConfigForm({
                         />
                     </div>
                 </>
+            )}
+
+            {node.type === 'rag' && (
+                <RagFields
+                    data={data}
+                    knowledgeBases={knowledgeBases}
+                    ragSearchUrlTemplate={ragSearchUrlTemplate}
+                    readOnly={readOnly}
+                    onChange={(patch) => onUpdate?.({ ...data, ...patch })}
+                />
             )}
 
             {canRemove && (

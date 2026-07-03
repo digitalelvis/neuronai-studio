@@ -2,35 +2,45 @@
 
 **North star:** Agentes multimodais autônomos com grafos de workflow cíclicos.
 
-**Última atualização:** 2026-06-30
+**Development line:** `v0.2.x` → release alvo `v0.2.0`  
+**Última publicação:** `v0.1.2` (`main`)  
+**Última atualização:** 2026-07-02
 
 ---
 
 ## Milestones
 
-### M1 — Fundação autônoma (P0) `planned`
+### M1 — Fundação autônoma (P0) `done`
 
 Grafos cíclicos + agentes multimodais + RAG real. Entrega o padrão end-to-end para loops com agent, attachments e knowledge base.
 
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
-| 1 | `workflow-cyclic-graphs` | planned | [spec](../features/workflow-cyclic-graphs/spec.md) |
-| 2 | `autonomous-multimodal-agents` | planned | [spec](../features/autonomous-multimodal-agents/spec.md) |
-| 3 | `workflow-rag` | planned | [spec](../features/workflow-rag/spec.md) |
+| 1 | `workflow-cyclic-graphs` | **done** (P0+P1) | [spec](../features/workflow-cyclic-graphs/spec.md) · [design](../features/workflow-cyclic-graphs/design.md) · [tasks](../features/workflow-cyclic-graphs/tasks.md) |
+| 2 | `autonomous-multimodal-agents` | **done** | [spec](../features/autonomous-multimodal-agents/spec.md) · [design](../features/autonomous-multimodal-agents/design.md) |
+| 3 | `workflow-rag` | **done** | [spec](../features/workflow-rag/spec.md) · [design](../features/workflow-rag/design.md) |
+| 3b | `rag-knowledge-base-tool` | **done** | [spec](../features/rag-knowledge-base-tool/spec.md) · [design](../features/rag-knowledge-base-tool/design.md) |
 
-**Critério de conclusão M1:** Template autonomous-lead-qualification executável no test harness com loop, agent com tools, anexo PDF/imagem, e opcionalmente nó RAG upstream.
+**Critério de conclusão M1:** Template `autonomous-lead-qualification` executável no test harness com loop, agent com tools, anexo PDF/imagem, e opcionalmente nó RAG upstream.
 
-### M2 — Capacidades de agente no workflow (P1) `planned`
+**Etapa atual:** M1 concluído — publicar `v0.2.0`. Próximo foco: M2 Feature 5 (`workflow-tool-approval`).
+
+### M2 — Capacidades de agente no workflow (P1) `in progress`
 
 Structured output, aprovação de tools e streaming de tokens no harness.
 
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
-| 4 | `workflow-structured-output` | planned | [spec](../features/workflow-structured-output/spec.md) |
+| 4 | `workflow-structured-output` | **done** (T1–T17; T12 parcial) | [spec](../features/workflow-structured-output/spec.md) · [tasks](../features/workflow-structured-output/tasks.md) |
 | 5 | `workflow-tool-approval` | planned | [spec](../features/workflow-tool-approval/spec.md) |
 | 6 | `workflow-token-streaming` | planned | [spec](../features/workflow-token-streaming/spec.md) |
 
-### M3 — Escala e resiliência (P2) `planned`
+**Etapa atual (v0.2.x):** Feature 5 — `workflow-tool-approval` (próxima após fechar M1)  
+**Concluído (Feature 4):** T1–T17 — registry, resolver, dot notation, `AgentRunner::structuredInline`, executors LLM/agent, erros de validação no trace, canvas inspector, round-trip, codegen e docs.  
+**Próximos passos:** Iniciar `workflow-tool-approval` → depois `workflow-token-streaming`.  
+**Nota:** T12 parcial — hint dot notation (`lead.tier`) só no condition; loop sem inspector aguarda polish M1.
+
+### M3 — Escala e resiliência (P2) `in progress`
 
 Paralelismo, checkpoints generalizados e execução assíncrona.
 
@@ -38,17 +48,60 @@ Paralelismo, checkpoints generalizados e execução assíncrona.
 |-------|---------|--------|------|
 | 7 | `workflow-parallel-execution` | planned | [spec](../features/workflow-parallel-execution/spec.md) |
 | 8 | `workflow-checkpoints-persistence` | planned | [spec](../features/workflow-checkpoints-persistence/spec.md) |
-| 9 | `workflow-queue-runner` | planned | [spec](../features/workflow-queue-runner/spec.md) |
+| 9 | `workflow-queue-runner` | **done** | [spec](../features/workflow-queue-runner/spec.md) · [tasks](../features/workflow-queue-runner/tasks.md) |
+
+### M4 — Integração externa (P1) `planned`
+
+Expor agentes e workflows para clients externos (Vercel AI SDK, AG-UI) via endpoints de streaming no package, sem alterar o harness interno.
+
+| Ordem | Feature | Status | Spec |
+|-------|---------|--------|------|
+| 10 | `stream-adapters` | planned | [spec](../features/stream-adapters/spec.md) |
+
+**Critério de conclusão M4:** Host app consome agente via `useChat` (Vercel) e workflow via client AG-UI usando rotas configuráveis do package; workflow com Human node pausa e retoma via endpoint `resume/{protocol}`; catálogo e Connect Panel documentam URLs e snippets.
+
+**Dependências:** SA-14 (tokens em workflow externo) opcionalmente aguarda `workflow-token-streaming`.
+
+---
+
+## Próximas tarefas (ordem de execução)
+
+Fila derivada do estado real (ver [STATE.md](STATE.md)).
+
+### Sprint atual — publicar `v0.2.0`
+
+1. ~~`workflow-rag` Fatia 3~~ ✅
+2. ~~AMA-09 docs~~ ✅
+3. PR `v0.2.x` → `main` + tag `v0.2.0`
+4. Governança — branch protection para `v0.2.x` no GitHub
+
+### Próximo — completar M2
+
+5. `workflow-tool-approval` (Feature 5)
+6. `workflow-token-streaming` (Feature 6)
+
+### Depois — M3 e M4
+
+7. `workflow-parallel-execution` (Feature 7)
+8. `workflow-checkpoints-persistence` (Feature 8)
+9. `stream-adapters` (Feature 10) — SA-14 pode aguardar token streaming
 
 ---
 
 ## Features concluídas
 
-| Feature | Status |
-|---------|--------|
-| `studio-test-harness` | ✅ done |
-| `workflow-json-io` | ✅ done |
-| `workflow-code-bridge` | ✅ done |
+| Feature | Status | Version |
+|---------|--------|---------|
+| `studio-test-harness` | ✅ done | 0.1.x |
+| `workflow-json-io` | ✅ done | 0.1.x |
+| `workflow-code-bridge` | ✅ done | 0.1.x |
+| Multimodal attachments (AMA partial) | ✅ done | 0.1.2 |
+| `workflow-cyclic-graphs` (P0+P1) | ✅ done | 0.2.x |
+| `autonomous-multimodal-agents` (core) | ✅ done | 0.2.x |
+| `workflow-structured-output` | ✅ done | 0.2.x |
+| `workflow-queue-runner` | ✅ done | 0.2.x |
+| `workflow-rag` | ✅ done | 0.2.x |
+| `rag-knowledge-base-tool` | ✅ done | 0.2.x |
 
 ---
 
@@ -60,11 +113,14 @@ flowchart TD
     AMA[autonomous-multimodal-agents]
     RAG[workflow-rag]
     STH[studio-test-harness]
+    SO[workflow-structured-output]
 
     CG --> AMA
     STH --> AMA
     RAG -.-> AMA
     CG -.-> RAG
+    CG -.-> SO
+    SO -.-> CG
 ```
 
 ---
@@ -96,6 +152,12 @@ Mapeamento feature → arquivos `docs/` a criar/atualizar na implementação.
 | `workflow-parallel-execution` | `guides/workflows/node-types/logic-nodes.md`, `guides/workflows/overview.md`, `guides/workflows/runtime-and-traces.md`, `guides/workflows/human-in-the-loop.md`, `extending/custom-node-types.md` |
 | `workflow-checkpoints-persistence` | `guides/workflows/runtime-and-traces.md`, `guides/workflows/human-in-the-loop.md`, `reference/database-schema.md`, `reference/configuration.md`, `extending/custom-node-types.md` |
 | `workflow-queue-runner` | `guides/workflows/runtime-and-traces.md`, `guides/export-and-production.md`, `reference/configuration.md`, `reference/artisan-commands.md`, `getting-started/installation.md` |
+
+### M4
+
+| Feature | Documentos |
+|---------|------------|
+| `stream-adapters` | `guides/integration/stream-adapters.md`, `guides/integration/vercel-ai-sdk.md`, `guides/integration/ag-ui.md`, `reference/configuration.md`, `getting-started/installation.md`, `guides/agents/playground-and-threads.md` |
 
 ---
 

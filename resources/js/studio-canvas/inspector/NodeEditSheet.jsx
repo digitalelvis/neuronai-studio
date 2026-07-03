@@ -13,6 +13,9 @@ export default function NodeEditSheet({
     agents = [],
     tools = [],
     mcpServers = [],
+    knowledgeBases = [],
+    ragSearchUrlTemplate = '',
+    outputClasses = [],
     providers = {},
     providerModels = {},
     defaultProvider = '',
@@ -40,6 +43,9 @@ export default function NodeEditSheet({
                         agents={agents}
                         tools={tools}
                         mcpServers={mcpServers}
+                        knowledgeBases={knowledgeBases}
+                        ragSearchUrlTemplate={ragSearchUrlTemplate}
+                        outputClasses={outputClasses}
                         providers={providers}
                         providerModels={providerModels}
                         defaultProvider={defaultProvider}

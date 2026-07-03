@@ -209,6 +209,9 @@ export default function WorkflowEditorShell({ config }) {
                     agents={config.agents || []}
                     tools={config.tools || []}
                     mcpServers={config.mcpServers || []}
+                    knowledgeBases={config.knowledgeBases || []}
+                    ragSearchUrlTemplate={config.ragSearchUrlTemplate ?? ''}
+                    outputClasses={config.outputClasses || []}
                     providers={config.providers || {}}
                     providerModels={config.providerModels || {}}
                     defaultProvider={config.defaultProvider ?? ''}

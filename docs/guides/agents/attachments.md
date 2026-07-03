@@ -60,6 +60,12 @@ sequenceDiagram
 - Send PDFs for document Q&A workflows
 - Ensure your chosen model supports the attachment modality (vision models for images)
 
+## Workflow test harness
+
+The workflow test harness uses the same upload endpoint and MIME validation as the Playground. Uploaded files are merged into `state.attachments` at run start (or resume) and survive across **Loop** iterations for autonomous agent workflows.
+
+Agent and LLM nodes read attachments through `MessageFactory::resolveMessageWithAttachments()`. Pair with the **Autonomous Lead Qualification** template for a full loop + tools + attachments example — see [Templates](../templates.md#autonomous-lead-qualification).
+
 ## Related
 
 - [Playground & Threads](playground-and-threads.md)

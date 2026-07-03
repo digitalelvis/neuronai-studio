@@ -1,0 +1,72 @@
+{
+  "meta": {
+    "id": "rag-knowledge-qna",
+    "name": "RAG Knowledge Q&A",
+    "description": "Knowledge-grounded Q&A: retrieves the most relevant chunks from a knowledge base and answers strictly from that context. Select a knowledge base on the RAG node after installing.",
+    "complexity": "intermediate",
+    "category": "support",
+    "tags": ["rag", "knowledge", "agent"],
+    "agents": ["knowledge-agent"]
+  },
+  "graph": {
+    "version": 1,
+    "nodes": [
+      {
+        "id": "start_1",
+        "type": "start",
+        "position": { "x": 100, "y": 200 },
+        "data": {}
+      },
+      {
+        "id": "rag_1",
+        "type": "rag",
+        "position": { "x": 320, "y": 200 },
+        "data": {
+          "query": "{{ input }}",
+          "top_k": 5,
+          "output_key": "rag_context"
+        }
+      },
+      {
+        "id": "agent_1",
+        "type": "agent",
+        "position": { "x": 560, "y": 200 },
+        "data": {
+          "agent_ref": "knowledge-agent",
+          "message": "Answer the user's question using ONLY the knowledge base context provided below. If the answer is not contained in the context, say you don't have enough information — do not rely on outside knowledge.\n\nQuestion:\n{{ input }}\n\nKnowledge base context:\n{{ rag_context.context }}",
+          "output_key": "agent_response"
+        }
+      },
+      {
+        "id": "stop_1",
+        "type": "stop",
+        "position": { "x": 800, "y": 200 },
+        "data": {}
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge_start_rag",
+        "source": "start_1",
+        "target": "rag_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_rag_agent",
+        "source": "rag_1",
+        "target": "agent_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_agent_stop",
+        "source": "agent_1",
+        "target": "stop_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      }
+    ],
+    "viewport": { "x": 0, "y": 0, "zoom": 1 }
+  }
+}

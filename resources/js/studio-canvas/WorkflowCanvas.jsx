@@ -114,11 +114,34 @@ function WorkflowCanvasInner({
         [setNodes],
     );
 
+    const setLoopIteration = useCallback(
+        (nodeId, iteration, maxSteps) => {
+            if (!nodeId) {
+                return;
+            }
+
+            setNodes((current) =>
+                current.map((node) =>
+                    node.id === nodeId
+                        ? {
+                              ...node,
+                              data: {
+                                  ...node.data,
+                                  loopIteration: { iteration, maxSteps },
+                              },
+                          }
+                        : node,
+                ),
+            );
+        },
+        [setNodes],
+    );
+
     const clearExecutionStatus = useCallback(() => {
         setNodes((current) =>
             current.map((node) => ({
                 ...node,
-                data: { ...node.data, executionStatus: null },
+                data: { ...node.data, executionStatus: null, loopIteration: null },
             })),
         );
         setRunStatus(null);
@@ -377,6 +400,12 @@ function WorkflowCanvasInner({
                 return;
             }
 
+            if (detail.event === 'loop_iteration') {
+                setLoopIteration(detail.node_id, detail.iteration, detail.max_steps);
+                setExecutionStatus(detail.node_id, 'running');
+                return;
+            }
+
             if (detail.event === 'trace_completed') {
                 setRunStatus('completed');
                 return;
@@ -411,6 +440,7 @@ function WorkflowCanvasInner({
         readOnly,
         removeSelectedNode,
         setExecutionStatus,
+        setLoopIteration,
         setNodes,
         updateNodeData,
     ]);

@@ -53,6 +53,27 @@ After the run completes, open **Traces** for this workflow. Click the latest tra
 - Input and output payloads for each step
 - Total duration and any errors
 
+## Optional: Autonomous loop with attachments
+
+For the full autonomous agent pattern (loop + tools + multimodal input):
+
+1. Open **Templates** and install **Autonomous Lead Qualification**
+2. Open the workflow editor and inspect the **Loop** → **Agent** → **Condition** subgraph
+3. In the **Test** panel, attach a PDF or image and send an initial message
+4. Watch SSE events: `loop_iteration`, `tool_call`, `tool_result`
+5. If the agent needs more data, reply when the workflow pauses at the **Human** node
+
+The agent retains thread memory across iterations via `__studio_thread_id`. See [Autonomous agents in workflows](../guides/workflows/overview.md#autonomous-agents-in-workflows).
+
+## Optional: RAG upstream of an agent
+
+1. Create a **Knowledge Base** under `/neuronai-studio/knowledge-bases` and ingest a document
+2. Install the **Support RAG HITL** template (or add a RAG node manually before an Agent node)
+3. Confirm the Agent message references `{{ rag_context.context }}`
+4. Run the test harness — trace steps include `rag_query` metadata
+
+See [AI Nodes — RAG](../guides/workflows/node-types/ai-nodes.md#rag).
+
 ## Next steps
 
 - [Workflow Overview](../guides/workflows/overview.md) — concepts and node types

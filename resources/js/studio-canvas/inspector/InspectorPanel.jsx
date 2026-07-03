@@ -33,6 +33,22 @@ export default function InspectorPanel({
         return () => window.removeEventListener('workflow-open-code', onOpenCode);
     }, []);
 
+    useEffect(() => {
+        const onViewTrace = (event) => {
+            const traceId = event.detail?.traceId;
+            if (!traceId) {
+                return;
+            }
+
+            setSelectedTraceId(traceId);
+            setTraceSheetOpen(true);
+            setTab('traces');
+        };
+
+        window.addEventListener('workflow-view-trace', onViewTrace);
+        return () => window.removeEventListener('workflow-view-trace', onViewTrace);
+    }, []);
+
     const workflowAdapter = useMemo(() => {
         if (!workflowConfig.streamUrl) {
             return null;
