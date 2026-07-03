@@ -10,6 +10,8 @@ use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
 use DigitalElvis\NeuronAIStudio\Runtime\MessageFactory;
 use DigitalElvis\NeuronAIStudio\Runtime\StateTemplateInterpolator;
 use DigitalElvis\NeuronAIStudio\Runtime\StructuredOutput\StructuredOutputResolver;
+use NeuronAI\Chat\Messages\Stream\Chunks\TextChunk;
+use NeuronAI\Chat\Messages\UserMessage;
 use NeuronAI\Workflow\WorkflowState;
 
 class AgentNodeExecutor implements NodeExecutorInterface
@@ -67,6 +69,10 @@ class AgentNodeExecutor implements NodeExecutorInterface
             $state->set($outputKey, $response->structured);
 
             return 'default';
+        }
+
+        if ($this->shouldStream($data, $requireApproval, $state)) {
+            return $this->streamResponse($nodeId, (string) $outputKey, $data, $definition, $userMessage, $threadKey, $state);
         }
 
         try {
@@ -138,6 +144,64 @@ class AgentNodeExecutor implements NodeExecutorInterface
         if ($decision === 'reject' && $context->targetForHandle($nodeId, 'rejected') !== null) {
             return 'rejected';
         }
+
+        return 'default';
+    }
+
+    /**
+     * Token streaming only applies to interactive SSE runs (state carries an
+     * emitter) and never to structured output or tool-approval nodes, which
+     * rely on the blocking path for validation and interrupt handling.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    protected function shouldStream(array $data, bool $requireApproval, WorkflowState $state): bool
+    {
+        return ($data['stream'] ?? false) === true
+            && $requireApproval === false
+            && $state instanceof BuilderWorkflowState
+            && $state->stepEmitter !== null;
+    }
+
+    /**
+     * Consume the agent stream, emitting a `token` event per text chunk while
+     * accumulating the final content and tool events for the workflow state.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    protected function streamResponse(
+        string $nodeId,
+        string $outputKey,
+        array $data,
+        ?AgentDefinition $definition,
+        UserMessage $userMessage,
+        ?string $threadKey,
+        BuilderWorkflowState $state,
+    ): string {
+        $config = $definition !== null
+            ? [
+                'provider' => $definition->provider,
+                'model' => $definition->model,
+                'instructions' => $definition->instructions,
+                'tools' => $definition->tools ?? [],
+            ]
+            : $data;
+
+        $generator = $this->agentRunner->streamInline($config, $userMessage, $definition, $threadKey);
+
+        foreach ($generator as $chunk) {
+            if ($chunk instanceof TextChunk && $chunk->content !== '') {
+                $state->emitStep('token', [
+                    'node_id' => $nodeId,
+                    'delta' => $chunk->content,
+                ]);
+            }
+        }
+
+        $response = $generator->getReturn();
+
+        $state->set($outputKey, $response->content);
+        $this->emitToolEvents($nodeId, $response->toolEvents, $state);
 
         return 'default';
     }

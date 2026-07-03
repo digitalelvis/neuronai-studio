@@ -101,6 +101,37 @@ class AgentRunner
     }
 
     /**
+     * Stream an agent response inline, yielding chunks as they arrive and
+     * returning the final AgentRunResult (content + tool events) once the
+     * stream is fully consumed. Mirrors runInline for the token-streaming path.
+     *
+     * @param  array<string, mixed>  $config
+     * @return Generator<int, StreamChunk, mixed, AgentRunResult>
+     */
+    public function streamInline(
+        array $config,
+        string|UserMessage $message,
+        ?AgentDefinition $definition = null,
+        ?string $threadKey = null,
+        bool $fake = false,
+    ): Generator {
+        $agent = $this->makeAgent($definition, $config, $threadKey, $fake);
+        $userMessage = $message instanceof UserMessage ? $message : new UserMessage($message);
+        $handler = $agent->stream($userMessage);
+
+        foreach ($handler->events() as $event) {
+            if ($event instanceof StreamChunk) {
+                yield $event;
+            }
+        }
+
+        $content = $handler->getMessage()->getContent();
+        $events = $this->toolEvents->fromChatHistory($agent->getChatHistory());
+
+        return new AgentRunResult($content, $events);
+    }
+
+    /**
      * Translate a NeuronAI ToolApproval interrupt into a Studio-level exception
      * carrying the tools awaiting human approval. Non-approval interrupts bubble up.
      */

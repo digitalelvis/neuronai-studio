@@ -4,10 +4,13 @@ namespace DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors;
 
 use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
 use DigitalElvis\NeuronAIStudio\Runtime\AgentRunner;
+use DigitalElvis\NeuronAIStudio\Runtime\BuilderWorkflowState;
 use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
 use DigitalElvis\NeuronAIStudio\Runtime\MessageFactory;
 use DigitalElvis\NeuronAIStudio\Runtime\StateTemplateInterpolator;
 use DigitalElvis\NeuronAIStudio\Runtime\StructuredOutput\StructuredOutputResolver;
+use NeuronAI\Chat\Messages\Message;
+use NeuronAI\Chat\Messages\Stream\Chunks\TextChunk;
 use NeuronAI\Workflow\WorkflowState;
 
 class LlmNodeExecutor implements NodeExecutorInterface
@@ -47,6 +50,27 @@ class LlmNodeExecutor implements NodeExecutorInterface
         }
 
         $aiProvider = $this->providers->resolve($provider, $model);
+
+        if (($data['stream'] ?? false) === true && $state instanceof BuilderWorkflowState && $state->stepEmitter !== null) {
+            $nodeId = (string) ($nodeConfig['id'] ?? 'llm');
+            $generator = $aiProvider->stream($userMessage);
+
+            foreach ($generator as $chunk) {
+                if ($chunk instanceof TextChunk && $chunk->content !== '') {
+                    $state->emitStep('token', [
+                        'node_id' => $nodeId,
+                        'delta' => $chunk->content,
+                    ]);
+                }
+            }
+
+            /** @var Message $finalMessage */
+            $finalMessage = $generator->getReturn();
+            $state->set($outputKey, $finalMessage->getContent());
+
+            return 'default';
+        }
+
         $response = $aiProvider->chat($userMessage);
 
         $state->set($outputKey, $response->getContent());
