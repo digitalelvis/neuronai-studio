@@ -1,9 +1,9 @@
 # State
 
 **Last Updated:** 2026-07-02
-**Development line:** `v0.2.x` (target release `v0.2.0`)
-**Latest published:** `v0.1.2` on `main`
-**Current Work:** Sprint M1 fechada — preparar release `v0.2.0` (PR `v0.2.x` → `main`)
+**Development line:** `v0.2.x` (target release `v0.2.1+`)
+**Latest published:** `v0.2.0` on `main`
+**Current Work:** M2 — `workflow-tool-approval` (próxima feature)
 
 ---
 

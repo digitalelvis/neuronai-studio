@@ -185,6 +185,7 @@ Consumers on `v0.1.x` can stay on latest `v0.1.*` tag until ready to adopt cycli
 | Issue | Cause | Fix |
 |-------|-------|-----|
 | Release workflow loops | Missing `[skip ci]` on release commit | Ensure `.release-it.json` has `[skip ci]` in `commitMessage` |
+| Release push rejected on `main` | Branch protection blocks `GITHUB_TOKEN` direct push | Add **GitHub Actions** (or repo admins) to ruleset bypass on `Protect main`, or run `release-it --no-git.push` locally and `git push origin HEAD:main --tags` |
 | No version bump | Only `docs`/`chore` commits since last tag | Expected — `requireCommitsFail: false` skips release |
 | Packagist stale | Hook not configured | Follow [3.3 GitHub Hook](#33-github-hook-auto-update); add API token as webhook secret |
 | Packagist hook 403 | Webhook missing secret | Set **Secret** to your Packagist API token (Profile) |

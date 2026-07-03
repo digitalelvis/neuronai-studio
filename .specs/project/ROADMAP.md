@@ -2,8 +2,8 @@
 
 **North star:** Agentes multimodais autônomos com grafos de workflow cíclicos.
 
-**Development line:** `v0.2.x` → release alvo `v0.2.0`  
-**Última publicação:** `v0.1.2` (`main`)  
+**Development line:** `v0.2.x` (target release `v0.2.1+`)  
+**Latest published:** `v0.2.0` on `main`  
 **Última atualização:** 2026-07-02
 
 ---
@@ -72,7 +72,7 @@ Fila derivada do estado real (ver [STATE.md](STATE.md)).
 
 1. ~~`workflow-rag` Fatia 3~~ ✅
 2. ~~AMA-09 docs~~ ✅
-3. PR `v0.2.x` → `main` + tag `v0.2.0`
+3. ~~PR `v0.2.x` → `main` + tag `v0.2.0`~~ ✅
 4. Governança — branch protection para `v0.2.x` no GitHub
 
 ### Próximo — completar M2
