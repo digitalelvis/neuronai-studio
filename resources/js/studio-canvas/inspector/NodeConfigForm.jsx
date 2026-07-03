@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/select';
 import ProviderModelFields from './ProviderModelFields';
 import StructuredOutputFields from './shared/StructuredOutputFields';
+import StreamToggleField from './shared/StreamToggleField';
 import RagFields from './shared/RagFields';
 
 export default function NodeConfigForm({
@@ -104,6 +105,12 @@ export default function NodeConfigForm({
                         readOnly={readOnly}
                         onChange={(patch) => onUpdate?.({ ...data, ...patch })}
                     />
+                    <StreamToggleField
+                        stream={Boolean(data.stream)}
+                        structured={Boolean(data.structured)}
+                        readOnly={readOnly}
+                        onChange={(patch) => onUpdate?.({ ...data, ...patch })}
+                    />
                 </>
             )}
 
@@ -143,6 +150,12 @@ export default function NodeConfigForm({
                         structured={Boolean(data.structured)}
                         outputClass={data.output_class ?? ''}
                         outputClasses={outputClasses}
+                        readOnly={readOnly}
+                        onChange={(patch) => onUpdate?.({ ...data, ...patch })}
+                    />
+                    <StreamToggleField
+                        stream={Boolean(data.stream)}
+                        structured={Boolean(data.structured)}
                         readOnly={readOnly}
                         onChange={(patch) => onUpdate?.({ ...data, ...patch })}
                     />

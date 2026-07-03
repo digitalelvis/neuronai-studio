@@ -275,8 +275,11 @@ function WorkflowCanvasInner({
                           provider: defaultProvider,
                           model: defaultModel,
                           output_key: 'llm_response',
+                          stream: true,
                       }
-                    : {};
+                    : type === 'agent'
+                      ? { stream: true }
+                      : {};
 
             const node = buildFlowNode(type, nodePosition, nodeTypesMeta, defaultConfig);
             const nextNodes = [...currentNodes, node];
