@@ -45,6 +45,7 @@ sequenceDiagram
 |-------|-------------|
 | `thread` | Workflow chat thread ID for the run |
 | `step_started` | Node execution begins |
+| `token` | Incremental text delta from a streaming Agent/LLM node (`node_id`, `delta`) |
 | `step_completed` | Node finished with handle and duration |
 | `loop_iteration` | Loop node incremented (`iteration`, `max_steps`, `node_id`) |
 | `tool_call` | Agent node invoked a tool |
@@ -55,6 +56,26 @@ sequenceDiagram
 | `tool_approval_resolved` | Approval decision applied on resume (`approved: bool`) |
 | `trace_completed` | Run finished successfully |
 | `trace_failed` | Execution failure |
+
+## Token streaming
+
+Agent and LLM nodes can stream their response token-by-token during a step instead of blocking until the full reply is ready — the same real-time experience as the agent playground.
+
+Enable it per node with `data.stream: true`. When streaming is active, the runner emits a `token` event for each text delta between the node's `step_started` and `step_completed` boundaries:
+
+```
+event: step_started    (node_id: agent_1)
+event: token           (node_id: agent_1, delta: "Hello")
+event: token           (node_id: agent_1, delta: " world")
+event: step_completed  (node_id: agent_1, handle: default)
+```
+
+The `StudioChat` chat surface aggregates consecutive `token` deltas into the assistant bubble, so text appears incrementally. The final accumulated content is still written to the node's `output_key`, and tool events are emitted after the stream completes — downstream nodes and trace records behave exactly as in the blocking path.
+
+Streaming falls back to the blocking path (no `token` events) when:
+
+- the node uses **structured output** (`structured: true`) — validation requires the complete response, or
+- the Agent node has **tool approval** enabled — the run pauses on the interrupt instead.
 
 ## Tool approval pause (`awaiting_tool_approval`)
 

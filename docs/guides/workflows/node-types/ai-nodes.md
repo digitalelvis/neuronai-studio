@@ -14,6 +14,7 @@ AI nodes invoke language models, agents, tools, and MCP connectors within a work
 | `structured` | When `true`, validate and store typed output instead of plain text |
 | `output_class` | FQCN or short name of a PHP output class (required when `structured` is on) |
 | `require_tool_approval` | Optional per-node override. Pause for human approval before the agent runs any tool (see [Tool approval](#tool-approval)) |
+| `stream` | When `true`, stream the response token-by-token via SSE during the step (see [Streaming](#streaming)) |
 
 Example message:
 
@@ -81,8 +82,15 @@ Attach a PDF or image in the harness before sending — the same attachment arra
 | `output_key` | State key for the response |
 | `structured` | When `true`, validate and store typed output instead of plain text |
 | `output_class` | FQCN or short name of a PHP output class (required when `structured` is on) |
+| `stream` | When `true`, stream the response token-by-token via SSE during the step (see [Streaming](#streaming)) |
 
 Use when you need a one-off LLM step without tool bindings.
+
+## Streaming
+
+Agent and LLM nodes can stream their text output token-by-token instead of blocking until the full response is ready. Set `stream: true` on the node to emit incremental `token` SSE events during the step; the chat surface renders the text as it arrives while the final content is still written to `output_key`.
+
+Streaming applies only to plain-text responses on an interactive SSE run. It is automatically skipped (falling back to the blocking path) for **structured output** nodes and for Agent nodes with **tool approval** enabled. See [Runtime & Traces → Token streaming](../runtime-and-traces.md#token-streaming) for the event sequence.
 
 ## Structured output
 

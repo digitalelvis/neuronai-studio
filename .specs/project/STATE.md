@@ -3,7 +3,7 @@
 **Last Updated:** 2026-07-03
 **Development line:** `v0.2.x` (target release `v0.2.1+`)
 **Latest published:** `v0.2.0` on `main`
-**Current Work:** M2 — `workflow-token-streaming` (próxima feature)
+**Current Work:** M2 — `workflow-token-streaming` (slice 1 backend entregue; slice 2 toggle/docs pendente)
 
 ---
 
@@ -81,7 +81,7 @@
 |---------|--------|-------|
 | `workflow-structured-output` | ✅ done | T1–T17 ✅; T12 parcial — hint dot notation só no condition (loop sem inspector) |
 | `workflow-tool-approval` | ✅ done | Slices 1–3 ✅ (backend, resume/API, UI+codegen+docs) |
-| `workflow-token-streaming` | ⏳ planned | — |
+| `workflow-token-streaming` | 🔄 in progress | Slice 1 (backend token SSE) ✅; slice 2 (toggle canvas + docs polish) pendente |
 
 ### workflow-tool-approval — Slice 1 (backend) entregue
 
@@ -110,6 +110,16 @@
 - [x] Rebuild `studio-chat.bundle.js` (Vite IIFE)
 - [x] Docs: human-in-the-loop (Tool approval vs Human), ai-nodes (approval no agent node), creating-agents (flag + export), runtime-and-traces (status/SSE/resume payload), security-and-access (aprovar tools sensíveis)
 - [x] 2 testes codegen novos (`NativeWorkflowExporterTest`) — suíte 235 verde
+
+### workflow-token-streaming — Slice 1 (backend token SSE) entregue
+
+- [x] TS-01: `AgentRunner::streamInline` — generator yield `StreamChunk` + `return AgentRunResult` (conteúdo + tool events) após consumir eventos
+- [x] TS-03/TS-06: `AgentNodeExecutor` streaming branch (`data.stream`) → emite SSE `token` `{node_id, delta}` entre `step_started`/`step_completed`; fallback blocking para structured e tool-approval (sem regressão)
+- [x] TS-02: `LlmNodeExecutor` streaming via `AIProviderInterface::stream()` + `getReturn()` → `output_key`
+- [x] TS-04/TS-05: sem mudança — `WorkflowStreamController` propaga `token` e `StudioChat`/`WorkflowSessionAdapter` já agregam `token` na bolha assistant
+- [x] TS-08: `WorkflowTokenStreamingTest` (5 testes: agent stream, llm stream, 2 regressões blocking, tool-approval fallback) — suíte 240 verde
+- [x] Docs: runtime-and-traces (evento `token` + seção Token streaming), ai-nodes (opção `stream` + seção Streaming)
+- [ ] Slice 2: toggle `stream` no inspector canvas (LLM/Agent), default on no harness, docs frontend-bundles/playground (TS-07)
 
 ### Structured output — entregue
 
