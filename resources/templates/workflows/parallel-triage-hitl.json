@@ -1,0 +1,203 @@
+{
+  "meta": {
+    "id": "parallel-triage-hitl",
+    "name": "Parallel Support Triage with Human Review",
+    "description": "Full M3 showcase: forks a support ticket into three automated analyses plus a human review branch. The automated branches run and are checkpointed first; the human branch pauses the workflow (parallel interrupt). On resume, the completed branches are reused from their checkpoints and only the human branch finishes before the join and the triage composer run.",
+    "complexity": "advanced",
+    "category": "support",
+    "tags": ["parallel", "fork", "join", "checkpoints", "human", "hitl", "resume"],
+    "agents": ["support-triage-composer"]
+  },
+  "graph": {
+    "version": 1,
+    "nodes": [
+      {
+        "id": "start_1",
+        "type": "start",
+        "position": { "x": 40, "y": 340 },
+        "data": {}
+      },
+      {
+        "id": "set_ticket",
+        "type": "set_state",
+        "position": { "x": 200, "y": 340 },
+        "data": {
+          "key": "ticket",
+          "from_key": "input"
+        }
+      },
+      {
+        "id": "fork_1",
+        "type": "fork",
+        "position": { "x": 400, "y": 340 },
+        "data": {
+          "join": "join_1"
+        }
+      },
+      {
+        "id": "llm_sentiment",
+        "type": "llm",
+        "position": { "x": 640, "y": 100 },
+        "data": {
+          "provider": "openai",
+          "model": "gpt-4o-mini",
+          "checkpoint": true,
+          "prompt": "You are a support analyst. Analyze ONLY the sentiment and emotional tone of the following customer support ticket.\n\nReturn at most 4 lines covering:\n- Overall sentiment: positive | neutral | negative\n- Emotional intensity: low | medium | high\n- Churn or escalation risk, if any.\n\nTicket:\n{{ticket}}",
+          "output_key": "sentiment_analysis"
+        }
+      },
+      {
+        "id": "llm_facts",
+        "type": "llm",
+        "position": { "x": 640, "y": 280 },
+        "data": {
+          "provider": "openai",
+          "model": "gpt-4o-mini",
+          "checkpoint": true,
+          "prompt": "You are a support analyst. Extract the concrete facts from the following support ticket as a short bullet list: customer intent / requested action, product or service mentioned, order or reference ids, dates and deadlines.\n\nOmit any field that is absent. Do not infer or invent information.\n\nTicket:\n{{ticket}}",
+          "output_key": "facts_analysis"
+        }
+      },
+      {
+        "id": "llm_priority",
+        "type": "llm",
+        "position": { "x": 640, "y": 460 },
+        "data": {
+          "provider": "openai",
+          "model": "gpt-4o-mini",
+          "checkpoint": true,
+          "prompt": "You are a support triage analyst. Based on the following support ticket, decide the priority (low | medium | high | urgent) and the best team to route it to (billing | technical | account | general). Give a one-line justification.\n\nTicket:\n{{ticket}}",
+          "output_key": "priority_analysis"
+        }
+      },
+      {
+        "id": "human_review",
+        "type": "human",
+        "position": { "x": 640, "y": 640 },
+        "data": {
+          "prompt": "Review this ticket before the automated reply is composed. Add internal notes or approval for the customer:\n\n{{ticket}}",
+          "output_key": "review_notes"
+        }
+      },
+      {
+        "id": "join_1",
+        "type": "join",
+        "position": { "x": 900, "y": 340 },
+        "data": {
+          "output_key": "analyses"
+        }
+      },
+      {
+        "id": "agent_compose",
+        "type": "agent",
+        "position": { "x": 1100, "y": 340 },
+        "data": {
+          "agent_ref": "support-triage-composer",
+          "checkpoint": true,
+          "message": "Support ticket:\n{{ticket}}\n\n--- Analysis 1: sentiment & tone ---\n{{sentiment_analysis}}\n\n--- Analysis 2: extracted facts ---\n{{facts_analysis}}\n\n--- Analysis 3: priority & routing ---\n{{priority_analysis}}\n\n--- Internal reviewer notes ---\n{{review_notes}}\n\nProduce the triage summary and the suggested reply.",
+          "output_key": "triage_summary"
+        }
+      },
+      {
+        "id": "stop_1",
+        "type": "stop",
+        "position": { "x": 1320, "y": 340 },
+        "data": {}
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge_start_set",
+        "source": "start_1",
+        "target": "set_ticket",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_set_fork",
+        "source": "set_ticket",
+        "target": "fork_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_fork_join",
+        "source": "fork_1",
+        "target": "join_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_fork_sentiment",
+        "source": "fork_1",
+        "target": "llm_sentiment",
+        "sourceHandle": "sentiment",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_fork_facts",
+        "source": "fork_1",
+        "target": "llm_facts",
+        "sourceHandle": "facts",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_fork_priority",
+        "source": "fork_1",
+        "target": "llm_priority",
+        "sourceHandle": "priority",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_fork_review",
+        "source": "fork_1",
+        "target": "human_review",
+        "sourceHandle": "review",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_sentiment_join",
+        "source": "llm_sentiment",
+        "target": "join_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_facts_join",
+        "source": "llm_facts",
+        "target": "join_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_priority_join",
+        "source": "llm_priority",
+        "target": "join_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_review_join",
+        "source": "human_review",
+        "target": "join_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_join_agent",
+        "source": "join_1",
+        "target": "agent_compose",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_agent_stop",
+        "source": "agent_compose",
+        "target": "stop_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      }
+    ],
+    "viewport": { "x": 0, "y": 0, "zoom": 1 }
+  }
+}

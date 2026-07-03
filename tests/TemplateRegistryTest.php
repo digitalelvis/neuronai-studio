@@ -11,7 +11,7 @@ class TemplateRegistryTest extends TestCase
         $registry = app(TemplateRegistry::class);
         $templates = $registry->all();
 
-        $this->assertCount(15, $templates);
+        $this->assertCount(18, $templates);
 
         $ids = collect($templates)->map(fn (array $entry) => $entry['type'].':'.$entry['id'])->sort()->values()->all();
 
@@ -25,10 +25,13 @@ class TemplateRegistryTest extends TestCase
             'agent:knowledge-agent',
             'agent:lead-qualifier',
             'agent:support-assistant',
+            'agent:support-triage-composer',
             'workflow:autonomous-lead-qualification',
             'workflow:basic-agent-chat',
             'workflow:lead-qualification',
             'workflow:lead-qualification-loop',
+            'workflow:parallel-support-triage',
+            'workflow:parallel-triage-hitl',
             'workflow:rag-knowledge-qna',
             'workflow:support-rag-hitl',
         ], $ids);
@@ -38,11 +41,11 @@ class TemplateRegistryTest extends TestCase
     {
         $registry = app(TemplateRegistry::class);
 
-        $this->assertCount(9, $registry->all('agent'));
-        $this->assertCount(6, $registry->all('workflow'));
+        $this->assertCount(10, $registry->all('agent'));
+        $this->assertCount(8, $registry->all('workflow'));
         $this->assertCount(1, $registry->all('workflow', 'basic'));
-        $this->assertCount(4, $registry->all('workflow', 'intermediate'));
-        $this->assertCount(1, $registry->all('workflow', 'advanced'));
+        $this->assertCount(5, $registry->all('workflow', 'intermediate'));
+        $this->assertCount(2, $registry->all('workflow', 'advanced'));
     }
 
     public function test_registry_loads_agent_template(): void
@@ -64,7 +67,7 @@ class TemplateRegistryTest extends TestCase
 
         $registry = app(TemplateRegistry::class);
 
-        $this->assertCount(15, $registry->all());
+        $this->assertCount(18, $registry->all());
         $this->assertNotNull($registry->load('agent', 'support-assistant'));
         $this->assertNotNull($registry->load('workflow', 'basic-agent-chat'));
     }
