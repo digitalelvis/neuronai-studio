@@ -267,6 +267,95 @@ class NativeWorkflowExporterTest extends TestCase
         $this->cleanupExport($exportPath);
     }
 
+    public function test_agent_export_reads_require_tool_approval_from_definition(): void
+    {
+        $exportPath = $this->exportPath();
+        config([
+            'neuronai-studio.export_path' => $exportPath,
+            'neuronai-studio.export_namespace' => 'App\\Neuron',
+        ]);
+
+        $agent = AgentDefinition::create([
+            'name' => 'Approval Agent',
+            'slug' => 'approval-agent-export',
+            'provider' => 'openai',
+            'model' => 'gpt-4o-mini',
+            'instructions' => 'You act on tools.',
+            'require_tool_approval' => true,
+        ]);
+
+        $workflow = WorkflowDefinition::make([
+            'name' => 'Approval Agent Flow',
+            'slug' => 'approval-agent-flow',
+            'graph' => [
+                'version' => 1,
+                'nodes' => [
+                    ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                    ['id' => 'agent_1', 'type' => 'agent', 'position' => ['x' => 100, 'y' => 0], 'data' => [
+                        'agent_id' => $agent->id,
+                        'message' => 'Delete {{input}}',
+                        'output_key' => 'agent_response',
+                    ]],
+                    ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+                ],
+                'edges' => [
+                    ['id' => 'e1', 'source' => 'start_1', 'target' => 'agent_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                    ['id' => 'e2', 'source' => 'agent_1', 'target' => 'stop_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ],
+                'viewport' => ['x' => 0, 'y' => 0, 'zoom' => 1],
+            ],
+            'status' => 'draft',
+        ]);
+
+        $preview = app(NativeWorkflowExporter::class)->preview($workflow);
+
+        $this->assertStringContainsString("'require_tool_approval' => (bool) \$agent->require_tool_approval,", $preview);
+
+        $this->cleanupExport($exportPath);
+    }
+
+    public function test_inline_agent_export_applies_tool_approval_middleware_from_override(): void
+    {
+        $exportPath = $this->exportPath();
+        config([
+            'neuronai-studio.export_path' => $exportPath,
+            'neuronai-studio.export_namespace' => 'App\\Neuron',
+        ]);
+
+        $workflow = WorkflowDefinition::make([
+            'name' => 'Inline Approval Flow',
+            'slug' => 'inline-approval-flow',
+            'graph' => [
+                'version' => 1,
+                'nodes' => [
+                    ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                    ['id' => 'agent_1', 'type' => 'agent', 'position' => ['x' => 100, 'y' => 0], 'data' => [
+                        'provider' => 'openai',
+                        'model' => 'gpt-4o-mini',
+                        'instructions' => 'You act on tools.',
+                        'message' => 'Delete {{input}}',
+                        'output_key' => 'agent_response',
+                        'require_tool_approval' => true,
+                    ]],
+                    ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+                ],
+                'edges' => [
+                    ['id' => 'e1', 'source' => 'start_1', 'target' => 'agent_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                    ['id' => 'e2', 'source' => 'agent_1', 'target' => 'stop_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ],
+                'viewport' => ['x' => 0, 'y' => 0, 'zoom' => 1],
+            ],
+            'status' => 'draft',
+        ]);
+
+        $preview = app(NativeWorkflowExporter::class)->preview($workflow);
+
+        $this->assertStringContainsString('use NeuronAI\\Agent\\Middleware\\ToolApproval;', $preview);
+        $this->assertStringContainsString('$agent->addGlobalMiddleware(new ToolApproval());', $preview);
+
+        $this->cleanupExport($exportPath);
+    }
+
     public function test_preview_does_not_write_files(): void
     {
         $exportPath = $this->exportPath();
