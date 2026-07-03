@@ -99,6 +99,26 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Checkpoints & Persistence
+    |--------------------------------------------------------------------------
+    |
+    | Node-level checkpoints let opt-in nodes (rag, llm, agent, tool with
+    | `checkpoint: true`) skip re-execution when a workflow resumes. Results are
+    | keyed by trace + node + loop iteration and persisted to the
+    | `neuronai_studio_workflow_checkpoints` table. `ttl` (minutes, null = keep
+    | forever) drives the `neuronai-studio:checkpoints:purge` command.
+    |
+    */
+
+    'checkpoints' => [
+        'enabled' => (bool) env('NEURONAI_STUDIO_CHECKPOINTS_ENABLED', true),
+        'ttl' => env('NEURONAI_STUDIO_CHECKPOINTS_TTL') !== null
+            ? (int) env('NEURONAI_STUDIO_CHECKPOINTS_TTL')
+            : null,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Inspector Integration
     |--------------------------------------------------------------------------
     */
