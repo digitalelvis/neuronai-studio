@@ -3,7 +3,7 @@
 **Last Updated:** 2026-07-03
 **Development line:** `v0.2.x` (target release `v0.2.1+`)
 **Latest published:** `v0.2.0` on `main`
-**Current Work:** M2 — `workflow-token-streaming` (slice 1 backend entregue; slice 2 toggle/docs pendente)
+**Current Work:** M2 — `workflow-token-streaming` (slices 1–2 entregues; feature completa)
 
 ---
 
@@ -81,7 +81,7 @@
 |---------|--------|-------|
 | `workflow-structured-output` | ✅ done | T1–T17 ✅; T12 parcial — hint dot notation só no condition (loop sem inspector) |
 | `workflow-tool-approval` | ✅ done | Slices 1–3 ✅ (backend, resume/API, UI+codegen+docs) |
-| `workflow-token-streaming` | 🔄 in progress | Slice 1 (backend token SSE) ✅; slice 2 (toggle canvas + docs polish) pendente |
+| `workflow-token-streaming` | ✅ done | Slice 1 (backend token SSE) ✅; slice 2 (toggle canvas + docs polish) ✅ |
 
 ### workflow-tool-approval — Slice 1 (backend) entregue
 
@@ -119,7 +119,13 @@
 - [x] TS-04/TS-05: sem mudança — `WorkflowStreamController` propaga `token` e `StudioChat`/`WorkflowSessionAdapter` já agregam `token` na bolha assistant
 - [x] TS-08: `WorkflowTokenStreamingTest` (5 testes: agent stream, llm stream, 2 regressões blocking, tool-approval fallback) — suíte 240 verde
 - [x] Docs: runtime-and-traces (evento `token` + seção Token streaming), ai-nodes (opção `stream` + seção Streaming)
-- [ ] Slice 2: toggle `stream` no inspector canvas (LLM/Agent), default on no harness, docs frontend-bundles/playground (TS-07)
+
+### workflow-token-streaming — Slice 2 (toggle canvas + docs polish) entregue
+
+- [x] TS-07: `StreamToggleField` compartilhado no inspector (agent/llm) — desabilita + nota quando `structured` (paridade com fallback backend)
+- [x] Default on no harness: `stream: true` no default config de novos nós agent/llm (`WorkflowCanvas.addNodeAt`)
+- [x] Rebuild `resources/js/dist/workflow-canvas.bundle.js`
+- [x] Docs: `frontend-bundles.md` (token handling StudioChat/WorkflowSessionAdapter), `playground-and-threads.md` (parity harness ↔ playground)
 
 ### Structured output — entregue
 

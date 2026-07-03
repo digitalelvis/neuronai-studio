@@ -2,7 +2,7 @@
 
 **Design**: `.specs/features/workflow-token-streaming/design.md`
 **Spec**: `.specs/features/workflow-token-streaming/spec.md`
-**Status**: In progress — M2 feature 6 (slice 1: backend token SSE entregue)
+**Status**: In progress — M2 feature 6 (slice 1: backend token SSE ✅; slice 2: toggle canvas + docs polish ✅)
 
 > **TESTING.md**: inexistente neste repositório. Matriz inferida dos padrões em `tests/`:
 >
@@ -21,7 +21,7 @@
 | Slice | Escopo | Requisitos |
 |-------|--------|------------|
 | **1 — Backend token SSE** | `AgentRunner::streamInline`, streaming em `AgentNodeExecutor` + `LlmNodeExecutor`, SSE `token` via `emitStep`, testes | TS-01, TS-02, TS-03, TS-04, TS-06, TS-08 |
-| 2 — Toggle + docs polish | inspector toggle stream (canvas), default on no harness, docs frontend-bundles | TS-07, docs restantes |
+| **2 — Toggle + docs polish** ✅ | `StreamToggleField` no inspector (agent/llm), default on no harness (novos nós agent/llm), docs frontend-bundles + playground | TS-07, docs restantes |
 
 `WorkflowStreamController` e o `WorkflowSessionAdapter`/`StudioChat` já propagam eventos SSE arbitrários e agregam `token` na bolha assistant (TS-04/TS-05 sem mudança de código).
 
@@ -151,12 +151,35 @@ T2 + T3 ──→ T4 → T5
 
 - [x] Seção `token` no fluxo SSE (ordem `step_started → token* → step_completed`)
 - [x] Opção `stream` em LLM/Agent node documentada
-- [ ] `playground-and-threads.md` / `frontend-bundles.md` — slice 2
+- [x] `playground-and-threads.md` (parity) / `frontend-bundles.md` (token handling) — slice 2
 
 **Tests**: none
 **Gate**: manual review
 
 **Commit**: `docs(workflows): document workflow token streaming`
+
+---
+
+### T6: Toggle `stream` no inspector canvas (slice 2)
+
+**What**: Toggle **Stream tokens** no inspector dos nós agent/llm; default on para novos nós no harness; rebuild do bundle canvas.
+**Where**: `resources/js/studio-canvas/inspector/shared/StreamToggleField.jsx`, `NodeConfigForm.jsx`, `WorkflowCanvas.jsx`
+**Depends on**: T2, T3
+**Reuses**: padrão `StructuredOutputFields` (Checkbox + Label)
+**Requirement**: TS-07
+
+**Done when**:
+
+- [x] `StreamToggleField` compartilhado (Checkbox) — desabilita/nota quando `structured` (paridade com fallback backend)
+- [x] Montado nos branches agent e llm do `NodeConfigForm`
+- [x] `stream: true` no default config de novos nós agent/llm (`WorkflowCanvas.addNodeAt`)
+- [x] Rebuild `resources/js/dist/workflow-canvas.bundle.js`
+- [x] Docs slice 2: `frontend-bundles.md` (token handling) + `playground-and-threads.md` (parity)
+
+**Tests**: nenhum (JS sem harness de teste); suíte PHP 240 verde
+**Gate**: manual review
+
+**Commit**: `feat(studio): add stream toggle to agent and llm nodes`
 
 ---
 
@@ -170,16 +193,14 @@ T2 + T3 ──→ T4 → T5
 | TS-04 | (existente — WorkflowStreamController) |
 | TS-05 | (existente — StudioChat/WorkflowSessionAdapter) |
 | TS-06 | T2, T3 |
-| TS-07 | slice 2 |
+| TS-07 | T6 (slice 2) |
 | TS-08 | T4 |
 
 ---
 
-## Optional (defer — slice 2)
+## Optional (defer)
 
 | Item | Motivo |
 |------|--------|
-| Toggle `stream` no inspector canvas (LLM/Agent) | Frontend polish; P1 |
-| Default stream on no harness | Requer toggle canvas |
-| `reference/frontend-bundles.md` token handling | Docs polish |
 | Streaming + tool approval no mesmo nó | Interrupt serialization com stream é complexo; blocking cobre HITL |
+| `VercelAIAdapter` no export codegen | Fora do escopo Studio bundle; blocking `chat()` é o default de produção |

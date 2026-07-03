@@ -23,7 +23,7 @@ Grafos cíclicos + agentes multimodais + RAG real. Entrega o padrão end-to-end 
 
 **Critério de conclusão M1:** Template `autonomous-lead-qualification` executável no test harness com loop, agent com tools, anexo PDF/imagem, e opcionalmente nó RAG upstream.
 
-**Etapa atual:** M1 concluído — publicar `v0.2.0`. M2 Feature 5 (`workflow-tool-approval`) concluída; Feature 6 (`workflow-token-streaming`) em andamento (slice 1 backend entregue).
+**Etapa atual:** M1 concluído — publicar `v0.2.0`. M2 Features 5 (`workflow-tool-approval`) e 6 (`workflow-token-streaming`) concluídas.
 
 ### M2 — Capacidades de agente no workflow (P1) `in progress`
 
@@ -33,15 +33,16 @@ Structured output, aprovação de tools e streaming de tokens no harness.
 |-------|---------|--------|------|
 | 4 | `workflow-structured-output` | **done** (T1–T17; T12 parcial) | [spec](../features/workflow-structured-output/spec.md) · [tasks](../features/workflow-structured-output/tasks.md) |
 | 5 | `workflow-tool-approval` | **done** (slices 1–3: backend, resume/API, UI+codegen+docs) | [spec](../features/workflow-tool-approval/spec.md) · [tasks](../features/workflow-tool-approval/tasks.md) |
-| 6 | `workflow-token-streaming` | in progress (slice 1 backend) | [spec](../features/workflow-token-streaming/spec.md) · [tasks](../features/workflow-token-streaming/tasks.md) |
+| 6 | `workflow-token-streaming` | **done** (slices 1–2: backend token SSE, toggle canvas + docs) | [spec](../features/workflow-token-streaming/spec.md) · [tasks](../features/workflow-token-streaming/tasks.md) |
 
-**Etapa atual (v0.2.x):** Feature 5 — `workflow-tool-approval` **concluída** (slices 1–3). Próximo foco: Feature 6 (`workflow-token-streaming`).  
+**Etapa atual (v0.2.x):** Features 5 (`workflow-tool-approval`) e 6 (`workflow-token-streaming`) **concluídas**. Próximo foco: M3/M4.  
 **Concluído (Feature 4):** T1–T17 — registry, resolver, dot notation, `AgentRunner::structuredInline`, executors LLM/agent, erros de validação no trace, canvas inspector, round-trip, codegen e docs.  
 **Feature 5 — slice 1 entregue (T1–T6):** `ToolApprovalRequiredException`, config `require_tool_approval` (AgentDefinition + override no nó), `ToolApproval` middleware no `AgentRunner`, `WorkflowRunner::pauseForToolApproval` → status `awaiting_tool_approval` + SSE `tool_approval_required`, 5 testes backend.  
 **Feature 5 — slice 2 entregue (TA-05, TA-07):** interrupt serializado no checkpoint + `AgentRunner::resumeInlineApproval`, resume `approve|reject` via `WorkflowRunner::resumeToolApproval` + SSE `tool_approval_resolved`, handle `rejected` opcional no nó agent, controllers sync/async + `ResumeWorkflowJob` aceitam `approval`, 2 testes novos (suíte 233 verde).  
 **Feature 5 — slice 3 entregue (TA-06, TA-08, docs):** `ToolApprovalCard` inline (sem modal) + `WorkflowSessionAdapter.resumeApproval` + `StudioChat` (`consumeAssistantStream`); `AgentNodeCodeGenerator` aplica `require_tool_approval`/`ToolApproval` no export; docs (HITL, ai-nodes, creating-agents, runtime-and-traces, security); rebuild `studio-chat.bundle.js`; 2 testes codegen (suíte 235 verde).  
 **Feature 6 — slice 1 entregue (TS-01–04, TS-06, TS-08):** `AgentRunner::streamInline`, streaming em `AgentNodeExecutor`/`LlmNodeExecutor` via `data.stream` → SSE `token` `{node_id, delta}` entre step boundaries; fallback blocking para structured/tool-approval; `WorkflowStreamController` + `StudioChat` já propagam/agregam `token` (sem mudança); `WorkflowTokenStreamingTest` (5 testes, suíte 240 verde); docs runtime-and-traces + ai-nodes.  
-**Próximos passos:** `workflow-token-streaming` slice 2 (toggle canvas TS-07 + docs polish), depois M3/M4.  
+**Feature 6 — slice 2 entregue (TS-07 + docs):** `StreamToggleField` no inspector canvas (agent/llm, desabilita quando structured), default `stream: true` em novos nós agent/llm no harness, rebuild `workflow-canvas.bundle.js`, docs frontend-bundles (token handling) + playground-and-threads (parity).  
+**Próximos passos:** M3/M4.  
 **Nota:** T12 parcial — hint dot notation (`lead.tier`) só no condition; loop sem inspector aguarda polish M1.
 
 ### M3 — Escala e resiliência (P2) `in progress`
