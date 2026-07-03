@@ -23,13 +23,13 @@ flowchart TB
     Export --> PHP[app/Neuron/Workflows]
 ```
 
-## Node types (13)
+## Node types (15)
 
 | Category | Types |
 |----------|-------|
 | Flow | start, stop, delay, human |
 | AI | agent, llm, tool, mcp, rag |
-| Logic | condition, set_state, loop |
+| Logic | condition, set_state, loop, fork, join |
 
 See the [node type guides](node-types/flow-nodes.md) for configuration details.
 
@@ -63,10 +63,25 @@ Workflows can originate from:
 | Tool pipeline | start → tool → llm → stop |
 | Cyclic refinement | start → loop → agent/llm → loop → stop |
 | Autonomous lead qualification | start → loop → agent (tools + attachments) → condition → stop |
+| Parallel fan-out | start → fork → (branch a, branch b) → join → stop |
 
 ## Cyclic graphs
 
 Workflows may contain cycles when a **Loop** node authorizes back-edges. Each loop enforces `max_steps` to prevent infinite execution. Use loops for iterative extraction, qualification, or refinement until a state condition is satisfied.
+
+## Sequential vs parallel
+
+By default nodes run **sequentially** — each node completes before the next begins, and every
+node reads the state left by its predecessor. Reach for **parallel** execution (a
+[Fork/Join](node-types/logic-nodes.md#fork) pair) when independent work can proceed
+concurrently and only needs to be recombined at the end — for example extracting structured
+data and generating an image description from the same input, or fanning out to several models
+and merging their answers.
+
+Prefer sequential when a later step depends on an earlier step's output; prefer parallel when
+branches are independent and each writes to a distinct output key. Because branches execute in
+isolated state, they cannot observe one another's partial writes — the Join node is the single
+point where their results are merged.
 
 ## Autonomous agents in workflows
 

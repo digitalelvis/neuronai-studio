@@ -102,9 +102,47 @@ In the test harness, the pending tools and their arguments render in an inline `
 
 See [Runtime & Traces](runtime-and-traces.md#tool-approval-pause-awaiting_tool_approval) for the checkpoint shape and resume payload.
 
+## Parallel branches
+
+A Human node can live **inside a parallel branch** (see [Fork/Join](node-types/logic-nodes.md#fork)).
+When a branch reaches its Human node, the runner:
+
+1. Emits `parallel_interrupt` (`fork_id`, `branch_id`, `node_id`) followed by the usual
+   `human_input_required`, and sets the trace to `awaiting_input`.
+2. Persists a **parallel checkpoint** that records the results of branches that already
+   completed, the interrupted branch's pending state, and which branches have not started yet.
+
+On resume, execution continues **only the interrupted branch** from its Human node, re-runs any
+branches that had not started, and reuses the already-completed branch results — then the Join
+node merges everything. Multiple branches can pause in turn; each resume advances one.
+
+```mermaid
+sequenceDiagram
+    participant UI
+    participant Runner as WorkflowRunner
+    participant Fork as ForkNodeExecutor
+
+    UI->>Runner: run/stream
+    Runner->>Fork: run branches
+    Fork-->>Runner: branch_b hits Human node
+    Runner-->>UI: parallel_interrupt + human_input_required
+    Note over UI: User replies
+    UI->>Runner: resume { message }
+    Runner->>Fork: reuse branch_a result, finish branch_b
+    Runner-->>UI: join merges { branch_a, branch_b } → continues
+```
+
+> Only Human interrupts are captured per-branch. A tool-approval interrupt inside a branch is
+> not yet split per-branch — model branch-level approval with a Human gate for now.
+
 ## Checkpoint storage
 
-Checkpoints are stored on the trace record. The runtime uses `HumanInputRequiredException` to signal the pause without marking the trace as failed. Tool approval uses `ToolApprovalRequiredException` and the `awaiting_tool_approval` status.
+Checkpoints are stored on the trace record. The runtime uses `HumanInputRequiredException` to signal the pause without marking the trace as failed. Tool approval uses `ToolApprovalRequiredException` and the `awaiting_tool_approval` status, and parallel branch pauses use `ParallelBranchInterruptException` with a `kind: parallel` checkpoint.
+
+Separately, individual expensive nodes can cache their result across resumes via opt-in
+**node checkpoints** (`data.checkpoint: true`), persisted in the
+`neuronai_studio_workflow_checkpoints` table. See
+[Runtime & Traces](runtime-and-traces.md#node-checkpoints).
 
 ## Template example
 
@@ -121,6 +159,8 @@ This workflow combines intent classification, RAG retrieval, and human approval 
 - `HumanNodeExecutor`
 - `HumanInputRequiredException`
 - `ToolApprovalRequiredException`, `AgentNodeExecutor`, `AgentRunner`
+- `ParallelBranchInterruptException`, `ForkNodeExecutor`, `ParallelBranchRunner`
+- `CheckpointService`, `WorkflowCheckpoint`
 - `WorkflowTraceResumeController`
 - `WorkflowThread.jsx`, `ToolApprovalCard.jsx` (resume UI)
 
