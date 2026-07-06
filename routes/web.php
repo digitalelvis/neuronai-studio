@@ -17,6 +17,7 @@ use DigitalElvis\NeuronAIStudio\Http\Livewire\KnowledgeBases\Edit as KnowledgeBa
 use DigitalElvis\NeuronAIStudio\Http\Livewire\KnowledgeBases\Index as KnowledgeBasesIndex;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\McpServers\Edit as McpServersEdit;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\McpServers\Index as McpServersIndex;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\StreamAdapters\Index as StreamAdaptersIndex;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\Templates\Index as TemplatesIndex;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\Tools\Edit as ToolsEdit;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\Tools\Index as ToolsIndex;
@@ -90,6 +91,7 @@ Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
         });
 
         Route::get('/templates', TemplatesIndex::class)->name('templates.index');
+        Route::get('/stream-adapters', StreamAdaptersIndex::class)->name('stream-adapters.index');
 
         Route::post('/studio/attachments', [AttachmentController::class, 'store'])->name('attachments.store');
         Route::get('/studio/attachments/file', [AttachmentController::class, 'show'])->name('attachments.show');
