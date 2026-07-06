@@ -3,11 +3,18 @@
 **Last Updated:** 2026-07-03
 **Development line:** `v0.2.x` (target release `v0.2.1+`)
 **Latest published:** `v0.2.0` on `main`
-**Current Work:** M3 concluído — `workflow-checkpoints-persistence` (Feature 8) e `workflow-parallel-execution` (Feature 7) entregues. Próximo: M4 (`stream-adapters`).
+**Current Work:** M4 (`stream-adapters`) **em andamento** — branch `feat/stream-adapters`; Fase 1 entregue (SA-T1..T8 + testes agent/workflow/resume/rotas/registry; 278 verde). Próximo: SA-T10/T11 (catálogo + Connect Panel) → SA-T12 (docs) → SA-T13 (P2). M1/M2/M3 concluídos.
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-008: M4 stream-adapters — separação interno/externo + ponte interpretado→adapter (2026-07-03)
+
+**Decision:** Kickoff do M4 (`stream-adapters`). Endpoints externos (Vercel AI SDK, AG-UI) ficam em grupo/arquivo de rotas **separado** (`routes/integration.php`, prefix `api/neuronai`, middleware próprio configurável) registrado condicionalmente por `stream_adapters.enabled`. Zero alteração no playground/harness interno (controllers, `fetchSse.js`, SessionAdapters, `StudioChat`). Para workflow, como o runtime do Studio é **interpretado** (SSE próprio, não chunks Neuron), a ponte converte eventos (`token`/`tool_call`/`tool_result`) em chunks (`TextChunk`/`ToolCallChunk`/`ToolResultChunk`) e alimenta `$adapter->transform()` (Opção A recomendada; AD final na Fase 1 / SA-T6).
+**Reason:** `WorkflowHandler::events($adapter)` só existe no runtime nativo; o Studio roda interpretado. Reusar os adapters oficiais (formato garantido) sem tocar no caminho interno mantém regressão zero e paridade com o protocolo.
+**Trade-off:** Ponte adiciona uma camada de conversão de eventos; interrupt (Human node) precisa de mapeamento explícito para evento terminal do protocolo + `trace_id` p/ `resume/{protocol}`.
+**Impact:** `StreamAdapterRegistry`, config `stream_adapters`, `routes/integration.php`, `AgentRunner::streamHandler`, `AgentIntegrateStreamController`, `WorkflowStreamBridge`, `WorkflowIntegrateStreamController`, `WorkflowIntegrateResumeController`, catálogo `/stream-adapters`, Connect Panel. Ver [tasks](../features/stream-adapters/tasks.md).
 
 ### AD-007: Runtime interpretado para execução paralela (2026-07-03)
 
@@ -186,6 +193,28 @@
 - [x] Testes: `TemplateRegistryTest` (18 templates), `TemplateInstallerTest` (2 novos — install/valida fork/join + HITL), `WorkflowEditorSaveTest` (2 novos — slug estável / dedupe) — suíte 258 verde
 - [ ] Não commitados no fix: `resources/**/*.css` (artefatos de build minificado, fora de escopo)
 
+## M4 progress snapshot
+
+| Feature | Status | Notas |
+|---------|--------|-------|
+| `stream-adapters` | ✅ done | branch `feat/stream-adapters`; Fase 1–3 entregues (SA-T1..T13); suíte 279 verde |
+
+### stream-adapters — plano (SA-T1..SA-T13)
+
+- [x] SA-T1 — config `stream_adapters` (enabled, route_prefix, middleware, protocols) (SA-02)
+- [x] SA-T2 — `StreamAdapterRegistry` (available vercel/agui + roadmap; resolve → adapter neuron) (SA-01)
+- [x] SA-T3 — `routes/integration.php` + registro condicional no service provider + middleware próprio (SA-03, SA-04)
+- [x] SA-T4 — `AgentRunner::streamHandler()` expõe handler p/ `events($adapter)` (SA-07)
+- [x] SA-T5 — `AgentIntegrateStreamController` (POST agent stream vercel/agui) (SA-05)
+- [x] SA-T6 — `WorkflowStreamBridge` (evento interpretado → chunk Neuron → `transform`; Opção A; fallback step-boundary + sinal `awaiting_input`+`trace_id`) (SA-06)
+- [x] SA-T7 — `WorkflowIntegrateStreamController` (POST workflow stream vercel/agui; pausa Human node sinaliza `trace_id`) (SA-06)
+- [x] SA-T8 — `WorkflowIntegrateResumeController` (`resume/{protocol}` Human node → completa stream) (SA-12, SA-13)
+- [x] SA-T9 — testes formato vercel/agui + regressão zero (registry/rotas/agent/workflow/resume ✅; suíte 279 verde) (SA-08, SA-11)
+- [x] SA-T10 — catálogo Studio `/stream-adapters` (SA-09)
+- [x] SA-T11 — Connect Panel URLs stream+resume + snippets `useChat`/AG-UI (SA-10)
+- [x] SA-T12 — docs integration (stream-adapters, vercel-ai-sdk, ag-ui)
+- [x] SA-T13 — SA-14 tokens em nós agent/llm no workflow externo via `WorkflowStreamBridge` (SA-14)
+
 ### Queue runner — entregue
 
 - [x] `async_runs_enabled`, `queue_tries`, `queue_backoff` config
@@ -278,3 +307,4 @@
 - [x] `workflow-rag` — KnowledgeBase + executor real + codegen + docs
 - [x] AMA-09 — docs dedicated autonomous-agent guide sections
 - [ ] Configurar branch protection para `v0.2.x` no GitHub (espelhar `v0.0.x`)
+- [ ] **M4 `stream-adapters`** — SA-T10..SA-T13 (branch `feat/stream-adapters`; SA-T1..T8 ✅, SA-T9 parcial, suíte 278 verde)

@@ -4,7 +4,8 @@
 
 **Development line:** `v0.2.x` (target release `v0.2.1+`)  
 **Latest published:** `v0.2.0` on `main`  
-**Última atualização:** 2026-07-03
+**Última atualização:** 2026-07-03  
+**Etapa atual:** M1/M2/M3 concluídos. **M4 (`stream-adapters`) em andamento** — spec + tasks (SA-T1..SA-T13) prontos, implementação por iniciar.
 
 ---
 
@@ -60,17 +61,27 @@ Paralelismo, checkpoints generalizados e execução assíncrona.
 **Feature 7 — entregue (PE-01..09):** `ForkNodeExecutor`/`JoinNodeExecutor`/`ParallelBranchRunner` (runtime interpretado, estado isolado por branch), `ParallelBranchInterruptException` + resume parcial no `WorkflowRunner`, `GraphValidator` fork/join pairing, codegen `ParallelEvent` subclass, canvas fork/join + inspector + rebuild bundle, SSE `branch_started`/`branch_completed`/`parallel_interrupt`, 4 testes novos.
 **M3 — template pack + fix (2026-07-03):** templates de referência `parallel-support-triage` (intermediate) e `parallel-triage-hitl` (advanced) + agente `support-triage-composer` (caso real de triagem de suporte com providers reais, fork/join + checkpoints + HITL em branch); fix `Editor::resolveSlug` (auto-save do canvas não regrava slug quando o nome não muda → evita `UNIQUE workflow_definitions.slug`); docs `guides/templates.md`; suíte 258 verde.
 
-### M4 — Integração externa (P1) `planned`
+### M4 — Integração externa (P1) `in progress`
 
 Expor agentes e workflows para clients externos (Vercel AI SDK, AG-UI) via endpoints de streaming no package, sem alterar o harness interno.
 
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
-| 10 | `stream-adapters` | planned | [spec](../features/stream-adapters/spec.md) |
+| 10 | `stream-adapters` | in progress (tasks SA-T1..SA-T13 definidas) | [spec](../features/stream-adapters/spec.md) · [tasks](../features/stream-adapters/tasks.md) |
 
 **Critério de conclusão M4:** Host app consome agente via `useChat` (Vercel) e workflow via client AG-UI usando rotas configuráveis do package; workflow com Human node pausa e retoma via endpoint `resume/{protocol}`; catálogo e Connect Panel documentam URLs e snippets.
 
-**Dependências:** SA-14 (tokens em workflow externo) opcionalmente aguarda `workflow-token-streaming`.
+**Plano de tasks (ver [tasks.md](../features/stream-adapters/tasks.md)):**
+- **Fase 1 — backend + resume + testes:** SA-T1 (config), SA-T2 (`StreamAdapterRegistry`), SA-T3 (rotas condicionais + middleware), SA-T4 (`AgentRunner::streamHandler`), SA-T5 (`AgentIntegrateStreamController`), SA-T6 (ponte workflow interpretado → adapter), SA-T7 (`WorkflowIntegrateStreamController`), SA-T8 (resume Human node externo), SA-T9 (formato vercel/agui + regressão zero).
+- **Fase 2 — UI:** SA-T10 (catálogo `/stream-adapters`), SA-T11 (Connect Panel URLs stream+resume + snippets).
+- **Fase 3 — docs:** SA-T12 (guides integration + configuration + installation).
+- **Fase 4 — P2:** SA-T13 (SA-14 — tokens em nós agent/llm no workflow externo).
+
+**Decisões em aberto (resolver na Fase 1, registrar AD):**
+- Ponte workflow interpretado → adapter: converter eventos SSE do Studio (`token`/`tool_call`/`tool_result`) em chunks Neuron (`TextChunk`/`ToolCallChunk`/`ToolResultChunk`) e alimentar `$adapter->transform()` (Opção A, recomendada) vs emitir linhas de protocolo direto (Opção B).
+- Mapeamento de interrupt (Human node) para evento terminal do protocolo + `trace_id` p/ resume externo.
+
+**Dependências:** SA-14 (tokens em workflow externo) opcionalmente aguarda `workflow-token-streaming` (✅ done — pode ser puxada na Fase 1).
 
 ---
 
@@ -94,7 +105,16 @@ Fila derivada do estado real (ver [STATE.md](STATE.md)).
 
 7. ~~`workflow-parallel-execution` (Feature 7)~~ ✅
 8. ~~`workflow-checkpoints-persistence` (Feature 8)~~ ✅
-9. `stream-adapters` (Feature 10) — SA-14 pode aguardar token streaming
+9. `stream-adapters` (Feature 10) — **M4 em andamento**
+
+### M4 em execução — `stream-adapters` (ver [tasks.md](../features/stream-adapters/tasks.md))
+
+1. SA-T1 → SA-T2 → SA-T3 (config + `StreamAdapterRegistry` + rotas condicionais/middleware)
+2. SA-T4 → SA-T5 (agent stream vercel/agui end-to-end)
+3. SA-T6 → SA-T7 → SA-T8 (ponte workflow interpretado→adapter + workflow stream + resume Human node)
+4. SA-T9 (formato vercel/agui + regressão zero — em paralelo)
+5. SA-T10 → SA-T11 (catálogo + Connect Panel)
+6. SA-T12 (docs) · SA-T13 (SA-14, P2)
 
 ---
 
@@ -180,3 +200,5 @@ Mapeamento feature → arquivos `docs/` a criar/atualizar na implementação.
 - ~~Runtime interpretado vs native Neuron para execução paralela~~ → **resolvido (AD-007):** runtime interpretado (branches sequenciais, estado isolado); codegen nativo emite `ParallelEvent` para export
 - SSE/broadcast vs polling para queue runner v1
 - Escopo de autonomia multi-turn **dentro** de um único nó agent vs entre iterações do loop
+- **[M4]** Ponte workflow interpretado → adapter: converter eventos SSE do Studio em chunks Neuron e alimentar `$adapter->transform()` (Opção A, recomendada) vs emitir protocolo direto (Opção B) — decidir e registrar AD na Fase 1 (SA-T6)
+- **[M4]** Mapeamento de interrupt (Human node/`parallel_interrupt`) para evento terminal do protocolo externo + `trace_id` p/ resume via `resume/{protocol}`
