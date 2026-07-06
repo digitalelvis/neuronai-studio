@@ -20,6 +20,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Stream Adapters (External Integration)
+    |--------------------------------------------------------------------------
+    |
+    | Exposes agents and workflows to external clients (Vercel AI SDK, AG-UI,
+    | ...) via dedicated streaming endpoints. These routes are completely
+    | separate from the internal Studio playground/harness and only registered
+    | when `enabled` is true. The host app controls prefix and middleware
+    | (e.g. ['api', 'auth:sanctum']) independently of the Studio UI middleware.
+    |
+    */
+
+    'stream_adapters' => [
+        'enabled' => env('NEURONAI_STUDIO_INTEGRATE_ENABLED', true),
+        'route_prefix' => env('NEURONAI_STUDIO_INTEGRATE_PREFIX', 'api/neuronai'),
+        'middleware' => ['api'],
+        'protocols' => [
+            'vercel' => ['enabled' => true],
+            'agui' => ['enabled' => true],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Export Configuration
     |--------------------------------------------------------------------------
     */
