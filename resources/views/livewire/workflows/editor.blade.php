@@ -2,6 +2,22 @@
     $providerModels = collect(config('neuronai-studio.providers', []))
         ->mapWithKeys(fn ($provider, $key) => [$key => $provider['models'] ?? []])
         ->all();
+
+    $enabledProtocols = array_values(array_keys(array_filter(
+        config('neuronai-studio.stream_adapters.protocols', []),
+        fn ($p) => !empty($p['enabled'])
+    )));
+
+    $integratePrefix = config('neuronai-studio.stream_adapters.route_prefix', 'api/neuronai');
+    $integrateStreamUrls = $workflow?->exists ? [
+        'vercel' => url($integratePrefix.'/workflows/'.$workflow->id.'/stream/vercel'),
+        'agui' => url($integratePrefix.'/workflows/'.$workflow->id.'/stream/agui'),
+    ] : null;
+
+    $integrateResumeUrls = $workflow?->exists ? [
+        'vercel' => url($integratePrefix.'/workflows/traces/__TRACE__/resume/vercel'),
+        'agui' => url($integratePrefix.'/workflows/traces/__TRACE__/resume/agui'),
+    ] : null;
 @endphp
 
 <div class="studio-product-root flex min-h-0 flex-1 flex-col">
@@ -39,6 +55,9 @@
             outputClasses: @json($outputClassesForCanvas),
             providers: @json($providers),
             providerModels: @json($providerModels),
+            enabledProtocols: @json($enabledProtocols),
+            integrateStreamUrls: @json($integrateStreamUrls),
+            integrateResumeUrls: @json($integrateResumeUrls),
             defaultProvider: @json(config('neuronai-studio.default_provider')),
             defaultModel: @json(config('neuronai-studio.default_model')),
         };

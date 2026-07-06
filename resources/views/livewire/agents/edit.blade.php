@@ -2,6 +2,17 @@
     $providerModels = collect(config('neuronai-studio.providers', []))
         ->mapWithKeys(fn ($provider, $key) => [$key => $provider['models'] ?? []])
         ->all();
+
+    $enabledProtocols = array_values(array_keys(array_filter(
+        config('neuronai-studio.stream_adapters.protocols', []),
+        fn ($p) => !empty($p['enabled'])
+    )));
+
+    $integratePrefix = config('neuronai-studio.stream_adapters.route_prefix', 'api/neuronai');
+    $agentStreamUrls = $agent?->exists ? [
+        'vercel' => url($integratePrefix.'/agents/'.$agent->id.'/stream/vercel'),
+        'agui' => url($integratePrefix.'/agents/'.$agent->id.'/stream/agui'),
+    ] : null;
 @endphp
 
 <div class="studio-product-root flex min-h-0 flex-1 flex-col">
@@ -15,6 +26,8 @@
             defaultProvider: @json(config('neuronai-studio.default_provider')),
             toolList: @json($toolList),
             mcpServers: @json($mcpServers),
+            enabledProtocols: @json($enabledProtocols),
+            streamUrls: @json($agentStreamUrls),
             initial: {
                 name: @json($name),
                 description: @json($description),
