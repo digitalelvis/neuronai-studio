@@ -5,6 +5,7 @@ import WorkflowCodePanel from '../WorkflowCodePanel';
 import StudioTestHarness from '../../studio-chat/StudioTestHarness';
 import { WorkflowSessionAdapter } from '../../studio-chat/adapters/WorkflowSessionAdapter';
 import { TraceList, TraceDetailSheet } from '../../studio-traces';
+import ConnectPanel from '../../components/ConnectPanel';
 
 export default function InspectorPanel({
     workflowConfig = {},
@@ -76,11 +77,12 @@ export default function InspectorPanel({
     return (
         <div className="flex h-full min-h-0 flex-col overflow-hidden bg-card">
             <Tabs value={tab} onValueChange={setTab} className="flex h-full flex-col">
-                <TabsList className="mx-2 mt-2 grid w-auto grid-cols-4">
+                <TabsList className="mx-2 mt-2 grid w-auto grid-cols-5">
                     <TabsTrigger value="test">Test</TabsTrigger>
                     <TabsTrigger value="traces">Trace</TabsTrigger>
                     <TabsTrigger value="json">JSON</TabsTrigger>
                     <TabsTrigger value="code">Code</TabsTrigger>
+                    <TabsTrigger value="connect">Connect</TabsTrigger>
                 </TabsList>
 
                 <TabsContent
@@ -118,6 +120,15 @@ export default function InspectorPanel({
 
                 <TabsContent value="code" className="mt-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
                     <WorkflowCodePanel readOnly={workflowConfig.readOnly ?? false} />
+                </TabsContent>
+
+                <TabsContent value="connect" className="mt-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
+                    <ConnectPanel
+                        protocols={workflowConfig.enabledProtocols ?? ['vercel', 'agui']}
+                        streamUrls={workflowConfig.integrateStreamUrls ?? {}}
+                        resumeUrls={workflowConfig.integrateResumeUrls ?? {}}
+                        type="workflow"
+                    />
                 </TabsContent>
             </Tabs>
 

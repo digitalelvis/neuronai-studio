@@ -11,6 +11,7 @@ use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\StructuredOutputValidationExc
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ToolApprovalRequiredException;
 use Illuminate\Support\Str;
 use Generator;
+use NeuronAI\Agent\AgentHandler;
 use NeuronAI\Agent\Events\ToolCallEvent;
 use NeuronAI\Agent\Middleware\ToolApproval;
 use NeuronAI\Chat\Messages\AssistantMessage;
@@ -81,6 +82,31 @@ class AgentRunner
                 yield $event;
             }
         }
+    }
+
+    /**
+     * Return the agent stream handler WITHOUT consuming its events, so an
+     * external integration controller can drive it through a wire-protocol
+     * adapter via `$handler->events($adapter)`. The internal playground path
+     * (`stream()`) is left untouched (SA-08).
+     *
+     * @param  array<string, mixed>  $payload
+     */
+    public function streamHandler(AgentDefinition $definition, array $payload): AgentHandler
+    {
+        $definition->loadMissing('mcpBindings');
+
+        $threadKey = $this->resolveThreadKey($definition, $payload);
+        $config = $this->resolvePlaygroundConfig($definition, $payload);
+
+        $agent = $this->makeAgent($definition, $config, $threadKey);
+
+        $message = $this->messages->userMessage(
+            (string) ($payload['message'] ?? ''),
+            is_array($payload['attachments'] ?? null) ? $payload['attachments'] : [],
+        );
+
+        return $agent->stream($message);
     }
 
     public function runInline(array $config, string|UserMessage $message, ?AgentDefinition $definition = null, ?string $threadKey = null, bool $fake = false): AgentRunResult

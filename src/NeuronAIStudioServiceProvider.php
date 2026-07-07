@@ -106,6 +106,10 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
             return new Registry\TemplateRegistry;
         });
 
+        $this->app->singleton(Integration\StreamAdapterRegistry::class, function () {
+            return new Integration\StreamAdapterRegistry;
+        });
+
         $this->app->singleton('neuronai-studio', function ($app) {
             return new NeuronAIStudioManager(
                 $app->make(NodeTypeRegistry::class),
@@ -162,6 +166,10 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
     protected function registerRoutes(): void
     {
         $this->loadRoutesFrom(__DIR__.'/../routes/web.php');
+
+        if (config('neuronai-studio.stream_adapters.enabled', false)) {
+            $this->loadRoutesFrom(__DIR__.'/../routes/integration.php');
+        }
     }
 
     protected function registerMiddleware(): void

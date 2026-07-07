@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { collectLivewireErrors, formatLivewireErrorSummary } from '@/lib/livewireErrors';
+import ConnectPanel from '@/components/ConnectPanel';
 
 const categoryLabels = {
     builtin: 'Built-in Toolkits',
@@ -182,9 +183,10 @@ export default function AgentForm({ config }) {
                 <ResizablePanel defaultSize={45} minSize={30}>
                     <div className="flex h-full flex-col p-4">
                         <Tabs defaultValue="tools" className="flex h-full flex-col">
-                            <TabsList>
+                            <TabsList className="grid w-full grid-cols-3">
                                 <TabsTrigger value="tools">Tools</TabsTrigger>
                                 <TabsTrigger value="mcp">MCP Servers</TabsTrigger>
+                                <TabsTrigger value="connect">Connect</TabsTrigger>
                             </TabsList>
                             <TabsContent value="tools" className="mt-3 flex-1 overflow-hidden">
                                 <ScrollArea className="h-full pr-2">
@@ -275,6 +277,13 @@ export default function AgentForm({ config }) {
                                         ))
                                     )}
                                 </ScrollArea>
+                            </TabsContent>
+                            <TabsContent value="connect" className="mt-3 flex-1 overflow-hidden">
+                                <ConnectPanel
+                                    protocols={config.enabledProtocols ?? ['vercel', 'agui']}
+                                    streamUrls={config.streamUrls ?? {}}
+                                    type="agent"
+                                />
                             </TabsContent>
                         </Tabs>
                     </div>
