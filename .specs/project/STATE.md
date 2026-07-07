@@ -1,13 +1,19 @@
 # State
 
-**Last Updated:** 2026-07-03
+**Last Updated:** 2026-07-07
 **Development line:** `v0.2.x` (target release `v0.2.1+`)
 **Latest published:** `v0.2.0` on `main`
-**Current Work:** M4 (`stream-adapters`) **em andamento** — branch `feat/stream-adapters`; Fase 1 entregue (SA-T1..T8 + testes agent/workflow/resume/rotas/registry; 278 verde). Próximo: SA-T10/T11 (catálogo + Connect Panel) → SA-T12 (docs) → SA-T13 (P2). M1/M2/M3 concluídos.
+**Current Work:** M4 (`stream-adapters`) e Refatoração Unified Runs e Traces concluídos. Todos os marcos de integração, unificação e token tracking estão 100% entregues e testados (279 testes do PHPUnit passando, suíte verde).
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-009: Unified Threads, Runs, and Traces (2026-07-07)
+
+**Decision:** Refatorar a execução de Workflows e Agents para unificar sob a nomenclatura/conceito de StudioRuns e StudioThreads.
+**Reason:** Unificação semântica (runs vs traces), suporte a pausas distribuídas para Agents (HITL/Tool Approval) e rastreamento de tokens por TraceSpans.
+**Impact:** `StudioThread`, `StudioRun`, `StudioTrace`, `StudioTraceSpan` substituem os legados `WorkflowTrace`, `WorkflowTraceStep`, `WorkflowCheckpoint`.
 
 ### AD-008: M4 stream-adapters — separação interno/externo + ponte interpretado→adapter (2026-07-03)
 
@@ -46,7 +52,7 @@
 
 ### AD-003: Roadmap north star — cíclicos + multimodal autônomo (2026-06-30)
 
-**Decision:** Priorizar M1 com três features P0 (`workflow-cyclic-graphs`, `autonomous-multimodal-agents`, `workflow-rag`) antes de P1/P2.
+**Decision:** Priorizar M1 with three features P0 (`workflow-cyclic-graphs`, `autonomous-multimodal-agents`, `workflow-rag`) antes de P1/P2.
 **Reason:** Estado atual é DAG-only, `RagNodeExecutor` stub, `GraphExecutionLoop` sem guardrail — bloqueia agentes autônomos com mídia em loops.
 **Trade-off:** Nove features planejadas aumentam superfície; M1 é mínimo viável para north star.
 **Impact:** Ver [.specs/project/ROADMAP.md](ROADMAP.md).
@@ -81,20 +87,7 @@
 | `autonomous-multimodal-agents` | ✅ done | AMA-09 docs entregue |
 | `workflow-rag` | ✅ done | Fatia 1–3 (backend, UI, codegen, docs) |
 
-### workflow-rag — Fatia 1 (backend) entregue
-
-- [x] Migrations `knowledge_bases` + `knowledge_documents`
-- [x] Models `KnowledgeBase` (defaults provider/model/driver) + `KnowledgeDocument` (status ingest)
-- [x] Config `rag`: drivers vector store, providers/modelos embeddings, retrieval + chunk defaults
-- [x] `EmbeddingsFactory` + `VectorStoreFactory` extensíveis (`extend()`), default `file`/`openai`
-- [x] `DocumentIngestService` (load → split → embed → persist + status) e `RagRetrievalService` (top_k, threshold, `toContext`)
-- [x] `RagNodeExecutor` real → `rag_context` {query, results, context, top_score}
-- [x] `StateTemplateInterpolator` com dot notation (`{{rag_context.context}}`)
-- [x] 15 testes novos (ingest, retrieval, executor, interpolator) — suíte 203 verde
-- [x] Fatia 2: CRUD Studio (`KnowledgeBases\Index`/`Edit`) + ingest UI (upload + texto) + `RagFields` inspector no canvas + debug search (`KnowledgeBaseSearchController`) + exposição KBs ao canvas + nav link
-- [x] Fatia 2: 10 testes novos (CRUD/ingest/preview, search controller, exposição canvas) — suíte 213 verde
-- [x] `rag-knowledge-base-tool` — aba RAG em tools/create, `KnowledgeBaseTool`, `ToolResolver` branch `type: rag`
-- [x] Fatia 3: `RagNodeCodeGenerator` + docs
+---
 
 ## M2 progress snapshot
 
@@ -104,58 +97,7 @@
 | `workflow-tool-approval` | ✅ done | Slices 1–3 ✅ (backend, resume/API, UI+codegen+docs) |
 | `workflow-token-streaming` | ✅ done | Slice 1 (backend token SSE) ✅; slice 2 (toggle canvas + docs polish) ✅ |
 
-### workflow-tool-approval — Slice 1 (backend) entregue
-
-- [x] `ToolApprovalRequiredException` (node_id, pending_tools, message)
-- [x] `require_tool_approval` no `AgentDefinition` (migration + cast/fillable) + override no nó agent (`data.require_tool_approval`)
-- [x] `AgentRunner` aplica `ToolApproval` middleware quando habilitado; `runInline` converte `WorkflowInterrupt`/`ApprovalRequest` → `ToolApprovalRequiredException`
-- [x] `AgentNodeExecutor` anexa `node_id` do grafo à exceção
-- [x] `WorkflowRunner::pauseForToolApproval` → status `awaiting_tool_approval` + checkpoint `{ state, node_id, pending_tools, interrupt }` + SSE `tool_approval_required` (interpreted `run`/`resume`)
-- [x] 5 testes novos (exceção, runner pausa/regressão, workflow pausa/regressão) — suíte 231 verde
-
-### workflow-tool-approval — Slice 2 (resume + API/SSE) entregue
-
-- [x] `ToolApprovalRequiredException` carrega `serializedInterrupt`; `AgentRunner::toolApprovalException` serializa o `WorkflowInterrupt` para resume real
-- [x] `AgentRunner::resumeInlineApproval` — restaura o interrupt via `InMemoryPersistence`, aplica decisão (`approve`/`reject`) nas `Action`s e resume o agente (`chat([], $request)`)
-- [x] `AgentNodeExecutor` consome marker `__tool_approval_resume` do state → resume o nó + roteia handle `rejected` opcional
-- [x] `WorkflowRunner::resumeInterpreted` aceita `approval`; `resumeToolApproval` reidrata o state do checkpoint, emite SSE `tool_approval_resolved` e re-executa o nó via `GraphExecutionLoop::runFromNode`
-- [x] Controllers sync/async aceitam `approval: approve|reject` (message opcional); `dispatchResume`/`ResumeWorkflowJob` propagam `approval`
-- [x] 2 testes novos (approve → completa; reject → handle `rejected`) — suíte 233 verde
-
-### workflow-tool-approval — Slice 3 (UI + codegen + docs) entregue
-
-- [x] TA-06: `WorkflowSessionAdapter` guarda `pendingApproval` no SSE `tool_approval_required` + `resumeApproval(decision, feedback)` → `POST .../resume/stream` com `{ approval, message? }`
-- [x] TA-06: `StudioChat` trata `tool_approval_required` (card inline) + `handleToolApproval` consome resume stream; loop de packets extraído em `consumeAssistantStream` (reuso send/resume)
-- [x] TA-06: `ToolApprovalCard.jsx` — tools pendentes + args + Approve/Reject + feedback opcional (sem modal); `MessageList` renderiza card + badge `Tool approval`
-- [x] TA-08: `AgentNodeCodeGenerator` — path agent_id passa `require_tool_approval` (override literal ou `(bool) $agent->require_tool_approval`) ao `runInline`; path inline aplica `$agent->addGlobalMiddleware(new ToolApproval())` + import
-- [x] Rebuild `studio-chat.bundle.js` (Vite IIFE)
-- [x] Docs: human-in-the-loop (Tool approval vs Human), ai-nodes (approval no agent node), creating-agents (flag + export), runtime-and-traces (status/SSE/resume payload), security-and-access (aprovar tools sensíveis)
-- [x] 2 testes codegen novos (`NativeWorkflowExporterTest`) — suíte 235 verde
-
-### workflow-token-streaming — Slice 1 (backend token SSE) entregue
-
-- [x] TS-01: `AgentRunner::streamInline` — generator yield `StreamChunk` + `return AgentRunResult` (conteúdo + tool events) após consumir eventos
-- [x] TS-03/TS-06: `AgentNodeExecutor` streaming branch (`data.stream`) → emite SSE `token` `{node_id, delta}` entre `step_started`/`step_completed`; fallback blocking para structured e tool-approval (sem regressão)
-- [x] TS-02: `LlmNodeExecutor` streaming via `AIProviderInterface::stream()` + `getReturn()` → `output_key`
-- [x] TS-04/TS-05: sem mudança — `WorkflowStreamController` propaga `token` e `StudioChat`/`WorkflowSessionAdapter` já agregam `token` na bolha assistant
-- [x] TS-08: `WorkflowTokenStreamingTest` (5 testes: agent stream, llm stream, 2 regressões blocking, tool-approval fallback) — suíte 240 verde
-- [x] Docs: runtime-and-traces (evento `token` + seção Token streaming), ai-nodes (opção `stream` + seção Streaming)
-
-### workflow-token-streaming — Slice 2 (toggle canvas + docs polish) entregue
-
-- [x] TS-07: `StreamToggleField` compartilhado no inspector (agent/llm) — desabilita + nota quando `structured` (paridade com fallback backend)
-- [x] Default on no harness: `stream: true` no default config de novos nós agent/llm (`WorkflowCanvas.addNodeAt`)
-- [x] Rebuild `resources/js/dist/workflow-canvas.bundle.js`
-- [x] Docs: `frontend-bundles.md` (token handling StudioChat/WorkflowSessionAdapter), `playground-and-threads.md` (parity harness ↔ playground)
-
-### Structured output — entregue
-
-- [x] `structured_output_scan_paths`, `OutputClassRegistry`, `StructuredOutputResolver`
-- [x] `WorkflowStateValue` + dot notation em condition/loop
-- [x] `AgentRunner::structuredInline` + branch structured em `LlmNodeExecutor` / `AgentNodeExecutor`
-- [x] `StructuredOutputValidationException` + `validation_errors` no SSE/trace
-- [x] Canvas inspector (T10–T13), round-trip T16, codegen T14–T15, docs T17
-- [ ] T12 parcial — hint `lead.tier` no condition; loop aguarda inspector M1
+---
 
 ## M3 progress snapshot
 
@@ -165,77 +107,14 @@
 | `workflow-checkpoints-persistence` | ✅ done | CP-01..08 ✅ — service + decorator + EloquentPersistence + purge |
 | `workflow-parallel-execution` | ✅ done | PE-01..09 ✅ — fork/join runtime, branch resume, codegen, canvas (PE-08 preview parcial) |
 
-### workflow-checkpoints-persistence — entregue (CP-01..08)
-
-- [x] CP-05: migration `neuronai_studio_workflow_checkpoints` (FK nullable + `workflow_key`, `input_hash`, `state_payload`, `expires_at`, unique node/iteration) + `WorkflowCheckpoint` model + config `checkpoints.enabled/ttl`
-- [x] CP-01/CP-06: `CheckpointService` — chave `sha256(trace_id|node_id|iteration|input_hash)`, hash do input (exclui chaves voláteis) → invalidação, lookup/store/forget, TTL + `purgeExpired`
-- [x] CP-02/CP-03: `CheckpointingExecutor` (decorator) embrulha agent/llm/rag/tool com `data.checkpoint: true`; hit mescla o diff de estado e pula o executor interno; escopo por iteração de loop
-- [x] CP-04: `EloquentPersistence` (`PersistenceInterface` + `SerializablePersistenceInterface`) persiste `WorkflowInterrupt` de workflows nativos via `workflow_key` + node `__native_interrupt`
-- [x] CP-05: `PurgeCheckpointsCommand` (`neuronai-studio:checkpoints:purge`)
-- [x] CP-08: `CheckpointServiceTest` + `EloquentPersistenceTest` + fixture `SampleInterruptNode` + `MigrationTest` (10 testes) — suíte 250 verde
-
-### workflow-parallel-execution — entregue (PE-01..09)
-
-- [x] PE-01/PE-04: node types `fork`/`join` (config + executors + registry); `GraphValidator::validateParallel` (fork→join default, ≥1 branch, join pareado)
-- [x] PE-02/PE-03: `ForkNodeExecutor` roda branches via `ParallelBranchRunner` em estado isolado até o join; `GraphExecutionLoop::runFromNode` com `stopAtNodeId`; `JoinNodeExecutor` mescla `{ branchId: result }` em `output_key`
-- [x] PE-05/PE-06: `ParallelBranchInterruptException` + checkpoint `kind: parallel`; `WorkflowRunner::pauseForParallelInterrupt`/`resumeParallel` retoma só a branch pendente, re-executa branches não iniciadas e reusa concluídas; SSE `parallel_interrupt`
-- [x] PE-07: `GraphTranspiler` + `Fork/JoinNodeCodeGenerator` + stub `native-parallel-event` emitem subclasse `ParallelEvent`; fork retorna `new XParallelEvent([...])`, branches retornam `StopEvent(result:)`, join lê `getAllResults()`
-- [x] PE-01/PE-08: canvas fork (handle por branch) + inspector branch editor / join `output_key`; rebuild `workflow-canvas.bundle.js`
-- [x] PE-09: `WorkflowParallelExecutionTest` (merge, human interrupt + resume parcial, validator) + `NativeWorkflowExporterTest` (ParallelEvent compila) — 4 testes, suíte 254 verde
-- [ ] PE-08 parcial: preview de resultados agregados no inspector do join (deferred); tool approval dentro de branch não dividido por branch
-
-### M3 template pack + slug fix — entregue (2026-07-03)
-
-- [x] Templates de referência (providers reais, sem fake): `parallel-support-triage` (intermediate — fork → 3 branches LLM sentiment/facts/priority → join → agente compositor, todos com `checkpoint: true`) e `parallel-triage-hitl` (advanced — mesma base + branch `human` que pausa via `parallel_interrupt`, resume reusa checkpoints das branches concluídas)
-- [x] Agente `support-triage-composer` (sintetiza análises paralelas + nota do revisor em triage summary + resposta sugerida)
-- [x] Fix `Editor::resolveSlug` — auto-save do canvas (`saveGraphBeforeRun` → `save()`) não regrava o slug quando o nome não mudou; quando muda, gera slug único excluindo o próprio id (evita `UniqueConstraintViolationException` em `workflow_definitions.slug`)
-- [x] Docs `guides/templates.md` (tabelas + seção "Parallel Support Triage" com input de exemplo e resultado esperado)
-- [x] Testes: `TemplateRegistryTest` (18 templates), `TemplateInstallerTest` (2 novos — install/valida fork/join + HITL), `WorkflowEditorSaveTest` (2 novos — slug estável / dedupe) — suíte 258 verde
-- [ ] Não commitados no fix: `resources/**/*.css` (artefatos de build minificado, fora de escopo)
+---
 
 ## M4 progress snapshot
 
 | Feature | Status | Notas |
 |---------|--------|-------|
 | `stream-adapters` | ✅ done | branch `feat/stream-adapters`; Fase 1–3 entregues (SA-T1..T13); suíte 279 verde |
-
-### stream-adapters — plano (SA-T1..SA-T13)
-
-- [x] SA-T1 — config `stream_adapters` (enabled, route_prefix, middleware, protocols) (SA-02)
-- [x] SA-T2 — `StreamAdapterRegistry` (available vercel/agui + roadmap; resolve → adapter neuron) (SA-01)
-- [x] SA-T3 — `routes/integration.php` + registro condicional no service provider + middleware próprio (SA-03, SA-04)
-- [x] SA-T4 — `AgentRunner::streamHandler()` expõe handler p/ `events($adapter)` (SA-07)
-- [x] SA-T5 — `AgentIntegrateStreamController` (POST agent stream vercel/agui) (SA-05)
-- [x] SA-T6 — `WorkflowStreamBridge` (evento interpretado → chunk Neuron → `transform`; Opção A; fallback step-boundary + sinal `awaiting_input`+`trace_id`) (SA-06)
-- [x] SA-T7 — `WorkflowIntegrateStreamController` (POST workflow stream vercel/agui; pausa Human node sinaliza `trace_id`) (SA-06)
-- [x] SA-T8 — `WorkflowIntegrateResumeController` (`resume/{protocol}` Human node → completa stream) (SA-12, SA-13)
-- [x] SA-T9 — testes formato vercel/agui + regressão zero (registry/rotas/agent/workflow/resume ✅; suíte 279 verde) (SA-08, SA-11)
-- [x] SA-T10 — catálogo Studio `/stream-adapters` (SA-09)
-- [x] SA-T11 — Connect Panel URLs stream+resume + snippets `useChat`/AG-UI (SA-10)
-- [x] SA-T12 — docs integration (stream-adapters, vercel-ai-sdk, ag-ui)
-- [x] SA-T13 — SA-14 tokens em nós agent/llm no workflow externo via `WorkflowStreamBridge` (SA-14)
-
-### Queue runner — entregue
-
-- [x] `async_runs_enabled`, `queue_tries`, `queue_backoff` config
-- [x] `WorkflowRunner::runExistingTrace`, `dispatch`, `dispatchResume`
-- [x] `RunWorkflowJob`, `ResumeWorkflowJob` com `failed()` handler
-- [x] `POST /workflows/{id}/run` → 202 queued; `POST /traces/{id}/resume` → 202 queued
-- [x] Polling via `GET /traces/{id}/json` (`queued`, `running`, `awaiting_node_id`)
-- [x] E2E tests + docs (runtime-and-traces, export-and-production, configuration, installation)
-- [ ] SSE/broadcast em tempo real para jobs (deferred — polling v1)
-
-### AMA já entregue em `v0.1.2` (baseline para v0.2.0)
-
-- [x] AMA-01 — attachments no workflow stream + `state.attachments` entre iterações
-- [x] AMA-02 — `MessageFactory` em `AgentNodeExecutor` e `LlmNodeExecutor`
-- [x] AMA-03 — `__studio_thread_id` estável em loops (teste integração)
-- [x] AMA-04 — agent com tools + memory via `AgentRunner::runInline`
-- [x] AMA-05 — `output_key` alimenta condition/loop (state compartilhado)
-- [x] AMA-06 — template `autonomous-lead-qualification` + agent `lead-qualifier`
-- [x] AMA-07 — `tool_call` / `tool_result` SSE no harness + canvas `loop_iteration`
-- [x] AMA-10 — `AutonomousMultimodalAgentsTest` (loop + agent + attachments + tools)
-- [x] AMA-09 — documentação padrão autonomous agent (overview, ai-nodes, attachments, threads, runtime, quickstart)
+| `unified-runs-and-traces` | ✅ done | T1–T7 concluídos; migrations, models, adapters, token tracking, 279 testes verde |
 
 ---
 
@@ -287,6 +166,8 @@
 | workflow-token-streaming | 2026-07-03 | 0.2.x | ✅ Done |
 | workflow-checkpoints-persistence | 2026-07-03 | 0.2.x | ✅ Done |
 | workflow-parallel-execution | 2026-07-03 | 0.2.x | ✅ Done |
+| stream-adapters | 2026-07-03 | 0.2.x | ✅ Done |
+| unified-runs-and-traces | 2026-07-07 | 0.2.x | ✅ Done |
 
 ---
 
@@ -307,4 +188,5 @@
 - [x] `workflow-rag` — KnowledgeBase + executor real + codegen + docs
 - [x] AMA-09 — docs dedicated autonomous-agent guide sections
 - [ ] Configurar branch protection para `v0.2.x` no GitHub (espelhar `v0.0.x`)
-- [ ] **M4 `stream-adapters`** — SA-T10..SA-T13 (branch `feat/stream-adapters`; SA-T1..T8 ✅, SA-T9 parcial, suíte 278 verde)
+- [x] **M4 `stream-adapters`** — SA-T10..SA-T13 (branch `feat/stream-adapters`; SA-T1..T8 ✅, SA-T9 parcial, suíte 278 verde)
+- [x] **Unified Runs and Traces** — T1-T7 concluídos (unificação de tabelas, token tracking, api unificada, 279 testes verde)
