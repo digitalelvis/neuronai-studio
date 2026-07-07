@@ -172,10 +172,10 @@ class AutonomousMultimodalAgentsTest extends TestCase
         ]);
 
         $this->assertEquals('completed', $trace->status);
-        $this->assertSame($scopedKey, $trace->output['__studio_thread_id'] ?? null);
+        $this->assertSame($threadId, $trace->output['__studio_thread_id'] ?? null);
         $this->assertIsArray($trace->output['attachments'] ?? null);
         $this->assertStringContainsString('@', (string) ($trace->output['lead_profile'] ?? ''));
-        $this->assertGreaterThanOrEqual(2, StudioChatMessage::query()->where('thread_id', $scopedKey)->count());
+        $this->assertGreaterThanOrEqual(2, StudioChatMessage::query()->where('thread_id', $threadId)->count());
     }
 
     public function test_agent_node_executor_emits_tool_events_to_state(): void

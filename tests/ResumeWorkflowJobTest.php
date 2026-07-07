@@ -5,9 +5,10 @@ namespace DigitalElvis\NeuronAIStudio\Tests;
 use DigitalElvis\NeuronAIStudio\Http\Middleware\EnsureNeuronAIStudioAuthorized;
 use DigitalElvis\NeuronAIStudio\Jobs\ResumeWorkflowJob;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
-use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 class ResumeWorkflowJobTest extends TestCase
@@ -58,7 +59,7 @@ class ResumeWorkflowJobTest extends TestCase
             'neuronai-studio.queue_backoff' => 45,
         ]);
 
-        $job = new ResumeWorkflowJob(1, 'human_1', 'hello');
+        $job = new ResumeWorkflowJob((string) Str::uuid(), 'human_1', 'hello');
 
         $this->assertSame('workflows', $job->queue);
         $this->assertSame('redis', $job->connection);

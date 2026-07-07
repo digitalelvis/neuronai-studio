@@ -2,19 +2,20 @@
 
 namespace DigitalElvis\NeuronAIStudio\Tests;
 
-use DigitalElvis\NeuronAIStudio\Models\WorkflowCheckpoint;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
-use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
+use DigitalElvis\NeuronAIStudio\Models\StudioThread;
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Runtime\BuilderWorkflowState;
 use DigitalElvis\NeuronAIStudio\Runtime\Checkpoint\CheckpointService;
 use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\CheckpointingExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorInterface;
 use NeuronAI\Workflow\WorkflowState;
+use Illuminate\Support\Str;
 
 class CheckpointServiceTest extends TestCase
 {
-    protected function trace(): WorkflowTrace
+    protected function trace(): StudioRun
     {
         $workflow = WorkflowDefinition::create([
             'name' => 'Checkpoint Flow',
@@ -22,8 +23,15 @@ class CheckpointServiceTest extends TestCase
             'graph' => WorkflowDefinition::defaultGraph(),
         ]);
 
-        return WorkflowTrace::create([
-            'workflow_definition_id' => $workflow->id,
+        $thread = StudioThread::create([
+            'id' => (string) Str::uuid(),
+            'entity_type' => WorkflowDefinition::class,
+            'entity_id' => $workflow->id,
+        ]);
+
+        return StudioRun::create([
+            'id' => (string) Str::uuid(),
+            'thread_id' => $thread->id,
             'status' => 'running',
             'input' => ['input' => 'x'],
             'started_at' => now(),
@@ -31,7 +39,7 @@ class CheckpointServiceTest extends TestCase
     }
 
     /** @param array<string, mixed> $data */
-    protected function state(int $traceId, array $data = []): BuilderWorkflowState
+    protected function state(string $traceId, array $data = []): BuilderWorkflowState
     {
         $context = new GraphContext([], []);
 
@@ -73,7 +81,8 @@ class CheckpointServiceTest extends TestCase
         $decorator->execute($config, $this->state($trace->id), $context);
 
         $this->assertSame(1, $inner->calls);
-        $this->assertSame(1, WorkflowCheckpoint::query()->where('workflow_trace_id', $trace->id)->count());
+        $trace->refresh();
+        $this->assertCount(1, $trace->checkpoint_state['node_checkpoints'] ?? []);
 
         // A fresh state models a resume: the node's output is not present yet.
         $resumeState = $this->state($trace->id);
@@ -95,7 +104,8 @@ class CheckpointServiceTest extends TestCase
         $decorator->execute($config, $this->state($trace->id, ['__loop_iterations' => ['loop_1' => 2]]), $context);
 
         $this->assertSame(2, $inner->calls, 'Each loop iteration must get its own checkpoint.');
-        $this->assertSame(2, WorkflowCheckpoint::query()->where('workflow_trace_id', $trace->id)->count());
+        $trace->refresh();
+        $this->assertCount(2, $trace->checkpoint_state['node_checkpoints'] ?? []);
     }
 
     public function test_disabled_checkpoints_always_delegate(): void
@@ -112,7 +122,8 @@ class CheckpointServiceTest extends TestCase
         $decorator->execute($config, $this->state($trace->id), $context);
 
         $this->assertSame(2, $inner->calls);
-        $this->assertSame(0, WorkflowCheckpoint::query()->count());
+        $trace->refresh();
+        $this->assertEmpty($trace->checkpoint_state['node_checkpoints'] ?? []);
     }
 
     public function test_missing_checkpoint_flag_delegates_without_persisting(): void
@@ -127,7 +138,8 @@ class CheckpointServiceTest extends TestCase
         $decorator->execute($config, $this->state($trace->id), $context);
 
         $this->assertSame(2, $inner->calls);
-        $this->assertSame(0, WorkflowCheckpoint::query()->count());
+        $trace->refresh();
+        $this->assertEmpty($trace->checkpoint_state['node_checkpoints'] ?? []);
     }
 
     public function test_input_change_invalidates_checkpoint(): void
@@ -142,10 +154,9 @@ class CheckpointServiceTest extends TestCase
         $decorator->execute($config, $this->state($trace->id, ['input' => 'second']), $context);
 
         $this->assertSame(2, $inner->calls, 'Changed input state must invalidate the checkpoint.');
-        $this->assertSame(1, WorkflowCheckpoint::query()->where('workflow_trace_id', $trace->id)->count());
     }
 
-    public function test_purge_expired_removes_stale_checkpoints(): void
+    public function test_expired_checkpoint_returns_null_on_lookup(): void
     {
         $trace = $this->trace();
         config(['neuronai-studio.checkpoints.ttl' => 60]);
@@ -153,9 +164,11 @@ class CheckpointServiceTest extends TestCase
         $service = app(CheckpointService::class);
         $service->store($trace->id, 'agent_1', 0, 'hash', ['reply' => 'x'], 'default');
 
-        WorkflowCheckpoint::query()->update(['expires_at' => now()->subMinute()]);
+        $trace->refresh();
+        $state = $trace->checkpoint_state;
+        $state['node_checkpoints']['agent_1_0']['expires_at'] = now()->subMinutes(2)->toIso8601String();
+        $trace->update(['checkpoint_state' => $state]);
 
-        $this->assertSame(1, $service->purgeExpired());
-        $this->assertSame(0, WorkflowCheckpoint::query()->count());
+        $this->assertNull($service->lookup($trace->id, 'agent_1', 0));
     }
 }
