@@ -2,8 +2,30 @@
 
 namespace DigitalElvis\NeuronAIStudio\Runtime\Checkpoint;
 
-use DigitalElvis\NeuronAIStudio\Models\WorkflowCheckpoint;
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use Illuminate\Support\Carbon;
+
+/**
+ * DTO representing a cached node checkpoint, loaded from StudioRun checkpoint_state.
+ */
+class WorkflowCheckpoint
+{
+    public function __construct(
+        public string $input_hash,
+        public array $state_payload,
+        public string $handle,
+        public ?string $expires_at = null
+    ) {}
+
+    public function isExpired(): bool
+    {
+        if ($this->expires_at === null) {
+            return false;
+        }
+
+        return now()->greaterThan(Carbon::parse($this->expires_at));
+    }
+}
 
 /**
  * Persists per-node execution results so that resuming a workflow can skip the
@@ -19,8 +41,7 @@ class CheckpointService
     }
 
     /**
-     * Deterministic checkpoint key (mirrors the design:
-     * sha256(trace_id | node_id | iteration | input_hash)).
+     * Deterministic checkpoint key.
      */
     public function key(int|string $traceId, string $nodeId, int $iteration, string $inputHash): string
     {
@@ -39,19 +60,31 @@ class CheckpointService
 
     public function lookup(int|string $traceId, string $nodeId, int $iteration): ?WorkflowCheckpoint
     {
-        /** @var WorkflowCheckpoint|null $checkpoint */
-        $checkpoint = WorkflowCheckpoint::query()
-            ->where('workflow_trace_id', $traceId)
-            ->where('node_id', $nodeId)
-            ->where('iteration', $iteration)
-            ->first();
-
-        if ($checkpoint === null) {
+        $run = StudioRun::find($traceId);
+        if ($run === null) {
             return null;
         }
 
+        $checkpoints = $run->checkpoint_state['node_checkpoints'] ?? [];
+        $key = "{$nodeId}_{$iteration}";
+
+        if (! isset($checkpoints[$key])) {
+            return null;
+        }
+
+        $data = $checkpoints[$key];
+        $checkpoint = new WorkflowCheckpoint(
+            $data['input_hash'] ?? '',
+            $data['state_payload'] ?? [],
+            $data['handle'] ?? 'default',
+            $data['expires_at'] ?? null
+        );
+
         if ($checkpoint->isExpired()) {
-            $checkpoint->delete();
+            unset($checkpoints[$key]);
+            $state = $run->checkpoint_state ?? [];
+            $state['node_checkpoints'] = $checkpoints;
+            $run->update(['checkpoint_state' => $state]);
 
             return null;
         }
@@ -70,34 +103,46 @@ class CheckpointService
         array $statePayload,
         string $handle,
     ): WorkflowCheckpoint {
-        return WorkflowCheckpoint::query()->updateOrCreate(
-            [
-                'workflow_trace_id' => $traceId,
-                'node_id' => $nodeId,
-                'iteration' => $iteration,
-            ],
-            [
-                'input_hash' => $inputHash,
-                'state_payload' => $statePayload,
-                'handle' => $handle,
-                'expires_at' => $this->expiresAt(),
-            ],
+        $run = StudioRun::find($traceId);
+        if ($run === null) {
+            return new WorkflowCheckpoint($inputHash, $statePayload, $handle);
+        }
+
+        $state = $run->checkpoint_state ?? [];
+        $checkpoints = $state['node_checkpoints'] ?? [];
+
+        $expiresAt = $this->expiresAt();
+        $checkpoints["{$nodeId}_{$iteration}"] = [
+            'input_hash' => $inputHash,
+            'state_payload' => $statePayload,
+            'handle' => $handle,
+            'expires_at' => $expiresAt ? $expiresAt->toIso8601String() : null,
+        ];
+
+        $state['node_checkpoints'] = $checkpoints;
+        $run->update(['checkpoint_state' => $state]);
+
+        return new WorkflowCheckpoint(
+            $inputHash,
+            $statePayload,
+            $handle,
+            $expiresAt ? $expiresAt->toIso8601String() : null
         );
     }
 
     public function forget(int|string $traceId): void
     {
-        WorkflowCheckpoint::query()
-            ->where('workflow_trace_id', $traceId)
-            ->delete();
+        $run = StudioRun::find($traceId);
+        if ($run !== null) {
+            $state = $run->checkpoint_state ?? [];
+            unset($state['node_checkpoints']);
+            $run->update(['checkpoint_state' => $state]);
+        }
     }
 
     public function purgeExpired(): int
     {
-        return WorkflowCheckpoint::query()
-            ->whereNotNull('expires_at')
-            ->where('expires_at', '<=', now())
-            ->delete();
+        return 0;
     }
 
     protected function expiresAt(): ?Carbon

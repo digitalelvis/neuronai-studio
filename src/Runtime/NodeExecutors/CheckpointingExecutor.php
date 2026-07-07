@@ -78,7 +78,7 @@ class CheckpointingExecutor implements NodeExecutorInterface
 
     protected function resolveTraceId(WorkflowState $state): int|string|null
     {
-        $traceId = $state->get('__workflow_trace_id');
+        $traceId = $state->get('__studio_run_id') ?? $state->get('__workflow_trace_id');
 
         if ($traceId === null && $state instanceof BuilderWorkflowState) {
             $traceId = $state->workflowRunId;

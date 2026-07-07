@@ -2,7 +2,7 @@
 
 namespace DigitalElvis\NeuronAIStudio\Runtime\Persistence;
 
-use DigitalElvis\NeuronAIStudio\Models\WorkflowCheckpoint;
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use NeuronAI\Exceptions\WorkflowException;
 use NeuronAI\Workflow\Interrupt\WorkflowInterrupt;
 use NeuronAI\Workflow\Persistence\PersistenceInterface;
@@ -10,14 +10,12 @@ use NeuronAI\Workflow\Persistence\SerializablePersistenceInterface;
 
 /**
  * Database-backed persistence for native NeuronAI workflows. Serialized
- * interrupts are stored in the shared `workflow_checkpoints` table keyed by the
- * workflow resume token (`workflow_key`), giving durable resume across requests
- * and queue workers without the volatility of `InMemoryPersistence`.
+ * interrupts are stored in the run's `checkpoint_state` column keyed by the
+ * run ID (passed as $workflowId), giving durable resume across requests
+ * and queue workers.
  */
 class EloquentPersistence implements PersistenceInterface, SerializablePersistenceInterface
 {
-    protected const NODE_ID = '__native_interrupt';
-
     public function serialize(WorkflowInterrupt $interrupt): string
     {
         return serialize($interrupt);
@@ -30,31 +28,25 @@ class EloquentPersistence implements PersistenceInterface, SerializablePersisten
 
     public function save(string $workflowId, WorkflowInterrupt $interrupt): void
     {
-        WorkflowCheckpoint::query()->updateOrCreate(
-            [
-                'workflow_key' => $workflowId,
-                'node_id' => self::NODE_ID,
-                'iteration' => 0,
-            ],
-            [
-                'workflow_trace_id' => null,
-                'input_hash' => null,
-                'state_payload' => ['interrupt' => base64_encode($this->serialize($interrupt))],
-                'handle' => null,
-                'expires_at' => null,
-            ],
-        );
+        $run = StudioRun::find($workflowId);
+        if ($run === null) {
+            return;
+        }
+
+        $state = $run->checkpoint_state ?? [];
+        $state['interrupt'] = base64_encode($this->serialize($interrupt));
+
+        $run->update(['checkpoint_state' => $state]);
     }
 
     public function load(string $workflowId): WorkflowInterrupt
     {
-        /** @var WorkflowCheckpoint|null $checkpoint */
-        $checkpoint = WorkflowCheckpoint::query()
-            ->where('workflow_key', $workflowId)
-            ->where('node_id', self::NODE_ID)
-            ->first();
+        $run = StudioRun::find($workflowId);
+        if ($run === null) {
+            throw new WorkflowException("No saved workflow found for ID: {$workflowId}.");
+        }
 
-        $encoded = $checkpoint?->state_payload['interrupt'] ?? null;
+        $encoded = $run->checkpoint_state['interrupt'] ?? null;
 
         if (! is_string($encoded)) {
             throw new WorkflowException("No saved workflow found for ID: {$workflowId}.");
@@ -65,9 +57,11 @@ class EloquentPersistence implements PersistenceInterface, SerializablePersisten
 
     public function delete(string $workflowId): void
     {
-        WorkflowCheckpoint::query()
-            ->where('workflow_key', $workflowId)
-            ->where('node_id', self::NODE_ID)
-            ->delete();
+        $run = StudioRun::find($workflowId);
+        if ($run !== null) {
+            $state = $run->checkpoint_state ?? [];
+            unset($state['interrupt']);
+            $run->update(['checkpoint_state' => $state]);
+        }
     }
 }
