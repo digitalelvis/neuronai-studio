@@ -5,7 +5,7 @@ namespace DigitalElvis\NeuronAIStudio\Http\Livewire;
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use DigitalElvis\NeuronAIStudio\Models\ToolDefinition;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
-use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Registry\ToolRegistry;
 use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
 use Livewire\Component;
@@ -21,7 +21,7 @@ class Dashboard extends Component
             'workflowCount' => WorkflowDefinition::count(),
             'toolCount' => max(ToolDefinition::count(), $registryCount),
             'mcpServerCount' => count(app(\DigitalElvis\NeuronAIStudio\Registry\McpRegistry::class)->all()),
-            'recentTraces' => WorkflowTrace::with('workflow')->latest()->limit(10)->get(),
+            'recentTraces' => StudioRun::with('thread.entity')->latest()->limit(10)->get(),
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
             breadcrumbs: [['label' => 'Dashboard']],
             title: 'Dashboard',

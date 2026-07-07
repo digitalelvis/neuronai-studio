@@ -2,17 +2,17 @@
 
 namespace DigitalElvis\NeuronAIStudio\Http\Livewire\Workflows;
 
-use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
 use Livewire\Component;
 
 class TraceDetail extends Component
 {
-    public WorkflowTrace $trace;
+    public StudioRun $trace;
 
-    public function mount(WorkflowTrace $trace): void
+    public function mount(StudioRun $run): void
     {
-        $this->trace = $trace->load(['workflow', 'steps']);
+        $this->trace = $run->load(['thread.entity', 'traces.spans']);
     }
 
     public function render()

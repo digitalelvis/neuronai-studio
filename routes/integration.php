@@ -26,6 +26,8 @@ Route::prefix(config('neuronai-studio.stream_adapters.route_prefix', 'api/neuron
         Route::post('workflows/{workflow}/stream/{protocol}', WorkflowIntegrateStreamController::class)
             ->name('workflows.stream');
 
+        Route::post('workflows/threads/{thread}/runs/{run}/resume/{protocol}', WorkflowIntegrateResumeController::class);
+
         Route::post('workflows/traces/{trace}/resume/{protocol}', WorkflowIntegrateResumeController::class)
             ->name('workflows.resume');
     });

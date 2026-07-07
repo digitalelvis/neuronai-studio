@@ -2,7 +2,7 @@
 
 namespace DigitalElvis\NeuronAIStudio\Integration;
 
-use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use Illuminate\Support\Str;
 use NeuronAI\Chat\Messages\Stream\Adapters\AGUIAdapter;
 use NeuronAI\Chat\Messages\Stream\Adapters\StreamAdapterInterface;
@@ -42,9 +42,9 @@ class WorkflowStreamBridge
      * workflow (returning the resulting trace).
      *
      * @param  callable(string): void  $sink
-     * @param  callable(callable(string, array<string, mixed>): void): WorkflowTrace  $execute
+     * @param  callable(callable(string, array<string, mixed>): void): StudioRun  $execute
      */
-    public function run(callable $sink, callable $execute): WorkflowTrace
+    public function run(callable $sink, callable $execute): StudioRun
     {
         foreach ($this->adapter->start() as $line) {
             $sink($line);
@@ -56,13 +56,13 @@ class WorkflowStreamBridge
             }
         };
 
-        $trace = $execute($emitter);
+        $run = $execute($emitter);
 
         // Step-boundary fallback: when no per-token deltas were streamed (node
         // without `stream: true`), emit the final output text so external
         // clients still receive the assistant response.
         if (! $this->streamedText) {
-            $text = $this->finalText($trace);
+            $text = $this->finalText($run);
 
             if ($text !== '') {
                 foreach ($this->adapter->transform(new TextChunk($this->messageId, $text)) as $line) {
@@ -71,8 +71,8 @@ class WorkflowStreamBridge
             }
         }
 
-        if (in_array($trace->status, ['awaiting_input', 'awaiting_tool_approval'], true)) {
-            foreach ($this->awaitingSignal($trace) as $line) {
+        if (in_array($run->status, ['awaiting_input', 'awaiting_tool_approval'], true)) {
+            foreach ($this->awaitingSignal($run) as $line) {
                 $sink($line);
             }
         }
@@ -81,7 +81,7 @@ class WorkflowStreamBridge
             $sink($line);
         }
 
-        return $trace;
+        return $run;
     }
 
     /**
@@ -142,9 +142,9 @@ class WorkflowStreamBridge
      * string value written to the workflow output (typically the final agent/
      * llm node response).
      */
-    protected function finalText(WorkflowTrace $trace): string
+    protected function finalText(StudioRun $run): string
     {
-        $output = is_array($trace->output) ? $trace->output : [];
+        $output = is_array($run->output) ? $run->output : [];
         $text = '';
 
         foreach ($output as $key => $value) {
@@ -171,12 +171,12 @@ class WorkflowStreamBridge
      *
      * @return iterable<string>
      */
-    protected function awaitingSignal(WorkflowTrace $trace): iterable
+    protected function awaitingSignal(StudioRun $run): iterable
     {
         $payload = [
-            'status' => $trace->status,
-            'trace_id' => $trace->id,
-            'node_id' => $trace->awaiting_node_id,
+            'status' => $run->status,
+            'trace_id' => $run->id,
+            'node_id' => $run->awaitingNodeId(),
         ];
 
         if ($this->adapter instanceof AGUIAdapter) {
