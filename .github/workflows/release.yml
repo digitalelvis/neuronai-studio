@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -34,9 +35,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Release
-        run: npx release-it --ci --no-git.push
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx release-it --ci --no-git.push --no-github.release
 
       - name: Push release commit and tag
         run: git push origin HEAD:main --tags
