@@ -4,8 +4,11 @@ namespace DigitalElvis\NeuronAIStudio\Tests;
 
 use DigitalElvis\NeuronAIStudio\Http\Middleware\EnsureNeuronAIStudioAuthorized;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
-use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
-use DigitalElvis\NeuronAIStudio\Models\WorkflowTraceStep;
+use DigitalElvis\NeuronAIStudio\Models\StudioThread;
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
+use DigitalElvis\NeuronAIStudio\Models\StudioTrace;
+use DigitalElvis\NeuronAIStudio\Models\StudioTraceSpan;
+use Illuminate\Support\Str;
 
 class WorkflowTraceControllerTest extends TestCase
 {
@@ -19,8 +22,15 @@ class WorkflowTraceControllerTest extends TestCase
             'graph' => WorkflowDefinition::defaultGraph(),
         ]);
 
-        $trace = WorkflowTrace::create([
-            'workflow_definition_id' => $workflow->id,
+        $thread = StudioThread::create([
+            'id' => (string) Str::uuid(),
+            'entity_type' => WorkflowDefinition::class,
+            'entity_id' => $workflow->id,
+        ]);
+
+        $run = StudioRun::create([
+            'id' => (string) Str::uuid(),
+            'thread_id' => $thread->id,
             'status' => 'completed',
             'input' => ['message' => 'hello'],
             'started_at' => now(),
@@ -30,7 +40,7 @@ class WorkflowTraceControllerTest extends TestCase
         $response = $this->getJson(route('neuronai-studio.workflows.traces.index', $workflow));
 
         $response->assertOk();
-        $response->assertJsonPath('data.0.id', $trace->id);
+        $response->assertJsonPath('data.0.id', $run->id);
         $response->assertJsonPath('data.0.status', 'completed');
     }
 
@@ -44,8 +54,15 @@ class WorkflowTraceControllerTest extends TestCase
             'graph' => WorkflowDefinition::defaultGraph(),
         ]);
 
-        $trace = WorkflowTrace::create([
-            'workflow_definition_id' => $workflow->id,
+        $thread = StudioThread::create([
+            'id' => (string) Str::uuid(),
+            'entity_type' => WorkflowDefinition::class,
+            'entity_id' => $workflow->id,
+        ]);
+
+        $run = StudioRun::create([
+            'id' => (string) Str::uuid(),
+            'thread_id' => $thread->id,
             'status' => 'completed',
             'input' => ['message' => 'hello'],
             'output' => ['result' => 'ok'],
@@ -53,18 +70,25 @@ class WorkflowTraceControllerTest extends TestCase
             'finished_at' => now(),
         ]);
 
-        WorkflowTraceStep::create([
-            'workflow_trace_id' => $trace->id,
-            'node_id' => 'start_1',
-            'node_type' => 'start',
-            'state_snapshot' => ['input' => 'hello'],
+        $trace = StudioTrace::create([
+            'id' => (string) Str::uuid(),
+            'run_id' => $run->id,
+        ]);
+
+        StudioTraceSpan::create([
+            'id' => (string) Str::uuid(),
+            'trace_id' => $trace->id,
+            'name' => 'start_1',
+            'type' => 'start',
+            'status' => 'completed',
+            'output' => ['state_snapshot' => ['input' => 'hello']],
             'duration_ms' => 5,
         ]);
 
-        $response = $this->getJson(route('neuronai-studio.workflows.traces.show.json', $trace));
+        $response = $this->getJson(route('neuronai-studio.workflows.runs.show.json', $run));
 
         $response->assertOk();
-        $response->assertJsonPath('trace.id', $trace->id);
+        $response->assertJsonPath('trace.id', $run->id);
         $response->assertJsonPath('steps.0.node_id', 'start_1');
     }
 
@@ -78,38 +102,47 @@ class WorkflowTraceControllerTest extends TestCase
             'graph' => WorkflowDefinition::defaultGraph(),
         ]);
 
-        $queued = WorkflowTrace::create([
-            'workflow_definition_id' => $workflow->id,
+        $thread = StudioThread::create([
+            'id' => (string) Str::uuid(),
+            'entity_type' => WorkflowDefinition::class,
+            'entity_id' => $workflow->id,
+        ]);
+
+        $queued = StudioRun::create([
+            'id' => (string) Str::uuid(),
+            'thread_id' => $thread->id,
             'status' => 'queued',
             'input' => ['message' => 'pending'],
             'started_at' => null,
         ]);
 
-        $running = WorkflowTrace::create([
-            'workflow_definition_id' => $workflow->id,
+        $running = StudioRun::create([
+            'id' => (string) Str::uuid(),
+            'thread_id' => $thread->id,
             'status' => 'running',
             'input' => ['message' => 'in progress'],
             'started_at' => now(),
         ]);
 
-        $awaiting = WorkflowTrace::create([
-            'workflow_definition_id' => $workflow->id,
+        $awaiting = StudioRun::create([
+            'id' => (string) Str::uuid(),
+            'thread_id' => $thread->id,
             'status' => 'awaiting_input',
             'input' => ['message' => 'need human'],
-            'awaiting_node_id' => 'human_1',
+            'checkpoint_state' => ['node_id' => 'human_1'],
             'started_at' => now(),
         ]);
 
-        $this->getJson(route('neuronai-studio.workflows.traces.show.json', $queued))
+        $this->getJson(route('neuronai-studio.workflows.runs.show.json', $queued))
             ->assertOk()
             ->assertJsonPath('trace.status', 'queued')
             ->assertJsonPath('trace.awaiting_node_id', null);
 
-        $this->getJson(route('neuronai-studio.workflows.traces.show.json', $running))
+        $this->getJson(route('neuronai-studio.workflows.runs.show.json', $running))
             ->assertOk()
             ->assertJsonPath('trace.status', 'running');
 
-        $this->getJson(route('neuronai-studio.workflows.traces.show.json', $awaiting))
+        $this->getJson(route('neuronai-studio.workflows.runs.show.json', $awaiting))
             ->assertOk()
             ->assertJsonPath('trace.status', 'awaiting_input')
             ->assertJsonPath('trace.awaiting_node_id', 'human_1');

@@ -2,9 +2,10 @@
 
 **North star:** Agentes multimodais autônomos com grafos de workflow cíclicos.
 
-**Development line:** `v0.2.x` → release alvo `v0.2.0`  
-**Última publicação:** `v0.1.2` (`main`)  
-**Última atualização:** 2026-07-02
+**Development line:** `v0.2.x` (target release `v0.2.1+`)  
+**Latest published:** `v0.2.0` on `main`  
+**Última atualização:** 2026-07-07  
+**Etapa atual:** M1/M2/M3/M4 concluídos. **Refatoração Unified Runs e Traces concluída** — todos os marcos de integração, unificação e token tracking estão 100% integrados e testados.
 
 ---
 
@@ -23,68 +24,47 @@ Grafos cíclicos + agentes multimodais + RAG real. Entrega o padrão end-to-end 
 
 **Critério de conclusão M1:** Template `autonomous-lead-qualification` executável no test harness com loop, agent com tools, anexo PDF/imagem, e opcionalmente nó RAG upstream.
 
-**Etapa atual:** M1 concluído — publicar `v0.2.0`. Próximo foco: M2 Feature 5 (`workflow-tool-approval`).
+**Etapa atual:** M1 concluído — publicar `v0.2.0`. M2 Features 5 (`workflow-tool-approval`) e 6 (`workflow-token-streaming`) concluídas.
 
-### M2 — Capacidades de agente no workflow (P1) `in progress`
+### M2 — Capacidades de agente no workflow (P1) `done`
 
 Structured output, aprovação de tools e streaming de tokens no harness.
 
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
 | 4 | `workflow-structured-output` | **done** (T1–T17; T12 parcial) | [spec](../features/workflow-structured-output/spec.md) · [tasks](../features/workflow-structured-output/tasks.md) |
-| 5 | `workflow-tool-approval` | planned | [spec](../features/workflow-tool-approval/spec.md) |
-| 6 | `workflow-token-streaming` | planned | [spec](../features/workflow-token-streaming/spec.md) |
+| 5 | `workflow-tool-approval` | **done** (slices 1–3: backend, resume/API, UI+codegen+docs) | [spec](../features/workflow-tool-approval/spec.md) · [tasks](../features/workflow-tool-approval/tasks.md) |
+| 6 | `workflow-token-streaming` | **done** (slices 1–2: backend token SSE, toggle canvas + docs) | [spec](../features/workflow-token-streaming/spec.md) · [tasks](../features/workflow-token-streaming/tasks.md) |
 
-**Etapa atual (v0.2.x):** Feature 5 — `workflow-tool-approval` (próxima após fechar M1)  
-**Concluído (Feature 4):** T1–T17 — registry, resolver, dot notation, `AgentRunner::structuredInline`, executors LLM/agent, erros de validação no trace, canvas inspector, round-trip, codegen e docs.  
-**Próximos passos:** Iniciar `workflow-tool-approval` → depois `workflow-token-streaming`.  
-**Nota:** T12 parcial — hint dot notation (`lead.tier`) só no condition; loop sem inspector aguarda polish M1.
-
-### M3 — Escala e resiliência (P2) `in progress`
+### M3 — Escala e resiliência (P2) `done`
 
 Paralelismo, checkpoints generalizados e execução assíncrona.
 
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
-| 7 | `workflow-parallel-execution` | planned | [spec](../features/workflow-parallel-execution/spec.md) |
-| 8 | `workflow-checkpoints-persistence` | planned | [spec](../features/workflow-checkpoints-persistence/spec.md) |
+| 7 | `workflow-parallel-execution` | **done** (PE-01..09; runtime interpretado, PE-08 preview parcial) | [spec](../features/workflow-parallel-execution/spec.md) · [design](../features/workflow-parallel-execution/design.md) · [tasks](../features/workflow-parallel-execution/tasks.md) |
+| 8 | `workflow-checkpoints-persistence` | **done** (CP-01..08) | [spec](../features/workflow-checkpoints-persistence/spec.md) · [design](../features/workflow-checkpoints-persistence/design.md) · [tasks](../features/workflow-checkpoints-persistence/tasks.md) |
 | 9 | `workflow-queue-runner` | **done** | [spec](../features/workflow-queue-runner/spec.md) · [tasks](../features/workflow-queue-runner/tasks.md) |
 
-### M4 — Integração externa (P1) `planned`
+### M4 — Integração externa (P1) `done`
 
 Expor agentes e workflows para clients externos (Vercel AI SDK, AG-UI) via endpoints de streaming no package, sem alterar o harness interno.
 
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
-| 10 | `stream-adapters` | planned | [spec](../features/stream-adapters/spec.md) |
+| 10 | `stream-adapters` | **done** (SA-T1..SA-T13) | [spec](../features/stream-adapters/spec.md) · [tasks](../features/stream-adapters/tasks.md) |
+| 11 | `unified-runs-and-traces` | **done** (T1–T7) | [spec](../features/unified-runs-and-traces/spec.md) · [tasks](../features/unified-runs-and-traces/tasks.md) |
 
 **Critério de conclusão M4:** Host app consome agente via `useChat` (Vercel) e workflow via client AG-UI usando rotas configuráveis do package; workflow com Human node pausa e retoma via endpoint `resume/{protocol}`; catálogo e Connect Panel documentam URLs e snippets.
-
-**Dependências:** SA-14 (tokens em workflow externo) opcionalmente aguarda `workflow-token-streaming`.
 
 ---
 
 ## Próximas tarefas (ordem de execução)
 
-Fila derivada do estado real (ver [STATE.md](STATE.md)).
+Fila de planejamento futura:
 
-### Sprint atual — publicar `v0.2.0`
-
-1. ~~`workflow-rag` Fatia 3~~ ✅
-2. ~~AMA-09 docs~~ ✅
-3. PR `v0.2.x` → `main` + tag `v0.2.0`
-4. Governança — branch protection para `v0.2.x` no GitHub
-
-### Próximo — completar M2
-
-5. `workflow-tool-approval` (Feature 5)
-6. `workflow-token-streaming` (Feature 6)
-
-### Depois — M3 e M4
-
-7. `workflow-parallel-execution` (Feature 7)
-8. `workflow-checkpoints-persistence` (Feature 8)
-9. `stream-adapters` (Feature 10) — SA-14 pode aguardar token streaming
+1. Governança — branch protection para `v0.2.x` no GitHub.
+2. Planejamento do próximo Milestone (M5 — Analítica e Faturamento).
 
 ---
 
@@ -102,6 +82,12 @@ Fila derivada do estado real (ver [STATE.md](STATE.md)).
 | `workflow-queue-runner` | ✅ done | 0.2.x |
 | `workflow-rag` | ✅ done | 0.2.x |
 | `rag-knowledge-base-tool` | ✅ done | 0.2.x |
+| `workflow-tool-approval` | ✅ done | 0.2.x |
+| `workflow-token-streaming` | ✅ done | 0.2.x |
+| `workflow-checkpoints-persistence` | ✅ done | 0.2.x |
+| `workflow-parallel-execution` | ✅ done | 0.2.x |
+| `stream-adapters` | ✅ done | 0.2.x |
+| `unified-runs-and-traces` | ✅ done | 0.2.x |
 
 ---
 
@@ -158,11 +144,11 @@ Mapeamento feature → arquivos `docs/` a criar/atualizar na implementação.
 | Feature | Documentos |
 |---------|------------|
 | `stream-adapters` | `guides/integration/stream-adapters.md`, `guides/integration/vercel-ai-sdk.md`, `guides/integration/ag-ui.md`, `reference/configuration.md`, `getting-started/installation.md`, `guides/agents/playground-and-threads.md` |
+| `unified-runs-and-traces` | `guides/workflows/runtime-and-traces.md`, `reference/database-schema.md` |
 
 ---
 
 ## Decisões em aberto (ver [STATE.md](STATE.md))
 
-- Runtime interpretado vs native Neuron para execução paralela
-- SSE/broadcast vs polling para queue runner v1
+- SSE/broadcast vs polling para queue runner v1 (polling v1 implementado; SSE deferido)
 - Escopo de autonomia multi-turn **dentro** de um único nó agent vs entre iterações do loop

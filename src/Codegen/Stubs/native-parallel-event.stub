@@ -1,0 +1,9 @@
+<?php
+
+namespace {{ namespace }};
+
+use NeuronAI\Workflow\Events\ParallelEvent;
+
+class {{ className }} extends ParallelEvent
+{
+}

@@ -16,11 +16,12 @@ class GraphExecutionLoop
         string $nodeId,
         GraphContext $graphContext,
         BuilderWorkflowState $state,
+        ?string $stopAtNodeId = null,
     ): BuilderWorkflowState {
         $globalMaxSteps = max(1, (int) config('neuronai-studio.loop.global_max_steps', 1000));
         $executedSteps = 0;
 
-        while ($nodeId !== '') {
+        while ($nodeId !== '' && $nodeId !== $stopAtNodeId) {
             $executedSteps++;
 
             if ($executedSteps > $globalMaxSteps) {

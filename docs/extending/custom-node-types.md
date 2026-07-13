@@ -93,9 +93,35 @@ Custom node fields appear in the inspector when you extend the React inspector c
 
 See the registered types in `NeuronAIStudioServiceProvider::registerNodeTypes()`:
 
-- start, stop, agent, llm, condition, set_state, loop, tool, rag, delay, mcp, human
+- start, stop, agent, llm, condition, set_state, loop, tool, rag, delay, mcp, human, fork, join
 
 Use these as reference implementations in `src/Runtime/NodeExecutors/`.
+
+### The fork/join pattern
+
+Parallel execution is implemented as a **pair** of cooperating nodes plus a helper runner —
+a useful template if you build fan-out/fan-in nodes:
+
+- `ForkNodeExecutor` reads its branch edges (each non-`default` source handle is a branch),
+  runs each branch subgraph through `ParallelBranchRunner` in an isolated `BuilderWorkflowState`
+  up to the paired join node, and stores the collected `{ branchId: result }` map on the state.
+- `JoinNodeExecutor` writes that map to its `output_key`.
+- `GraphValidator::validateParallel()` enforces the pairing (a fork must reach a join on its
+  `default` handle and declare at least one branch; a join must have a paired fork).
+- A branch that pauses raises `ParallelBranchInterruptException`, which `WorkflowRunner` turns
+  into a `kind: parallel` checkpoint so only the interrupted branch resumes.
+
+Key idea: keep branch state **isolated** and merge only at the join, so branches remain
+independent and order-insensitive.
+
+### Checkpointable nodes (decorator)
+
+`CheckpointingExecutor` wraps Agent/LLM/RAG/Tool executors so a node with `data.checkpoint: true`
+caches its state change in `neuronai_studio_workflow_checkpoints` and is skipped on resume. It is
+a plain decorator over `NodeExecutorInterface` — you can wrap your own executor the same way when
+registering it, injecting `CheckpointService`. The checkpoint key is
+`sha256(trace_id | node_id | iteration | input_hash)` and the input hash excludes volatile
+internal keys, so changing relevant upstream state invalidates the cache.
 
 ### Nodes with guardrails
 

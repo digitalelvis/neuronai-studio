@@ -11,7 +11,7 @@ class BuilderWorkflowState extends WorkflowState
 
     public function __construct(
         public GraphContext $graphContext,
-        public ?int $workflowRunId = null,
+        public ?string $workflowRunId = null,
         array $data = [],
     ) {
         parent::__construct($data);

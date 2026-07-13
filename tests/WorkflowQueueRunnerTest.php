@@ -5,9 +5,11 @@ namespace DigitalElvis\NeuronAIStudio\Tests;
 use DigitalElvis\NeuronAIStudio\Http\Middleware\EnsureNeuronAIStudioAuthorized;
 use DigitalElvis\NeuronAIStudio\Jobs\RunWorkflowJob;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
-use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
+use DigitalElvis\NeuronAIStudio\Models\StudioThread;
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 class WorkflowQueueRunnerTest extends TestCase
@@ -36,17 +38,17 @@ class WorkflowQueueRunnerTest extends TestCase
         $traceId = $response->json('trace_id');
 
         Queue::assertPushed(RunWorkflowJob::class, function (RunWorkflowJob $job) use ($traceId) {
-            $this->assertSame($traceId, $job->traceId);
+            $this->assertSame($traceId, $job->runId);
             $job->handle(app(WorkflowRunner::class));
 
             return true;
         });
 
-        $trace = WorkflowTrace::findOrFail($traceId);
-        $this->assertSame('completed', $trace->status);
-        $this->assertSame('Hello', $trace->output['greeting'] ?? null);
+        $run = StudioRun::findOrFail($traceId);
+        $this->assertSame('completed', $run->status);
+        $this->assertSame('Hello', $run->output['greeting'] ?? null);
 
-        $poll = $this->getJson(route('neuronai-studio.workflows.traces.show.json', $trace));
+        $poll = $this->getJson(route('neuronai-studio.workflows.runs.show.json', $run));
         $poll->assertOk();
         $poll->assertJsonPath('trace.status', 'completed');
     }
@@ -55,14 +57,21 @@ class WorkflowQueueRunnerTest extends TestCase
     {
         $workflow = $this->setStateWorkflow();
 
-        $trace = WorkflowTrace::create([
-            'workflow_definition_id' => $workflow->id,
+        $thread = StudioThread::create([
+            'id' => (string) Str::uuid(),
+            'entity_type' => WorkflowDefinition::class,
+            'entity_id' => $workflow->id,
+        ]);
+
+        $run = StudioRun::create([
+            'id' => (string) Str::uuid(),
+            'thread_id' => $thread->id,
             'status' => 'queued',
             'input' => ['input' => 'test'],
             'started_at' => null,
         ]);
 
-        $job = new RunWorkflowJob($trace->id, 999999, ['input' => 'test']);
+        $job = new RunWorkflowJob($run->id, 999999, ['input' => 'test']);
 
         try {
             $job->handle(app(WorkflowRunner::class));
@@ -73,9 +82,9 @@ class WorkflowQueueRunnerTest extends TestCase
 
         $job->failed(new RuntimeException('Simulated permanent failure'));
 
-        $trace->refresh();
-        $this->assertSame('failed', $trace->status);
-        $this->assertSame('Simulated permanent failure', $trace->error_message);
+        $run->refresh();
+        $this->assertSame('failed', $run->status);
+        $this->assertSame('Simulated permanent failure', $run->error_message);
     }
 
     public function test_sync_stream_path_unchanged_when_async_disabled(): void
@@ -89,7 +98,7 @@ class WorkflowQueueRunnerTest extends TestCase
         ]);
 
         $response->assertStatus(501);
-        $this->assertSame(0, WorkflowTrace::count());
+        $this->assertSame(0, StudioRun::count());
     }
 
     protected function setStateWorkflow(): WorkflowDefinition

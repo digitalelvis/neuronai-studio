@@ -3,7 +3,7 @@
 namespace DigitalElvis\NeuronAIStudio\Http\Controllers;
 
 use DigitalElvis\NeuronAIStudio\Http\Controllers\Concerns\ValidatesChatAttachments;
-use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\WorkflowExecutionException;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\StructuredOutputValidationException;
@@ -15,16 +15,28 @@ class WorkflowTraceResumeController
 {
     use ValidatesChatAttachments;
 
-    public function __invoke(Request $request, WorkflowTrace $trace, WorkflowRunner $runner): StreamedResponse
+    public function __invoke(Request $request, $threadOrRun, $run = null): StreamedResponse
     {
+        $runModel = $run instanceof StudioRun 
+            ? $run 
+            : ($threadOrRun instanceof StudioRun ? $threadOrRun : null);
+
+        if ($runModel === null) {
+            $runId = is_string($run) ? $run : (is_string($threadOrRun) ? $threadOrRun : '');
+            $runModel = StudioRun::findOrFail($runId);
+        }
+
         $validated = $request->validate([
             'node_id' => 'required|string',
+            'approval' => 'nullable|in:approve,reject',
         ]);
 
-        $chat = $this->validateChatPayload($request);
+        $approval = $validated['approval'] ?? null;
+
+        $chat = $this->validateChatPayload($request, requireContent: $approval === null);
         $validated = array_merge($validated, $chat);
 
-        return response()->stream(function () use ($trace, $runner, $validated) {
+        return response()->stream(function () use ($runModel, $validated, $approval) {
             $send = function (string $event, array $data): void {
                 echo "event: {$event}\n";
                 echo 'data: '.json_encode($data, JSON_THROW_ON_ERROR)."\n\n";
@@ -37,15 +49,17 @@ class WorkflowTraceResumeController
             };
 
             try {
+                $runner = app(WorkflowRunner::class);
                 $result = $runner->resume(
-                    $trace,
+                    $runModel,
                     $validated['node_id'],
                     $validated['message'],
                     $send,
                     $validated['attachments'] ?? [],
+                    $approval,
                 );
 
-                if ($result->status === 'awaiting_input') {
+                if (in_array($result->status, ['awaiting_input', 'awaiting_tool_approval'], true)) {
                     return;
                 }
 

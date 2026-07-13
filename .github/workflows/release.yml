@@ -34,6 +34,14 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Release
-        run: npx release-it --ci
+        run: npx release-it --ci --no-git.push
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Push release commit and tag
+        run: git push origin HEAD:main --tags
+
+      - name: Create GitHub Release
+        run: gh release create "v$(node -p "require('./package.json').version")" --title "Release $(node -p "require('./package.json').version")" --generate-notes
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -39,9 +39,15 @@ class GraphTranspiler
             }
         }
 
+        $parallel = $this->parallelMeta($nodes, $context);
+
         $events = [];
         $executableNodes = [];
         $executionOrder = [];
+
+        foreach ($parallel['events'] as $eventClass => $eventDef) {
+            $events[$eventClass] = $eventDef;
+        }
 
         foreach ($nodes as $node) {
             $id = (string) ($node['id'] ?? '');
@@ -55,13 +61,24 @@ class GraphTranspiler
 
             $inputEvent = $id === $startTargetId
                 ? 'StartEvent'
-                : $this->eventClassName($id);
+                : ($parallel['joinInput'][$id] ?? $this->eventClassName($id));
 
             $outgoing = $context->outgoingEdges($id);
             $branchReturns = [];
             $returnType = 'StopEvent';
+            $forkMeta = null;
+            $stopResultKey = null;
 
-            if ($type === 'condition') {
+            if ($type === 'fork') {
+                $fork = $parallel['forks'][$id];
+                $returnType = $fork['eventClass'];
+                $forkMeta = $fork;
+                $events[$fork['eventClass']] = [
+                    'id' => $id,
+                    'className' => $fork['eventClass'],
+                    'kind' => 'parallel',
+                ];
+            } elseif ($type === 'condition') {
                 foreach (['true', 'false'] as $handle) {
                     $targetId = $context->targetForHandle($id, $handle);
                     if ($targetId === null) {
@@ -102,13 +119,20 @@ class GraphTranspiler
                 $targetId = $context->targetForHandle($id);
                 if ($targetId !== null) {
                     $targetType = (string) ($nodeById[$targetId]['type'] ?? '');
-                    $returnType = $this->eventClassName($targetId);
 
-                    $events[$targetId] = ['id' => $targetId, 'className' => $returnType];
+                    if ($targetType === 'join') {
+                        // Parallel branch terminal: return its result to the executor,
+                        // which collects branch results into the ParallelEvent.
+                        $returnType = 'StopEvent';
+                        $stopResultKey = $this->resultKey($type, is_array($node['data'] ?? null) ? $node['data'] : []);
+                    } else {
+                        $returnType = $this->eventClassName($targetId);
+                        $events[$targetId] = ['id' => $targetId, 'className' => $returnType];
+                    }
                 }
             }
 
-            if ($id === $startTargetId) {
+            if ($id === $startTargetId && $type !== 'fork') {
                 $firstTarget = $context->targetForHandle($id);
                 if ($firstTarget !== null && ($nodeById[$firstTarget]['type'] ?? '') !== 'stop') {
                     $events[$firstTarget] = [
@@ -126,6 +150,8 @@ class GraphTranspiler
                 'inputEvent' => $inputEvent,
                 'returnType' => $returnType,
                 'branchReturns' => $branchReturns,
+                'parallel' => $forkMeta,
+                'stopResultKey' => $stopResultKey,
             ];
         }
 
@@ -135,6 +161,81 @@ class GraphTranspiler
             'events' => array_values($events),
             'executionOrder' => $executionOrder,
         ];
+    }
+
+    /**
+     * Precomputes fork/join parallel metadata so branch input events, the
+     * ParallelEvent subclass, and the join node input override are known before
+     * per-node code generation.
+     *
+     * @param  array<int, array<string, mixed>>  $nodes
+     * @return array{
+     *     forks: array<string, array{eventClass: string, joinId: string, branches: array<string, array{entryId: string, eventClass: string}>}>,
+     *     joinInput: array<string, string>,
+     *     events: array<string, array{id: string, className: string, kind?: string}>
+     * }
+     */
+    protected function parallelMeta(array $nodes, GraphContext $context): array
+    {
+        $forks = [];
+        $joinInput = [];
+        $events = [];
+
+        foreach ($nodes as $node) {
+            if (($node['type'] ?? '') !== 'fork') {
+                continue;
+            }
+
+            $forkId = (string) ($node['id'] ?? '');
+            if ($forkId === '') {
+                continue;
+            }
+
+            $eventClass = Str::studly($forkId).'ParallelEvent';
+
+            $joinId = $context->targetForHandle($forkId, 'default');
+            if (! is_string($joinId) || $joinId === '') {
+                $joinId = (string) ($node['data']['join'] ?? '');
+            }
+
+            $branches = [];
+            foreach ($context->outgoingEdges($forkId) as $edge) {
+                $handle = (string) ($edge['sourceHandle'] ?? 'default');
+                $target = (string) ($edge['target'] ?? '');
+
+                if ($handle === 'default' || $target === '') {
+                    continue;
+                }
+
+                $branchEventClass = $this->eventClassName($target);
+                $branches[$handle] = ['entryId' => $target, 'eventClass' => $branchEventClass];
+                $events[$branchEventClass] = ['id' => $target, 'className' => $branchEventClass];
+            }
+
+            $forks[$forkId] = [
+                'eventClass' => $eventClass,
+                'joinId' => (string) $joinId,
+                'branches' => $branches,
+            ];
+
+            if (is_string($joinId) && $joinId !== '') {
+                $joinInput[$joinId] = $eventClass;
+            }
+        }
+
+        return [
+            'forks' => $forks,
+            'joinInput' => $joinInput,
+            'events' => $events,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function resultKey(string $type, array $data): string
+    {
+        return (string) ($data['output_key'] ?? $data['key'] ?? 'result');
     }
 
     public function nodeClassName(string $nodeId): string

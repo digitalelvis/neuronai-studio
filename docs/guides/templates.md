@@ -31,6 +31,7 @@ Repeating the same workflow template creates a new workflow. Agents referenced b
 | `intent-classifier` | Intent Classifier |
 | `knowledge-agent` | Knowledge Agent |
 | `lead-qualifier` | Lead Qualifier (tools + multimodal) |
+| `support-triage-composer` | Support Triage Composer (parallel synthesis) |
 
 ### Workflows
 
@@ -40,7 +41,9 @@ Repeating the same workflow template creates a new workflow. Agents referenced b
 | `lead-qualification` | Intermediate | LLM extraction + condition branching |
 | `lead-qualification-loop` | Intermediate | LLM extraction in a cyclic loop until email found |
 | `autonomous-lead-qualification` | Intermediate | Agent + tools + attachments in a loop |
+| `parallel-support-triage` | Intermediate | Fork/join parallel analysis + checkpoints |
 | `support-rag-hitl` | Advanced | Intent routing, RAG, human-in-the-loop |
+| `parallel-triage-hitl` | Advanced | Parallel analysis + human review branch + checkpoint resume |
 
 ## Lead Qualification (loop)
 
@@ -59,6 +62,45 @@ Template `autonomous-lead-qualification` runs the `lead-qualifier` agent inside 
 5. When `lead_profile` contains `@`, the loop exits and the workflow completes as `qualified`.
 
 Requires cyclic graphs, multimodal attachments (`state.attachments`, `MessageFactory`), and harness resume support.
+
+## Parallel Support Triage (M3 reference templates)
+
+Two templates demonstrate the M3 features — **parallel execution** (fork/join) and **node checkpoints** — on a real support-triage use case. They are the recommended starting point for developers exercising these capabilities.
+
+Both call the configured provider normally (no fakes), so set a provider API key before running (see [Installation](../getting-started/installation.md)).
+
+### `parallel-support-triage` (intermediate)
+
+Runs end to end without pausing:
+
+1. `set_state` stores the incoming ticket as `ticket`.
+2. A **fork** launches three independent LLM analyses in parallel branches — `sentiment`, `facts`, `priority` — each writing its own `output_key`.
+3. The **join** merges the branch results into `analyses` (`{ sentiment: ..., facts: ..., priority: ... }`).
+4. The `support-triage-composer` agent synthesizes a triage summary and a suggested customer reply into `triage_summary`.
+
+Every analysis node and the composer set `"checkpoint": true`, so re-running the same ticket reuses cached results (emitting `checkpoint_hit`) instead of calling the provider again.
+
+### `parallel-triage-hitl` (advanced)
+
+Same fork/join, plus a fourth **human review** branch. This is the full M3 showcase:
+
+1. The three automated branches run and store checkpoints first.
+2. The human branch raises a **parallel interrupt**; the workflow pauses with status `awaiting_input` (`awaiting_node_id = human_review`) and emits `parallel_interrupt` + `human_input_required`.
+3. On resume, the already-completed branches are **reused from their checkpoints** (`checkpoint_hit`, no new provider calls) and only the human branch finishes before the join and composer run.
+
+**Example input** (paste into the harness Test tab):
+
+```text
+Assunto: Cobrança duplicada no pedido #48213
+
+Fui cobrado duas vezes pelo plano Pro este mês (R$ 89,90 em 28/06 e de
+novo em 01/07) no cartão terminado em 4412. Preciso do estorno até
+sexta (04/07), senão vou cancelar. E-mail: joao.pereira@empresa.com.br
+```
+
+**Expected result** — `triage_summary` contains a `## Triage` block (sentiment, key facts, priority `urgent`, route to `billing`) followed by a short `## Suggested reply` to the customer. In the HITL variant, the reviewer note you provide during the pause is woven into the reply.
+
+See [Logic Nodes → Fork / Join](workflows/node-types/logic-nodes.md), [Runtime & Traces](workflows/runtime-and-traces.md), and [Human-in-the-Loop](workflows/human-in-the-loop.md).
 
 ## File locations
 

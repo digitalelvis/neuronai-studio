@@ -9,6 +9,7 @@ export class WorkflowSessionAdapter {
         this.onBeforeRun = onBeforeRun;
         this.syncCanvas = syncCanvas;
         this.pendingResume = null;
+        this.pendingApproval = null;
     }
 
     async *send(message, attachments = [], context = {}) {
@@ -63,6 +64,30 @@ export class WorkflowSessionAdapter {
         );
     }
 
+    async *resumeApproval(decision, feedback = '') {
+        if (!this.pendingApproval) {
+            throw new Error('No workflow trace awaiting tool approval.');
+        }
+
+        const { traceId, nodeId } = this.pendingApproval;
+        this.pendingApproval = null;
+
+        const url = this.resumeUrlTemplate.replace('__TRACE__', String(traceId));
+
+        const payload = {
+            node_id: nodeId,
+            approval: decision === 'reject' ? 'reject' : 'approve',
+        };
+
+        if (typeof feedback === 'string' && feedback.trim() !== '') {
+            payload.message = feedback.trim();
+        }
+
+        yield* this.consumeStream(
+            fetchSse(url, jsonPostOptions(payload)),
+        );
+    }
+
     async *consumeStream(stream) {
         for await (const packet of stream) {
             const canvasEvents = [
@@ -88,11 +113,19 @@ export class WorkflowSessionAdapter {
                 };
             }
 
+            if (packet.event === 'tool_approval_required') {
+                this.pendingApproval = {
+                    traceId: packet.data.trace_id,
+                    nodeId: packet.data.node_id,
+                };
+            }
+
             yield packet;
         }
     }
 
     reset() {
         this.pendingResume = null;
+        this.pendingApproval = null;
     }
 }

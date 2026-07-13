@@ -45,14 +45,129 @@ sequenceDiagram
 |-------|-------------|
 | `thread` | Workflow chat thread ID for the run |
 | `step_started` | Node execution begins |
+| `token` | Incremental text delta from a streaming Agent/LLM node (`node_id`, `delta`) |
 | `step_completed` | Node finished with handle and duration |
 | `loop_iteration` | Loop node incremented (`iteration`, `max_steps`, `node_id`) |
 | `tool_call` | Agent node invoked a tool |
 | `tool_result` | Tool returned a result during agent step |
 | `rag_query` | RAG node completed retrieval (`query`, `knowledge_base_id`, `chunk_count`, `top_score`) |
 | `human_input_required` | Workflow paused at Human node |
+| `tool_approval_required` | Agent node paused before running a tool (`node_id`, `pending_tools`, `message`) |
+| `tool_approval_resolved` | Approval decision applied on resume (`approved: bool`) |
+| `branch_started` | A parallel branch began (`fork_id`, `branch_id`) |
+| `branch_completed` | A parallel branch finished (`fork_id`, `branch_id`, `duration_ms`) |
+| `parallel_interrupt` | A parallel branch paused for human input (`fork_id`, `branch_id`, `node_id`, `reason`) |
 | `trace_completed` | Run finished successfully |
 | `trace_failed` | Execution failure |
+
+## Token streaming
+
+Agent and LLM nodes can stream their response token-by-token during a step instead of blocking until the full reply is ready — the same real-time experience as the agent playground.
+
+Enable it per node with `data.stream: true`. When streaming is active, the runner emits a `token` event for each text delta between the node's `step_started` and `step_completed` boundaries:
+
+```
+event: step_started    (node_id: agent_1)
+event: token           (node_id: agent_1, delta: "Hello")
+event: token           (node_id: agent_1, delta: " world")
+event: step_completed  (node_id: agent_1, handle: default)
+```
+
+The `StudioChat` chat surface aggregates consecutive `token` deltas into the assistant bubble, so text appears incrementally. The final accumulated content is still written to the node's `output_key`, and tool events are emitted after the stream completes — downstream nodes and trace records behave exactly as in the blocking path.
+
+Streaming falls back to the blocking path (no `token` events) when:
+
+- the node uses **structured output** (`structured: true`) — validation requires the complete response, or
+- the Agent node has **tool approval** enabled — the run pauses on the interrupt instead.
+
+## Tool approval pause (`awaiting_tool_approval`)
+
+When an Agent node has [tool approval](human-in-the-loop.md#tool-approval) enabled and the model requests a tool, the runner pauses **before** the tool executes and persists a distinct `awaiting_tool_approval` status (separate from the Human node's `awaiting_input`).
+
+The checkpoint stores everything needed to resume from the same node without re-running earlier steps:
+
+```php
+[
+    'status' => 'awaiting_tool_approval',
+    'awaiting_node_id' => 'agent_1',
+    'checkpoint' => [
+        'state' => [/* state snapshot */],
+        'node_id' => 'agent_1',
+        'pending_tools' => [
+            ['name' => 'delete_file', 'arguments' => ['path' => '/tmp/report.txt'], 'call_id' => 'call_1'],
+        ],
+        'interrupt' => '/* serialized NeuronAI WorkflowInterrupt */',
+    ],
+]
+```
+
+### Resume payload
+
+Resume with an approval decision instead of a chat message:
+
+```
+POST /neuronai-studio/workflows/traces/{id}/resume/stream
+```
+
+```json
+{
+  "node_id": "agent_1",
+  "approval": "approve",
+  "message": "optional feedback (used on reject)"
+}
+```
+
+- `approval: "approve"` — the tool runs and the node continues on `default`.
+- `approval: "reject"` — the tool is skipped with the rejection feedback; if the Agent node has a `rejected` handle wired, execution routes there, otherwise it continues on `default`.
+- `message` is optional; when rejecting it is forwarded to the model as the user's instruction.
+
+Async resume (`POST /workflows/traces/{id}/resume`) accepts the same `approval` field and enqueues `ResumeWorkflowJob`.
+
+## Parallel execution
+
+[Fork and Join nodes](node-types/logic-nodes.md#fork) run several branch subgraphs and merge
+their results. The interpreted runtime executes each branch in an **isolated copy of the
+state** up to the paired Join node, then the Join node writes a `{ branchId: result }` map to
+its `output_key`.
+
+Each branch emits its own `step_started` / `step_completed` events (so branch nodes appear in
+the trace timeline) wrapped by `branch_started` / `branch_completed`:
+
+```
+event: step_started    (node_id: fork_1, node_type: fork)
+event: branch_started  (fork_id: fork_1, branch_id: branch_a)
+event: step_started    (node_id: llm_a)
+event: step_completed  (node_id: llm_a)
+event: branch_completed(fork_id: fork_1, branch_id: branch_a, duration_ms: 812)
+event: branch_started  (fork_id: fork_1, branch_id: branch_b)
+...
+event: step_completed  (node_id: fork_1)
+event: step_started    (node_id: join_1, node_type: join)
+```
+
+If a branch pauses (a Human node inside the branch), the runner persists a **parallel
+checkpoint** and emits `parallel_interrupt` followed by `human_input_required`. Resuming
+continues only the interrupted branch and re-runs any branches that had not started yet,
+reusing the results of branches that already completed. See
+[Parallel branches](human-in-the-loop.md#parallel-branches).
+
+## Node checkpoints
+
+Expensive nodes (Agent, LLM, RAG, Tool) can opt into **checkpointing** so that a resumed run
+does not re-execute a step whose result is already known. Set `data.checkpoint: true` on the
+node. On the first execution the resulting state change is stored in the
+`neuronai_studio_workflow_checkpoints` table keyed by
+`sha256(trace_id | node_id | iteration | input_hash)`; on resume the stored change is merged
+back and the underlying provider call is skipped.
+
+The `input_hash` is derived from the node's input state (excluding volatile internal keys), so
+changing the relevant upstream state **invalidates** the checkpoint and the node runs again.
+Loop bodies are scoped by iteration, so each pass keeps its own checkpoint.
+
+Checkpointing is controlled globally by `neuronai-studio.checkpoints.enabled` and expires via
+`neuronai-studio.checkpoints.ttl`. See [Configuration](../../reference/configuration.md#checkpoints)
+and [Database schema](../../reference/database-schema.md#workflow-checkpoints). Expired rows are
+removed by `php artisan neuronai-studio:checkpoints:purge`.
 
 ## Trace records
 
@@ -184,6 +299,8 @@ See [Attachments](../agents/attachments.md#workflow-test-harness) and [Playgroun
 ## Related code
 
 - `WorkflowRunner`, `GraphExecutionLoop`, `GraphInterpreterWorkflow`
+- `ForkNodeExecutor`, `JoinNodeExecutor`, `ParallelBranchRunner`
+- `CheckpointService`, `CheckpointingExecutor`, `WorkflowCheckpoint` model
 - `WorkflowTrace`, `WorkflowTraceStep` models
 - `WorkflowStreamController`, `WorkflowTraceController`
 - `WorkflowRunController`, `WorkflowTraceResumeJsonController`

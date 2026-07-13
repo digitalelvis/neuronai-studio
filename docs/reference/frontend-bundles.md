@@ -35,6 +35,10 @@ React components communicate with Livewire via `window.Livewire.find(componentId
 
 Livewire code editors sync via `window.Livewire.find(wireId).set(field, value)` on each change.
 
+### Token streaming
+
+`studio-chat` consumes SSE from both the agent playground and the workflow harness (via `WorkflowSessionAdapter`). `StudioChat` aggregates consecutive `token` events into the active assistant bubble, so text renders incrementally regardless of source. The workflow adapter forwards arbitrary SSE events unchanged, so no adapter-specific token handling is required — enabling the **Stream tokens** toggle on an Agent/LLM node is enough. See [Runtime & Traces → Token streaming](../guides/workflows/runtime-and-traces.md#token-streaming).
+
 ## Code editor API
 
 The `studio-code` bundle exposes `window.NeuronStudioCode`:

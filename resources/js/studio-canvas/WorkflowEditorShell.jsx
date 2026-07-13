@@ -185,6 +185,9 @@ export default function WorkflowEditorShell({ config }) {
                                 tracesIndexUrl: config.tracesIndexUrl,
                                 traceShowUrlTemplate: config.traceShowUrlTemplate,
                                 traceShowJsonUrlTemplate: config.traceShowJsonUrlTemplate,
+                                enabledProtocols: config.enabledProtocols,
+                                integrateStreamUrls: config.integrateStreamUrls,
+                                integrateResumeUrls: config.integrateResumeUrls,
                             }}
                             onBeforeRun={window.saveGraphBeforeRun}
                         />

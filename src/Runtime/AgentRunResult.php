@@ -12,5 +12,6 @@ class AgentRunResult
         public readonly string $content = '',
         public readonly array $toolEvents = [],
         public readonly ?array $structured = null,
+        public readonly ?string $runId = null,
     ) {}
 }

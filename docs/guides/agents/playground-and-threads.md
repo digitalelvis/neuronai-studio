@@ -96,6 +96,10 @@ Configure the same context window via `NEURONAI_STUDIO_CHAT_HISTORY_CONTEXT_WIND
 
 Workflows use a similar chat UI (`StudioTestHarness`) but route through `WorkflowRunner` instead of `AgentRunner`. See [Runtime & Traces](../workflows/runtime-and-traces.md).
 
+### Streaming parity
+
+Agent and LLM nodes reach the same token-by-token experience as the playground. Enable **Stream tokens** on the node (default on for new Agent/LLM nodes in the harness) and the runner emits `token` SSE events between the node's step boundaries — `StudioChat` aggregates them into the assistant bubble exactly as in the playground. Structured output and tool-approval nodes fall back to the blocking path. See [Runtime & Traces → Token streaming](../workflows/runtime-and-traces.md#token-streaming).
+
 ## Next steps
 
 - [Attachments](attachments.md) — send images, PDFs, and more

@@ -92,6 +92,179 @@ export default forwardRef(function StudioChat({
         return message.id;
     }, []);
 
+    const consumeAssistantStream = useCallback(
+        async (iterator, assistantId, userText, initialText = '') => {
+            let assistantText = initialText;
+            let traceFinished = false;
+            const toolMessages = [];
+
+            for await (const packet of iterator) {
+                if (packet.event === 'thread' && packet.data?.thread_id) {
+                    setThreadId(packet.data.thread_id);
+                }
+
+                if (packet.event === 'trace_started' && mode === 'workflow') {
+                    updateMessage(assistantId, {
+                        content: '',
+                        streaming: true,
+                        meta: { userMessage: userText, stepEvents: [], status: 'running' },
+                    });
+                }
+
+                if (packet.event === 'step_started' && mode === 'workflow') {
+                    updateMessage(assistantId, (current) => ({
+                        streaming: true,
+                        meta: {
+                            ...current.meta,
+                            userMessage: userText,
+                            currentNodeId: packet.data?.node_id ?? null,
+                        },
+                    }));
+                }
+
+                if (packet.event === 'step_completed' && mode === 'workflow') {
+                    updateMessage(assistantId, (current) => {
+                        const stepEvents = [...(current.meta?.stepEvents ?? [])];
+                        stepEvents.push({
+                            nodeId: packet.data?.node_id ?? 'unknown',
+                            nodeType: packet.data?.node_type ?? 'unknown',
+                            handle: packet.data?.handle,
+                            durationMs: packet.data?.duration_ms ?? null,
+                        });
+
+                        return {
+                            streaming: true,
+                            meta: {
+                                ...current.meta,
+                                userMessage: userText,
+                                stepEvents,
+                                currentNodeId: null,
+                            },
+                        };
+                    });
+                }
+
+                if (packet.event === 'token') {
+                    assistantText += packet.data?.delta ?? '';
+                    updateMessage(assistantId, { content: assistantText, streaming: true });
+                }
+
+                if (packet.event === 'message') {
+                    assistantText = packet.data?.content ?? assistantText;
+                    updateMessage(assistantId, { content: assistantText, streaming: true });
+                }
+
+                if (packet.event === 'tool_call' || packet.event === 'tool_result') {
+                    toolMessages.push({
+                        name: packet.data?.name ?? 'tool',
+                        type: packet.event === 'tool_call' ? 'call' : 'result',
+                        inputs: packet.data?.inputs ?? {},
+                        result: packet.data?.result ?? null,
+                    });
+                }
+
+                if (packet.event === 'human_input_required') {
+                    traceFinished = true;
+                    updateMessage(assistantId, { streaming: false, content: assistantText || 'Waiting for your input…' });
+                    appendMessage({
+                        id: createId('system'),
+                        role: 'system',
+                        content: packet.data?.prompt ?? 'Please provide input to continue.',
+                        meta: { status: 'awaiting_input', nodeId: packet.data?.node_id, traceId: packet.data?.trace_id },
+                    });
+                    return { traceFinished, assistantText };
+                }
+
+                if (packet.event === 'tool_approval_required') {
+                    traceFinished = true;
+                    updateMessage(assistantId, {
+                        streaming: false,
+                        content: assistantText || 'Waiting for tool approval…',
+                    });
+                    appendMessage({
+                        id: createId('tool-approval'),
+                        role: 'system',
+                        content: packet.data?.message ?? 'A tool requires your approval before running.',
+                        meta: {
+                            status: 'awaiting_tool_approval',
+                            nodeId: packet.data?.node_id,
+                            traceId: packet.data?.trace_id,
+                            pendingTools: packet.data?.pending_tools ?? [],
+                        },
+                    });
+                    return { traceFinished, assistantText };
+                }
+
+                if (packet.event === 'tool_approval_resolved') {
+                    window.dispatchEvent(new CustomEvent('canvas-trace-start'));
+                }
+
+                if (packet.event === 'trace_completed') {
+                    traceFinished = true;
+                    const output = packet.data?.output;
+                    updateMessage(assistantId, {
+                        content: formatWorkflowData(output),
+                        streaming: false,
+                        meta: {
+                            traceId: packet.data?.trace_id,
+                            status: 'completed',
+                            workflowOutput: output,
+                            userMessage: userText,
+                            stepEvents: undefined,
+                            currentNodeId: null,
+                            toolEvents: toolMessages.length ? toolMessages : undefined,
+                        },
+                    });
+                    onRunCompleted?.(packet.data);
+                    window.dispatchEvent(new CustomEvent('workflow-trace-finished'));
+                }
+
+                if (packet.event === 'done') {
+                    traceFinished = true;
+                    updateMessage(assistantId, {
+                        content: assistantText || 'Done.',
+                        streaming: false,
+                        meta: { toolEvents: toolMessages.length ? toolMessages : undefined },
+                    });
+                }
+
+                if (packet.event === 'trace_failed' || packet.event === 'error') {
+                    traceFinished = true;
+                    const failMessage = packet.data?.message ?? 'Trace failed.';
+                    const traceId = packet.data?.trace_id ?? null;
+                    setError(failMessage);
+                    updateMessage(assistantId, (current) => ({
+                        content: failMessage,
+                        streaming: false,
+                        meta: {
+                            ...current.meta,
+                            status: 'failed',
+                            traceId,
+                            toolEvents: toolMessages.length ? toolMessages : current.meta?.toolEvents,
+                        },
+                    }));
+                    if (traceId) {
+                        window.dispatchEvent(
+                            new CustomEvent('workflow-view-trace', { detail: { traceId } }),
+                        );
+                    }
+                    window.dispatchEvent(new CustomEvent('workflow-trace-finished'));
+                }
+            }
+
+            if (assistantText && !traceFinished) {
+                updateMessage(assistantId, {
+                    content: assistantText,
+                    streaming: false,
+                    meta: { toolEvents: toolMessages.length ? toolMessages : undefined },
+                });
+            }
+
+            return { traceFinished, assistantText };
+        },
+        [appendMessage, mode, onRunCompleted, updateMessage],
+    );
+
     useEffect(() => {
         if (!supportsThreads) {
             return;
@@ -192,9 +365,6 @@ export default forwardRef(function StudioChat({
                 window.dispatchEvent(new CustomEvent('canvas-trace-start'));
             }
 
-            let assistantText = '';
-            const toolMessages = [];
-
             const sendContext = supportsThreads
                 ? {
                       state: effectiveContext,
@@ -208,153 +378,16 @@ export default forwardRef(function StudioChat({
                       parameters: mode === 'agent' ? parameters : undefined,
                   };
 
-            for await (const packet of adapter.send(
+            const result = await consumeAssistantStream(
+                adapter.send(text, uploaded.length > 0 ? payloadAttachments : attachments, sendContext),
+                assistantId,
                 text,
-                uploaded.length > 0 ? payloadAttachments : attachments,
-                sendContext,
-            )) {
-                if (packet.event === 'thread' && packet.data?.thread_id) {
-                    setThreadId(packet.data.thread_id);
-                }
-
-                if (packet.event === 'trace_started' && mode === 'workflow') {
-                    updateMessage(assistantId, {
-                        content: '',
-                        streaming: true,
-                        meta: { userMessage: text, stepEvents: [], status: 'running' },
-                    });
-                }
-
-                if (packet.event === 'step_started' && mode === 'workflow') {
-                    updateMessage(assistantId, (current) => ({
-                        streaming: true,
-                        meta: {
-                            ...current.meta,
-                            userMessage: text,
-                            currentNodeId: packet.data?.node_id ?? null,
-                        },
-                    }));
-                }
-
-                if (packet.event === 'step_completed' && mode === 'workflow') {
-                    updateMessage(assistantId, (current) => {
-                        const stepEvents = [...(current.meta?.stepEvents ?? [])];
-                        stepEvents.push({
-                            nodeId: packet.data?.node_id ?? 'unknown',
-                            nodeType: packet.data?.node_type ?? 'unknown',
-                            handle: packet.data?.handle,
-                            durationMs: packet.data?.duration_ms ?? null,
-                        });
-
-                        return {
-                            streaming: true,
-                            meta: {
-                                ...current.meta,
-                                userMessage: text,
-                                stepEvents,
-                                currentNodeId: null,
-                            },
-                        };
-                    });
-                }
-
-                if (packet.event === 'token') {
-                    assistantText += packet.data?.delta ?? '';
-                    updateMessage(assistantId, { content: assistantText, streaming: true });
-                }
-
-                if (packet.event === 'message') {
-                    assistantText = packet.data?.content ?? assistantText;
-                    updateMessage(assistantId, { content: assistantText, streaming: true });
-                }
-
-                if (packet.event === 'tool_call' || packet.event === 'tool_result') {
-                    toolMessages.push({
-                        name: packet.data?.name ?? 'tool',
-                        type: packet.event === 'tool_call' ? 'call' : 'result',
-                        inputs: packet.data?.inputs ?? {},
-                        result: packet.data?.result ?? null,
-                    });
-                }
-
-                if (packet.event === 'human_input_required') {
-                    traceFinished = true;
-                    updateMessage(assistantId, { streaming: false, content: assistantText || 'Waiting for your input…' });
-                    appendMessage({
-                        id: createId('system'),
-                        role: 'system',
-                        content: packet.data?.prompt ?? 'Please provide input to continue.',
-                        meta: { status: 'awaiting_input', nodeId: packet.data?.node_id, traceId: packet.data?.trace_id },
-                    });
-                    setSending(false);
-                    return;
-                }
-
-                if (packet.event === 'trace_completed') {
-                    traceFinished = true;
-                    const output = packet.data?.output;
-                    updateMessage(assistantId, {
-                        content: formatWorkflowData(output),
-                        streaming: false,
-                        meta: {
-                            traceId: packet.data?.trace_id,
-                            status: 'completed',
-                            workflowOutput: output,
-                            userMessage: text,
-                            stepEvents: undefined,
-                            currentNodeId: null,
-                            toolEvents: toolMessages.length ? toolMessages : undefined,
-                        },
-                    });
-                    onRunCompleted?.(packet.data);
-                    window.dispatchEvent(new CustomEvent('workflow-trace-finished'));
-                }
-
-                if (packet.event === 'done') {
-                    traceFinished = true;
-                    updateMessage(assistantId, {
-                        content: assistantText || 'Done.',
-                        streaming: false,
-                        meta: { toolEvents: toolMessages.length ? toolMessages : undefined },
-                    });
-                }
-
-                if (packet.event === 'trace_failed' || packet.event === 'error') {
-                    traceFinished = true;
-                    const message = packet.data?.message ?? 'Trace failed.';
-                    const traceId = packet.data?.trace_id ?? null;
-                    setError(message);
-                    updateMessage(assistantId, (current) => ({
-                        content: message,
-                        streaming: false,
-                        meta: {
-                            ...current.meta,
-                            status: 'failed',
-                            traceId,
-                            toolEvents: toolMessages.length ? toolMessages : current.meta?.toolEvents,
-                        },
-                    }));
-                    if (traceId) {
-                        window.dispatchEvent(
-                            new CustomEvent('workflow-view-trace', { detail: { traceId } }),
-                        );
-                    }
-                    window.dispatchEvent(new CustomEvent('workflow-trace-finished'));
-                }
-            }
-
-            if (assistantText) {
-                updateMessage(assistantId, {
-                    content: assistantText,
-                    streaming: false,
-                    meta: { toolEvents: toolMessages.length ? toolMessages : undefined },
-                });
-            }
+            );
+            traceFinished = result.traceFinished;
         } catch (sendError) {
             traceFinished = true;
             const message = sendError instanceof Error ? sendError.message : 'Request failed.';
             setError(message);
-            setSuccessMessage('');
             if (assistantId) {
                 updateMessage(assistantId, { content: message, streaming: false, meta: { status: 'failed' } });
             }
@@ -362,6 +395,62 @@ export default forwardRef(function StudioChat({
             setSending(false);
 
             if (!traceFinished && assistantId) {
+                setMessages((current) =>
+                    current.map((message) =>
+                        message.id === assistantId && message.streaming && !message.content && !message.meta?.stepEvents?.length
+                            ? {
+                                  ...message,
+                                  content: 'No response received.',
+                                  streaming: false,
+                                  meta: { ...message.meta, status: 'failed' },
+                              }
+                            : message,
+                    ),
+                );
+            }
+        }
+    };
+
+    const handleToolApproval = async (cardId, decision, feedback = '') => {
+        if (!adapter || sending || typeof adapter.resumeApproval !== 'function') {
+            return;
+        }
+
+        setError('');
+        setSending(true);
+        updateMessage(cardId, (current) => ({ meta: { ...current.meta, resolution: decision } }));
+
+        const assistantId = createId('assistant');
+        appendMessage({
+            id: assistantId,
+            role: 'assistant',
+            content: '',
+            streaming: true,
+            meta: mode === 'workflow' ? { userMessage: '', stepEvents: [], status: 'running' } : undefined,
+        });
+
+        if (mode === 'workflow') {
+            window.dispatchEvent(new CustomEvent('canvas-trace-start'));
+        }
+
+        let traceFinished = false;
+
+        try {
+            const result = await consumeAssistantStream(
+                adapter.resumeApproval(decision, feedback),
+                assistantId,
+                '',
+            );
+            traceFinished = result.traceFinished;
+        } catch (resumeError) {
+            traceFinished = true;
+            const message = resumeError instanceof Error ? resumeError.message : 'Request failed.';
+            setError(message);
+            updateMessage(assistantId, { content: message, streaming: false, meta: { status: 'failed' } });
+        } finally {
+            setSending(false);
+
+            if (!traceFinished) {
                 setMessages((current) =>
                     current.map((message) =>
                         message.id === assistantId && message.streaming && !message.content && !message.meta?.stepEvents?.length
@@ -436,7 +525,13 @@ export default forwardRef(function StudioChat({
             </div>
 
             <ScrollArea className="flex-1 px-4">
-                <MessageList messages={messages} mode={mode} viewMode={viewMode} />
+                <MessageList
+                    messages={messages}
+                    mode={mode}
+                    viewMode={viewMode}
+                    onToolApproval={handleToolApproval}
+                    approvalDisabled={sending}
+                />
             </ScrollArea>
 
             {!hideComposer && (

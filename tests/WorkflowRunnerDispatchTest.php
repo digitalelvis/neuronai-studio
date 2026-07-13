@@ -4,7 +4,7 @@ namespace DigitalElvis\NeuronAIStudio\Tests;
 
 use DigitalElvis\NeuronAIStudio\Jobs\RunWorkflowJob;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
-use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
 use Illuminate\Support\Facades\Queue;
 use RuntimeException;
@@ -19,19 +19,19 @@ class WorkflowRunnerDispatchTest extends TestCase
 
         $workflow = $this->setStateWorkflow();
 
-        $trace = app(WorkflowRunner::class)->dispatch($workflow, ['input' => 'test']);
+        $run = app(WorkflowRunner::class)->dispatch($workflow, ['input' => 'test']);
 
-        $this->assertSame('queued', $trace->status);
-        $this->assertNull($trace->started_at);
-        $this->assertSame(['input' => 'test'], $trace->input);
+        $this->assertSame('queued', $run->status);
+        $this->assertNull($run->started_at);
+        $this->assertSame(['input' => 'test'], $run->input);
 
-        Queue::assertPushed(RunWorkflowJob::class, function (RunWorkflowJob $job) use ($trace, $workflow) {
-            return $job->traceId === $trace->id
+        Queue::assertPushed(RunWorkflowJob::class, function (RunWorkflowJob $job) use ($run, $workflow) {
+            return $job->runId === $run->id
                 && $job->workflowId === $workflow->id
                 && $job->input === ['input' => 'test'];
         });
 
-        $this->assertSame(1, WorkflowTrace::count());
+        $this->assertSame(1, StudioRun::count());
     }
 
     public function test_dispatch_throws_when_async_disabled(): void

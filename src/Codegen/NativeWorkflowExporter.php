@@ -77,7 +77,7 @@ class NativeWorkflowExporter
         $previewSections = [];
 
         foreach ($plan['events'] as $event) {
-            $content = $this->renderEvent($eventsNamespace, $event['className']);
+            $content = $this->renderEvent($eventsNamespace, $event['className'], $event['kind'] ?? null);
             $path = $this->eventPath($className, $event['className']);
             $eventFiles[] = ['path' => $path, 'content' => $content];
             $previewSections[] = "// Events/{$event['className']}.php\n".$content;
@@ -249,8 +249,16 @@ class NativeWorkflowExporter
         $inputEvent = $this->shortTypeName($inputEventFqcn);
         $returnType = $this->shortTypeName($returnTypeFqcn);
 
+        $branchImports = [];
+        if (is_array($nodePlan['parallel'] ?? null)) {
+            foreach ($nodePlan['parallel']['branches'] as $branch) {
+                $branchImports[] = "{$eventsNamespace}\\{$branch['eventClass']}";
+            }
+        }
+
         $extraImports = collect($generated['imports'])
             ->merge($this->returnTypeImports($nodePlan['returnType'], $eventsNamespace))
+            ->merge($branchImports)
             ->merge([
                 $inputEventFqcn !== 'StartEvent' ? $inputEventFqcn : null,
             ])
@@ -276,12 +284,14 @@ class NativeWorkflowExporter
         );
     }
 
-    protected function renderEvent(string $namespace, string $className): string
+    protected function renderEvent(string $namespace, string $className, ?string $kind = null): string
     {
+        $stub = $kind === 'parallel' ? 'native-parallel-event.stub' : 'native-event.stub';
+
         return str_replace(
             ['{{ namespace }}', '{{ className }}'],
             [$namespace, $className],
-            file_get_contents(__DIR__.'/Stubs/native-event.stub')
+            file_get_contents(__DIR__.'/Stubs/'.$stub)
         );
     }
 

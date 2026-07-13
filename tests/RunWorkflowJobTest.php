@@ -4,9 +4,11 @@ namespace DigitalElvis\NeuronAIStudio\Tests;
 
 use DigitalElvis\NeuronAIStudio\Jobs\RunWorkflowJob;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
-use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
+use DigitalElvis\NeuronAIStudio\Models\StudioThread;
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
 use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Str;
 use RuntimeException;
 
 class RunWorkflowJobTest extends TestCase
@@ -15,41 +17,55 @@ class RunWorkflowJobTest extends TestCase
     {
         $workflow = $this->setStateWorkflow();
 
-        $trace = WorkflowTrace::create([
-            'workflow_definition_id' => $workflow->id,
+        $thread = StudioThread::create([
+            'id' => (string) Str::uuid(),
+            'entity_type' => WorkflowDefinition::class,
+            'entity_id' => $workflow->id,
+        ]);
+
+        $run = StudioRun::create([
+            'id' => (string) Str::uuid(),
+            'thread_id' => $thread->id,
             'status' => 'queued',
             'input' => ['input' => 'test'],
             'started_at' => null,
         ]);
 
-        $job = new RunWorkflowJob($trace->id, $workflow->id, ['input' => 'test']);
+        $job = new RunWorkflowJob($run->id, $workflow->id, ['input' => 'test']);
         $job->handle(app(WorkflowRunner::class));
 
-        $trace->refresh();
-        $this->assertSame('completed', $trace->status);
-        $this->assertSame('Hello', $trace->output['greeting'] ?? null);
-        $this->assertNotNull($trace->started_at);
-        $this->assertNotNull($trace->finished_at);
+        $run->refresh();
+        $this->assertSame('completed', $run->status);
+        $this->assertSame('Hello', $run->output['greeting'] ?? null);
+        $this->assertNotNull($run->started_at);
+        $this->assertNotNull($run->finished_at);
     }
 
     public function test_failed_marks_trace_as_failed(): void
     {
         $workflow = $this->setStateWorkflow();
 
-        $trace = WorkflowTrace::create([
-            'workflow_definition_id' => $workflow->id,
+        $thread = StudioThread::create([
+            'id' => (string) Str::uuid(),
+            'entity_type' => WorkflowDefinition::class,
+            'entity_id' => $workflow->id,
+        ]);
+
+        $run = StudioRun::create([
+            'id' => (string) Str::uuid(),
+            'thread_id' => $thread->id,
             'status' => 'running',
             'input' => ['input' => 'test'],
             'started_at' => now(),
         ]);
 
-        $job = new RunWorkflowJob($trace->id, $workflow->id, ['input' => 'test']);
+        $job = new RunWorkflowJob($run->id, $workflow->id, ['input' => 'test']);
         $job->failed(new RuntimeException('Queue worker exploded'));
 
-        $trace->refresh();
-        $this->assertSame('failed', $trace->status);
-        $this->assertSame('Queue worker exploded', $trace->error_message);
-        $this->assertNotNull($trace->finished_at);
+        $run->refresh();
+        $this->assertSame('failed', $run->status);
+        $this->assertSame('Queue worker exploded', $run->error_message);
+        $this->assertNotNull($run->finished_at);
     }
 
     public function test_job_uses_configured_queue_and_retries(): void
@@ -61,7 +77,7 @@ class RunWorkflowJobTest extends TestCase
             'neuronai-studio.queue_backoff' => 45,
         ]);
 
-        $job = new RunWorkflowJob(1, 1, []);
+        $job = new RunWorkflowJob((string) Str::uuid(), 1, []);
 
         $this->assertSame('workflows', $job->queue);
         $this->assertSame('redis', $job->connection);

@@ -20,6 +20,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Stream Adapters (External Integration)
+    |--------------------------------------------------------------------------
+    |
+    | Exposes agents and workflows to external clients (Vercel AI SDK, AG-UI,
+    | ...) via dedicated streaming endpoints. These routes are completely
+    | separate from the internal Studio playground/harness and only registered
+    | when `enabled` is true. The host app controls prefix and middleware
+    | (e.g. ['api', 'auth:sanctum']) independently of the Studio UI middleware.
+    |
+    */
+
+    'stream_adapters' => [
+        'enabled' => env('NEURONAI_STUDIO_INTEGRATE_ENABLED', true),
+        'route_prefix' => env('NEURONAI_STUDIO_INTEGRATE_PREFIX', 'api/neuronai'),
+        'middleware' => ['api'],
+        'protocols' => [
+            'vercel' => ['enabled' => true],
+            'agui' => ['enabled' => true],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Export Configuration
     |--------------------------------------------------------------------------
     */
@@ -96,6 +119,26 @@ return [
     'queue_tries' => (int) env('NEURONAI_STUDIO_QUEUE_TRIES', 1),
 
     'queue_backoff' => (int) env('NEURONAI_STUDIO_QUEUE_BACKOFF', 30),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Checkpoints & Persistence
+    |--------------------------------------------------------------------------
+    |
+    | Node-level checkpoints let opt-in nodes (rag, llm, agent, tool with
+    | `checkpoint: true`) skip re-execution when a workflow resumes. Results are
+    | keyed by trace + node + loop iteration and persisted to the
+    | `neuronai_studio_workflow_checkpoints` table. `ttl` (minutes, null = keep
+    | forever) drives the `neuronai-studio:checkpoints:purge` command.
+    |
+    */
+
+    'checkpoints' => [
+        'enabled' => (bool) env('NEURONAI_STUDIO_CHECKPOINTS_ENABLED', true),
+        'ttl' => env('NEURONAI_STUDIO_CHECKPOINTS_TTL') !== null
+            ? (int) env('NEURONAI_STUDIO_CHECKPOINTS_TTL')
+            : null,
+    ],
 
     /*
     |--------------------------------------------------------------------------
@@ -282,6 +325,16 @@ return [
         'loop' => [
             'label' => 'Loop',
             'icon' => 'repeat',
+            'category' => 'logic',
+        ],
+        'fork' => [
+            'label' => 'Fork',
+            'icon' => 'git-fork',
+            'category' => 'logic',
+        ],
+        'join' => [
+            'label' => 'Join',
+            'icon' => 'git-merge',
             'category' => 'logic',
         ],
     ],

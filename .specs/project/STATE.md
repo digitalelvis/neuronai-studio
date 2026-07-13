@@ -1,13 +1,47 @@
 # State
 
-**Last Updated:** 2026-07-02
-**Development line:** `v0.2.x` (target release `v0.2.0`)
-**Latest published:** `v0.1.2` on `main`
-**Current Work:** Sprint M1 fechada — preparar release `v0.2.0` (PR `v0.2.x` → `main`)
+**Last Updated:** 2026-07-07
+**Development line:** `v0.2.x` (target release `v0.2.1+`)
+**Latest published:** `v0.2.0` on `main`
+**Current Work:** M4 (`stream-adapters`) e Refatoração Unified Runs e Traces concluídos. Todos os marcos de integração, unificação e token tracking estão 100% entregues e testados (279 testes do PHPUnit passando, suíte verde).
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-009: Unified Threads, Runs, and Traces (2026-07-07)
+
+**Decision:** Refatorar a execução de Workflows e Agents para unificar sob a nomenclatura/conceito de StudioRuns e StudioThreads.
+**Reason:** Unificação semântica (runs vs traces), suporte a pausas distribuídas para Agents (HITL/Tool Approval) e rastreamento de tokens por TraceSpans.
+**Impact:** `StudioThread`, `StudioRun`, `StudioTrace`, `StudioTraceSpan` substituem os legados `WorkflowTrace`, `WorkflowTraceStep`, `WorkflowCheckpoint`.
+
+### AD-008: M4 stream-adapters — separação interno/externo + ponte interpretado→adapter (2026-07-03)
+
+**Decision:** Kickoff do M4 (`stream-adapters`). Endpoints externos (Vercel AI SDK, AG-UI) ficam em grupo/arquivo de rotas **separado** (`routes/integration.php`, prefix `api/neuronai`, middleware próprio configurável) registrado condicionalmente por `stream_adapters.enabled`. Zero alteração no playground/harness interno (controllers, `fetchSse.js`, SessionAdapters, `StudioChat`). Para workflow, como o runtime do Studio é **interpretado** (SSE próprio, não chunks Neuron), a ponte converte eventos (`token`/`tool_call`/`tool_result`) em chunks (`TextChunk`/`ToolCallChunk`/`ToolResultChunk`) e alimenta `$adapter->transform()` (Opção A recomendada; AD final na Fase 1 / SA-T6).
+**Reason:** `WorkflowHandler::events($adapter)` só existe no runtime nativo; o Studio roda interpretado. Reusar os adapters oficiais (formato garantido) sem tocar no caminho interno mantém regressão zero e paridade com o protocolo.
+**Trade-off:** Ponte adiciona uma camada de conversão de eventos; interrupt (Human node) precisa de mapeamento explícito para evento terminal do protocolo + `trace_id` p/ `resume/{protocol}`.
+**Impact:** `StreamAdapterRegistry`, config `stream_adapters`, `routes/integration.php`, `AgentRunner::streamHandler`, `AgentIntegrateStreamController`, `WorkflowStreamBridge`, `WorkflowIntegrateStreamController`, `WorkflowIntegrateResumeController`, catálogo `/stream-adapters`, Connect Panel. Ver [tasks](../features/stream-adapters/tasks.md).
+
+### AD-007: Runtime interpretado para execução paralela (2026-07-03)
+
+**Decision:** Fork/Join usam runtime **interpretado** — `ForkNodeExecutor` roda cada branch sequencialmente em um `BuilderWorkflowState` isolado (clone) até o join, e `JoinNodeExecutor` mescla os resultados por branch id. O codegen nativo emite uma subclasse `ParallelEvent` válida para export, mas a orquestração concorrente via `AsyncExecutor` do Neuron não é exercida em runtime pelo Studio.
+**Reason:** Isolamento de estado por branch + resume parcial (reusar o mecanismo de checkpoint/HITL) são mais simples e determinísticos sob o loop interpretado; evita dependência do Amp/AsyncExecutor no caminho do harness.
+**Trade-off:** Sem paralelismo real de I/O no runtime interpretado (branches independentes mas sequenciais); aprovação de tool dentro de branch não é dividida por branch (só Human interrupt).
+**Impact:** `ParallelBranchRunner`, `ForkNodeExecutor`/`JoinNodeExecutor`, `ParallelBranchInterruptException`, checkpoint `kind: parallel` no `WorkflowRunner`, `GraphValidator::validateParallel`, SSE `branch_started`/`branch_completed`/`parallel_interrupt`.
+
+### AD-006: Checkpoints como decorator opt-in + EloquentPersistence (2026-07-03)
+
+**Decision:** Generalizar checkpoints com um `CheckpointService` + tabela `neuronai_studio_workflow_checkpoints`. Nós caros (agent/llm/rag/tool) optam via `data.checkpoint: true` e são embrulhados por um decorator `CheckpointingExecutor`. Workflows nativos usam `EloquentPersistence` (implementa `SerializablePersistenceInterface`) para persistir `WorkflowInterrupt`.
+**Reason:** Evita re-executar chamadas de provider caras no resume sem acoplar a lógica de cache a cada executor; mantém o checkpoint per-trace do Human/ToolApproval intacto.
+**Trade-off:** Chave `sha256(trace_id|node_id|iteration|input_hash)` guarda apenas o diff de estado do nó (mesclado no hit); mudanças em chaves voláteis internas são ignoradas no hash para não invalidar indevidamente.
+**Impact:** `CheckpointService`, `CheckpointingExecutor`, `WorkflowCheckpoint` model, migration nullable FK + `workflow_key`, config `checkpoints.enabled/ttl`, comando `checkpoints:purge`, `EloquentPersistence`.
+
+### AD-005: Tool approval via NeuronAI `ToolApproval` middleware (2026-07-03)
+
+**Decision:** Reusar o middleware `NeuronAI\Agent\Middleware\ToolApproval` no `DynamicAgent`; converter o `WorkflowInterrupt`/`ApprovalRequest` do agente em `ToolApprovalRequiredException` na camada `AgentRunner`, seguindo o padrão de pausa do Human node.
+**Reason:** Evita reimplementar detecção de tool call; mantém pausa/checkpoint consistentes com `pauseForHumanInput` e status `awaiting_input`.
+**Trade-off:** Slices 1–2 aprovam **todas** as tools (config vazio). Slice 2 persiste o `WorkflowInterrupt` serializado no checkpoint e restaura para resume real; UI/codegen ficam para slice 3.
+**Impact:** `require_tool_approval` no `AgentDefinition` + override no nó agent; novo status `awaiting_tool_approval` no trace (coluna string, sem migration); SSE `tool_approval_required` + `tool_approval_resolved`; resume `approve|reject` via `POST .../resume/stream` (sync) e `.../resume` (async job); handle `rejected` opcional no nó agent. Nota: tools com callback `Closure` quebram a serialização do interrupt — Studio usa tools baseadas em classe.
 
 ### AD-004: Linha de desenvolvimento v0.2.x (2026-06-30)
 
@@ -18,7 +52,7 @@
 
 ### AD-003: Roadmap north star — cíclicos + multimodal autônomo (2026-06-30)
 
-**Decision:** Priorizar M1 com três features P0 (`workflow-cyclic-graphs`, `autonomous-multimodal-agents`, `workflow-rag`) antes de P1/P2.
+**Decision:** Priorizar M1 with three features P0 (`workflow-cyclic-graphs`, `autonomous-multimodal-agents`, `workflow-rag`) antes de P1/P2.
 **Reason:** Estado atual é DAG-only, `RagNodeExecutor` stub, `GraphExecutionLoop` sem guardrail — bloqueia agentes autônomos com mídia em loops.
 **Trade-off:** Nove features planejadas aumentam superfície; M1 é mínimo viável para north star.
 **Impact:** Ver [.specs/project/ROADMAP.md](ROADMAP.md).
@@ -53,65 +87,34 @@
 | `autonomous-multimodal-agents` | ✅ done | AMA-09 docs entregue |
 | `workflow-rag` | ✅ done | Fatia 1–3 (backend, UI, codegen, docs) |
 
-### workflow-rag — Fatia 1 (backend) entregue
-
-- [x] Migrations `knowledge_bases` + `knowledge_documents`
-- [x] Models `KnowledgeBase` (defaults provider/model/driver) + `KnowledgeDocument` (status ingest)
-- [x] Config `rag`: drivers vector store, providers/modelos embeddings, retrieval + chunk defaults
-- [x] `EmbeddingsFactory` + `VectorStoreFactory` extensíveis (`extend()`), default `file`/`openai`
-- [x] `DocumentIngestService` (load → split → embed → persist + status) e `RagRetrievalService` (top_k, threshold, `toContext`)
-- [x] `RagNodeExecutor` real → `rag_context` {query, results, context, top_score}
-- [x] `StateTemplateInterpolator` com dot notation (`{{rag_context.context}}`)
-- [x] 15 testes novos (ingest, retrieval, executor, interpolator) — suíte 203 verde
-- [x] Fatia 2: CRUD Studio (`KnowledgeBases\Index`/`Edit`) + ingest UI (upload + texto) + `RagFields` inspector no canvas + debug search (`KnowledgeBaseSearchController`) + exposição KBs ao canvas + nav link
-- [x] Fatia 2: 10 testes novos (CRUD/ingest/preview, search controller, exposição canvas) — suíte 213 verde
-- [x] `rag-knowledge-base-tool` — aba RAG em tools/create, `KnowledgeBaseTool`, `ToolResolver` branch `type: rag`
-- [x] Fatia 3: `RagNodeCodeGenerator` + docs
+---
 
 ## M2 progress snapshot
 
 | Feature | Status | Notas |
 |---------|--------|-------|
 | `workflow-structured-output` | ✅ done | T1–T17 ✅; T12 parcial — hint dot notation só no condition (loop sem inspector) |
-| `workflow-tool-approval` | ⏳ planned | — |
-| `workflow-token-streaming` | ⏳ planned | — |
+| `workflow-tool-approval` | ✅ done | Slices 1–3 ✅ (backend, resume/API, UI+codegen+docs) |
+| `workflow-token-streaming` | ✅ done | Slice 1 (backend token SSE) ✅; slice 2 (toggle canvas + docs polish) ✅ |
 
-### Structured output — entregue
-
-- [x] `structured_output_scan_paths`, `OutputClassRegistry`, `StructuredOutputResolver`
-- [x] `WorkflowStateValue` + dot notation em condition/loop
-- [x] `AgentRunner::structuredInline` + branch structured em `LlmNodeExecutor` / `AgentNodeExecutor`
-- [x] `StructuredOutputValidationException` + `validation_errors` no SSE/trace
-- [x] Canvas inspector (T10–T13), round-trip T16, codegen T14–T15, docs T17
-- [ ] T12 parcial — hint `lead.tier` no condition; loop aguarda inspector M1
+---
 
 ## M3 progress snapshot
 
 | Feature | Status | Notas |
 |---------|--------|-------|
 | `workflow-queue-runner` | ✅ done | T1–T11 ✅ — `RunWorkflowJob`, `ResumeWorkflowJob`, async run/resume API, polling, docs |
+| `workflow-checkpoints-persistence` | ✅ done | CP-01..08 ✅ — service + decorator + EloquentPersistence + purge |
+| `workflow-parallel-execution` | ✅ done | PE-01..09 ✅ — fork/join runtime, branch resume, codegen, canvas (PE-08 preview parcial) |
 
-### Queue runner — entregue
+---
 
-- [x] `async_runs_enabled`, `queue_tries`, `queue_backoff` config
-- [x] `WorkflowRunner::runExistingTrace`, `dispatch`, `dispatchResume`
-- [x] `RunWorkflowJob`, `ResumeWorkflowJob` com `failed()` handler
-- [x] `POST /workflows/{id}/run` → 202 queued; `POST /traces/{id}/resume` → 202 queued
-- [x] Polling via `GET /traces/{id}/json` (`queued`, `running`, `awaiting_node_id`)
-- [x] E2E tests + docs (runtime-and-traces, export-and-production, configuration, installation)
-- [ ] SSE/broadcast em tempo real para jobs (deferred — polling v1)
+## M4 progress snapshot
 
-### AMA já entregue em `v0.1.2` (baseline para v0.2.0)
-
-- [x] AMA-01 — attachments no workflow stream + `state.attachments` entre iterações
-- [x] AMA-02 — `MessageFactory` em `AgentNodeExecutor` e `LlmNodeExecutor`
-- [x] AMA-03 — `__studio_thread_id` estável em loops (teste integração)
-- [x] AMA-04 — agent com tools + memory via `AgentRunner::runInline`
-- [x] AMA-05 — `output_key` alimenta condition/loop (state compartilhado)
-- [x] AMA-06 — template `autonomous-lead-qualification` + agent `lead-qualifier`
-- [x] AMA-07 — `tool_call` / `tool_result` SSE no harness + canvas `loop_iteration`
-- [x] AMA-10 — `AutonomousMultimodalAgentsTest` (loop + agent + attachments + tools)
-- [x] AMA-09 — documentação padrão autonomous agent (overview, ai-nodes, attachments, threads, runtime, quickstart)
+| Feature | Status | Notas |
+|---------|--------|-------|
+| `stream-adapters` | ✅ done | branch `feat/stream-adapters`; Fase 1–3 entregues (SA-T1..T13); suíte 279 verde |
+| `unified-runs-and-traces` | ✅ done | T1–T7 concluídos; migrations, models, adapters, token tracking, 279 testes verde |
 
 ---
 
@@ -130,6 +133,20 @@
 **Problem:** `Storage::url()` apontava para `/storage/...` (403) em disco `local` privado.
 **Solution:** `GET /studio/attachments/file?storage_key=` + manter blob preview no composer.
 
+### L-003: Resume de fork deve reprocessar branches não iniciadas (2026-07-03)
+
+**Context:** Interrupt (Human node) dentro de uma branch paralela.
+**Problem:** Retomar apenas a branch pendente perdia as branches que ainda não tinham iniciado (as posteriores ao interrupt na ordem sequencial).
+**Solution:** No resume, o `ForkNodeExecutor` itera todas as branches: pula as concluídas (do checkpoint), retoma a pendente com o input injetado, e roda as não iniciadas do zero.
+**Prevents:** Perda silenciosa de resultados de branch em workflows com >1 branch e HITL.
+
+### L-004: Slug do workflow não pode ser recalculado em todo save (2026-07-03)
+
+**Context:** Auto-save do canvas antes de rodar teste (`saveGraphBeforeRun` → `Editor::save()`), com dois workflows de mesmo nome (ex.: dois installs do mesmo template).
+**Problem:** `save()` fazia `slug = Str::slug($this->name)` sempre, sobrescrevendo o sufixo de dedupe (`-1`) → `UNIQUE constraint failed: workflow_definitions.slug`.
+**Solution:** `Editor::resolveSlug` mantém o slug atual quando o nome não muda; quando muda, gera slug único ignorando o próprio id.
+**Prevents:** Colisão de slug ao testar/salvar workflows com nomes duplicados (comum com templates reinstalados).
+
 ---
 
 ## Features Completed
@@ -145,6 +162,12 @@
 | autonomous-multimodal-agents | 2026-07-02 | 0.2.x | ✅ Done |
 | workflow-rag | 2026-07-02 | 0.2.x | ✅ Done |
 | rag-knowledge-base-tool | 2026-07-02 | 0.2.x | ✅ Done |
+| workflow-tool-approval | 2026-07-03 | 0.2.x | ✅ Done |
+| workflow-token-streaming | 2026-07-03 | 0.2.x | ✅ Done |
+| workflow-checkpoints-persistence | 2026-07-03 | 0.2.x | ✅ Done |
+| workflow-parallel-execution | 2026-07-03 | 0.2.x | ✅ Done |
+| stream-adapters | 2026-07-03 | 0.2.x | ✅ Done |
+| unified-runs-and-traces | 2026-07-07 | 0.2.x | ✅ Done |
 
 ---
 
@@ -165,3 +188,5 @@
 - [x] `workflow-rag` — KnowledgeBase + executor real + codegen + docs
 - [x] AMA-09 — docs dedicated autonomous-agent guide sections
 - [ ] Configurar branch protection para `v0.2.x` no GitHub (espelhar `v0.0.x`)
+- [x] **M4 `stream-adapters`** — SA-T10..SA-T13 (branch `feat/stream-adapters`; SA-T1..T8 ✅, SA-T9 parcial, suíte 278 verde)
+- [x] **Unified Runs and Traces** — T1-T7 concluídos (unificação de tabelas, token tracking, api unificada, 279 testes verde)

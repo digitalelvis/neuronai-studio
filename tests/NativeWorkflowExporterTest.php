@@ -267,6 +267,95 @@ class NativeWorkflowExporterTest extends TestCase
         $this->cleanupExport($exportPath);
     }
 
+    public function test_agent_export_reads_require_tool_approval_from_definition(): void
+    {
+        $exportPath = $this->exportPath();
+        config([
+            'neuronai-studio.export_path' => $exportPath,
+            'neuronai-studio.export_namespace' => 'App\\Neuron',
+        ]);
+
+        $agent = AgentDefinition::create([
+            'name' => 'Approval Agent',
+            'slug' => 'approval-agent-export',
+            'provider' => 'openai',
+            'model' => 'gpt-4o-mini',
+            'instructions' => 'You act on tools.',
+            'require_tool_approval' => true,
+        ]);
+
+        $workflow = WorkflowDefinition::make([
+            'name' => 'Approval Agent Flow',
+            'slug' => 'approval-agent-flow',
+            'graph' => [
+                'version' => 1,
+                'nodes' => [
+                    ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                    ['id' => 'agent_1', 'type' => 'agent', 'position' => ['x' => 100, 'y' => 0], 'data' => [
+                        'agent_id' => $agent->id,
+                        'message' => 'Delete {{input}}',
+                        'output_key' => 'agent_response',
+                    ]],
+                    ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+                ],
+                'edges' => [
+                    ['id' => 'e1', 'source' => 'start_1', 'target' => 'agent_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                    ['id' => 'e2', 'source' => 'agent_1', 'target' => 'stop_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ],
+                'viewport' => ['x' => 0, 'y' => 0, 'zoom' => 1],
+            ],
+            'status' => 'draft',
+        ]);
+
+        $preview = app(NativeWorkflowExporter::class)->preview($workflow);
+
+        $this->assertStringContainsString("'require_tool_approval' => (bool) \$agent->require_tool_approval,", $preview);
+
+        $this->cleanupExport($exportPath);
+    }
+
+    public function test_inline_agent_export_applies_tool_approval_middleware_from_override(): void
+    {
+        $exportPath = $this->exportPath();
+        config([
+            'neuronai-studio.export_path' => $exportPath,
+            'neuronai-studio.export_namespace' => 'App\\Neuron',
+        ]);
+
+        $workflow = WorkflowDefinition::make([
+            'name' => 'Inline Approval Flow',
+            'slug' => 'inline-approval-flow',
+            'graph' => [
+                'version' => 1,
+                'nodes' => [
+                    ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                    ['id' => 'agent_1', 'type' => 'agent', 'position' => ['x' => 100, 'y' => 0], 'data' => [
+                        'provider' => 'openai',
+                        'model' => 'gpt-4o-mini',
+                        'instructions' => 'You act on tools.',
+                        'message' => 'Delete {{input}}',
+                        'output_key' => 'agent_response',
+                        'require_tool_approval' => true,
+                    ]],
+                    ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+                ],
+                'edges' => [
+                    ['id' => 'e1', 'source' => 'start_1', 'target' => 'agent_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                    ['id' => 'e2', 'source' => 'agent_1', 'target' => 'stop_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ],
+                'viewport' => ['x' => 0, 'y' => 0, 'zoom' => 1],
+            ],
+            'status' => 'draft',
+        ]);
+
+        $preview = app(NativeWorkflowExporter::class)->preview($workflow);
+
+        $this->assertStringContainsString('use NeuronAI\\Agent\\Middleware\\ToolApproval;', $preview);
+        $this->assertStringContainsString('$agent->addGlobalMiddleware(new ToolApproval());', $preview);
+
+        $this->cleanupExport($exportPath);
+    }
+
     public function test_preview_does_not_write_files(): void
     {
         $exportPath = $this->exportPath();
@@ -368,6 +457,65 @@ class NativeWorkflowExporterTest extends TestCase
         $this->assertStringContainsString('StateTemplateInterpolator::interpolate', $preview);
         $this->assertStringContainsString("'chunk_count' => count(\$results)", $preview);
         $this->assertStringNotContainsString('Configure a RAG class export', $preview);
+
+        $this->cleanupExport($exportPath);
+    }
+
+    /** @return array<string, mixed> */
+    protected function parallelGraph(): array
+    {
+        return [
+            'version' => 1,
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                ['id' => 'fork_1', 'type' => 'fork', 'position' => ['x' => 100, 'y' => 0], 'data' => []],
+                ['id' => 'branch_a', 'type' => 'set_state', 'position' => ['x' => 200, 'y' => -50], 'data' => ['key' => 'branch_a', 'value' => 'A']],
+                ['id' => 'branch_b', 'type' => 'set_state', 'position' => ['x' => 200, 'y' => 50], 'data' => ['key' => 'branch_b', 'value' => 'B']],
+                ['id' => 'join_1', 'type' => 'join', 'position' => ['x' => 300, 'y' => 0], 'data' => ['output_key' => 'merged']],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 400, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'fork_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'fork_1', 'target' => 'join_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ['id' => 'e3', 'source' => 'fork_1', 'target' => 'branch_a', 'sourceHandle' => 'branch_a', 'targetHandle' => 'default'],
+                ['id' => 'e4', 'source' => 'fork_1', 'target' => 'branch_b', 'sourceHandle' => 'branch_b', 'targetHandle' => 'default'],
+                ['id' => 'e5', 'source' => 'branch_a', 'target' => 'join_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ['id' => 'e6', 'source' => 'branch_b', 'target' => 'join_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ['id' => 'e7', 'source' => 'join_1', 'target' => 'stop_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+            ],
+            'viewport' => ['x' => 0, 'y' => 0, 'zoom' => 1],
+        ];
+    }
+
+    public function test_parallel_graph_exports_parallel_event_subclass_and_compiles(): void
+    {
+        $exportPath = $this->exportPath();
+        config([
+            'neuronai-studio.export_path' => $exportPath,
+            'neuronai-studio.export_namespace' => 'App\\Neuron',
+        ]);
+
+        $workflow = WorkflowDefinition::make([
+            'name' => 'Parallel Flow',
+            'slug' => 'parallel-flow',
+            'graph' => $this->parallelGraph(),
+            'status' => 'draft',
+        ]);
+
+        $result = app(NativeWorkflowExporter::class)->export($workflow);
+        $preview = $result['preview'];
+
+        $this->assertStringContainsString('class Fork1ParallelEvent extends ParallelEvent', $preview);
+        $this->assertStringContainsString('use NeuronAI\\Workflow\\Events\\ParallelEvent;', $preview);
+        $this->assertStringContainsString('new Fork1ParallelEvent([', $preview);
+        $this->assertStringContainsString("'branch_a' => new BranchAEvent()", $preview);
+        $this->assertStringContainsString('function __invoke(Fork1ParallelEvent $event, WorkflowState $state)', $preview);
+        $this->assertStringContainsString('$event->getAllResults()', $preview);
+        $this->assertStringContainsString("return new StopEvent(result: \$state->get('branch_a'))", $preview);
+
+        // The generated workflow file must be syntactically valid PHP.
+        require_once $exportPath.'/Workflows/ParallelFlowWorkflow/ParallelFlowWorkflow.php';
+        $this->assertTrue(class_exists('App\\Neuron\\Workflows\\ParallelFlowWorkflow\\ParallelFlowWorkflow'));
 
         $this->cleanupExport($exportPath);
     }

@@ -102,6 +102,23 @@ Classes must have public properties annotated with `NeuronAI\StructuredOutput\Sc
 | `loop.default_max_steps` | — | `10` | Default `max_steps` when a Loop node omits the field |
 | `loop.global_max_steps` | — | `1000` | Hard cap on total node executions per run |
 
+### Checkpoints
+
+Opt-in per-node result cache used to skip re-executing expensive nodes on resume (set
+`data.checkpoint: true` on Agent/LLM/RAG/Tool nodes). See
+[Node checkpoints](../guides/workflows/runtime-and-traces.md#node-checkpoints).
+
+| Key | Env | Default | Description |
+|-----|-----|---------|-------------|
+| `checkpoints.enabled` | `NEURONAI_STUDIO_CHECKPOINTS_ENABLED` | `true` | Global switch for node checkpointing |
+| `checkpoints.ttl` | `NEURONAI_STUDIO_CHECKPOINTS_TTL` | `null` | Seconds before a checkpoint expires (`null` = never) |
+
+Purge expired checkpoints:
+
+```bash
+php artisan neuronai-studio:checkpoints:purge
+```
+
 ## Templates
 
 | Key | Env | Default | Description |

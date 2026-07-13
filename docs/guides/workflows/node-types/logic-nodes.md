@@ -75,6 +75,51 @@ flowchart TD
     Cond -->|false| Std[Standard Agent]
 ```
 
+## Fork
+
+**Purpose:** Run several branch subgraphs in parallel, then converge into a Join node.
+
+| Config | Description |
+|--------|-------------|
+| `branches` | List of branch ids. Each id becomes a named output handle on the canvas |
+
+Wiring convention:
+
+| Edge | Handle | Meaning |
+|------|--------|---------|
+| `fork → join` | `default` | The main continuation (required — validation fails without it) |
+| `fork → branch entry` | `<branchId>` | One edge per branch, using the branch id as the source handle |
+| `branch tail → join` | `default` | Every branch must converge back into the same Join node |
+
+The interpreted runtime executes branches sequentially with **isolated state per branch**
+(mirroring NeuronAI's `ParallelEvent` merge semantics), so branches never see each other's
+partial writes. Each branch result is keyed by its branch id.
+
+```mermaid
+flowchart LR
+    Fork[Fork] -->|branch_a| A[LLM / Agent]
+    Fork -->|branch_b| B[LLM / Agent]
+    A --> Join[Join]
+    B --> Join
+    Fork -->|default| Join
+    Join --> Stop[Stop]
+```
+
+## Join
+
+**Purpose:** Merge the results collected by the paired Fork node into a single state key.
+
+| Config | Description |
+|--------|-------------|
+| `output_key` | State key that receives the merged map (default: `parallel_results`) |
+
+The output is an object keyed by branch id, e.g. `{ branch_a: …, branch_b: … }`. A branch's
+value is its single produced output when unambiguous, otherwise the full map of keys the
+branch wrote.
+
+See [Runtime & Traces](../runtime-and-traces.md#parallel-execution) for branch step events and
+[Human-in-the-Loop](../human-in-the-loop.md#parallel-branches) for pausing inside a branch.
+
 ## Logic node summary
 
 | Node | Inputs | Outputs |
@@ -82,10 +127,13 @@ flowchart TD
 | Loop | 1 | 2 (continue, exit) |
 | Condition | 1 | 2 (true, false) |
 | Set State | 1 | 1 |
+| Fork | 1 | 1 (default) + 1 per branch |
+| Join | N (branches) | 1 |
 
 ## Related code
 
 - `LoopNodeExecutor`, `ConditionNodeExecutor`, `SetStateNodeExecutor`
+- `ForkNodeExecutor`, `JoinNodeExecutor`, `ParallelBranchRunner`
 - `StateTemplateInterpolator` — for `{{key}}` in other nodes, not Condition evaluation
 
 ## See also

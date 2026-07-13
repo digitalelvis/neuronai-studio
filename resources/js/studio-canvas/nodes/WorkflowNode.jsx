@@ -10,6 +10,8 @@ const ICONS = {
     bot: '🤖',
     'message-square': '💬',
     'git-branch': '⑂',
+    'git-fork': '⋔',
+    'git-merge': '⋈',
     database: '⛁',
     wrench: '🔧',
     search: '🔍',
@@ -18,7 +20,17 @@ const ICONS = {
     circle: '●',
 };
 
-function NodeHandles({ nodeType }) {
+function forkBranches(config) {
+    if (!config || !Array.isArray(config.branches)) {
+        return [];
+    }
+
+    return config.branches
+        .map((branch) => (typeof branch === 'string' ? branch : branch?.id))
+        .filter((id) => typeof id === 'string' && id !== '');
+}
+
+function NodeHandles({ nodeType, config }) {
     if (nodeType === 'start') {
         return <Handle type="source" position={Position.Right} id="default" className="ab-flow-handle" />;
     }
@@ -45,6 +57,34 @@ function NodeHandles({ nodeType }) {
                     className="ab-flow-handle ab-flow-handle-false"
                     style={{ top: '65%' }}
                 />
+            </>
+        );
+    }
+
+    if (nodeType === 'fork') {
+        const branches = forkBranches(config);
+        const count = branches.length;
+
+        return (
+            <>
+                <Handle type="target" position={Position.Left} id="default" className="ab-flow-handle" />
+                <Handle
+                    type="source"
+                    position={Position.Right}
+                    id="default"
+                    className="ab-flow-handle"
+                    style={{ top: '18%' }}
+                />
+                {branches.map((branchId, index) => (
+                    <Handle
+                        key={branchId}
+                        type="source"
+                        position={Position.Right}
+                        id={branchId}
+                        className="ab-flow-handle ab-flow-handle-continue"
+                        style={{ top: `${Math.round(40 + (index * 55) / Math.max(1, count))}%` }}
+                    />
+                ))}
             </>
         );
     }
@@ -111,7 +151,7 @@ export default function WorkflowNode({ id, data, selected }) {
                     </button>
                 </NodeToolbar>
             )}
-            <NodeHandles nodeType={data.nodeType} />
+            <NodeHandles nodeType={data.nodeType} config={data.config} />
             <div className="ab-flow-node-accent" />
             <div className="ab-flow-node-header">
                 <span className="ab-flow-node-icon">{icon}</span>
@@ -133,6 +173,9 @@ export default function WorkflowNode({ id, data, selected }) {
                     <span className="ab-flow-handle-label ab-flow-handle-label-continue">continue</span>
                     <span className="ab-flow-handle-label ab-flow-handle-label-exit">exit</span>
                 </div>
+            )}
+            {data.nodeType === 'fork' && forkBranches(data.config).length > 0 && (
+                <div className="ab-flow-node-meta">{forkBranches(data.config).join(', ')}</div>
             )}
             {data.nodeType === 'loop' && data.loopIteration && (
                 <div className="ab-flow-node-meta ab-flow-node-loop-iteration">
