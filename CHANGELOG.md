@@ -1,5 +1,32 @@
 # Changelog
 
+# [0.3.0](https://github.com/digitalelvis/neuronai-studio/compare/v0.2.0...v0.3.0) (2026-07-13)
+
+
+### Bug Fixes
+
+* **release:** disable release-it GitHub plugin in CI ([3f91a56](https://github.com/digitalelvis/neuronai-studio/commit/3f91a56c932d555a04f2013a72602a80f68396a4))
+* **workflows:** keep deduplicated slug on canvas auto-save ([4537b20](https://github.com/digitalelvis/neuronai-studio/commit/4537b2074cdc0ccea249d02754262d6fdcaf5632))
+
+
+### Features
+
+* add unified studio runs, traces, spans, and threads schema and models ([c804450](https://github.com/digitalelvis/neuronai-studio/commit/c8044501074b77f018d6affb45d24757d5dcb11a))
+* **canvas:** add fork/join nodes and branch inspector ([9eaea41](https://github.com/digitalelvis/neuronai-studio/commit/9eaea41a748cacdb1becd5b00d9173c948e89065))
+* **codegen:** export ParallelEvent subclass for fork/join nodes ([b9dd65b](https://github.com/digitalelvis/neuronai-studio/commit/b9dd65b0b7049d138532fd42d653abccd8e82a27))
+* **runtime:** add eloquent persistence for native workflows ([5957a80](https://github.com/digitalelvis/neuronai-studio/commit/5957a8001e3dbc25a37d05401a89e631db4ab0d4))
+* **runtime:** add fork/join parallel execution with branch resume ([b7aad34](https://github.com/digitalelvis/neuronai-studio/commit/b7aad345d260480d220da9d354cb6122462bb03c))
+* **runtime:** add tool approval pause/resume to workflows ([48e1376](https://github.com/digitalelvis/neuronai-studio/commit/48e137664fac9dd8cabb00f9414c25cdb58b5c01))
+* **runtime:** add workflow checkpoints table, model and config ([c7beb60](https://github.com/digitalelvis/neuronai-studio/commit/c7beb60436be0592619e4d0fa12f839921bf4c29))
+* **runtime:** cache opt-in nodes with a checkpointing executor ([589a489](https://github.com/digitalelvis/neuronai-studio/commit/589a489ea0c3b74ddb0b2359dbf782d4034051f7))
+* **runtime:** stream tokens from agent and llm nodes ([808ce21](https://github.com/digitalelvis/neuronai-studio/commit/808ce21dba04c455aed9c74aa5b213e8b2fc0062))
+* **stream-adapters:** add configuration, registry and integration endpoints ([b420bc3](https://github.com/digitalelvis/neuronai-studio/commit/b420bc3b3d6dcd5c6f9a9c6670f960485b952882))
+* **stream-adapters:** add Connect Panel for agents and workflows ([cd992d2](https://github.com/digitalelvis/neuronai-studio/commit/cd992d2a8ca15ee3de4c42907aaa95be24e6f16c))
+* **stream-adapters:** add studio catalog page and navigation link ([a0295fb](https://github.com/digitalelvis/neuronai-studio/commit/a0295fb63027bf9f67ef5ca78a1b5bc8956c9e52))
+* **studio:** add stream toggle to agent and llm nodes ([d563107](https://github.com/digitalelvis/neuronai-studio/commit/d5631076d0f055af1ec56148fc8f0750f9bbf5a2))
+* **studio:** add tool approval card and native codegen ([12b8c1b](https://github.com/digitalelvis/neuronai-studio/commit/12b8c1bb8b227f5ca9af50375b501df97d09f15a))
+* **templates:** add parallel support triage template pack ([953a58e](https://github.com/digitalelvis/neuronai-studio/commit/953a58e4fa6a7e0a39e084a02ac0d17e197b433a))
+
 # [0.2.0](https://github.com/digitalelvis/neuronai-studio/compare/v0.1.2...v0.2.0) (2026-07-03)
 
 
