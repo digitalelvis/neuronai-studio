@@ -30,4 +30,9 @@ class StudioChatMessage extends Model
             'meta' => 'array',
         ];
     }
+
+    public function thread()
+    {
+        return $this->belongsTo(StudioThread::class, 'thread_id');
+    }
 }

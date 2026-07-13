@@ -3,7 +3,7 @@
 namespace DigitalElvis\NeuronAIStudio\Http\Controllers;
 
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
-use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -13,60 +13,71 @@ class WorkflowTraceController
     {
         $perPage = min((int) $request->integer('per_page', 25), 100);
 
-        $traces = $workflow->traces()
+        $runs = $workflow->runs()
             ->latest('id')
             ->paginate($perPage);
 
         return response()->json([
-            'data' => $traces->getCollection()->map(fn (WorkflowTrace $trace) => $this->traceSummary($trace)),
+            'data' => $runs->getCollection()->map(fn (StudioRun $run) => $this->runSummary($run)),
             'meta' => [
-                'current_page' => $traces->currentPage(),
-                'last_page' => $traces->lastPage(),
-                'per_page' => $traces->perPage(),
-                'total' => $traces->total(),
+                'current_page' => $runs->currentPage(),
+                'last_page' => $runs->lastPage(),
+                'per_page' => $runs->perPage(),
+                'total' => $runs->total(),
             ],
         ]);
     }
 
-    public function show(WorkflowTrace $trace): JsonResponse
+    public function show(StudioRun $run): JsonResponse
     {
-        $trace->load(['workflow', 'steps']);
+        $run->load(['thread.entity', 'traces.spans']);
+        $trace = $run->traces()->latest()->first();
+        $spans = $trace ? $trace->spans()->orderBy('started_at')->get() : collect();
 
         return response()->json([
-            'trace' => array_merge($this->traceSummary($trace), [
-                'error_message' => $trace->error_message,
-                'input' => $trace->input,
-                'output' => $trace->output,
-                'workflow_name' => $trace->workflow?->name,
+            'trace' => array_merge($this->runSummary($run), [
+                'error_message' => $run->error_message,
+                'input' => $run->input,
+                'output' => $run->output,
+                'workflow_name' => $run->thread?->entity?->name,
+                'prompt_tokens' => $run->prompt_tokens,
+                'completion_tokens' => $run->completion_tokens,
+                'total_tokens' => $run->total_tokens,
             ]),
-            'steps' => $trace->steps->map(fn ($step) => [
-                'id' => $step->id,
-                'node_type' => $step->node_type,
-                'node_id' => $step->node_id,
-                'duration_ms' => $step->duration_ms,
-                'state_snapshot' => $step->state_snapshot,
+            'steps' => $spans->map(fn ($span) => [
+                'id' => $span->id,
+                'node_type' => $span->type,
+                'node_id' => $span->name,
+                'duration_ms' => $span->duration_ms,
+                'state_snapshot' => $span->output['state_snapshot'] ?? null,
+                'prompt_tokens' => $span->prompt_tokens,
+                'completion_tokens' => $span->completion_tokens,
+                'total_tokens' => $span->total_tokens,
             ])->values(),
         ]);
     }
 
     /** @return array<string, mixed> */
-    protected function traceSummary(WorkflowTrace $trace): array
+    protected function runSummary(StudioRun $run): array
     {
         $inputPreview = null;
-        if (is_array($trace->input)) {
-            $inputPreview = $trace->input['message']
-                ?? $trace->input['input']
-                ?? (count($trace->input) ? json_encode($trace->input) : null);
+        if (is_array($run->input)) {
+            $inputPreview = $run->input['message']
+                ?? $run->input['input']
+                ?? (count($run->input) ? json_encode($run->input) : null);
         }
 
         return [
-            'id' => $trace->id,
-            'status' => $trace->status,
-            'awaiting_node_id' => $trace->awaiting_node_id,
+            'id' => $run->id,
+            'status' => $run->status,
+            'awaiting_node_id' => $run->awaitingNodeId(),
             'input_preview' => is_string($inputPreview) ? mb_substr($inputPreview, 0, 120) : null,
-            'started_at' => $trace->started_at?->toIso8601String(),
-            'finished_at' => $trace->finished_at?->toIso8601String(),
-            'duration_ms' => $trace->durationMs(),
+            'started_at' => $run->started_at?->toIso8601String(),
+            'finished_at' => $run->finished_at?->toIso8601String(),
+            'duration_ms' => $run->durationMs(),
+            'prompt_tokens' => $run->prompt_tokens,
+            'completion_tokens' => $run->completion_tokens,
+            'total_tokens' => $run->total_tokens,
         ];
     }
 }

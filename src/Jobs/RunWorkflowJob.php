@@ -3,7 +3,7 @@
 namespace DigitalElvis\NeuronAIStudio\Jobs;
 
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
-use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -23,7 +23,7 @@ class RunWorkflowJob implements ShouldQueue
 
     /** @param  array<string, mixed>  $input */
     public function __construct(
-        public int $traceId,
+        public string $runId,
         public int $workflowId,
         public array $input,
     ) {
@@ -45,23 +45,23 @@ class RunWorkflowJob implements ShouldQueue
 
     public function handle(WorkflowRunner $runner): void
     {
-        $trace = WorkflowTrace::findOrFail($this->traceId);
+        $run = StudioRun::findOrFail($this->runId);
         $workflow = WorkflowDefinition::findOrFail($this->workflowId);
 
-        $trace->update(['status' => 'running']);
+        $run->update(['status' => 'running']);
 
-        $runner->runExistingTrace($trace->fresh(), $workflow, $this->input, emitter: null);
+        $runner->runExistingRun($run->fresh(), $workflow, $this->input, emitter: null);
     }
 
     public function failed(?Throwable $exception): void
     {
-        $trace = WorkflowTrace::find($this->traceId);
+        $run = StudioRun::find($this->runId);
 
-        if ($trace === null) {
+        if ($run === null) {
             return;
         }
 
-        $trace->update([
+        $run->update([
             'status' => 'failed',
             'error_message' => $exception?->getMessage() ?? 'Workflow job failed.',
             'finished_at' => now(),

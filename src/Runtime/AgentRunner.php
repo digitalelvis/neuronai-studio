@@ -3,6 +3,9 @@
 namespace DigitalElvis\NeuronAIStudio\Runtime;
 
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Models\StudioThread;
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
+use DigitalElvis\NeuronAIStudio\Models\StudioTrace;
 use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
 use DigitalElvis\NeuronAIStudio\Support\ChatThreadKey;
 use DigitalElvis\NeuronAIStudio\Support\PlaygroundContext;
@@ -109,21 +112,84 @@ class AgentRunner
         return $agent->stream($message);
     }
 
-    public function runInline(array $config, string|UserMessage $message, ?AgentDefinition $definition = null, ?string $threadKey = null, bool $fake = false): AgentRunResult
+    protected function createExecutionSession(?AgentDefinition $definition, ?string $threadKey = null, array $input = []): array
     {
-        $agent = $this->makeAgent($definition, $config, $threadKey, $fake);
-        $userMessage = $message instanceof UserMessage ? $message : new UserMessage($message);
-        $handler = $agent->chat($userMessage);
-
-        try {
-            $content = $handler->getMessage()->getContent();
-        } catch (WorkflowInterrupt $interrupt) {
-            throw $this->toolApprovalException($interrupt);
+        $threadId = $threadKey;
+        if ($threadId === null && $definition) {
+            $threadId = (string) Str::uuid();
         }
 
-        $events = $this->toolEvents->fromChatHistory($agent->getChatHistory());
+        $thread = null;
+        if ($threadId !== null) {
+            if (str_contains($threadId, ':')) {
+                $threadId = ChatThreadKey::publicId($threadId);
+            }
+            $thread = StudioThread::firstOrCreate([
+                'id' => $threadId,
+            ], [
+                'entity_type' => AgentDefinition::class,
+                'entity_id' => $definition ? $definition->id : null,
+            ]);
+        }
 
-        return new AgentRunResult($content, $events);
+        $run = StudioRun::create([
+            'id' => (string) Str::uuid(),
+            'thread_id' => $thread ? $thread->id : (string) Str::uuid(),
+            'status' => 'running',
+            'input' => $input,
+            'started_at' => now(),
+        ]);
+
+        $trace = StudioTrace::create([
+            'run_id' => $run->id,
+        ]);
+
+        return [$run, $trace];
+    }
+
+    public function runInline(array $config, string|UserMessage $message, ?AgentDefinition $definition = null, ?string $threadKey = null, bool $fake = false): AgentRunResult
+    {
+        [$run, $trace] = $this->createExecutionSession($definition, $threadKey, [
+            'message' => $message instanceof UserMessage ? $message->getContent() : $message
+        ]);
+
+        $agent = $this->makeAgent($definition, $config, $run->thread_id, $fake);
+        $agent->setPersistence(new InMemoryPersistence, $run->id);
+
+        $tracker = new TelemetryTracker($run, $trace);
+        $agent->observe($tracker);
+
+        $userMessage = $message instanceof UserMessage ? $message : new UserMessage($message);
+
+        try {
+            $handler = $agent->chat($userMessage);
+            $content = $handler->getMessage()->getContent();
+
+            $run->update([
+                'status' => 'completed',
+                'output' => ['content' => $content],
+                'finished_at' => now(),
+            ]);
+
+            $events = $this->toolEvents->fromChatHistory($agent->getChatHistory());
+            return new AgentRunResult($content, $events, runId: $run->id);
+        } catch (WorkflowInterrupt $interrupt) {
+            $run->update([
+                'status' => 'awaiting_tool_approval',
+                'checkpoint_state' => [
+                    'interrupt' => base64_encode(serialize($interrupt)),
+                ],
+                'finished_at' => null,
+            ]);
+            throw $this->toolApprovalException($interrupt, $run);
+        } catch (\Throwable $exception) {
+            $run->update([
+                'status' => 'failed',
+                'error_message' => $exception->getMessage(),
+                'finished_at' => now(),
+            ]);
+            throw $exception;
+        }
     }
 
     /**
@@ -141,27 +207,59 @@ class AgentRunner
         ?string $threadKey = null,
         bool $fake = false,
     ): Generator {
+        [$run, $trace] = $this->createExecutionSession($definition, $threadKey, [
+            'message' => $message instanceof UserMessage ? $message->getContent() : $message
+        ]);
+
         $agent = $this->makeAgent($definition, $config, $threadKey, $fake);
+        $agent->setPersistence(new InMemoryPersistence, $run->id);
+
+        $tracker = new TelemetryTracker($run, $trace);
+        $agent->observe($tracker);
+
         $userMessage = $message instanceof UserMessage ? $message : new UserMessage($message);
         $handler = $agent->stream($userMessage);
 
-        foreach ($handler->events() as $event) {
-            if ($event instanceof StreamChunk) {
-                yield $event;
+        try {
+            foreach ($handler->events() as $event) {
+                if ($event instanceof StreamChunk) {
+                    yield $event;
+                }
             }
+
+            $content = $handler->getMessage()->getContent();
+            $run->update([
+                'status' => 'completed',
+                'output' => ['content' => $content],
+                'finished_at' => now(),
+            ]);
+
+            $events = $this->toolEvents->fromChatHistory($agent->getChatHistory());
+            return new AgentRunResult($content, $events, runId: $run->id);
+        } catch (WorkflowInterrupt $interrupt) {
+            $run->update([
+                'status' => 'awaiting_tool_approval',
+                'checkpoint_state' => [
+                    'interrupt' => base64_encode(serialize($interrupt)),
+                ],
+                'finished_at' => null,
+            ]);
+            throw $this->toolApprovalException($interrupt, $run);
+        } catch (\Throwable $exception) {
+            $run->update([
+                'status' => 'failed',
+                'error_message' => $exception->getMessage(),
+                'finished_at' => now(),
+            ]);
+            throw $exception;
         }
-
-        $content = $handler->getMessage()->getContent();
-        $events = $this->toolEvents->fromChatHistory($agent->getChatHistory());
-
-        return new AgentRunResult($content, $events);
     }
 
     /**
      * Translate a NeuronAI ToolApproval interrupt into a Studio-level exception
      * carrying the tools awaiting human approval. Non-approval interrupts bubble up.
      */
-    protected function toolApprovalException(WorkflowInterrupt $interrupt): WorkflowInterrupt|ToolApprovalRequiredException
+    protected function toolApprovalException(WorkflowInterrupt $interrupt, ?StudioRun $run = null): WorkflowInterrupt|ToolApprovalRequiredException
     {
         $request = $interrupt->getRequest();
 
@@ -187,7 +285,12 @@ class AgentRunner
             }
         }
 
-        return new ToolApprovalRequiredException('', $pendingTools, $request->getMessage(), serialize($interrupt));
+        return new ToolApprovalRequiredException(
+            '',
+            $pendingTools,
+            $request->getMessage(),
+            $run ? base64_encode(serialize($interrupt)) : serialize($interrupt)
+        );
     }
 
     /**
@@ -198,6 +301,84 @@ class AgentRunner
      */
     public function resumeInlineApproval(
         array $config,
+        string|StudioRun $run,
+        string $decision,
+        ?string $feedback = null,
+        ?AgentDefinition $definition = null,
+        ?string $threadKey = null,
+    ): AgentRunResult {
+        if (is_string($run)) {
+            if (Str::isUuid($run) || strlen($run) < 100) {
+                $run = StudioRun::findOrFail($run);
+            } else {
+                return $this->resumeInlineApprovalLegacy($config, $run, $decision, $feedback, $definition, $threadKey);
+            }
+        }
+
+        $serializedInterrupt = base64_decode($run->checkpoint_state['interrupt']);
+        /** @var WorkflowInterrupt $interrupt */
+        $interrupt = unserialize($serializedInterrupt);
+        $request = $interrupt->getRequest();
+
+        if ($request instanceof ApprovalRequest) {
+            foreach ($request->getActions() as $action) {
+                $decision === 'reject'
+                    ? $action->reject($feedback)
+                    : $action->approve($feedback);
+            }
+        }
+
+        $run->update([
+            'status' => 'running',
+            'finished_at' => null,
+        ]);
+
+        $trace = $run->traces()->latest()->first() ?? StudioTrace::create(['run_id' => $run->id]);
+
+        $agent = $this->makeAgent($definition, $config, $threadKey);
+        $agent->setPersistence(new InMemoryPersistence, $run->id);
+
+        $tracker = new TelemetryTracker($run, $trace);
+        $agent->observe($tracker);
+
+        $persistence = new InMemoryPersistence;
+        $resumeToken = 'studio_tool_approval';
+        $persistence->save($resumeToken, $interrupt);
+        $agent->setPersistence($persistence, $resumeToken);
+
+        try {
+            $handler = $agent->chat([], $request);
+            $content = $handler->getMessage()->getContent();
+
+            $run->update([
+                'status' => 'completed',
+                'output' => ['content' => $content],
+                'finished_at' => now(),
+            ]);
+
+            $events = $this->toolEvents->fromChatHistory($agent->getChatHistory());
+            return new AgentRunResult($content, $events, runId: $run->id);
+        } catch (WorkflowInterrupt $reinterrupt) {
+            $run->update([
+                'status' => 'awaiting_tool_approval',
+                'checkpoint_state' => [
+                    'interrupt' => base64_encode(serialize($reinterrupt)),
+                ],
+                'finished_at' => null,
+            ]);
+            throw $this->toolApprovalException($reinterrupt, $run);
+        } catch (\Throwable $exception) {
+            $run->update([
+                'status' => 'failed',
+                'error_message' => $exception->getMessage(),
+                'finished_at' => now(),
+            ]);
+            throw $exception;
+        }
+    }
+
+    protected function resumeInlineApprovalLegacy(
+        array $config,
         string $serializedInterrupt,
         string $decision,
         ?string $feedback = null,
@@ -205,6 +386,13 @@ class AgentRunner
         ?string $threadKey = null,
     ): AgentRunResult {
         $agent = $this->makeAgent($definition, $config, $threadKey);
+
+        if (! str_starts_with($serializedInterrupt, 'O:')) {
+            $decoded = base64_decode($serializedInterrupt, true);
+            if (is_string($decoded)) {
+                $serializedInterrupt = $decoded;
+            }
+        }
 
         /** @var WorkflowInterrupt $interrupt */
         $interrupt = unserialize($serializedInterrupt);
@@ -244,24 +432,58 @@ class AgentRunner
         ?string $threadKey = null,
         bool $fake = false,
     ): AgentRunResult {
-        try {
-            $agent = $this->makeAgent($definition, $config, $threadKey, $fake);
-            $userMessage = $message instanceof UserMessage ? $message : new UserMessage($message);
-            $result = $agent->structured($userMessage, $outputClass);
-            $events = $this->toolEvents->fromChatHistory($agent->getChatHistory());
+        [$run, $trace] = $this->createExecutionSession($definition, $threadKey, [
+            'message' => $message instanceof UserMessage ? $message->getContent() : $message
+        ]);
 
+        $agent = $this->makeAgent($definition, $config, $threadKey, $fake);
+        $agent->setPersistence(new InMemoryPersistence, $run->id);
+
+        $tracker = new TelemetryTracker($run, $trace);
+        $agent->observe($tracker);
+
+        $userMessage = $message instanceof UserMessage ? $message : new UserMessage($message);
+
+        try {
+            $result = $agent->structured($userMessage, $outputClass);
+
+            $run->update([
+                'status' => 'completed',
+                'output' => ['structured' => $this->normalizeStructuredOutput($result)],
+                'finished_at' => now(),
+            ]);
+
+            $events = $this->toolEvents->fromChatHistory($agent->getChatHistory());
             return new AgentRunResult(
                 toolEvents: $events,
                 structured: $this->normalizeStructuredOutput($result),
+                runId: $run->id,
             );
         } catch (AgentException $exception) {
+            $run->update([
+                'status' => 'failed',
+                'error_message' => $exception->getMessage(),
+                'finished_at' => now(),
+            ]);
             throw StructuredOutputValidationException::fromAgentException($exception);
         } catch (ProviderException $exception) {
+            $run->update([
+                'status' => 'failed',
+                'error_message' => $exception->getMessage(),
+                'finished_at' => now(),
+            ]);
             throw new StructuredOutputValidationException(
                 $exception->getMessage(),
                 [$exception->getMessage()],
                 $exception,
             );
+        } catch (\Throwable $exception) {
+            $run->update([
+                'status' => 'failed',
+                'error_message' => $exception->getMessage(),
+                'finished_at' => now(),
+            ]);
+            throw $exception;
         }
     }
 

@@ -12,10 +12,16 @@ class ChatThreadLoader
      */
     public function loadForAgent(int $agentId, string $threadId): array
     {
-        $scopedKey = ChatThreadKey::forAgent($agentId, $threadId);
+        if (str_contains($threadId, ':')) {
+            $threadId = ChatThreadKey::publicId($threadId);
+        }
 
         $records = StudioChatMessage::query()
-            ->where('thread_id', $scopedKey)
+            ->where(function ($query) use ($agentId, $threadId) {
+                $query->where('thread_id', $threadId)
+                      ->orWhere('thread_id', ChatThreadKey::forAgent($agentId, $threadId))
+                      ->orWhere('thread_id', ChatThreadKey::forWorkflow($agentId, $threadId));
+            })
             ->orderBy('id')
             ->get(['role', 'content']);
 

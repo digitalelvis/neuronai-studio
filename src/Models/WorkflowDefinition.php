@@ -73,9 +73,21 @@ class WorkflowDefinition extends Model
         ];
     }
 
-    public function traces(): HasMany
+    public function runs(): \Illuminate\Database\Eloquent\Relations\HasManyThrough
     {
-        return $this->hasMany(WorkflowTrace::class, 'workflow_definition_id');
+        return $this->hasManyThrough(
+            \DigitalElvis\NeuronAIStudio\Models\StudioRun::class,
+            \DigitalElvis\NeuronAIStudio\Models\StudioThread::class,
+            'entity_id',
+            'thread_id',
+            'id',
+            'id'
+        )->where('entity_type', self::class);
+    }
+
+    public function traces()
+    {
+        return $this->runs();
     }
 
     public function isCodeLinked(): bool

@@ -34,10 +34,8 @@ class WorkflowChatThreadTest extends TestCase
             'thread_id' => $threadId,
         ]);
 
-        $expectedKey = ChatThreadKey::forWorkflow($workflow->id, $threadId);
-
         $this->assertEquals('completed', $trace->status);
-        $this->assertSame($expectedKey, $trace->output['__studio_thread_id'] ?? null);
+        $this->assertSame($threadId, $trace->output['__studio_thread_id'] ?? null);
     }
 
     public function test_agent_node_persists_messages_for_workflow_thread_across_runs(): void
@@ -56,7 +54,7 @@ class WorkflowChatThreadTest extends TestCase
         $runner->run($workflow, ['message' => 'Hi', 'thread_id' => $threadId]);
         $runner->run($workflow, ['message' => 'Follow up', 'thread_id' => $threadId]);
 
-        $this->assertSame(4, StudioChatMessage::query()->where('thread_id', $scopedKey)->count());
+        $this->assertSame(4, StudioChatMessage::query()->where('thread_id', $threadId)->count());
     }
 
     public function test_workflow_stream_endpoint_emits_thread_event(): void

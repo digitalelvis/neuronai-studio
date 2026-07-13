@@ -3,8 +3,10 @@
 namespace DigitalElvis\NeuronAIStudio\Tests;
 
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
-use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
+use DigitalElvis\NeuronAIStudio\Models\StudioThread;
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
+use Illuminate\Support\Str;
 
 class WorkflowRunnerTest extends TestCase
 {
@@ -27,11 +29,11 @@ class WorkflowRunnerTest extends TestCase
             ],
         ]);
 
-        $trace = app(WorkflowRunner::class)->run($workflow, ['input' => 'test']);
+        $run = app(WorkflowRunner::class)->run($workflow, ['input' => 'test']);
 
-        $this->assertEquals('completed', $trace->status);
-        $this->assertEquals('Hello', $trace->output['greeting'] ?? null);
-        $this->assertGreaterThan(0, $trace->steps()->count());
+        $this->assertEquals('completed', $run->status);
+        $this->assertEquals('Hello', $run->output['greeting'] ?? null);
+        $this->assertGreaterThan(0, $run->steps()->count());
     }
 
     public function test_trace_emits_step_events_when_listener_provided(): void
@@ -112,19 +114,26 @@ class WorkflowRunnerTest extends TestCase
             ],
         ]);
 
-        $trace = WorkflowTrace::create([
-            'workflow_definition_id' => $workflow->id,
+        $thread = StudioThread::create([
+            'id' => (string) Str::uuid(),
+            'entity_type' => WorkflowDefinition::class,
+            'entity_id' => $workflow->id,
+        ]);
+
+        $run = StudioRun::create([
+            'id' => (string) Str::uuid(),
+            'thread_id' => $thread->id,
             'status' => 'queued',
             'input' => ['input' => 'test'],
             'started_at' => null,
         ]);
 
-        $result = app(WorkflowRunner::class)->runExistingTrace($trace, $workflow, ['input' => 'test']);
+        $result = app(WorkflowRunner::class)->runExistingRun($run, $workflow, ['input' => 'test']);
 
-        $this->assertSame($trace->id, $result->id);
+        $this->assertSame($run->id, $result->id);
         $this->assertSame('completed', $result->status);
         $this->assertNotNull($result->started_at);
         $this->assertSame('Hello', $result->output['greeting'] ?? null);
-        $this->assertSame(1, WorkflowTrace::count());
+        $this->assertSame(1, StudioRun::count());
     }
 }

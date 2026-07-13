@@ -3,10 +3,12 @@
 namespace DigitalElvis\NeuronAIStudio\Tests;
 
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
-use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
+use DigitalElvis\NeuronAIStudio\Models\StudioThread;
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Orchestra\Testbench\Attributes\DefineEnvironment;
+use Illuminate\Support\Str;
 
 class WorkflowIntegrateResumeTest extends TestCase
 {
@@ -38,24 +40,27 @@ class WorkflowIntegrateResumeTest extends TestCase
         ]);
     }
 
-    protected function pausedTrace(WorkflowDefinition $workflow): WorkflowTrace
+    protected function pausedTrace(WorkflowDefinition $workflow): StudioRun
     {
-        $trace = app(WorkflowRunner::class)->run($workflow, ['message' => 'start']);
+        $run = app(WorkflowRunner::class)->run($workflow, ['message' => 'start']);
 
-        $this->assertSame('awaiting_input', $trace->status);
-        $this->assertSame('human_1', $trace->awaiting_node_id);
+        $this->assertSame('awaiting_input', $run->status);
+        $this->assertSame('human_1', $run->awaiting_node_id);
 
-        return $trace;
+        return $run;
     }
 
     #[DefineEnvironment('lightIntegrationMiddleware')]
     public function test_resume_completes_workflow_vercel(): void
     {
         $workflow = $this->humanWorkflow();
-        $trace = $this->pausedTrace($workflow);
+        $run = $this->pausedTrace($workflow);
 
         $response = $this->postJson(
-            route('neuronai-studio.integrate.workflows.resume', ['trace' => $trace, 'protocol' => 'vercel']),
+            route('neuronai-studio.integrate.workflows.resume', [
+                'trace' => $run->id,
+                'protocol' => 'vercel'
+            ]),
             ['message' => 'order-42'],
         );
 
@@ -67,19 +72,22 @@ class WorkflowIntegrateResumeTest extends TestCase
         $this->assertStringContainsString('order-42', $content);
         $this->assertStringContainsString('[DONE]', $content);
 
-        $trace->refresh();
-        $this->assertSame('completed', $trace->status);
-        $this->assertSame('order-42', $trace->output['confirmed'] ?? null);
+        $run->refresh();
+        $this->assertSame('completed', $run->status);
+        $this->assertSame('order-42', $run->output['confirmed'] ?? null);
     }
 
     #[DefineEnvironment('lightIntegrationMiddleware')]
     public function test_resume_completes_workflow_agui(): void
     {
         $workflow = $this->humanWorkflow();
-        $trace = $this->pausedTrace($workflow);
+        $run = $this->pausedTrace($workflow);
 
         $response = $this->postJson(
-            route('neuronai-studio.integrate.workflows.resume', ['trace' => $trace, 'protocol' => 'agui']),
+            route('neuronai-studio.integrate.workflows.resume', [
+                'trace' => $run->id,
+                'protocol' => 'agui'
+            ]),
             ['message' => 'order-99'],
         );
 
@@ -90,8 +98,8 @@ class WorkflowIntegrateResumeTest extends TestCase
         $this->assertStringContainsString('order-99', $content);
         $this->assertStringContainsString('RUN_FINISHED', $content);
 
-        $trace->refresh();
-        $this->assertSame('completed', $trace->status);
+        $run->refresh();
+        $this->assertSame('completed', $run->status);
     }
 
     #[DefineEnvironment('lightIntegrationMiddleware')]
@@ -99,8 +107,15 @@ class WorkflowIntegrateResumeTest extends TestCase
     {
         $workflow = $this->humanWorkflow();
 
-        $trace = WorkflowTrace::create([
-            'workflow_definition_id' => $workflow->id,
+        $thread = StudioThread::create([
+            'id' => (string) Str::uuid(),
+            'entity_type' => WorkflowDefinition::class,
+            'entity_id' => $workflow->id,
+        ]);
+
+        $run = StudioRun::create([
+            'id' => (string) Str::uuid(),
+            'thread_id' => $thread->id,
             'status' => 'completed',
             'input' => ['message' => 'done'],
             'started_at' => now(),
@@ -108,7 +123,10 @@ class WorkflowIntegrateResumeTest extends TestCase
         ]);
 
         $response = $this->postJson(
-            route('neuronai-studio.integrate.workflows.resume', ['trace' => $trace, 'protocol' => 'vercel']),
+            route('neuronai-studio.integrate.workflows.resume', [
+                'trace' => $run->id,
+                'protocol' => 'vercel'
+            ]),
             ['message' => 'too late'],
         );
 
@@ -119,10 +137,13 @@ class WorkflowIntegrateResumeTest extends TestCase
     public function test_resume_unknown_protocol_returns_404(): void
     {
         $workflow = $this->humanWorkflow();
-        $trace = $this->pausedTrace($workflow);
+        $run = $this->pausedTrace($workflow);
 
         $response = $this->postJson(
-            route('neuronai-studio.integrate.workflows.resume', ['trace' => $trace, 'protocol' => 'bogus']),
+            route('neuronai-studio.integrate.workflows.resume', [
+                'trace' => $run->id,
+                'protocol' => 'bogus'
+            ]),
             ['message' => 'order-42'],
         );
 

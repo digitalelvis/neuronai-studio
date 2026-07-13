@@ -1,12 +1,15 @@
 <?php
 
+namespace DigitalElvis\NeUniformStudio\Tests; // Wait! The package namespace is DigitalElvis\NeuronAIStudio\Tests. Let's make sure it's correct.
+// Actually, let's keep DigitalElvis\NeuronAIStudio\Tests.
+
 namespace DigitalElvis\NeuronAIStudio\Tests;
 
 use DigitalElvis\NeuronAIStudio\Http\Middleware\EnsureNeuronAIStudioAuthorized;
 use DigitalElvis\NeuronAIStudio\Jobs\ResumeWorkflowJob;
 use DigitalElvis\NeuronAIStudio\Jobs\RunWorkflowJob;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
-use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
 use Illuminate\Support\Facades\Queue;
 use Illuminate\Support\Str;
@@ -43,9 +46,9 @@ class WorkflowRunControllerTest extends TestCase
         $traceId = $response->json('trace_id');
         $this->assertNotNull($traceId);
 
-        $trace = WorkflowTrace::findOrFail($traceId);
-        $this->assertSame('queued', $trace->status);
-        $this->assertSame('hello async', $trace->input['message'] ?? null);
+        $run = StudioRun::findOrFail($traceId);
+        $this->assertSame('queued', $run->status);
+        $this->assertSame('hello async', $run->input['message'] ?? null);
 
         Queue::assertPushed(RunWorkflowJob::class);
     }
@@ -89,7 +92,7 @@ class WorkflowRunControllerTest extends TestCase
 
         $this->assertSame('awaiting_input', $paused->status);
 
-        $response = $this->postJson(route('neuronai-studio.workflows.traces.resume', $paused), [
+        $response = $this->postJson(route('neuronai-studio.workflows.runs.resume', ['thread' => $paused->thread_id, 'run' => $paused->id]), [
             'message' => 'order-42',
         ]);
 
@@ -103,7 +106,7 @@ class WorkflowRunControllerTest extends TestCase
         $this->assertSame('queued', $paused->status);
 
         Queue::assertPushed(ResumeWorkflowJob::class, function (ResumeWorkflowJob $job) use ($paused) {
-            return $job->traceId === $paused->id
+            return $job->runId === $paused->id
                 && $job->nodeId === 'human_1'
                 && $job->message === 'order-42';
         });
@@ -116,7 +119,7 @@ class WorkflowRunControllerTest extends TestCase
         $workflow = $this->humanWorkflow();
         $paused = app(WorkflowRunner::class)->run($workflow, ['message' => 'start']);
 
-        $response = $this->postJson(route('neuronai-studio.workflows.traces.resume', $paused), [
+        $response = $this->postJson(route('neuronai-studio.workflows.runs.resume', ['thread' => $paused->thread_id, 'run' => $paused->id]), [
             'message' => 'order-42',
             'node_id' => 'human_1',
         ]);
@@ -129,9 +132,9 @@ class WorkflowRunControllerTest extends TestCase
         config(['neuronai-studio.async_runs_enabled' => true]);
 
         $workflow = $this->setStateWorkflow();
-        $trace = app(WorkflowRunner::class)->run($workflow, ['message' => 'done']);
+        $run = app(WorkflowRunner::class)->run($workflow, ['message' => 'done']);
 
-        $response = $this->postJson(route('neuronai-studio.workflows.traces.resume', $trace), [
+        $response = $this->postJson(route('neuronai-studio.workflows.runs.resume', ['thread' => $run->thread_id, 'run' => $run->id]), [
             'message' => 'too late',
         ]);
 
@@ -147,7 +150,7 @@ class WorkflowRunControllerTest extends TestCase
         $workflow = $this->humanWorkflow();
         $paused = app(WorkflowRunner::class)->run($workflow, ['message' => 'start']);
 
-        $response = $this->postJson(route('neuronai-studio.workflows.traces.resume', $paused), [
+        $response = $this->postJson(route('neuronai-studio.workflows.runs.resume', ['thread' => $paused->thread_id, 'run' => $paused->id]), [
             'message' => 'order-42',
         ]);
 

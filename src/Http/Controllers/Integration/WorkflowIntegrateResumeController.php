@@ -5,7 +5,7 @@ namespace DigitalElvis\NeuronAIStudio\Http\Controllers\Integration;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\Concerns\ValidatesChatAttachments;
 use DigitalElvis\NeuronAIStudio\Integration\StreamAdapterRegistry;
 use DigitalElvis\NeuronAIStudio\Integration\WorkflowStreamBridge;
-use DigitalElvis\NeuronAIStudio\Models\WorkflowTrace;
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -24,28 +24,51 @@ class WorkflowIntegrateResumeController
 
     public function __invoke(
         Request $request,
-        WorkflowTrace $trace,
-        string $protocol,
-        StreamAdapterRegistry $registry,
-        WorkflowRunner $runner,
+        $threadOrRun,
+        $runOrProtocol = null,
+        $protocolString = null,
+        ?StreamAdapterRegistry $registry = null,
     ): StreamedResponse {
+        // Resolve $run model and $protocol dynamically based on route parameters
+        $runModel = $runOrProtocol instanceof StudioRun 
+            ? $runOrProtocol 
+            : ($threadOrRun instanceof StudioRun ? $threadOrRun : null);
+
+        if ($runModel === null) {
+            $runId = is_string($runOrProtocol) && \Illuminate\Support\Str::isUuid($runOrProtocol) 
+                ? $runOrProtocol 
+                : (is_string($threadOrRun) && \Illuminate\Support\Str::isUuid($threadOrRun) ? $threadOrRun : '');
+            $runModel = StudioRun::findOrFail($runId);
+        }
+
+        // The protocol is the parameter that is a string and not the run ID
+        $protocol = is_string($protocolString) && $protocolString !== ''
+            ? $protocolString
+            : (is_string($runOrProtocol) && ! \Illuminate\Support\Str::isUuid($runOrProtocol) ? $runOrProtocol : '');
+
+        if ($protocol === '') {
+            $protocol = is_string($threadOrRun) && ! \Illuminate\Support\Str::isUuid($threadOrRun) ? $threadOrRun : '';
+        }
+
+        $registry = $registry ?: app(StreamAdapterRegistry::class);
+
         abort_unless($registry->isEnabled($protocol), 404, "Unknown stream protocol [{$protocol}].");
 
         abort_unless(
-            in_array($trace->status, ['awaiting_input', 'awaiting_tool_approval'], true),
+            in_array($runModel->status, ['awaiting_input', 'awaiting_tool_approval'], true),
             422,
-            'Workflow trace is not awaiting input.',
+            'Workflow run is not awaiting input.',
         );
 
         $chat = $this->validateChatPayload($request);
         $message = (string) $chat['message'];
         $attachments = $chat['attachments'] ?? [];
 
-        $nodeId = (string) ($trace->awaiting_node_id ?? '');
+        $nodeId = (string) ($runModel->awaiting_node_id ?? '');
 
-        $adapter = $registry->resolve($protocol, (string) $trace->id);
+        $adapter = $registry->resolve($protocol, (string) $runModel->id);
 
-        return response()->stream(function () use ($trace, $runner, $adapter, $nodeId, $message, $attachments) {
+        return response()->stream(function () use ($runModel, $adapter, $nodeId, $message, $attachments) {
             $sink = static function (string $chunk): void {
                 echo $chunk;
 
@@ -57,9 +80,10 @@ class WorkflowIntegrateResumeController
             };
 
             try {
+                $runner = app(WorkflowRunner::class);
                 (new WorkflowStreamBridge($adapter))->run(
                     $sink,
-                    fn (callable $emitter) => $runner->resume($trace, $nodeId, $message, $emitter, $attachments),
+                    fn (callable $emitter) => $runner->resume($runModel, $nodeId, $message, $emitter, $attachments),
                 );
             } catch (Throwable $exception) {
                 $sink('data: '.json_encode(['error' => $exception->getMessage()], JSON_THROW_ON_ERROR)."\n\n");
