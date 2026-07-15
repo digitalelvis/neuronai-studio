@@ -3,6 +3,8 @@
 namespace DigitalElvis\NeuronAIStudio\Tests;
 
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
+use DigitalElvis\NeuronAIStudio\Models\StudioThread;
 use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
 use DigitalElvis\NeuronAIStudio\Runtime\AgentRunner;
 use DigitalElvis\NeuronAIStudio\Runtime\BuilderWorkflowState;
@@ -15,7 +17,9 @@ use DigitalElvis\NeuronAIStudio\Runtime\ToolEventExtractor;
 use DigitalElvis\NeuronAIStudio\Runtime\ToolResolver;
 use DigitalElvis\NeuronAIStudio\Tests\Fixtures\Output\SampleLeadProfile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use NeuronAI\Chat\Messages\AssistantMessage;
+use NeuronAI\Chat\Messages\Usage;
 use NeuronAI\Testing\FakeAIProvider;
 use NeuronAI\Testing\RequestRecord;
 
@@ -172,5 +176,57 @@ class AgentNodeExecutorTest extends TestCase
         $this->assertSame('chat reply', $state->get('agent_response'));
         $fakeProvider->assertMethodCallCount('chat', 1);
         $fakeProvider->assertMethodCallCount('structured', 0);
+    }
+
+    public function test_execute_links_child_run_to_parent_and_rolls_up_usage(): void
+    {
+        config([
+            'neuronai-studio.usage.pricing.openai.gpt-4o-mini' => [
+                'prompt_per_1k' => 0.00015,
+                'completion_per_1k' => 0.0006,
+            ],
+        ]);
+
+        $parent = StudioRun::create([
+            'id' => (string) Str::uuid(),
+            'thread_id' => StudioThread::create(['id' => (string) Str::uuid()])->id,
+            'status' => 'running',
+        ]);
+
+        $agent = AgentDefinition::create([
+            'name' => 'Nested Agent',
+            'slug' => 'nested-agent-node',
+            'provider' => 'openai',
+            'model' => 'gpt-4o-mini',
+            'instructions' => 'You are helpful.',
+        ]);
+
+        $fakeProvider = new FakeAIProvider(
+            (new AssistantMessage('nested reply'))->setUsage(new Usage(1000, 500)),
+        );
+        $executor = $this->makeExecutor($fakeProvider);
+        $context = new GraphContext([], []);
+        $state = new BuilderWorkflowState($context, null, [
+            'input' => 'Hello',
+            '__studio_run_id' => $parent->id,
+        ]);
+
+        $executor->execute([
+            'data' => [
+                'agent_id' => $agent->id,
+                'output_key' => 'agent_response',
+            ],
+        ], $state, $context);
+
+        $child = StudioRun::query()->where('parent_run_id', $parent->id)->first();
+        $this->assertNotNull($child);
+        $this->assertSame($parent->id, $child->parent_run_id);
+        $this->assertSame(1500, $child->total_tokens);
+        $this->assertSame('0.000450', $child->estimated_cost);
+
+        $parent = $parent->fresh();
+        $this->assertGreaterThan(0, $parent->total_tokens);
+        $this->assertSame(1500, $parent->total_tokens);
+        $this->assertSame('0.000450', $parent->estimated_cost);
     }
 }

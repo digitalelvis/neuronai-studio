@@ -233,11 +233,15 @@ T12 → T13
 **Requirement**: CE-01  
 
 **Done when**:
-- [ ] Child run has `parent_run_id` = workflow run
-- [ ] Parent totals > 0 after agent node with FakeAIProvider usage (or recorded usage)
+- [x] Child run has `parent_run_id` = workflow run
+- [x] Parent totals > 0 after agent node with FakeAIProvider usage (or recorded usage)
+
+**Status**: ✅ Done  
 
 **Tests**: extend `AgentNodeExecutorTest`  
 **Gate**: quick  
+
+**Gate check**: `./vendor/bin/phpunit tests/AgentNodeExecutorTest.php` — OK (4 tests, 15 assertions)  
 
 ---
 
