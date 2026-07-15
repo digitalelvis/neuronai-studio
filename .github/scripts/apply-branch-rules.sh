@@ -128,4 +128,5 @@ done
 
 echo
 echo "Rulesets applied. Verify in GitHub: Settings → Rules → Rulesets"
-echo "Remember: enable Actions bypass for release-it if Release workflow fails on main."
+echo "Release workflow needs repository secret RELEASE_TOKEN (Administrator fine-grained PAT)."
+echo "See docs/RELEASE.md § Release bot (RELEASE_TOKEN)."

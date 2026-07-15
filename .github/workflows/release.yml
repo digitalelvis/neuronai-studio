@@ -15,10 +15,21 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Require RELEASE_TOKEN
+        env:
+          RELEASE_TOKEN: ${{ secrets.RELEASE_TOKEN }}
+        run: |
+          if [ -z "${RELEASE_TOKEN}" ]; then
+            echo "::error::Missing secret RELEASE_TOKEN. Create a fine-grained PAT from a repo Administrator (Contents: Read and write) and add it as repository secret RELEASE_TOKEN. See docs/RELEASE.md § Release bot (RELEASE_TOKEN)."
+            exit 1
+          fi
+
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
+          # Must be an Administrator PAT so ruleset bypass (RepositoryRole admin) applies.
+          # Default GITHUB_TOKEN cannot bypass "Protect main" on user-owned repos.
+          token: ${{ secrets.RELEASE_TOKEN }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -35,12 +46,29 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
       - name: Release
-        run: npx release-it --ci --no-git.push --no-github.release
+        id: release
+        run: |
+          before="$(node -p "require('./package.json').version")"
+          npx release-it --ci --no-git.push --no-github.release
+          after="$(node -p "require('./package.json').version")"
+          echo "version=${after}" >> "${GITHUB_OUTPUT}"
+          if [ "${before}" = "${after}" ]; then
+            echo "released=false" >> "${GITHUB_OUTPUT}"
+            echo "No version bump (nothing to release)."
+          else
+            echo "released=true" >> "${GITHUB_OUTPUT}"
+            echo "Bumped ${before} → ${after}"
+          fi
 
+      # Push commit first, then tag — never publish a Packagist tag if main rejects the commit.
       - name: Push release commit and tag
-        run: git push origin HEAD:main --tags
+        if: steps.release.outputs.released == 'true'
+        run: |
+          git push origin "HEAD:main"
+          git push origin "v${{ steps.release.outputs.version }}"
 
       - name: Create GitHub Release
-        run: gh release create "v$(node -p "require('./package.json').version")" --title "Release $(node -p "require('./package.json').version")" --generate-notes
+        if: steps.release.outputs.released == 'true'
+        run: gh release create "v${{ steps.release.outputs.version }}" --title "Release ${{ steps.release.outputs.version }}" --generate-notes
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.RELEASE_TOKEN }}
