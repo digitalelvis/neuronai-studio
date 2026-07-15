@@ -106,12 +106,16 @@ T12 → T13
 **Requirement**: CE-02, CE-03  
 
 **Done when**:
-- [ ] Formula `(p/1000)*rate_p + (c/1000)*rate_c`
-- [ ] Missing key → `"0.000000"` (or equivalent decimal string/float consistent with casts)
-- [ ] Unit tests green
+- [x] Formula `(p/1000)*rate_p + (c/1000)*rate_c`
+- [x] Missing key → `"0.000000"` (or equivalent decimal string/float consistent with casts)
+- [x] Unit tests green
+
+**Status**: ✅ Done  
 
 **Tests**: unit `UsageCostEstimatorTest`  
 **Gate**: quick  
+
+**Gate check**: `./vendor/bin/phpunit tests/Usage/UsageCostEstimatorTest.php` — OK (10 tests, 15 assertions)  
 
 ---
 
