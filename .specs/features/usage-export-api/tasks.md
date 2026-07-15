@@ -1,7 +1,7 @@
 # Usage Export API — Tasks
 
 **Design**: [design.md](./design.md) · **Spec**: [spec.md](./spec.md)  
-**Status**: Ready  
+**Status**: Debt — specs/design/tasks ready; Execute deferred (AD-015)  
 **Linha**: `v0.3.x` · **Ordem M5**: 2/3  
 **Blocked by**: `cost-estimation` CE-T12 (minimum: CE-T2..T5 + denormalized columns usable)
 

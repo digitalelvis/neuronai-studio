@@ -1,7 +1,7 @@
 # Usage Analytics — Tasks
 
 **Design**: [design.md](./design.md) · **Spec**: [spec.md](./spec.md)  
-**Status**: Ready  
+**Status**: Debt — specs/design/tasks ready; Execute deferred (AD-015)  
 **Linha**: `v0.3.x` · **Ordem M5**: 3/3 (mínimo Studio)  
 **Blocked by**: `UsageQuery` (UE-T2) + CE columns; Debugger tokens can start after CE-T3 if JSON already has tokens
 

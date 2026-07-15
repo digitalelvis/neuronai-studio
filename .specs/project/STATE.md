@@ -3,11 +3,17 @@
 **Last Updated:** 2026-07-15
 **Development line:** `v0.3.x` (target release `v0.4.0` — M5)
 **Latest published:** `v0.3.3` on Packagist / `main`
-**Current Work:** Cost estimation (CE-T1…T13) done on `feat/m5-analytics-billing`. Next: usage-export-api (UE).
+**Current Work:** `cost-estimation` done on `feat/m5-analytics-billing`. UE + UA parked as M5 debt (AD-015).
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-015: UE + UA como débito M5 — não Execute agora (2026-07-15)
+
+**Decision:** Manter `usage-export-api` e `usage-analytics` no roadmap com specs/design/tasks intactos, mas **não executar** até retorno explícito. CE permanece a fatia M5 entregue nesta onda.
+**Reason:** Metering no DB (provider/model/cost + nest rollup) já desbloqueia o host via queries diretas; API de export e superfície Studio podem esperar sem invalidar o design.
+**Impact:** Status ROADMAP → `debt`; M5 fica `partial` até UE/UA. Retomada: UE-T1 → … → UA.
 
 ### AD-012: RELEASE_TOKEN para push do release em main (2026-07-15)
 
@@ -204,6 +210,8 @@
 
 ## Deferred Ideas
 
+- [ ] **M5 debt:** `usage-export-api` (UE-T1…T7) — specs prontos; Execute sob demanda (AD-015)
+- [ ] **M5 debt:** `usage-analytics` (UA-T1…T8) — Dashboard mínimo + Debugger badges; Execute sob demanda (AD-015)
 - [ ] Autonomia multi-turn dentro de um único nó agent (múltiplas tool rounds sem sair do nó)
 - [ ] SSE em tempo real para `RunWorkflowJob` (broadcast vs polling)
 - [ ] Remove redundant layout `<link>` tags for bundle-inlined CSS
@@ -233,5 +241,6 @@
 - [x] Especificar M5 (Discuss → Spec) — AD-013; specs CE / UE / UA
 - [x] Design M5 — AD-014; design.md CE / UE / UA
 - [x] Tasks M5 — index + CE/UE/UA tasks.md (28)
-- [ ] Execute M5 — CE-T1…T13 → UE → UA
+- [x] Execute M5 `cost-estimation` (CE-T1…T13)
+- [ ] Execute M5 `usage-export-api` + `usage-analytics` — **débito** (AD-015)
 - [ ] Aplicar ruleset da development line em `v0.3.x` (`apply-branch-rules.sh`)

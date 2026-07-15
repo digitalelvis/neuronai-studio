@@ -5,7 +5,7 @@
 **Development line:** `v0.3.x` (target release `v0.4.0` — M5)  
 **Latest published:** `v0.3.3` on Packagist / `main`  
 **Última atualização:** 2026-07-15  
-**Etapa atual:** `cost-estimation` ✅. Próximo: Execute `usage-export-api` (UE-T1…) na linha `v0.3.x`.
+**Etapa atual:** `cost-estimation` ✅. `usage-export-api` + `usage-analytics` no roadmap como **débito** (não executar agora).
 
 ---
 
@@ -57,19 +57,21 @@ Expor agentes e workflows para clients externos (Vercel AI SDK, AG-UI) via endpo
 
 **Publicação:** `v0.3.0` (features) + `v0.3.1`–`v0.3.3` (metadata sync, governance, RELEASE_TOKEN fix). Linha `v0.2.x` encerrada.
 
-### M5 — Analítica e Faturamento (P1) `tasked`
+### M5 — Analítica e Faturamento (P1) `partial`
 
 Uso de tokens/spans já persistidos (`TelemetryTracker`, `StudioTraceSpan`) para **metering no host** (prioridade) e superfície mínima no Studio (Dashboard + badges Debugger).
 
 **Escopo decidido (2026-07-15):** host-first — `cost-estimation` + `usage-export-api` são P1 do milstone; `usage-analytics` é mínimo (Dashboard Livewire existente + badges no Debugger), sem página Usage/BI. Index: [m5-analytics-billing/tasks.md](../features/m5-analytics-billing/tasks.md).
 
+**Débito (2026-07-15):** CE shipped; UE + UA permanecem no roadmap com specs/design/tasks prontos, mas **não entram na fila de Execute agora** — retomada sob demanda.
+
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
 | 12 | `cost-estimation` | **done** | [spec](../features/cost-estimation/spec.md) · [design](../features/cost-estimation/design.md) · [tasks](../features/cost-estimation/tasks.md) |
-| 13 | `usage-export-api` | **tasked** | [spec](../features/usage-export-api/spec.md) · [design](../features/usage-export-api/design.md) · [tasks](../features/usage-export-api/tasks.md) |
-| 14 | `usage-analytics` | **tasked** (mínimo) | [spec](../features/usage-analytics/spec.md) · [design](../features/usage-analytics/design.md) · [tasks](../features/usage-analytics/tasks.md) |
+| 13 | `usage-export-api` | **debt** (tasked, not now) | [spec](../features/usage-export-api/spec.md) · [design](../features/usage-export-api/design.md) · [tasks](../features/usage-export-api/tasks.md) |
+| 14 | `usage-analytics` | **debt** (mínimo, not now) | [spec](../features/usage-analytics/spec.md) · [design](../features/usage-analytics/design.md) · [tasks](../features/usage-analytics/tasks.md) |
 
-**Critério de conclusão M5:** Custo estimado configurável por modelo (provider/model no span LLM); API agregada + por-run para o host meter/faturar; Dashboard com totais de tokens/custo na janela recente; Debugger com badges de tokens.
+**Critério de conclusão M5:** Custo estimado configurável por modelo (provider/model no span LLM); API agregada + por-run para o host meter/faturar; Dashboard com totais de tokens/custo na janela recente; Debugger com badges de tokens. (API + Dashboard ainda em débito.)
 
 ---
 
@@ -80,7 +82,7 @@ Uso de tokens/spans já persistidos (`TelemetryTracker`, `StudioTraceSpan`) para
 3. ~~Especificar M5 (Discuss → Spec)~~ ✅ — context + 3 specs
 4. ~~Design M5~~ ✅ — CE / UE / UA design.md
 5. ~~Tasks M5~~ ✅ — 28 tasks (CE-T1…13, UE-T1…7, UA-T1…8)
-6. Execute M5 — ~~`cost-estimation`~~ ✅; próximo `usage-export-api` UE-T1.
+6. Execute M5 — ~~`cost-estimation`~~ ✅; `usage-export-api` + `usage-analytics` → **débito** (não executar agora).
 7. Aplicar ruleset da development line em `v0.3.x` (script `apply-branch-rules.sh`).
 
 ---
