@@ -2,8 +2,8 @@
 
 **Last Updated:** 2026-07-15
 **Development line:** `v0.3.x` (target release `v0.4.0` — M5)
-**Latest published:** `v0.3.1` on Packagist / `main`
-**Current Work:** Linha `v0.3.x` aberta após publicação M1–M4 em `v0.3.0`/`v0.3.1`. Próximo passo: especificar M5 (Analítica e Faturamento). Tag órfã `v0.3.1` absorvida na history de `main`.
+**Latest published:** `v0.3.2` on Packagist / `main`
+**Current Work:** Linha `v0.3.x` aberta após publicação M1–M4. Tags órfãs `v0.3.1`/`v0.3.2` absorvidas na history de `main`. Próximo passo: especificar M5 (e corrigir release bot bypass em `main`).
 
 ---
 

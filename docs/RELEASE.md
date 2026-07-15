@@ -166,12 +166,12 @@ For future releases:
 
 ## v0.3.x development line
 
-Active development targets **M5 (Analítica e Faturamento)** on branch `v0.3.x`. Latest published package is **`v0.3.1`**.
+Active development targets **M5 (Analítica e Faturamento)** on branch `v0.3.x`. Latest published package is **`v0.3.2`**.
 
 | Area | Status |
 |------|--------|
 | M1–M4 (cyclic graphs, RAG, structured output, HITL, parallel, queue, stream adapters, unified runs) | ✅ Published in `v0.3.0` |
-| Release metadata sync | ✅ `v0.3.1` (Packagist + absorbed into `main` history) |
+| Release metadata sync | ✅ `v0.3.1` / `v0.3.2` (Packagist + absorbed into `main` history) |
 | M5 usage analytics / cost estimation / export API | 🔜 Planned — specs TBD |
 
 Line `v0.2.x` is closed for new features. Consumers on `v0.2.x` / `v0.3.0` can stay until ready to adopt M5.
