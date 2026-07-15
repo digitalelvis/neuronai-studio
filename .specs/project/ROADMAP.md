@@ -5,7 +5,7 @@
 **Development line:** `v0.3.x` (target release `v0.4.0` — M5)  
 **Latest published:** `v0.3.3` on Packagist / `main`  
 **Última atualização:** 2026-07-15  
-**Etapa atual:** M5 tasks prontas (28). Próximo: Execute CE-T1… na linha `v0.3.x`.
+**Etapa atual:** `cost-estimation` ✅. Próximo: Execute `usage-export-api` (UE-T1…) na linha `v0.3.x`.
 
 ---
 
@@ -65,7 +65,7 @@ Uso de tokens/spans já persistidos (`TelemetryTracker`, `StudioTraceSpan`) para
 
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
-| 12 | `cost-estimation` | **tasked** | [spec](../features/cost-estimation/spec.md) · [design](../features/cost-estimation/design.md) · [tasks](../features/cost-estimation/tasks.md) |
+| 12 | `cost-estimation` | **done** | [spec](../features/cost-estimation/spec.md) · [design](../features/cost-estimation/design.md) · [tasks](../features/cost-estimation/tasks.md) |
 | 13 | `usage-export-api` | **tasked** | [spec](../features/usage-export-api/spec.md) · [design](../features/usage-export-api/design.md) · [tasks](../features/usage-export-api/tasks.md) |
 | 14 | `usage-analytics` | **tasked** (mínimo) | [spec](../features/usage-analytics/spec.md) · [design](../features/usage-analytics/design.md) · [tasks](../features/usage-analytics/tasks.md) |
 
@@ -80,7 +80,7 @@ Uso de tokens/spans já persistidos (`TelemetryTracker`, `StudioTraceSpan`) para
 3. ~~Especificar M5 (Discuss → Spec)~~ ✅ — context + 3 specs
 4. ~~Design M5~~ ✅ — CE / UE / UA design.md
 5. ~~Tasks M5~~ ✅ — 28 tasks (CE-T1…13, UE-T1…7, UA-T1…8)
-6. Execute M5 — começar em `cost-estimation` CE-T1.
+6. Execute M5 — ~~`cost-estimation`~~ ✅; próximo `usage-export-api` UE-T1.
 7. Aplicar ruleset da development line em `v0.3.x` (script `apply-branch-rules.sh`).
 
 ---

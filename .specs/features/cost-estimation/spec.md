@@ -6,10 +6,10 @@ O Studio já persiste `prompt_tokens` / `completion_tokens` / `total_tokens` em 
 
 ## Goals
 
-- [ ] Persistir `provider` e `model` em cada span LLM criado pelo `TelemetryTracker`.
-- [ ] Expor configuração de preços por modelo (prompt/completion por 1k tokens + currency).
-- [ ] Calcular `estimated_cost` (ou equivalente) por span e agregar no run / nas leituras de aggregate.
-- [ ] Documentar preços como estimativas editáveis pelo host.
+- [x] Persistir `provider` e `model` em cada span LLM criado pelo `TelemetryTracker`.
+- [x] Expor configuração de preços por modelo (prompt/completion por 1k tokens + currency).
+- [x] Calcular `estimated_cost` (ou equivalente) por span e agregar no run / nas leituras de aggregate.
+- [x] Documentar preços como estimativas editáveis pelo host.
 
 ## Out of Scope
 
@@ -103,10 +103,10 @@ O Studio já persiste `prompt_tokens` / `completion_tokens` / `total_tokens` em 
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| CE-01 | P1: Model attribution | Tasks | In Tasks |
-| CE-02 | P1: Configurable pricing | Tasks | In Tasks |
-| CE-03 | P1: Cost calculation | Tasks | In Tasks |
-| CE-04 | P2: Seed defaults | Tasks | In Tasks |
+| CE-01 | P1: Model attribution | Tasks | Done |
+| CE-02 | P1: Configurable pricing | Tasks | Done |
+| CE-03 | P1: Cost calculation | Tasks | Done |
+| CE-04 | P2: Seed defaults | Tasks | Done |
 
 **Coverage:** 4 total, mapped in [tasks.md](./tasks.md)
 
@@ -114,10 +114,10 @@ O Studio já persiste `prompt_tokens` / `completion_tokens` / `total_tokens` em 
 
 ## Success Criteria
 
-- [ ] LLM spans store provider + model whenever resolvable.
-- [ ] Host can override pricing in published config.
-- [ ] Estimated cost available for a run (sum of spans) and reusable by export API + Dashboard.
-- [ ] Docs: `guides/analytics/costs.md` + `reference/configuration.md` updated.
+- [x] LLM spans store provider + model whenever resolvable.
+- [x] Host can override pricing in published config.
+- [x] Estimated cost available for a run (sum of spans) and reusable by export API + Dashboard.
+- [x] Docs: `guides/analytics/costs.md` + `reference/configuration.md` updated.
 
 ---
 

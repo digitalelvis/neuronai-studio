@@ -3,7 +3,7 @@
 **Last Updated:** 2026-07-15
 **Development line:** `v0.3.x` (target release `v0.4.0` — M5)
 **Latest published:** `v0.3.3` on Packagist / `main`
-**Current Work:** M5 tasks prontas. Próximo: Execute CE-T1 (config `usage`) na `v0.3.x`.
+**Current Work:** Cost estimation (CE-T1…T13) done on `feat/m5-analytics-billing`. Next: usage-export-api (UE).
 
 ---
 

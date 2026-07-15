@@ -1,7 +1,7 @@
 # Cost Estimation — Tasks
 
 **Design**: [design.md](./design.md) · **Spec**: [spec.md](./spec.md)  
-**Status**: Ready  
+**Status**: ✅ Done  
 **Linha**: `v0.3.x` · **Ordem M5**: 1/3 (bloqueia UE + UA)
 
 ---
@@ -293,8 +293,11 @@ T12 → T13
 **Requirement**: CE-02, success criteria docs  
 
 **Done when**:
-- [ ] Docs state estimates ≠ invoices
-- [ ] Schema doc matches threads/runs/traces/spans
+- [x] Docs state estimates ≠ invoices
+- [x] Schema doc matches threads/runs/traces/spans
+
+**Status**: ✅ Done  
+**Notes**: `guides/analytics/costs.md`; `configuration.md` usage section; `database-schema.md` rewritten off legacy `workflow_*`; SUMMARY link.  
 
 **Tests**: none  
 **Gate**: quick  

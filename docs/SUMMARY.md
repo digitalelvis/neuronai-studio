@@ -51,6 +51,10 @@
 * [Export & Production](guides/export-and-production.md)
 * [Security & Access](guides/security-and-access.md)
 
+### Analytics
+
+* [Cost Estimation](guides/analytics/costs.md)
+
 ## Reference
 
 * [Configuration](reference/configuration.md)
