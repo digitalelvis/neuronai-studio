@@ -148,12 +148,17 @@ T12 → T13
 **Requirement**: CE-01, CE-03  
 
 **Done when**:
-- [ ] Existing observe path still creates llm span
-- [ ] Span has provider/model/cost when ctor provided
-- [ ] Parent incremented when set
+- [x] Existing observe path still creates llm span
+- [x] Span has provider/model/cost when ctor provided
+- [x] Parent incremented when set
+
+**Status**: ✅ Done  
+**Notes**: Optional `UsageRecorder` ctor arg for tests; AgentRunner wiring is CE-T7.  
 
 **Tests**: via CE-T12 / extend `AgentRunnerTest` as needed  
 **Gate**: quick  
+
+**Gate check**: `./vendor/bin/phpunit tests/TelemetryTrackerTest.php tests/Usage/UsageRecorderTest.php tests/AgentRunnerTest.php` — OK (8 tests, 47 assertions)  
 
 ---
 
