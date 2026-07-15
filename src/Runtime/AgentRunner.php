@@ -70,20 +70,44 @@ class AgentRunner
 
         $threadKey = $this->resolveThreadKey($definition, $payload);
         $config = $this->resolvePlaygroundConfig($definition, $payload);
+        $messageText = (string) ($payload['message'] ?? '');
+
+        [$run, $trace] = $this->createExecutionSession($definition, $threadKey, [
+            'message' => $messageText,
+        ]);
 
         $agent = $this->makeAgent($definition, $config, $threadKey);
+        $agent->setPersistence(new InMemoryPersistence, $run->id);
+
+        $tracker = $this->makeTelemetryTracker($run, $trace, $config);
+        $agent->observe($tracker);
 
         $message = $this->messages->userMessage(
-            (string) ($payload['message'] ?? ''),
+            $messageText,
             is_array($payload['attachments'] ?? null) ? $payload['attachments'] : [],
         );
 
         $handler = $agent->stream($message);
 
-        foreach ($handler->events() as $event) {
-            if ($event instanceof StreamChunk) {
-                yield $event;
+        try {
+            foreach ($handler->events() as $event) {
+                if ($event instanceof StreamChunk) {
+                    yield $event;
+                }
             }
+
+            $run->update([
+                'status' => 'completed',
+                'output' => ['content' => $handler->getMessage()->getContent()],
+                'finished_at' => now(),
+            ]);
+        } catch (\Throwable $exception) {
+            $run->update([
+                'status' => 'failed',
+                'error_message' => $exception->getMessage(),
+                'finished_at' => now(),
+            ]);
+            throw $exception;
         }
     }
 
@@ -91,7 +115,8 @@ class AgentRunner
      * Return the agent stream handler WITHOUT consuming its events, so an
      * external integration controller can drive it through a wire-protocol
      * adapter via `$handler->events($adapter)`. The internal playground path
-     * (`stream()`) is left untouched (SA-08).
+     * (`stream()`) is left untouched (SA-08). Attaches a TelemetryTracker so
+     * integrate streams meter usage when the consumer drains events.
      *
      * @param  array<string, mixed>  $payload
      */
@@ -101,11 +126,20 @@ class AgentRunner
 
         $threadKey = $this->resolveThreadKey($definition, $payload);
         $config = $this->resolvePlaygroundConfig($definition, $payload);
+        $messageText = (string) ($payload['message'] ?? '');
+
+        [$run, $trace] = $this->createExecutionSession($definition, $threadKey, [
+            'message' => $messageText,
+        ]);
 
         $agent = $this->makeAgent($definition, $config, $threadKey);
+        $agent->setPersistence(new InMemoryPersistence, $run->id);
+
+        $tracker = $this->makeTelemetryTracker($run, $trace, $config);
+        $agent->observe($tracker);
 
         $message = $this->messages->userMessage(
-            (string) ($payload['message'] ?? ''),
+            $messageText,
             is_array($payload['attachments'] ?? null) ? $payload['attachments'] : [],
         );
 

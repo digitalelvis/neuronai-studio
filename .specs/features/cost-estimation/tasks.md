@@ -191,11 +191,16 @@ T12 → T13
 **Requirement**: CE-01  
 
 **Done when**:
-- [ ] After `stream`/`streamHandler` run, llm spans exist with tokens when provider returns usage
-- [ ] Playground/integrate behavior otherwise unchanged (regession: existing stream tests)
+- [x] After `stream`/`streamHandler` run, llm spans exist with tokens when provider returns usage
+- [x] Playground/integrate behavior otherwise unchanged (regession: existing stream tests)
+
+**Status**: ✅ Done  
+**Notes**: `stream()` finalizes run status; `streamHandler()` attaches tracker (status stays `running` until consumer finishes — metering fires on inference-stop).  
 
 **Tests**: extend `AgentRunnerPlaygroundTest` / `AgentIntegrateStreamTest` lightly or CE-T12  
 **Gate**: full  
+
+**Gate check**: `./vendor/bin/phpunit tests/AgentRunnerPlaygroundTest.php tests/AgentIntegrateStreamTest.php tests/AgentChatThreadTest.php` — OK (9 tests, 40 assertions)  
 
 ---
 
