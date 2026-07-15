@@ -86,11 +86,15 @@ T12 → T13
 **Requirement**: CE-01, CE-03  
 
 **Done when**:
-- [ ] Fillable + casts (`estimated_cost` → `decimal:6`)
-- [ ] Relations work in a unit/feature smoke
+- [x] Fillable + casts (`estimated_cost` → `decimal:6`)
+- [x] Relations work in a unit/feature smoke
+
+**Status**: ✅ Done  
 
 **Tests**: covered by CE-T12  
 **Gate**: quick  
+
+**Gate check**: `./vendor/bin/phpunit tests/MigrationTest.php` — OK (4 tests, 31 assertions)  
 
 ---
 

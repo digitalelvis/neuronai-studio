@@ -149,4 +149,52 @@ class MigrationTest extends TestCase
             'model' => 'gpt-4o-mini',
         ]);
     }
+
+    public function test_run_parent_children_relations_and_usage_fillable(): void
+    {
+        $thread = StudioThread::create([
+            'id' => (string) Str::uuid(),
+        ]);
+
+        $parent = StudioRun::create([
+            'id' => (string) Str::uuid(),
+            'thread_id' => $thread->id,
+            'status' => 'running',
+            'estimated_cost' => '0.100000',
+        ]);
+
+        $child = StudioRun::create([
+            'id' => (string) Str::uuid(),
+            'thread_id' => $thread->id,
+            'parent_run_id' => $parent->id,
+            'status' => 'completed',
+            'estimated_cost' => '0.050000',
+        ]);
+
+        $this->assertTrue($child->parent->is($parent));
+        $this->assertTrue($parent->children->contains(fn (StudioRun $run) => $run->is($child)));
+        $this->assertSame('0.100000', $parent->fresh()->estimated_cost);
+        $this->assertSame('0.050000', $child->fresh()->estimated_cost);
+
+        $trace = StudioTrace::create([
+            'id' => (string) Str::uuid(),
+            'run_id' => $child->id,
+        ]);
+
+        $span = StudioTraceSpan::create([
+            'id' => (string) Str::uuid(),
+            'trace_id' => $trace->id,
+            'name' => 'llm',
+            'type' => 'llm',
+            'status' => 'completed',
+            'provider' => 'anthropic',
+            'model' => 'claude-sonnet-4-20250514',
+            'estimated_cost' => '0.012500',
+        ]);
+
+        $span = $span->fresh();
+        $this->assertSame('anthropic', $span->provider);
+        $this->assertSame('claude-sonnet-4-20250514', $span->model);
+        $this->assertSame('0.012500', $span->estimated_cost);
+    }
 }

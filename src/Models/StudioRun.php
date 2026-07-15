@@ -19,6 +19,7 @@ class StudioRun extends Model
     protected $fillable = [
         'id',
         'thread_id',
+        'parent_run_id',
         'status',
         'input',
         'output',
@@ -26,6 +27,7 @@ class StudioRun extends Model
         'prompt_tokens',
         'completion_tokens',
         'total_tokens',
+        'estimated_cost',
         'error_message',
         'started_at',
         'finished_at',
@@ -58,12 +60,23 @@ class StudioRun extends Model
             'prompt_tokens' => 'integer',
             'completion_tokens' => 'integer',
             'total_tokens' => 'integer',
+            'estimated_cost' => 'decimal:6',
         ];
     }
 
     public function thread(): BelongsTo
     {
         return $this->belongsTo(StudioThread::class, 'thread_id');
+    }
+
+    public function parent(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'parent_run_id');
+    }
+
+    public function children(): HasMany
+    {
+        return $this->hasMany(self::class, 'parent_run_id');
     }
 
     public function traces(): HasMany

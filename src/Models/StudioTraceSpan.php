@@ -21,12 +21,15 @@ class StudioTraceSpan extends Model
         'parent_span_id',
         'name',
         'type',
+        'provider',
+        'model',
         'status',
         'input',
         'output',
         'prompt_tokens',
         'completion_tokens',
         'total_tokens',
+        'estimated_cost',
         'duration_ms',
         'error_message',
         'started_at',
@@ -59,6 +62,7 @@ class StudioTraceSpan extends Model
             'prompt_tokens' => 'integer',
             'completion_tokens' => 'integer',
             'total_tokens' => 'integer',
+            'estimated_cost' => 'decimal:6',
             'duration_ms' => 'integer',
         ];
     }
