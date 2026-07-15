@@ -56,5 +56,5 @@
       "bypass_mode": "always"
     }
   ],
-  "_comment": "actor_id 5 = repository Administrator role. User-owned repositories do not support bypass for GitHub Actions app, use a PAT for release-it pushes."
+  "_comment": "actor_id 5 = RepositoryRole Administrator. User-owned repos cannot bypass via the GitHub Actions app. Release workflow must push with secrets.RELEASE_TOKEN (fine-grained PAT from an Administrator; Contents: Read and write). See docs/RELEASE.md."
 }

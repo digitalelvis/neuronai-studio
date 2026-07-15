@@ -8,6 +8,7 @@ Operational guide for versioning and publishing `digitalelvis/neuronai-studio` o
 |-----------|------|
 | `release-it` | Semver bump, `CHANGELOG.md`, Git tag, GitHub Release |
 | `.github/workflows/release.yml` | Runs `release-it --ci` on every push to `main` (skips `[skip ci]` commits) |
+| `RELEASE_TOKEN` (repo secret) | Administrator fine-grained PAT used to push the release commit past the `Protect main` ruleset |
 | `.github/workflows/ci.yml` | PHPUnit + frontend build gate on PRs to `main` and `v*.*.x` |
 | Packagist | Consumes Git tags (`v1.2.3`) — no `version` field in `composer.json` |
 
@@ -67,10 +68,36 @@ Operational guide for versioning and publishing `digitalelvis/neuronai-studio` o
 4. Backport to active development branches:
 
    ```bash
-   git checkout v0.2.x
+   git checkout v0.3.x
    git merge main
    git push
    ```
+
+## Release bot (`RELEASE_TOKEN`)
+
+User-owned repositories cannot add the built-in GitHub Actions app as a ruleset bypass actor. The Release workflow therefore authenticates with a **fine-grained Personal Access Token** owned by a repo **Administrator** (the `Protect main` ruleset already bypasses `RepositoryRole` Administrator).
+
+### One-time setup
+
+1. GitHub → Settings → Developer settings → [Fine-grained personal access tokens](https://github.com/settings/personal-access-tokens) → **Generate new token**.
+2. Configure:
+   - **Resource owner:** `digitalelvis` (repo owner account)
+   - **Repository access:** Only select `digitalelvis/neuronai-studio`
+   - **Permissions → Repository:**
+     - **Contents:** Read and write (push commit + tags)
+     - **Metadata:** Read (required)
+   - **Expiration:** 90 days (or shorter); set a calendar reminder to rotate
+3. Copy the token once.
+4. Repo → **Settings → Secrets and variables → Actions → New repository secret**:
+   - Name: `RELEASE_TOKEN`
+   - Value: the PAT
+5. Confirm the ruleset **Protect main** still lists **Bypass → Repository role: Admin** (applied via `.github/scripts/apply-branch-rules.sh`).
+
+Without `RELEASE_TOKEN`, the Release workflow fails **before** `release-it` runs (no orphan Packagist tags).
+
+### Rotate
+
+Generate a new fine-grained PAT → update the `RELEASE_TOKEN` secret → revoke the old token.
 
 ## Dry run locally
 
@@ -94,20 +121,15 @@ git checkout main
 git push -u origin main
 ```
 
-### 2. Branch protection (GitHub UI)
+### 2. Branch protection (rulesets)
 
-Repository → Settings → Branches → Add rule:
+Apply from the repo root (requires `gh` admin access):
 
-**`main`**
+```bash
+./.github/scripts/apply-branch-rules.sh
+```
 
-- Require a pull request before merging
-- Require status checks to pass: `test` (from CI workflow)
-- Do not allow bypassing (recommended)
-
-**`v0.3.x`** (or current development line)
-
-- Require a pull request before merging
-- Require status checks to pass: same contexts as `main` (see `.github/rulesets/`)
+That installs **Protect main** and **Protect development lines** from `.github/rulesets/`, including Administrator bypass for release pushes. Then create the [`RELEASE_TOKEN`](#release-bot-release_token) secret.
 
 ### 3. Register on Packagist
 
@@ -166,12 +188,12 @@ For future releases:
 
 ## v0.3.x development line
 
-Active development targets **M5 (Analítica e Faturamento)** on branch `v0.3.x`. Latest published package is **`v0.3.2`**.
+Active development targets **M5 (Analítica e Faturamento)** on branch `v0.3.x`. Latest published package is **`v0.3.3`**.
 
 | Area | Status |
 |------|--------|
 | M1–M4 (cyclic graphs, RAG, structured output, HITL, parallel, queue, stream adapters, unified runs) | ✅ Published in `v0.3.0` |
-| Release metadata sync | ✅ `v0.3.1` / `v0.3.2` (Packagist + absorbed into `main` history) |
+| Release bot (`RELEASE_TOKEN` + push `main` before tag) | ✅ Verified with `v0.3.3` on `main` + Packagist |
 | M5 usage analytics / cost estimation / export API | 🔜 Planned — specs TBD |
 
 Line `v0.2.x` is closed for new features. Consumers on `v0.2.x` / `v0.3.0` can stay until ready to adopt M5.
@@ -181,9 +203,11 @@ Line `v0.2.x` is closed for new features. Consumers on `v0.2.x` / `v0.3.0` can s
 | Issue | Cause | Fix |
 |-------|-------|-----|
 | Release workflow loops | Missing `[skip ci]` on release commit | Ensure `.release-it.json` has `[skip ci]` in `commitMessage` |
-| Release push rejected on `main` | Branch protection blocks `GITHUB_TOKEN` direct push | Add **GitHub Actions** (or repo admins) to ruleset bypass on `Protect main`, or run `release-it --no-git.push` locally and `git push origin HEAD:main --tags` |
+| `Missing secret RELEASE_TOKEN` | Secret not configured | Follow [Release bot](#release-bot-release_token) |
+| Release push rejected on `main` (GH013) | Push used `GITHUB_TOKEN` or a non-admin PAT | Use Administrator `RELEASE_TOKEN`; confirm Admin bypass on **Protect main** |
+| Orphan Packagist tag (tag exists, commit not on `main`) | Tag pushed before `main` (legacy workflow) or push to `main` rejected | Absorb tag via hotfix merge; current workflow pushes `main` **before** the tag |
 | Release rolls back after tag | `release-it` GitHub plugin fails in CI (`Cannot read properties of null`) | Keep `"github.release": false` in `.release-it.json`; workflow creates the GitHub Release via `gh release create` |
-| Release skipped after merge | Prior run failed and rolled back | Merge the workflow fix, then re-run **Release** via Actions → **workflow_dispatch**, or push an empty commit to `main` |
+| Release skipped after merge | Prior run failed before bump, or only `docs`/`chore` commits | Re-run **Release** via Actions → **workflow_dispatch** when a bump is expected |
 | No version bump | Only `docs`/`chore` commits since last tag | Expected — `requireCommitsFail: false` skips release |
 | Packagist stale | Hook not configured | Follow [3.3 GitHub Hook](#33-github-hook-auto-update); add API token as webhook secret |
 | Packagist hook 403 | Webhook missing secret | Set **Secret** to your Packagist API token (Profile) |

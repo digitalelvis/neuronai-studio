@@ -2,12 +2,18 @@
 
 **Last Updated:** 2026-07-15
 **Development line:** `v0.3.x` (target release `v0.4.0` — M5)
-**Latest published:** `v0.3.2` on Packagist / `main`
-**Current Work:** Linha `v0.3.x` aberta após publicação M1–M4. Tags órfãs `v0.3.1`/`v0.3.2` absorvidas na history de `main`. Próximo passo: especificar M5 (e corrigir release bot bypass em `main`).
+**Latest published:** `v0.3.3` on Packagist / `main`
+**Current Work:** Release bot resolvido (`RELEASE_TOKEN` + push em `main` antes da tag; `v0.3.3` publicado sem órfão). Próximo: especificar M5.
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-012: RELEASE_TOKEN para push do release em main (2026-07-15)
+
+**Decision:** Autenticar `.github/workflows/release.yml` com secret `RELEASE_TOKEN` (fine-grained PAT de um Administrator), nunca com `GITHUB_TOKEN`. Push do commit em `main` **antes** da tag. Falhar cedo se o secret faltar.
+**Reason:** Repos user-owned não permitem bypass do app GitHub Actions no ruleset; `GITHUB_TOKEN` gera tags órfãs no Packagist quando o push de `main` é rejeitado (GH013).
+**Impact:** Setup one-time em [docs/RELEASE.md](../../docs/RELEASE.md); ruleset Mantém bypass só para RepositoryRole Administrator.
 
 ### AD-010: Linha de desenvolvimento v0.3.x + M5 (2026-07-15)
 
@@ -205,5 +211,8 @@
 - [x] **Unified Runs and Traces** — T1-T7 concluídos (unificação de tabelas, token tracking, api unificada, 279 testes verde)
 - [x] Publicar ciclo M1–M4 (`v0.3.0` / `v0.3.1`) e absorver tag órfã em `main`
 - [x] Abrir linha `v0.3.x` e atualizar ROADMAP/STATE/RELEASE
+- [x] Absorver tag órfã `v0.3.2` em `main`
+- [x] Release workflow: `RELEASE_TOKEN` + push `main` antes da tag (AD-012)
+- [x] Secret `RELEASE_TOKEN` configurado; `v0.3.3` publicado com commit na ancestry de `main`
 - [ ] Especificar M5 (Discuss → Spec) — `usage-analytics`, `cost-estimation`, `usage-export-api`
 - [ ] Aplicar ruleset da development line em `v0.3.x` (`apply-branch-rules.sh`)

@@ -3,9 +3,9 @@
 **North star:** Agentes multimodais autônomos com grafos de workflow cíclicos.
 
 **Development line:** `v0.3.x` (target release `v0.4.0` — M5)  
-**Latest published:** `v0.3.2` on Packagist / `main`  
+**Latest published:** `v0.3.3` on Packagist / `main`  
 **Última atualização:** 2026-07-15  
-**Etapa atual:** M1–M4 publicados em `v0.3.0`–`v0.3.2`. Linha `v0.3.x` aberta para M5 (Analítica e Faturamento).
+**Etapa atual:** M1–M4 publicados; release bot OK (`v0.3.3`). Linha `v0.3.x` aberta para M5 (Analítica e Faturamento).
 
 ---
 
@@ -55,7 +55,7 @@ Expor agentes e workflows para clients externos (Vercel AI SDK, AG-UI) via endpo
 
 **Critério de conclusão M4:** Host app consome agente via `useChat` (Vercel) e workflow via client AG-UI usando rotas configuráveis do package; workflow com Human node pausa e retoma via endpoint `resume/{protocol}`; catálogo e Connect Panel documentam URLs e snippets.
 
-**Publicação:** `v0.3.0` (features) + `v0.3.1`/`v0.3.2` (release metadata sync + governance rulesets). Linha `v0.2.x` encerrada.
+**Publicação:** `v0.3.0` (features) + `v0.3.1`–`v0.3.3` (metadata sync, governance, RELEASE_TOKEN fix). Linha `v0.2.x` encerrada.
 
 ### M5 — Analítica e Faturamento (P1) `planned`
 
