@@ -112,8 +112,12 @@ class AgentRunner
         return $agent->stream($message);
     }
 
-    protected function createExecutionSession(?AgentDefinition $definition, ?string $threadKey = null, array $input = []): array
-    {
+    protected function createExecutionSession(
+        ?AgentDefinition $definition,
+        ?string $threadKey = null,
+        array $input = [],
+        ?StudioRun $parentRun = null,
+    ): array {
         $threadId = $threadKey;
         if ($threadId === null && $definition) {
             $threadId = (string) Str::uuid();
@@ -135,6 +139,7 @@ class AgentRunner
         $run = StudioRun::create([
             'id' => (string) Str::uuid(),
             'thread_id' => $thread ? $thread->id : (string) Str::uuid(),
+            'parent_run_id' => $parentRun?->id,
             'status' => 'running',
             'input' => $input,
             'started_at' => now(),
@@ -147,16 +152,22 @@ class AgentRunner
         return [$run, $trace];
     }
 
-    public function runInline(array $config, string|UserMessage $message, ?AgentDefinition $definition = null, ?string $threadKey = null, bool $fake = false): AgentRunResult
-    {
+    public function runInline(
+        array $config,
+        string|UserMessage $message,
+        ?AgentDefinition $definition = null,
+        ?string $threadKey = null,
+        bool $fake = false,
+        ?StudioRun $parentRun = null,
+    ): AgentRunResult {
         [$run, $trace] = $this->createExecutionSession($definition, $threadKey, [
             'message' => $message instanceof UserMessage ? $message->getContent() : $message
-        ]);
+        ], $parentRun);
 
         $agent = $this->makeAgent($definition, $config, $run->thread_id, $fake);
         $agent->setPersistence(new InMemoryPersistence, $run->id);
 
-        $tracker = new TelemetryTracker($run, $trace);
+        $tracker = $this->makeTelemetryTracker($run, $trace, $config, $parentRun);
         $agent->observe($tracker);
 
         $userMessage = $message instanceof UserMessage ? $message : new UserMessage($message);
@@ -206,15 +217,16 @@ class AgentRunner
         ?AgentDefinition $definition = null,
         ?string $threadKey = null,
         bool $fake = false,
+        ?StudioRun $parentRun = null,
     ): Generator {
         [$run, $trace] = $this->createExecutionSession($definition, $threadKey, [
             'message' => $message instanceof UserMessage ? $message->getContent() : $message
-        ]);
+        ], $parentRun);
 
         $agent = $this->makeAgent($definition, $config, $threadKey, $fake);
         $agent->setPersistence(new InMemoryPersistence, $run->id);
 
-        $tracker = new TelemetryTracker($run, $trace);
+        $tracker = $this->makeTelemetryTracker($run, $trace, $config, $parentRun);
         $agent->observe($tracker);
 
         $userMessage = $message instanceof UserMessage ? $message : new UserMessage($message);
@@ -306,6 +318,7 @@ class AgentRunner
         ?string $feedback = null,
         ?AgentDefinition $definition = null,
         ?string $threadKey = null,
+        ?StudioRun $parentRun = null,
     ): AgentRunResult {
         if (is_string($run)) {
             if (Str::isUuid($run) || strlen($run) < 100) {
@@ -338,7 +351,12 @@ class AgentRunner
         $agent = $this->makeAgent($definition, $config, $threadKey);
         $agent->setPersistence(new InMemoryPersistence, $run->id);
 
-        $tracker = new TelemetryTracker($run, $trace);
+        $tracker = $this->makeTelemetryTracker(
+            $run,
+            $trace,
+            $config,
+            $parentRun ?? $this->resolveParentRun($run),
+        );
         $agent->observe($tracker);
 
         $persistence = new InMemoryPersistence;
@@ -431,15 +449,16 @@ class AgentRunner
         ?AgentDefinition $definition = null,
         ?string $threadKey = null,
         bool $fake = false,
+        ?StudioRun $parentRun = null,
     ): AgentRunResult {
         [$run, $trace] = $this->createExecutionSession($definition, $threadKey, [
             'message' => $message instanceof UserMessage ? $message->getContent() : $message
-        ]);
+        ], $parentRun);
 
         $agent = $this->makeAgent($definition, $config, $threadKey, $fake);
         $agent->setPersistence(new InMemoryPersistence, $run->id);
 
-        $tracker = new TelemetryTracker($run, $trace);
+        $tracker = $this->makeTelemetryTracker($run, $trace, $config, $parentRun);
         $agent->observe($tracker);
 
         $userMessage = $message instanceof UserMessage ? $message : new UserMessage($message);
@@ -498,6 +517,35 @@ class AgentRunner
         }
 
         return ['value' => $result];
+    }
+
+    protected function makeTelemetryTracker(
+        StudioRun $run,
+        StudioTrace $trace,
+        array $config,
+        ?StudioRun $parentRun = null,
+    ): TelemetryTracker {
+        $provider = isset($config['provider']) && is_string($config['provider']) && $config['provider'] !== ''
+            ? $config['provider']
+            : null;
+        $model = isset($config['model']) && is_string($config['model']) && $config['model'] !== ''
+            ? $config['model']
+            : null;
+
+        return new TelemetryTracker($run, $trace, true, $provider, $model, $parentRun);
+    }
+
+    protected function resolveParentRun(StudioRun $run): ?StudioRun
+    {
+        if ($run->relationLoaded('parent')) {
+            return $run->parent;
+        }
+
+        if ($run->parent_run_id === null) {
+            return null;
+        }
+
+        return StudioRun::query()->find($run->parent_run_id);
     }
 
     /**

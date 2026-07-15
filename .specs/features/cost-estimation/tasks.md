@@ -170,11 +170,16 @@ T12 → T13
 **Requirement**: CE-01  
 
 **Done when**:
-- [ ] Inline paths pass config provider/model
-- [ ] Optional parent → `parent_run_id` persisted + tracker parent set
+- [x] Inline paths pass config provider/model
+- [x] Optional parent → `parent_run_id` persisted + tracker parent set
+
+**Status**: ✅ Done  
+**Notes**: `stream`/`streamHandler` metering is CE-T8; AgentNodeExecutor parent wire is CE-T10.  
 
 **Tests**: feature (CE-T12)  
 **Gate**: quick  
+
+**Gate check**: `./vendor/bin/phpunit tests/AgentRunnerTest.php` — OK (3 tests, 18 assertions)  
 
 ---
 
