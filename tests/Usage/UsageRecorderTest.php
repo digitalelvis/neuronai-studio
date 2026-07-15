@@ -91,6 +91,41 @@ class UsageRecorderTest extends TestCase
         $this->assertSame('0.000000', $span->estimated_cost);
     }
 
+    public function test_finalize_run_sums_own_spans_and_child_runs(): void
+    {
+        [$parent, $parentTrace] = $this->makeRunAndTrace();
+        $this->recorder->recordLlmSpan($parent, $parentTrace, 'openai', 'gpt-4o-mini', 1000, 0);
+
+        [$child, $childTrace] = $this->makeRunAndTrace($parent);
+        $this->recorder->recordLlmSpan($child, $childTrace, 'openai', 'gpt-4o-mini', 2000, 500);
+
+        // Simulate interim parent rollup (also done by recordLlmSpan with parent)
+        // then overwrite parent tokens to prove finalize recomputes from source.
+        $parent->update([
+            'prompt_tokens' => 1,
+            'completion_tokens' => 1,
+            'total_tokens' => 2,
+            'estimated_cost' => '0.000001',
+        ]);
+
+        $this->recorder->finalizeRun($child->fresh());
+        $this->recorder->finalizeRun($parent->fresh());
+
+        $child = $child->fresh();
+        $this->assertSame(2000, $child->prompt_tokens);
+        $this->assertSame(500, $child->completion_tokens);
+        $this->assertSame(2500, $child->total_tokens);
+        $this->assertSame('0.000600', $child->estimated_cost);
+
+        $parent = $parent->fresh();
+        // own 1000/0 + child 2000/500
+        $this->assertSame(3000, $parent->prompt_tokens);
+        $this->assertSame(500, $parent->completion_tokens);
+        $this->assertSame(3500, $parent->total_tokens);
+        // 0.000150 + 0.000600 = 0.000750
+        $this->assertSame('0.000750', $parent->estimated_cost);
+    }
+
     /**
      * @return array{0: StudioRun, 1: StudioTrace}
      */

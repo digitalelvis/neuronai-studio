@@ -12,6 +12,7 @@ use DigitalElvis\NeuronAIStudio\Support\PlaygroundContext;
 use DigitalElvis\NeuronAIStudio\Support\ProviderParameters;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\StructuredOutputValidationException;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ToolApprovalRequiredException;
+use DigitalElvis\NeuronAIStudio\Usage\UsageRecorder;
 use Illuminate\Support\Str;
 use Generator;
 use NeuronAI\Agent\AgentHandler;
@@ -96,17 +97,11 @@ class AgentRunner
                 }
             }
 
-            $run->update([
-                'status' => 'completed',
+            $this->markRunCompleted($run, [
                 'output' => ['content' => $handler->getMessage()->getContent()],
-                'finished_at' => now(),
             ]);
         } catch (\Throwable $exception) {
-            $run->update([
-                'status' => 'failed',
-                'error_message' => $exception->getMessage(),
-                'finished_at' => now(),
-            ]);
+            $this->markRunFailed($run, $exception);
             throw $exception;
         }
     }
@@ -210,10 +205,8 @@ class AgentRunner
             $handler = $agent->chat($userMessage);
             $content = $handler->getMessage()->getContent();
 
-            $run->update([
-                'status' => 'completed',
+            $this->markRunCompleted($run, [
                 'output' => ['content' => $content],
-                'finished_at' => now(),
             ]);
 
             $events = $this->toolEvents->fromChatHistory($agent->getChatHistory());
@@ -228,11 +221,7 @@ class AgentRunner
             ]);
             throw $this->toolApprovalException($interrupt, $run);
         } catch (\Throwable $exception) {
-            $run->update([
-                'status' => 'failed',
-                'error_message' => $exception->getMessage(),
-                'finished_at' => now(),
-            ]);
+            $this->markRunFailed($run, $exception);
             throw $exception;
         }
     }
@@ -274,10 +263,8 @@ class AgentRunner
             }
 
             $content = $handler->getMessage()->getContent();
-            $run->update([
-                'status' => 'completed',
+            $this->markRunCompleted($run, [
                 'output' => ['content' => $content],
-                'finished_at' => now(),
             ]);
 
             $events = $this->toolEvents->fromChatHistory($agent->getChatHistory());
@@ -292,11 +279,7 @@ class AgentRunner
             ]);
             throw $this->toolApprovalException($interrupt, $run);
         } catch (\Throwable $exception) {
-            $run->update([
-                'status' => 'failed',
-                'error_message' => $exception->getMessage(),
-                'finished_at' => now(),
-            ]);
+            $this->markRunFailed($run, $exception);
             throw $exception;
         }
     }
@@ -402,10 +385,8 @@ class AgentRunner
             $handler = $agent->chat([], $request);
             $content = $handler->getMessage()->getContent();
 
-            $run->update([
-                'status' => 'completed',
+            $this->markRunCompleted($run, [
                 'output' => ['content' => $content],
-                'finished_at' => now(),
             ]);
 
             $events = $this->toolEvents->fromChatHistory($agent->getChatHistory());
@@ -420,11 +401,7 @@ class AgentRunner
             ]);
             throw $this->toolApprovalException($reinterrupt, $run);
         } catch (\Throwable $exception) {
-            $run->update([
-                'status' => 'failed',
-                'error_message' => $exception->getMessage(),
-                'finished_at' => now(),
-            ]);
+            $this->markRunFailed($run, $exception);
             throw $exception;
         }
     }
@@ -500,10 +477,8 @@ class AgentRunner
         try {
             $result = $agent->structured($userMessage, $outputClass);
 
-            $run->update([
-                'status' => 'completed',
+            $this->markRunCompleted($run, [
                 'output' => ['structured' => $this->normalizeStructuredOutput($result)],
-                'finished_at' => now(),
             ]);
 
             $events = $this->toolEvents->fromChatHistory($agent->getChatHistory());
@@ -513,29 +488,17 @@ class AgentRunner
                 runId: $run->id,
             );
         } catch (AgentException $exception) {
-            $run->update([
-                'status' => 'failed',
-                'error_message' => $exception->getMessage(),
-                'finished_at' => now(),
-            ]);
+            $this->markRunFailed($run, $exception);
             throw StructuredOutputValidationException::fromAgentException($exception);
         } catch (ProviderException $exception) {
-            $run->update([
-                'status' => 'failed',
-                'error_message' => $exception->getMessage(),
-                'finished_at' => now(),
-            ]);
+            $this->markRunFailed($run, $exception);
             throw new StructuredOutputValidationException(
                 $exception->getMessage(),
                 [$exception->getMessage()],
                 $exception,
             );
         } catch (\Throwable $exception) {
-            $run->update([
-                'status' => 'failed',
-                'error_message' => $exception->getMessage(),
-                'finished_at' => now(),
-            ]);
+            $this->markRunFailed($run, $exception);
             throw $exception;
         }
     }
@@ -567,6 +530,33 @@ class AgentRunner
             : null;
 
         return new TelemetryTracker($run, $trace, true, $provider, $model, $parentRun);
+    }
+
+    /** @param  array<string, mixed>  $attributes */
+    protected function markRunCompleted(StudioRun $run, array $attributes = []): void
+    {
+        $run->update(array_merge([
+            'status' => 'completed',
+            'finished_at' => now(),
+        ], $attributes));
+
+        $this->finalizeRunUsage($run);
+    }
+
+    protected function markRunFailed(StudioRun $run, \Throwable $exception): void
+    {
+        $run->update([
+            'status' => 'failed',
+            'error_message' => $exception->getMessage(),
+            'finished_at' => now(),
+        ]);
+
+        $this->finalizeRunUsage($run);
+    }
+
+    protected function finalizeRunUsage(StudioRun $run): void
+    {
+        (new UsageRecorder)->finalizeRun($run);
     }
 
     protected function resolveParentRun(StudioRun $run): ?StudioRun

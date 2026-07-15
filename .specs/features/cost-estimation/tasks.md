@@ -212,11 +212,16 @@ T12 → T13
 **Requirement**: CE-03  
 
 **Done when**:
-- [ ] Parent workflow run totals include nested agent/llm child runs after complete
-- [ ] Standalone agent finalize still matches own spans
+- [x] Parent workflow run totals include nested agent/llm child runs after complete
+- [x] Standalone agent finalize still matches own spans
+
+**Status**: ✅ Done  
+**Notes**: `UsageRecorder::finalizeRun` = own spans + children; wired via AgentRunner mark helpers + WorkflowRunner terminal paths.  
 
 **Tests**: CE-T12  
 **Gate**: quick  
+
+**Gate check**: `./vendor/bin/phpunit tests/Usage/UsageRecorderTest.php tests/AgentRunnerTest.php tests/AgentRunnerPlaygroundTest.php tests/WorkflowRunnerTest.php tests/TelemetryTrackerTest.php` — OK (18 tests, 100 assertions)  
 
 ---
 

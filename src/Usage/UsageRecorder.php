@@ -67,6 +67,48 @@ class UsageRecorder
         return $span;
     }
 
+    /**
+     * Recompute run token/cost totals as own spans + child runs.
+     * Overwrites interim increment rollups so parent finalize cannot zero nested usage.
+     */
+    public function finalizeRun(StudioRun $run): void
+    {
+        $own = StudioTraceSpan::query()
+            ->whereHas('trace', fn ($query) => $query->where('run_id', $run->id))
+            ->toBase()
+            ->selectRaw('COALESCE(SUM(prompt_tokens), 0) as prompt_tokens')
+            ->selectRaw('COALESCE(SUM(completion_tokens), 0) as completion_tokens')
+            ->selectRaw('COALESCE(SUM(total_tokens), 0) as total_tokens')
+            ->selectRaw('COALESCE(SUM(estimated_cost), 0) as estimated_cost')
+            ->first();
+
+        $children = StudioRun::query()
+            ->where('parent_run_id', $run->id)
+            ->toBase()
+            ->selectRaw('COALESCE(SUM(prompt_tokens), 0) as prompt_tokens')
+            ->selectRaw('COALESCE(SUM(completion_tokens), 0) as completion_tokens')
+            ->selectRaw('COALESCE(SUM(total_tokens), 0) as total_tokens')
+            ->selectRaw('COALESCE(SUM(estimated_cost), 0) as estimated_cost')
+            ->first();
+
+        $promptTokens = (int) ($own->prompt_tokens ?? 0) + (int) ($children->prompt_tokens ?? 0);
+        $completionTokens = (int) ($own->completion_tokens ?? 0) + (int) ($children->completion_tokens ?? 0);
+        $totalTokens = (int) ($own->total_tokens ?? 0) + (int) ($children->total_tokens ?? 0);
+        $estimatedCost = number_format(
+            (float) ($own->estimated_cost ?? 0) + (float) ($children->estimated_cost ?? 0),
+            6,
+            '.',
+            '',
+        );
+
+        $run->update([
+            'prompt_tokens' => $promptTokens,
+            'completion_tokens' => $completionTokens,
+            'total_tokens' => $totalTokens,
+            'estimated_cost' => $estimatedCost,
+        ]);
+    }
+
     protected function incrementRunUsage(
         StudioRun $run,
         int $promptTokens,
