@@ -64,12 +64,17 @@ T12 → T13
 **Requirement**: CE-01, CE-03  
 
 **Done when**:
-- [ ] Migration uses `StudioTables::name()`
-- [ ] `parent_run_id` FK nullOnDelete → runs
-- [ ] `estimated_cost` is `decimal(12,6)` default 0
+- [x] Migration uses `StudioTables::name()`
+- [x] `parent_run_id` FK nullOnDelete → runs
+- [x] `estimated_cost` is `decimal(12,6)` default 0
+
+**Status**: ✅ Done  
+**Notes**: Also adds indexes on `runs(parent_run_id)` and `runs(started_at)`. `down()` drops FK then indexes before columns (SQLite-safe).  
 
 **Tests**: `MigrationTest` extended or run existing migration suite  
 **Gate**: quick  
+
+**Gate check**: `./vendor/bin/phpunit tests/MigrationTest.php` — OK (3 tests, 24 assertions)  
 
 ---
 
