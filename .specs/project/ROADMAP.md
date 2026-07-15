@@ -2,10 +2,10 @@
 
 **North star:** Agentes multimodais autônomos com grafos de workflow cíclicos.
 
-**Development line:** `v0.2.x` (target release `v0.2.1+`)  
-**Latest published:** `v0.2.0` on `main`  
-**Última atualização:** 2026-07-07  
-**Etapa atual:** M1/M2/M3/M4 concluídos. **Refatoração Unified Runs e Traces concluída** — todos os marcos de integração, unificação e token tracking estão 100% integrados e testados.
+**Development line:** `v0.3.x` (target release `v0.4.0` — M5)  
+**Latest published:** `v0.3.1` on Packagist / `main`  
+**Última atualização:** 2026-07-15  
+**Etapa atual:** M1–M4 publicados em `v0.3.0`/`v0.3.1`. Linha `v0.3.x` aberta para M5 (Analítica e Faturamento).
 
 ---
 
@@ -23,8 +23,6 @@ Grafos cíclicos + agentes multimodais + RAG real. Entrega o padrão end-to-end 
 | 3b | `rag-knowledge-base-tool` | **done** | [spec](../features/rag-knowledge-base-tool/spec.md) · [design](../features/rag-knowledge-base-tool/design.md) |
 
 **Critério de conclusão M1:** Template `autonomous-lead-qualification` executável no test harness com loop, agent com tools, anexo PDF/imagem, e opcionalmente nó RAG upstream.
-
-**Etapa atual:** M1 concluído — publicar `v0.2.0`. M2 Features 5 (`workflow-tool-approval`) e 6 (`workflow-token-streaming`) concluídas.
 
 ### M2 — Capacidades de agente no workflow (P1) `done`
 
@@ -57,14 +55,28 @@ Expor agentes e workflows para clients externos (Vercel AI SDK, AG-UI) via endpo
 
 **Critério de conclusão M4:** Host app consome agente via `useChat` (Vercel) e workflow via client AG-UI usando rotas configuráveis do package; workflow com Human node pausa e retoma via endpoint `resume/{protocol}`; catálogo e Connect Panel documentam URLs e snippets.
 
+**Publicação:** `v0.3.0` (features) + `v0.3.1` (release metadata sync). Linha `v0.2.x` encerrada.
+
+### M5 — Analítica e Faturamento (P1) `planned`
+
+Uso de tokens/spans já persistidos (`TelemetryTracker`, `StudioTraceSpan`) para insights no Studio e superfícies de billing no host app.
+
+| Ordem | Feature | Status | Spec |
+|-------|---------|--------|------|
+| 12 | `usage-analytics` | **planned** | TBD |
+| 13 | `cost-estimation` | **planned** | TBD |
+| 14 | `usage-export-api` | **planned** | TBD |
+
+**Critério de conclusão M5 (draft):** Dashboard de uso por agent/workflow/janela; custo estimado configurável por modelo; API/eventos agregados para o host faturar.
+
 ---
 
 ## Próximas tarefas (ordem de execução)
 
-Fila de planejamento futura:
-
-1. Governança — branch protection para `v0.2.x` no GitHub.
-2. Planejamento do próximo Milestone (M5 — Analítica e Faturamento).
+1. ~~Governança — branch protection / rulesets alinhados ao CI consolidado~~ ✅
+2. ~~Abrir linha `v0.3.x` e sincronizar `main` com tag `v0.3.1`~~ ✅ (este ciclo)
+3. Especificar M5 (`usage-analytics`, `cost-estimation`, `usage-export-api`) — Discuss → Spec → Design → Tasks.
+4. Aplicar ruleset da development line em `v0.3.x` (script `apply-branch-rules.sh`).
 
 ---
 
@@ -76,18 +88,18 @@ Fila de planejamento futura:
 | `workflow-json-io` | ✅ done | 0.1.x |
 | `workflow-code-bridge` | ✅ done | 0.1.x |
 | Multimodal attachments (AMA partial) | ✅ done | 0.1.2 |
-| `workflow-cyclic-graphs` (P0+P1) | ✅ done | 0.2.x |
-| `autonomous-multimodal-agents` (core) | ✅ done | 0.2.x |
-| `workflow-structured-output` | ✅ done | 0.2.x |
-| `workflow-queue-runner` | ✅ done | 0.2.x |
-| `workflow-rag` | ✅ done | 0.2.x |
-| `rag-knowledge-base-tool` | ✅ done | 0.2.x |
-| `workflow-tool-approval` | ✅ done | 0.2.x |
-| `workflow-token-streaming` | ✅ done | 0.2.x |
-| `workflow-checkpoints-persistence` | ✅ done | 0.2.x |
-| `workflow-parallel-execution` | ✅ done | 0.2.x |
-| `stream-adapters` | ✅ done | 0.2.x |
-| `unified-runs-and-traces` | ✅ done | 0.2.x |
+| `workflow-cyclic-graphs` (P0+P1) | ✅ done | 0.2.x → 0.3.0 |
+| `autonomous-multimodal-agents` (core) | ✅ done | 0.2.x → 0.3.0 |
+| `workflow-structured-output` | ✅ done | 0.2.x → 0.3.0 |
+| `workflow-queue-runner` | ✅ done | 0.2.x → 0.3.0 |
+| `workflow-rag` | ✅ done | 0.2.x → 0.3.0 |
+| `rag-knowledge-base-tool` | ✅ done | 0.2.x → 0.3.0 |
+| `workflow-tool-approval` | ✅ done | 0.2.x → 0.3.0 |
+| `workflow-token-streaming` | ✅ done | 0.2.x → 0.3.0 |
+| `workflow-checkpoints-persistence` | ✅ done | 0.2.x → 0.3.0 |
+| `workflow-parallel-execution` | ✅ done | 0.2.x → 0.3.0 |
+| `stream-adapters` | ✅ done | 0.2.x → 0.3.0 |
+| `unified-runs-and-traces` | ✅ done | 0.2.x → 0.3.0 |
 
 ---
 
@@ -146,9 +158,18 @@ Mapeamento feature → arquivos `docs/` a criar/atualizar na implementação.
 | `stream-adapters` | `guides/integration/stream-adapters.md`, `guides/integration/vercel-ai-sdk.md`, `guides/integration/ag-ui.md`, `reference/configuration.md`, `getting-started/installation.md`, `guides/agents/playground-and-threads.md` |
 | `unified-runs-and-traces` | `guides/workflows/runtime-and-traces.md`, `reference/database-schema.md` |
 
+### M5 (draft)
+
+| Feature | Documentos |
+|---------|------------|
+| `usage-analytics` | `guides/analytics/usage.md`, `guides/dashboard.md`, `reference/database-schema.md` |
+| `cost-estimation` | `guides/analytics/costs.md`, `reference/configuration.md` |
+| `usage-export-api` | `guides/analytics/export-api.md`, `reference/configuration.md`, `getting-started/installation.md` |
+
 ---
 
 ## Decisões em aberto (ver [STATE.md](STATE.md))
 
 - SSE/broadcast vs polling para queue runner v1 (polling v1 implementado; SSE deferido)
 - Escopo de autonomia multi-turn **dentro** de um único nó agent vs entre iterações do loop
+- Escopo M5: analytics-only no Studio vs analytics + API de billing no mesmo milestone

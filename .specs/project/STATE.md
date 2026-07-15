@@ -1,13 +1,26 @@
 # State
 
-**Last Updated:** 2026-07-07
-**Development line:** `v0.2.x` (target release `v0.2.1+`)
-**Latest published:** `v0.2.0` on `main`
-**Current Work:** M4 (`stream-adapters`) e Refatoração Unified Runs e Traces concluídos. Todos os marcos de integração, unificação e token tracking estão 100% entregues e testados (279 testes do PHPUnit passando, suíte verde).
+**Last Updated:** 2026-07-15
+**Development line:** `v0.3.x` (target release `v0.4.0` — M5)
+**Latest published:** `v0.3.1` on Packagist / `main`
+**Current Work:** Linha `v0.3.x` aberta após publicação M1–M4 em `v0.3.0`/`v0.3.1`. Próximo passo: especificar M5 (Analítica e Faturamento). Tag órfã `v0.3.1` absorvida na history de `main`.
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-010: Linha de desenvolvimento v0.3.x + M5 (2026-07-15)
+
+**Decision:** Encerrar `v0.2.x` como linha ativa; abrir `v0.3.x` a partir de `main` alinhada a Packagist `v0.3.1`. Planejar M5 (Analítica e Faturamento) em cima de tokens já persistidos em `StudioTraceSpan` / `TelemetryTracker`.
+**Reason:** M1–M4 já saíram em `v0.3.0`; `v0.3.1` corrigiu metadados de release. Nova minor series evita misturar patches de governança com features de usage/billing.
+**Impact:** PRs de feature → `v0.3.x`; release PR `v0.3.x` → `main` quando M5 estiver estável. Specs M5 ainda TBD (`usage-analytics`, `cost-estimation`, `usage-export-api`).
+
+### AD-011: Absorver tag órfã v0.3.1 na main (2026-07-15)
+
+**Decision:** Merge do commit `chore(release): 0.3.1` (tag Packagist) de volta em `main` via hotfix, com `[skip ci]` no merge commit, em vez de retag destrutivo.
+**Reason:** O push do release-it divergiu do tip de `main` (PR #22); Packagist apontava para um SHA fora da ancestry, e `package.json`/`CHANGELOG` na tip ficaram em `0.3.0`.
+**Impact:** `git describe` em `main` volta a reportar `v0.3.1`; próximo release real partirá dessa base.
+
 
 ### AD-009: Unified Threads, Runs, and Traces (2026-07-07)
 
@@ -75,7 +88,7 @@
 
 ## Active Blockers
 
-- Nenhum blocker ativo para `v0.2.0`.
+- Nenhum blocker ativo para `v0.3.x` / kickoff M5.
 
 ---
 
@@ -187,6 +200,10 @@
 - [x] AMA-03–07, AMA-10
 - [x] `workflow-rag` — KnowledgeBase + executor real + codegen + docs
 - [x] AMA-09 — docs dedicated autonomous-agent guide sections
-- [ ] Configurar branch protection para `v0.2.x` no GitHub (espelhar `v0.0.x`)
+- [x] Rulesets / required status checks alinhados ao CI consolidado
 - [x] **M4 `stream-adapters`** — SA-T10..SA-T13 (branch `feat/stream-adapters`; SA-T1..T8 ✅, SA-T9 parcial, suíte 278 verde)
 - [x] **Unified Runs and Traces** — T1-T7 concluídos (unificação de tabelas, token tracking, api unificada, 279 testes verde)
+- [x] Publicar ciclo M1–M4 (`v0.3.0` / `v0.3.1`) e absorver tag órfã em `main`
+- [x] Abrir linha `v0.3.x` e atualizar ROADMAP/STATE/RELEASE
+- [ ] Especificar M5 (Discuss → Spec) — `usage-analytics`, `cost-estimation`, `usage-export-api`
+- [ ] Aplicar ruleset da development line em `v0.3.x` (`apply-branch-rules.sh`)
