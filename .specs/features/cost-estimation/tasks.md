@@ -253,12 +253,16 @@ T12 → T13
 **Requirement**: CE-01  
 
 **Done when**:
-- [ ] Non-structured chat writes llm span on parent workflow run
-- [ ] Stream path records usage from final message when available
-- [ ] Missing parent ids → no crash
+- [x] Non-structured chat writes llm span on parent workflow run
+- [x] Stream path records usage from final message when available
+- [x] Missing parent ids → no crash
+
+**Status**: ✅ Done  
 
 **Tests**: extend `LlmNodeExecutorTest`  
 **Gate**: quick  
+
+**Gate check**: `./vendor/bin/phpunit tests/LlmNodeExecutorTest.php` — OK (7 tests, 23 assertions)  
 
 ---
 
