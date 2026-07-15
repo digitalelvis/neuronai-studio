@@ -127,12 +127,16 @@ T12 → T13
 **Requirement**: CE-01, CE-03  
 
 **Done when**:
-- [ ] `recordLlmSpan(...)` writes provider/model/tokens/estimated_cost
-- [ ] Increments child run; increments parent when provided
-- [ ] Never throws on null usage / missing price
+- [x] `recordLlmSpan(...)` writes provider/model/tokens/estimated_cost
+- [x] Increments child run; increments parent when provided
+- [x] Never throws on null usage / missing price
+
+**Status**: ✅ Done  
 
 **Tests**: unit/feature `UsageRecorderTest`  
 **Gate**: quick  
+
+**Gate check**: `./vendor/bin/phpunit tests/Usage/UsageRecorderTest.php` — OK (4 tests, 24 assertions)  
 
 ---
 
