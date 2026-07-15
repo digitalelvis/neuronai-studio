@@ -5,7 +5,7 @@
 **Development line:** `v0.3.x` (target release `v0.4.0` — M5)  
 **Latest published:** `v0.3.3` on Packagist / `main`  
 **Última atualização:** 2026-07-15  
-**Etapa atual:** M1–M4 publicados; release bot OK (`v0.3.3`). Linha `v0.3.x` aberta para M5 (Analítica e Faturamento).
+**Etapa atual:** M5 tasks prontas (28). Próximo: Execute CE-T1… na linha `v0.3.x`.
 
 ---
 
@@ -57,26 +57,31 @@ Expor agentes e workflows para clients externos (Vercel AI SDK, AG-UI) via endpo
 
 **Publicação:** `v0.3.0` (features) + `v0.3.1`–`v0.3.3` (metadata sync, governance, RELEASE_TOKEN fix). Linha `v0.2.x` encerrada.
 
-### M5 — Analítica e Faturamento (P1) `planned`
+### M5 — Analítica e Faturamento (P1) `tasked`
 
-Uso de tokens/spans já persistidos (`TelemetryTracker`, `StudioTraceSpan`) para insights no Studio e superfícies de billing no host app.
+Uso de tokens/spans já persistidos (`TelemetryTracker`, `StudioTraceSpan`) para **metering no host** (prioridade) e superfície mínima no Studio (Dashboard + badges Debugger).
+
+**Escopo decidido (2026-07-15):** host-first — `cost-estimation` + `usage-export-api` são P1 do milstone; `usage-analytics` é mínimo (Dashboard Livewire existente + badges no Debugger), sem página Usage/BI. Index: [m5-analytics-billing/tasks.md](../features/m5-analytics-billing/tasks.md).
 
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
-| 12 | `usage-analytics` | **planned** | TBD |
-| 13 | `cost-estimation` | **planned** | TBD |
-| 14 | `usage-export-api` | **planned** | TBD |
+| 12 | `cost-estimation` | **tasked** | [spec](../features/cost-estimation/spec.md) · [design](../features/cost-estimation/design.md) · [tasks](../features/cost-estimation/tasks.md) |
+| 13 | `usage-export-api` | **tasked** | [spec](../features/usage-export-api/spec.md) · [design](../features/usage-export-api/design.md) · [tasks](../features/usage-export-api/tasks.md) |
+| 14 | `usage-analytics` | **tasked** (mínimo) | [spec](../features/usage-analytics/spec.md) · [design](../features/usage-analytics/design.md) · [tasks](../features/usage-analytics/tasks.md) |
 
-**Critério de conclusão M5 (draft):** Dashboard de uso por agent/workflow/janela; custo estimado configurável por modelo; API/eventos agregados para o host faturar.
+**Critério de conclusão M5:** Custo estimado configurável por modelo (provider/model no span LLM); API agregada + por-run para o host meter/faturar; Dashboard com totais de tokens/custo na janela recente; Debugger com badges de tokens.
 
 ---
 
 ## Próximas tarefas (ordem de execução)
 
 1. ~~Governança — branch protection / rulesets alinhados ao CI consolidado~~ ✅
-2. ~~Abrir linha `v0.3.x` e sincronizar `main` com tag `v0.3.1`~~ ✅ (este ciclo)
-3. Especificar M5 (`usage-analytics`, `cost-estimation`, `usage-export-api`) — Discuss → Spec → Design → Tasks.
-4. Aplicar ruleset da development line em `v0.3.x` (script `apply-branch-rules.sh`).
+2. ~~Abrir linha `v0.3.x` e sincronizar `main` com tag `v0.3.1`~~ ✅
+3. ~~Especificar M5 (Discuss → Spec)~~ ✅ — context + 3 specs
+4. ~~Design M5~~ ✅ — CE / UE / UA design.md
+5. ~~Tasks M5~~ ✅ — 28 tasks (CE-T1…13, UE-T1…7, UA-T1…8)
+6. Execute M5 — começar em `cost-estimation` CE-T1.
+7. Aplicar ruleset da development line em `v0.3.x` (script `apply-branch-rules.sh`).
 
 ---
 
@@ -158,13 +163,13 @@ Mapeamento feature → arquivos `docs/` a criar/atualizar na implementação.
 | `stream-adapters` | `guides/integration/stream-adapters.md`, `guides/integration/vercel-ai-sdk.md`, `guides/integration/ag-ui.md`, `reference/configuration.md`, `getting-started/installation.md`, `guides/agents/playground-and-threads.md` |
 | `unified-runs-and-traces` | `guides/workflows/runtime-and-traces.md`, `reference/database-schema.md` |
 
-### M5 (draft)
+### M5
 
 | Feature | Documentos |
 |---------|------------|
-| `usage-analytics` | `guides/analytics/usage.md`, `guides/dashboard.md`, `reference/database-schema.md` |
-| `cost-estimation` | `guides/analytics/costs.md`, `reference/configuration.md` |
+| `cost-estimation` | `guides/analytics/costs.md`, `reference/configuration.md`, `reference/database-schema.md` |
 | `usage-export-api` | `guides/analytics/export-api.md`, `reference/configuration.md`, `getting-started/installation.md` |
+| `usage-analytics` | `guides/analytics/usage.md`, `guides/dashboard.md`, `guides/workflows/runtime-and-traces.md` |
 
 ---
 
@@ -172,4 +177,3 @@ Mapeamento feature → arquivos `docs/` a criar/atualizar na implementação.
 
 - SSE/broadcast vs polling para queue runner v1 (polling v1 implementado; SSE deferido)
 - Escopo de autonomia multi-turn **dentro** de um único nó agent vs entre iterações do loop
-- Escopo M5: analytics-only no Studio vs analytics + API de billing no mesmo milestone

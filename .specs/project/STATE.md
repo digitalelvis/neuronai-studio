@@ -3,7 +3,7 @@
 **Last Updated:** 2026-07-15
 **Development line:** `v0.3.x` (target release `v0.4.0` — M5)
 **Latest published:** `v0.3.3` on Packagist / `main`
-**Current Work:** Release bot resolvido (`RELEASE_TOKEN` + push em `main` antes da tag; `v0.3.3` publicado sem órfão). Próximo: especificar M5.
+**Current Work:** M5 tasks prontas. Próximo: Execute CE-T1 (config `usage`) na `v0.3.x`.
 
 ---
 
@@ -15,11 +15,23 @@
 **Reason:** Repos user-owned não permitem bypass do app GitHub Actions no ruleset; `GITHUB_TOKEN` gera tags órfãs no Packagist quando o push de `main` é rejeitado (GH013).
 **Impact:** Setup one-time em [docs/RELEASE.md](../../docs/RELEASE.md); ruleset Mantém bypass só para RepositoryRole Administrator.
 
+### AD-014: M5 design — custo denormalizado + parent rollup (2026-07-15)
+
+**Decision:** Persistir `provider`/`model`/`estimated_cost` no span LLM e `estimated_cost` (+ opcional `parent_run_id`) no run. Pricing em `neuronai-studio.usage.pricing`. Nested agent/LLM sob workflow incrementa o parent run; agregados de janela **excluem** children para não duplicar. Fechar gaps de meter em `stream`/`streamHandler` e `LlmNodeExecutor`. Export: `GET usage` + `GET usage/runs/{run}` sob prefixo/middleware de integração, independente de `stream_adapters.enabled`. Dashboard: janela fixa 30 dias via `UsageQuery`.
+**Reason:** `InferenceStop` não carrega model; workflow parent hoje fica com 0 tokens porque LLM vive em runs filhos; LlmNodeExecutor chat/stream bypassa tracker.
+**Impact:** Ver designs CE/UE/UA. Finalize de run = own spans + children aggregates.
+
+### AD-013: M5 host-first + Dashboard mínimo (2026-07-15)
+
+**Decision:** M5 prioriza `cost-estimation` + `usage-export-api` para o host meter/faturar. `usage-analytics` fica **mínimo**: evoluir o Dashboard Livewire existente + badges de tokens no Debugger — sem página dedicada Usage/BI neste milstone. Context compartilhado em `.specs/features/m5-analytics-billing/context.md`.
+**Reason:** Token persistence já existe (M4); o gap de produto é API de metering para o host app. Studio só precisa de um sinal operacional leve.
+**Impact:** Ordem de design/implementação: CE → UE → UA. Página Usage avançada, multi-tenant attribution, embeddings cost e billing providers ficam em Deferred Ideas.
+
 ### AD-010: Linha de desenvolvimento v0.3.x + M5 (2026-07-15)
 
 **Decision:** Encerrar `v0.2.x` como linha ativa; abrir `v0.3.x` a partir de `main` alinhada a Packagist `v0.3.1`. Planejar M5 (Analítica e Faturamento) em cima de tokens já persistidos em `StudioTraceSpan` / `TelemetryTracker`.
 **Reason:** M1–M4 já saíram em `v0.3.0`; `v0.3.1` corrigiu metadados de release. Nova minor series evita misturar patches de governança com features de usage/billing.
-**Impact:** PRs de feature → `v0.3.x`; release PR `v0.3.x` → `main` quando M5 estiver estável. Specs M5 ainda TBD (`usage-analytics`, `cost-estimation`, `usage-export-api`).
+**Impact:** PRs de feature → `v0.3.x`; release PR `v0.3.x` → `main` quando M5 estiver estável. Specs M5: ver AD-013.
 
 ### AD-011: Absorver tag órfã v0.3.1 na main (2026-07-15)
 
@@ -196,6 +208,10 @@
 - [ ] SSE em tempo real para `RunWorkflowJob` (broadcast vs polling)
 - [ ] Remove redundant layout `<link>` tags for bundle-inlined CSS
 - [ ] Extract `StudioTestHarness.jsx` shell component if composition grows
+- [ ] Página dedicada Usage / charts / filtros avançados (além do Dashboard mínimo M5)
+- [ ] Multi-tenant / user attribution em usage
+- [ ] Custo de embeddings / RAG como linha separada
+- [ ] Integração com billing providers (Stripe, etc.)
 
 ---
 
@@ -214,5 +230,8 @@
 - [x] Absorver tag órfã `v0.3.2` em `main`
 - [x] Release workflow: `RELEASE_TOKEN` + push `main` antes da tag (AD-012)
 - [x] Secret `RELEASE_TOKEN` configurado; `v0.3.3` publicado com commit na ancestry de `main`
-- [ ] Especificar M5 (Discuss → Spec) — `usage-analytics`, `cost-estimation`, `usage-export-api`
+- [x] Especificar M5 (Discuss → Spec) — AD-013; specs CE / UE / UA
+- [x] Design M5 — AD-014; design.md CE / UE / UA
+- [x] Tasks M5 — index + CE/UE/UA tasks.md (28)
+- [ ] Execute M5 — CE-T1…T13 → UE → UA
 - [ ] Aplicar ruleset da development line em `v0.3.x` (`apply-branch-rules.sh`)
