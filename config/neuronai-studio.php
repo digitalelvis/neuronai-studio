@@ -94,6 +94,61 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Usage & Cost Estimation
+    |--------------------------------------------------------------------------
+    |
+    | Approximate public list prices for estimated_cost (not invoices). Rates are
+    | USD per 1k tokens: cost ≈ (prompt/1000)*prompt_per_1k +
+    | (completion/1000)*completion_per_1k. Override after publishing this config.
+    | Missing provider/model → cost 0. Ollama defaults to 0 (local).
+    |
+    | `export` / `events` stubs are owned by usage-export-api; kept here so a
+    | published config stays stable when that feature lands.
+    |
+    */
+
+    'usage' => [
+        'currency' => env('NEURONAI_STUDIO_USAGE_CURRENCY', 'USD'),
+
+        'pricing' => [
+            'openai' => [
+                'gpt-4o-mini' => ['prompt_per_1k' => 0.00015, 'completion_per_1k' => 0.0006],
+                'gpt-4o' => ['prompt_per_1k' => 0.0025, 'completion_per_1k' => 0.01],
+                'gpt-4-turbo' => ['prompt_per_1k' => 0.01, 'completion_per_1k' => 0.03],
+            ],
+            'anthropic' => [
+                'claude-sonnet-4-20250514' => ['prompt_per_1k' => 0.003, 'completion_per_1k' => 0.015],
+                'claude-3-5-sonnet-20241022' => ['prompt_per_1k' => 0.003, 'completion_per_1k' => 0.015],
+            ],
+            'gemini' => [
+                'gemini-3.5-flash' => ['prompt_per_1k' => 0.0015, 'completion_per_1k' => 0.009],
+                'gemini-3.1-pro-preview' => ['prompt_per_1k' => 0.002, 'completion_per_1k' => 0.012],
+                'gemini-3.1-pro-preview-customtools' => ['prompt_per_1k' => 0.002, 'completion_per_1k' => 0.012],
+                'gemini-3-flash-preview' => ['prompt_per_1k' => 0.0005, 'completion_per_1k' => 0.003],
+                'gemini-3.1-flash-lite' => ['prompt_per_1k' => 0.00025, 'completion_per_1k' => 0.0015],
+                'gemini-2.5-pro' => ['prompt_per_1k' => 0.00125, 'completion_per_1k' => 0.01],
+                'gemini-2.5-flash' => ['prompt_per_1k' => 0.0003, 'completion_per_1k' => 0.0025],
+                'gemini-2.5-flash-lite' => ['prompt_per_1k' => 0.0001, 'completion_per_1k' => 0.0004],
+            ],
+            'ollama' => [
+                'llama3.2' => ['prompt_per_1k' => 0, 'completion_per_1k' => 0],
+                'mistral' => ['prompt_per_1k' => 0, 'completion_per_1k' => 0],
+            ],
+        ],
+
+        'export' => [
+            'enabled' => env('NEURONAI_STUDIO_USAGE_EXPORT_ENABLED', true),
+            'route_prefix' => env('NEURONAI_STUDIO_USAGE_EXPORT_PREFIX'),
+            'middleware' => null,
+        ],
+
+        'events' => [
+            'enabled' => env('NEURONAI_STUDIO_USAGE_EVENTS_ENABLED', false),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Chat History
     |--------------------------------------------------------------------------
     |

@@ -44,9 +44,12 @@ T12 → T13
 **Requirement**: CE-02, CE-04  
 
 **Done when**:
-- [ ] `config('neuronai-studio.usage.currency')` defaults to `USD`
-- [ ] At least one price entry per provider catalog model family used in defaults (`gpt-4o-mini`, etc.)
-- [ ] Ollama models priced at `0`
+- [x] `config('neuronai-studio.usage.currency')` defaults to `USD`
+- [x] At least one price entry per provider catalog model family used in defaults (`gpt-4o-mini`, etc.)
+- [x] Ollama models priced at `0`
+
+**Status**: ✅ Done  
+**Notes**: Rates are USD **per 1k** tokens (sticker $/1M ÷ 1000). Design sample used sticker $/1M in `prompt_per_1k` fields — corrected per product decision. Stubs `usage.export` / `usage.events` included for UE stability.  
 
 **Tests**: none (covered by CE-T4)  
 **Gate**: quick  
