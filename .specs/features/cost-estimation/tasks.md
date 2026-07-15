@@ -274,10 +274,14 @@ T12 → T13
 **Requirement**: CE-01, CE-02, CE-03, CE-04  
 
 **Done when**:
-- [ ] Suite green; covers AC independent tests from spec
+- [x] Suite green; covers AC independent tests from spec
+
+**Status**: ✅ Done  
 
 **Tests**: feature  
 **Gate**: full  
+
+**Gate check**: `./vendor/bin/phpunit tests/Usage tests/AgentRunnerTest.php tests/AgentRunnerPlaygroundTest.php tests/AgentNodeExecutorTest.php tests/LlmNodeExecutorTest.php tests/WorkflowRunnerTest.php tests/TelemetryTrackerTest.php` — OK (44 tests, 174 assertions)  
 
 ---
 
