@@ -1,5 +1,6 @@
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { formatTokens } from '@/lib/formatUsage';
 
 function formatRelativeTime(isoString) {
     if (!isoString) {
@@ -60,6 +61,7 @@ export default function TraceListItem({ trace, selected = false, onClick, varian
             <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
                 <span>{formatRelativeTime(trace.started_at)}</span>
                 <span>{formatDuration(trace.duration_ms)}</span>
+                <span>{formatTokens(trace.total_tokens)}</span>
             </div>
         </button>
     );

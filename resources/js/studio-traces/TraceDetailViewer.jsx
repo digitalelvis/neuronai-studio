@@ -6,6 +6,7 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import TraceStepTimeline from './TraceStepTimeline';
 import TraceStepDetail from './TraceStepDetail';
 import { formatDuration } from './TraceListItem';
+import { formatCost, formatTokens } from '@/lib/formatUsage';
 
 export default function TraceDetailViewer({ trace, steps = [], variant = 'page', traceShowUrl = null }) {
     const [selectedStepId, setSelectedStepId] = useState(steps?.[0]?.id ?? null);
@@ -21,6 +22,12 @@ export default function TraceDetailViewer({ trace, steps = [], variant = 'page',
                     {trace?.durationMs != null && (
                         <span className="text-xs text-muted-foreground">{formatDuration(trace.durationMs)}</span>
                     )}
+                    <span className="text-xs text-muted-foreground">
+                        {formatTokens(trace?.totalTokens)} ({trace?.promptTokens ?? 0} prompt / {trace?.completionTokens ?? 0} completion)
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                        {formatCost(trace?.estimatedCost, trace?.currency)}
+                    </span>
                     {variant === 'sheet' && traceShowUrl && (
                         <Button variant="ghost" size="sm" className="ml-auto h-7 text-xs" asChild>
                             <a href={traceShowUrl} target="_blank" rel="noreferrer">

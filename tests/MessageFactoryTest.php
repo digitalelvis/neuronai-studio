@@ -123,7 +123,10 @@ class MessageFactoryTest extends TestCase
         ]);
 
         $response->assertOk();
-        $this->assertStringContainsString('event: done', $response->streamedContent());
+        $content = $response->streamedContent();
+        $this->assertStringContainsString('event: done', $content);
+        $this->assertStringContainsString('"total_tokens":0', $content);
+        $this->assertStringContainsString('"estimated_cost":"0.000000"', $content);
     }
 
     public function test_agent_stream_rejects_empty_message_without_attachments(): void

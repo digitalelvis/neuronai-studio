@@ -53,6 +53,10 @@ class WorkflowTraceController
                 'prompt_tokens' => $span->prompt_tokens,
                 'completion_tokens' => $span->completion_tokens,
                 'total_tokens' => $span->total_tokens,
+                'provider' => $span->provider,
+                'model' => $span->model,
+                'estimated_cost' => $span->estimated_cost ?? '0.000000',
+                'currency' => config('neuronai-studio.usage.currency', 'USD'),
             ])->values(),
         ]);
     }
@@ -78,6 +82,8 @@ class WorkflowTraceController
             'prompt_tokens' => $run->prompt_tokens,
             'completion_tokens' => $run->completion_tokens,
             'total_tokens' => $run->total_tokens,
+            'estimated_cost' => $run->estimated_cost ?? '0.000000',
+            'currency' => config('neuronai-studio.usage.currency', 'USD'),
         ];
     }
 }

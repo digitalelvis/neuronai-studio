@@ -33,6 +33,10 @@ class WorkflowTraceControllerTest extends TestCase
             'thread_id' => $thread->id,
             'status' => 'completed',
             'input' => ['message' => 'hello'],
+            'prompt_tokens' => 10,
+            'completion_tokens' => 5,
+            'total_tokens' => 15,
+            'estimated_cost' => '0.001250',
             'started_at' => now(),
             'finished_at' => now(),
         ]);
@@ -42,6 +46,9 @@ class WorkflowTraceControllerTest extends TestCase
         $response->assertOk();
         $response->assertJsonPath('data.0.id', $run->id);
         $response->assertJsonPath('data.0.status', 'completed');
+        $response->assertJsonPath('data.0.total_tokens', 15);
+        $response->assertJsonPath('data.0.estimated_cost', '0.001250');
+        $response->assertJsonPath('data.0.currency', 'USD');
     }
 
     public function test_show_returns_trace_with_steps(): void
@@ -78,10 +85,16 @@ class WorkflowTraceControllerTest extends TestCase
         StudioTraceSpan::create([
             'id' => (string) Str::uuid(),
             'trace_id' => $trace->id,
-            'name' => 'start_1',
-            'type' => 'start',
+            'name' => 'llm_inference',
+            'type' => 'llm',
+            'provider' => 'openai',
+            'model' => 'gpt-4o-mini',
             'status' => 'completed',
             'output' => ['state_snapshot' => ['input' => 'hello']],
+            'prompt_tokens' => 7,
+            'completion_tokens' => 3,
+            'total_tokens' => 10,
+            'estimated_cost' => '0.000150',
             'duration_ms' => 5,
         ]);
 
@@ -89,7 +102,11 @@ class WorkflowTraceControllerTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonPath('trace.id', $run->id);
-        $response->assertJsonPath('steps.0.node_id', 'start_1');
+        $response->assertJsonPath('steps.0.node_id', 'llm_inference');
+        $response->assertJsonPath('steps.0.provider', 'openai');
+        $response->assertJsonPath('steps.0.model', 'gpt-4o-mini');
+        $response->assertJsonPath('steps.0.estimated_cost', '0.000150');
+        $response->assertJsonPath('trace.currency', 'USD');
     }
 
     public function test_show_exposes_queued_running_and_awaiting_node_id(): void

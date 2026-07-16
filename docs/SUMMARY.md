@@ -54,6 +54,7 @@
 ### Analytics
 
 * [Cost Estimation](guides/analytics/costs.md)
+* [Usage Analytics](guides/analytics/usage.md)
 
 ## Reference
 

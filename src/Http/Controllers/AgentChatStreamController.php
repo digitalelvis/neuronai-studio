@@ -4,6 +4,7 @@ namespace DigitalElvis\NeuronAIStudio\Http\Controllers;
 
 use DigitalElvis\NeuronAIStudio\Http\Controllers\Concerns\ValidatesChatAttachments;
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Runtime\AgentRunner;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
@@ -60,7 +61,18 @@ class AgentChatStreamController
                     }
                 }
 
-                $send('done', []);
+                $run = StudioRun::query()
+                    ->where('thread_id', $thread['public_id'])
+                    ->latest('created_at')
+                    ->first();
+
+                $send('done', [
+                    'prompt_tokens' => $run?->prompt_tokens ?? 0,
+                    'completion_tokens' => $run?->completion_tokens ?? 0,
+                    'total_tokens' => $run?->total_tokens ?? 0,
+                    'estimated_cost' => $run?->estimated_cost ?? '0.000000',
+                    'currency' => config('neuronai-studio.usage.currency', 'USD'),
+                ]);
             } catch (Throwable $exception) {
                 $send('error', ['message' => $exception->getMessage()]);
             }

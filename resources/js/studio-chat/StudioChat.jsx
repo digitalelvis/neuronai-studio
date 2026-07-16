@@ -24,6 +24,20 @@ function toDisplayAttachments(attachments, uploaded = []) {
     });
 }
 
+function usageFromPayload(data) {
+    if (data?.total_tokens == null) {
+        return undefined;
+    }
+
+    return {
+        promptTokens: data.prompt_tokens ?? 0,
+        completionTokens: data.completion_tokens ?? 0,
+        totalTokens: data.total_tokens ?? 0,
+        estimatedCost: data.estimated_cost ?? '0.000000',
+        currency: data.currency ?? 'USD',
+    };
+}
+
 export default forwardRef(function StudioChat({
     adapter,
     mode = 'agent',
@@ -130,6 +144,7 @@ export default forwardRef(function StudioChat({
                             nodeType: packet.data?.node_type ?? 'unknown',
                             handle: packet.data?.handle,
                             durationMs: packet.data?.duration_ms ?? null,
+                            usage: usageFromPayload(packet.data),
                         });
 
                         return {
@@ -212,6 +227,7 @@ export default forwardRef(function StudioChat({
                             userMessage: userText,
                             stepEvents: undefined,
                             currentNodeId: null,
+                            usage: usageFromPayload(packet.data),
                             toolEvents: toolMessages.length ? toolMessages : undefined,
                         },
                     });
@@ -224,7 +240,11 @@ export default forwardRef(function StudioChat({
                     updateMessage(assistantId, {
                         content: assistantText || 'Done.',
                         streaming: false,
-                        meta: { toolEvents: toolMessages.length ? toolMessages : undefined },
+                        meta: {
+                            status: 'completed',
+                            usage: usageFromPayload(packet.data),
+                            toolEvents: toolMessages.length ? toolMessages : undefined,
+                        },
                     });
                 }
 

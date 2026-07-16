@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { formatCost, formatTokens } from '@/lib/formatUsage';
 
 function JsonBlock({ data, mode = 'pretty' }) {
     const text =
@@ -50,6 +51,16 @@ export default function TraceStepDetail({ trace, selectedStep }) {
                     </Button>
                 </div>
             </div>
+            {selectedStep?.node_type === 'llm' && (
+                <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+                    <span>{formatTokens(selectedStep.total_tokens)}</span>
+                    <span>{selectedStep.prompt_tokens ?? 0} prompt / {selectedStep.completion_tokens ?? 0} completion</span>
+                    {(selectedStep.provider || selectedStep.model) && (
+                        <span>{[selectedStep.provider, selectedStep.model].filter(Boolean).join(' / ')}</span>
+                    )}
+                    <span>{formatCost(selectedStep.estimated_cost, selectedStep.currency)}</span>
+                </div>
+            )}
 
             <TabsContent value="input" className={cn('mt-3 flex-1 overflow-auto')}>
                 <JsonBlock data={trace?.input} mode={viewMode} />

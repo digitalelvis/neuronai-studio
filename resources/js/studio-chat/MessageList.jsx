@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import WorkflowThread from './WorkflowThread';
 import ToolApprovalCard from './ToolApprovalCard';
 import { formatWorkflowData } from './utils/workflowOutput';
+import { formatCost, formatTokens } from '@/lib/formatUsage';
 
 function AttachmentPreview({ attachment }) {
     const src = attachment.previewUrl || attachment.url;
@@ -144,6 +145,16 @@ export default function MessageList({
                             <Badge variant="secondary" className="text-[10px]">
                                 Completed
                             </Badge>
+                        )}
+                        {message.meta?.usage && (
+                            <>
+                                <span className="text-[10px] text-muted-foreground">
+                                    {formatTokens(message.meta.usage.totalTokens)}
+                                </span>
+                                <span className="text-[10px] text-muted-foreground">
+                                    {formatCost(message.meta.usage.estimatedCost, message.meta.usage.currency)}
+                                </span>
+                            </>
                         )}
                         {message.meta?.status === 'running' && message.streaming && (
                             <Badge variant="outline" className="text-[10px]">
