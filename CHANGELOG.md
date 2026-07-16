@@ -1,5 +1,17 @@
 # Changelog
 
+# [0.5.0](https://github.com/digitalelvis/neuronai-studio/compare/v0.4.0...v0.5.0) (2026-07-16)
+
+
+### Bug Fixes
+
+* **workflows:** bind legacy traces JSON route to StudioRun ([6ab03c2](https://github.com/digitalelvis/neuronai-studio/commit/6ab03c2fdcab9cb79da55c17539ff016afdf749c))
+
+
+### Features
+
+* **usage:** surface usage analytics in dashboard, debugger, and streams ([ecb0a0b](https://github.com/digitalelvis/neuronai-studio/commit/ecb0a0b2a552c5bf500571049ef7599a0bb0ea21))
+
 # [0.4.0](https://github.com/digitalelvis/neuronai-studio/compare/v0.3.3...v0.4.0) (2026-07-16)
 
 
