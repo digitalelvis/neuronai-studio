@@ -48,6 +48,11 @@ export function mountTraceDetailViewer(rootEl, config = {}) {
                 input: trace.input,
                 output: trace.output,
                 durationMs: trace.durationMs,
+                promptTokens: trace.promptTokens,
+                completionTokens: trace.completionTokens,
+                totalTokens: trace.totalTokens,
+                estimatedCost: trace.estimatedCost,
+                currency: trace.currency,
             }}
             steps={config.steps ?? []}
             traceShowUrl={config.traceShowUrl}

@@ -1,8 +1,8 @@
 # M5 Analítica e Faturamento — Context
 
 **Gathered:** 2026-07-15  
-**Milestone:** M5 → target release `v0.4.0` on `v0.3.x`  
-**Status:** Tasks ready — Execute from CE-T1  
+**Milestone:** M5 — CE shipped in `v0.4.0`; UE + UA debt on `v0.4.x`  
+**Status:** CE done; UE + UA debt — UA tasks expanded (Pretty, AD-016)  
 **Tasks index:** [tasks.md](./tasks.md)
 **Specs:** [`cost-estimation`](../cost-estimation/spec.md) · [`usage-export-api`](../usage-export-api/spec.md) · [`usage-analytics`](../usage-analytics/spec.md)  
 **Designs:** [CE](../cost-estimation/design.md) · [UE](../usage-export-api/design.md) · [UA](../usage-analytics/design.md)
@@ -11,7 +11,7 @@
 
 ## Feature Boundary
 
-M5 entrega **estimativa de custo** e **API/eventos de uso para o host faturar**, com uma superfície mínima no Studio (Dashboard Livewire existente + badges de tokens no Debugger). Não entrega BI enterprise, página dedicada “Usage”, nem faturamento/cobrança real (Stripe etc.).
+M5 entrega **estimativa de custo** e **API/eventos de uso para o host faturar**, com uma superfície mínima no Studio (Dashboard Livewire + badges no Debugger + chips no Test Pretty). Não entrega BI enterprise, página dedicada “Usage”, nem faturamento/cobrança real (Stripe etc.).
 
 ---
 
@@ -20,14 +20,16 @@ M5 entrega **estimativa de custo** e **API/eventos de uso para o host faturar**,
 ### Escopo do milestone (1C)
 
 - **P1 no mesmo milstone:** `cost-estimation` + `usage-export-api`.
-- **`usage-analytics` é mínimo:** evoluir o Dashboard Livewire atual e badges no Neuron Debugger; página dedicada / filtros avançados / BI ficam fora (M6 ou deferred).
-- Critério de conclusão M5: host consegue consultar/agregar uso + custo estimado via API; operador do Studio vê totais de tokens/custo no Dashboard e tokens no Debugger.
+- **`usage-analytics` é mínimo:** Dashboard Livewire + badges no Debugger + **Test Pretty** (Completed + steps agent/llm); página dedicada / filtros avançados / BI ficam fora (M6 ou deferred).
+- Critério de conclusão M5: host consegue consultar/agregar uso + custo estimado via API; operador do Studio vê totais no Dashboard, tokens no Debugger e usage no Pretty.
 
 ### Superfície Studio (2A)
 
 - Reusar `Dashboard` Livewire + view `livewire/dashboard` — não criar rota/área “Usage”.
-- Neuron Debugger (`studio-traces`): mostrar badges de tokens (já no JSON); custo estimado quando disponível.
-- Densidade baixa: cards/stats no Dashboard (janela recente fixa, ex. 7/30 dias), não gráficos complexos.
+- Neuron Debugger (`studio-traces`): badges de tokens + custo estimado.
+- Test harness Pretty (`studio-chat`): chips de tokens/custo no Completed e ao lado da duração em steps agent/llm.
+- Densidade baixa: cards/stats no Dashboard (janela **30 dias**), não gráficos complexos.
+- UA extrai só `UsageQuery::aggregate` (partial UE-T2); rotas HTTP de export permanecem débito.
 
 ### Fundação de dados (compartilhada)
 

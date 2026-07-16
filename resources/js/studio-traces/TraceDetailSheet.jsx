@@ -73,6 +73,11 @@ export default function TraceDetailSheet({
                             input: detail.trace.input,
                             output: detail.trace.output,
                             durationMs: detail.trace.duration_ms,
+                            promptTokens: detail.trace.prompt_tokens,
+                            completionTokens: detail.trace.completion_tokens,
+                            totalTokens: detail.trace.total_tokens,
+                            estimatedCost: detail.trace.estimated_cost,
+                            currency: detail.trace.currency,
                         }}
                         steps={detail.steps ?? []}
                         traceShowUrl={traceShowUrl}

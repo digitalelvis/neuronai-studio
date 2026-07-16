@@ -76,6 +76,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
                 parentRun: $parentRun,
             );
             $state->set($outputKey, $response->structured);
+            $this->captureRunUsage($state, $response->runId);
 
             return 'default';
         }
@@ -108,6 +109,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
 
         $state->set($outputKey, $response->content);
         $this->emitToolEvents($nodeId, $response->toolEvents, $state);
+        $this->captureRunUsage($state, $response->runId);
 
         return 'default';
     }
@@ -159,6 +161,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
 
         $state->set($outputKey, $response->content);
         $this->emitToolEvents($nodeId, $response->toolEvents, $state);
+        $this->captureRunUsage($state, $response->runId);
 
         if ($decision === 'reject' && $context->targetForHandle($nodeId, 'rejected') !== null) {
             return 'rejected';
@@ -228,8 +231,29 @@ class AgentNodeExecutor implements NodeExecutorInterface
 
         $state->set($outputKey, $response->content);
         $this->emitToolEvents($nodeId, $response->toolEvents, $state);
+        $this->captureRunUsage($state, $response->runId);
 
         return 'default';
+    }
+
+    protected function captureRunUsage(WorkflowState $state, ?string $runId): void
+    {
+        if ($runId === null) {
+            return;
+        }
+
+        $run = StudioRun::query()->find($runId);
+        if ($run === null) {
+            return;
+        }
+
+        $state->set('__step_usage', [
+            'prompt_tokens' => $run->prompt_tokens ?? 0,
+            'completion_tokens' => $run->completion_tokens ?? 0,
+            'total_tokens' => $run->total_tokens ?? 0,
+            'estimated_cost' => $run->estimated_cost ?? '0.000000',
+            'currency' => config('neuronai-studio.usage.currency', 'USD'),
+        ]);
     }
 
     protected function resolveParentRun(WorkflowState $state): ?StudioRun

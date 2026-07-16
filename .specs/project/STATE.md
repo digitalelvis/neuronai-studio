@@ -1,19 +1,31 @@
 # State
 
-**Last Updated:** 2026-07-15
-**Development line:** `v0.3.x` (target release `v0.4.0` — M5)
-**Latest published:** `v0.3.3` on Packagist / `main`
-**Current Work:** `cost-estimation` done on `feat/m5-analytics-billing`. UE + UA parked as M5 debt (AD-015).
+**Last Updated:** 2026-07-16
+**Development line:** `v0.4.x` (M5 remainder — UE; CE in `v0.4.0`, UA implemented)
+**Latest published:** `v0.4.0` on Packagist / `main`
+**Current Work:** Linha `v0.4.x`. UA implementation complete; UE remains M5 debt.
 
 ---
 
 ## Recent Decisions (Last 60 days)
 
+### AD-017: Linha ativa `v0.4.x` pós-release 0.4.0 (2026-07-16)
+
+**Decision:** Encerrar `v0.3.x` como linha ativa de feature; desenvolver a partir de `v0.4.x`. CE já publicado em `v0.4.0`. Débito UE/UA e novas features miram PRs → `v0.4.x`.
+**Reason:** Release `v0.4.0` consolidou M4 leftovers + CE na `main`/Packagist.
+**Impact:** ROADMAP/STATE/Linha nos tasks M5 atualizados; ruleset da development line deve apontar para `v0.4.x`.
+
+### AD-016: UA inclui Test Pretty + UsageQuery mínimo (2026-07-16)
+
+**Decision:** Ampliar `usage-analytics` para chips de tokens/custo no Test Pretty (`WorkflowThread` / Completed header) além de Debugger + Dashboard. Dashboard usa `UsageQuery::aggregate` extraído no UA (partial UE-T2); HTTP export permanece débito. Tasks UA-T1…T11.
+**Reason:** Pretty é a superfície principal do harness; operadores veem latência mas não spend. Bloquear Dashboard em UE HTTP inteiro atrasa valor Studio.
+**Impact:** Spec/design/tasks UA + ROADMAP/M5 index atualizados; Execute ainda sob AD-015 até pull explícito.
+
 ### AD-015: UE + UA como débito M5 — não Execute agora (2026-07-15)
 
 **Decision:** Manter `usage-export-api` e `usage-analytics` no roadmap com specs/design/tasks intactos, mas **não executar** até retorno explícito. CE permanece a fatia M5 entregue nesta onda.
 **Reason:** Metering no DB (provider/model/cost + nest rollup) já desbloqueia o host via queries diretas; API de export e superfície Studio podem esperar sem invalidar o design.
-**Impact:** Status ROADMAP → `debt`; M5 fica `partial` até UE/UA. Retomada: UE-T1 → … → UA.
+**Impact:** Status ROADMAP → `debt`; M5 fica `partial` até UE/UA. Retomada preferencial: **UA** (valor Studio + Pretty) ou UE (host API) sob demanda.
 
 ### AD-012: RELEASE_TOKEN para push do release em main (2026-07-15)
 
@@ -211,7 +223,7 @@
 ## Deferred Ideas
 
 - [ ] **M5 debt:** `usage-export-api` (UE-T1…T7) — specs prontos; Execute sob demanda (AD-015)
-- [ ] **M5 debt:** `usage-analytics` (UA-T1…T8) — Dashboard mínimo + Debugger badges; Execute sob demanda (AD-015)
+- [x] **M5 debt:** `usage-analytics` (UA-T1…T11) — Dashboard + Debugger + Test Pretty implemented
 - [ ] Autonomia multi-turn dentro de um único nó agent (múltiplas tool rounds sem sair do nó)
 - [ ] SSE em tempo real para `RunWorkflowJob` (broadcast vs polling)
 - [ ] Remove redundant layout `<link>` tags for bundle-inlined CSS
@@ -242,5 +254,6 @@
 - [x] Design M5 — AD-014; design.md CE / UE / UA
 - [x] Tasks M5 — index + CE/UE/UA tasks.md (28)
 - [x] Execute M5 `cost-estimation` (CE-T1…T13)
-- [ ] Execute M5 `usage-export-api` + `usage-analytics` — **débito** (AD-015)
-- [ ] Aplicar ruleset da development line em `v0.3.x` (`apply-branch-rules.sh`)
+- [ ] Execute M5 `usage-export-api` — **débito** (AD-015)
+- [x] Execute M5 `usage-analytics` (UA-T1…T11, Pretty)
+- [ ] Aplicar ruleset da development line em `v0.4.x` (`apply-branch-rules.sh`)
