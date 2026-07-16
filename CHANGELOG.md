@@ -1,5 +1,12 @@
 # Changelog
 
+# [0.6.0](https://github.com/digitalelvis/neuronai-studio/compare/v0.5.1...v0.6.0) (2026-07-16)
+
+
+### Features
+
+* **usage:** add host metering export API and usage events ([7bbe343](https://github.com/digitalelvis/neuronai-studio/commit/7bbe343807b0f17228e03a77b08b119839a916eb))
+
 ## [0.5.1](https://github.com/digitalelvis/neuronai-studio/compare/v0.5.0...v0.5.1) (2026-07-16)
 
 # [0.5.0](https://github.com/digitalelvis/neuronai-studio/compare/v0.4.0...v0.5.0) (2026-07-16)
