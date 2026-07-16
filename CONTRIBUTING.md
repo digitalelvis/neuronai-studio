@@ -7,7 +7,7 @@ Thank you for your interest in contributing! This project is open source and we 
 - PHP 8.2+
 - Composer
 - Node.js 18+ (for frontend development)
-- Laravel 11 or 12 (via demo app)
+- Laravel 11, 12, or 13 (via demo app)
 
 ## Local development
 

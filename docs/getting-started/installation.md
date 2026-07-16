@@ -5,7 +5,7 @@ This guide walks through installing NeuronAI Studio in a Laravel application, fr
 ## Prerequisites
 
 - PHP 8.2 or higher
-- Laravel 11 or 12
+- Laravel 11, 12, or 13
 - A database configured in your `.env`
 - API credentials for at least one LLM provider (configured via Neuron Laravel)
 
