@@ -15,6 +15,7 @@ use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ParallelBranchInterruptExcept
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ToolApprovalRequiredException;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\WorkflowExecutionException;
 use DigitalElvis\NeuronAIStudio\Support\ChatThreadKey;
+use DigitalElvis\NeuronAIStudio\Usage\UsageRecorder;
 use Illuminate\Support\Str;
 use NeuronAI\Workflow\Interrupt\WorkflowInterrupt;
 use NeuronAI\Workflow\Persistence\InMemoryPersistence;
@@ -247,10 +248,8 @@ class WorkflowRunner
                 'output' => $this->outputWithNativeSteps($finalState->all(), $middleware->steps, $workflow),
                 'checkpoint_state' => null,
                 'finished_at' => now(),
-                'prompt_tokens' => StudioTraceSpan::where('trace_id', $trace->id)->sum('prompt_tokens'),
-                'completion_tokens' => StudioTraceSpan::where('trace_id', $trace->id)->sum('completion_tokens'),
-                'total_tokens' => StudioTraceSpan::where('trace_id', $trace->id)->sum('total_tokens'),
             ]);
+            $this->finalizeRunUsage($run);
 
             return $run->fresh();
         } catch (WorkflowInterrupt $interrupt) {
@@ -540,10 +539,8 @@ class WorkflowRunner
                 'output' => $this->outputWithNativeSteps($finalState->all(), $middleware->steps, $workflow),
                 'checkpoint_state' => null,
                 'finished_at' => now(),
-                'prompt_tokens' => StudioTraceSpan::where('trace_id', $trace->id)->sum('prompt_tokens'),
-                'completion_tokens' => StudioTraceSpan::where('trace_id', $trace->id)->sum('completion_tokens'),
-                'total_tokens' => StudioTraceSpan::where('trace_id', $trace->id)->sum('total_tokens'),
             ]);
+            $this->finalizeRunUsage($run);
 
             return $run->fresh();
         } catch (WorkflowInterrupt $interrupt) {
@@ -554,6 +551,7 @@ class WorkflowRunner
                 'error_message' => $exception->getMessage(),
                 'finished_at' => now(),
             ]);
+            $this->finalizeRunUsage($run);
 
             throw $exception;
         }
@@ -627,10 +625,8 @@ class WorkflowRunner
             'output' => $finalState->all(),
             'checkpoint_state' => null,
             'finished_at' => now(),
-            'prompt_tokens' => StudioTraceSpan::where('trace_id', $trace->id)->sum('prompt_tokens'),
-            'completion_tokens' => StudioTraceSpan::where('trace_id', $trace->id)->sum('completion_tokens'),
-            'total_tokens' => StudioTraceSpan::where('trace_id', $trace->id)->sum('total_tokens'),
         ]);
+        $this->finalizeRunUsage($run);
 
         return $run->fresh();
     }
@@ -650,22 +646,23 @@ class WorkflowRunner
                 'output' => $state->all(),
                 'checkpoint_state' => null,
                 'finished_at' => now(),
-                'prompt_tokens' => StudioTraceSpan::where('trace_id', $trace->id)->sum('prompt_tokens'),
-                'completion_tokens' => StudioTraceSpan::where('trace_id', $trace->id)->sum('completion_tokens'),
-                'total_tokens' => StudioTraceSpan::where('trace_id', $trace->id)->sum('total_tokens'),
             ]);
         } else {
             $run->update([
                 'status' => 'failed',
                 'error_message' => $exception->getMessage(),
                 'finished_at' => now(),
-                'prompt_tokens' => StudioTraceSpan::where('trace_id', $trace->id)->sum('prompt_tokens'),
-                'completion_tokens' => StudioTraceSpan::where('trace_id', $trace->id)->sum('completion_tokens'),
-                'total_tokens' => StudioTraceSpan::where('trace_id', $trace->id)->sum('total_tokens'),
             ]);
         }
 
+        $this->finalizeRunUsage($run);
+
         return $run->fresh();
+    }
+
+    protected function finalizeRunUsage(StudioRun $run): void
+    {
+        (new UsageRecorder)->finalizeRun($run);
     }
 
     /** @param  list<array<string, mixed>>  $steps */

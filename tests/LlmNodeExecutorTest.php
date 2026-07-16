@@ -2,6 +2,10 @@
 
 namespace DigitalElvis\NeuronAIStudio\Tests;
 
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
+use DigitalElvis\NeuronAIStudio\Models\StudioThread;
+use DigitalElvis\NeuronAIStudio\Models\StudioTrace;
+use DigitalElvis\NeuronAIStudio\Models\StudioTraceSpan;
 use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
 use DigitalElvis\NeuronAIStudio\Runtime\AgentRunner;
 use DigitalElvis\NeuronAIStudio\Runtime\BuilderWorkflowState;
@@ -14,7 +18,9 @@ use DigitalElvis\NeuronAIStudio\Runtime\ToolEventExtractor;
 use DigitalElvis\NeuronAIStudio\Runtime\ToolResolver;
 use DigitalElvis\NeuronAIStudio\Tests\Fixtures\Output\SampleLeadProfile;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use NeuronAI\Chat\Messages\AssistantMessage;
+use NeuronAI\Chat\Messages\Usage;
 use NeuronAI\Testing\FakeAIProvider;
 use NeuronAI\Testing\RequestRecord;
 
@@ -166,5 +172,133 @@ class LlmNodeExecutorTest extends TestCase
         $this->assertSame('plain text', $state->get('llm_response'));
         $fakeProvider->assertMethodCallCount('chat', 1);
         $fakeProvider->assertMethodCallCount('structured', 0);
+    }
+
+    public function test_execute_chat_records_llm_span_on_parent_workflow_run(): void
+    {
+        config([
+            'neuronai-studio.usage.pricing.openai.gpt-4o-mini' => [
+                'prompt_per_1k' => 0.00015,
+                'completion_per_1k' => 0.0006,
+            ],
+        ]);
+
+        $parent = StudioRun::create([
+            'id' => (string) Str::uuid(),
+            'thread_id' => StudioThread::create(['id' => (string) Str::uuid()])->id,
+            'status' => 'running',
+        ]);
+        $trace = StudioTrace::create([
+            'id' => (string) Str::uuid(),
+            'run_id' => $parent->id,
+        ]);
+
+        $fakeProvider = new FakeAIProvider(
+            (new AssistantMessage('metered'))->setUsage(new Usage(1000, 500)),
+        );
+        $executor = $this->makeExecutor($fakeProvider);
+        $context = new GraphContext([], []);
+        $state = new BuilderWorkflowState($context, null, [
+            '__studio_run_id' => $parent->id,
+            '__studio_trace_id' => $trace->id,
+        ]);
+
+        $executor->execute([
+            'data' => [
+                'prompt' => 'Hello',
+                'provider' => 'openai',
+                'model' => 'gpt-4o-mini',
+                'output_key' => 'llm_response',
+            ],
+        ], $state, $context);
+
+        $span = StudioTraceSpan::query()
+            ->where('trace_id', $trace->id)
+            ->where('type', 'llm')
+            ->first();
+
+        $this->assertNotNull($span);
+        $this->assertSame('openai', $span->provider);
+        $this->assertSame('gpt-4o-mini', $span->model);
+        $this->assertSame(1000, $span->prompt_tokens);
+        $this->assertSame(500, $span->completion_tokens);
+        $this->assertSame('0.000450', $span->estimated_cost);
+        $this->assertSame(1500, $parent->fresh()->total_tokens);
+        $this->assertSame('0.000450', $parent->fresh()->estimated_cost);
+    }
+
+    public function test_execute_chat_without_parent_ids_does_not_throw(): void
+    {
+        $fakeProvider = new FakeAIProvider(
+            (new AssistantMessage('ok'))->setUsage(new Usage(10, 5)),
+        );
+        $executor = $this->makeExecutor($fakeProvider);
+        $context = new GraphContext([], []);
+        $state = new BuilderWorkflowState($context, null, []);
+
+        $executor->execute([
+            'data' => [
+                'prompt' => 'Hello',
+                'provider' => 'openai',
+                'model' => 'gpt-4o-mini',
+                'output_key' => 'llm_response',
+            ],
+        ], $state, $context);
+
+        $this->assertSame('ok', $state->get('llm_response'));
+        $this->assertSame(0, StudioTraceSpan::query()->where('type', 'llm')->count());
+    }
+
+    public function test_execute_stream_records_usage_from_final_message(): void
+    {
+        config([
+            'neuronai-studio.usage.pricing.openai.gpt-4o-mini' => [
+                'prompt_per_1k' => 0.00015,
+                'completion_per_1k' => 0.0006,
+            ],
+        ]);
+
+        $parent = StudioRun::create([
+            'id' => (string) Str::uuid(),
+            'thread_id' => StudioThread::create(['id' => (string) Str::uuid()])->id,
+            'status' => 'running',
+        ]);
+        $trace = StudioTrace::create([
+            'id' => (string) Str::uuid(),
+            'run_id' => $parent->id,
+        ]);
+
+        $fakeProvider = new FakeAIProvider(
+            (new AssistantMessage('streamed'))->setUsage(new Usage(2000, 0)),
+        );
+        $fakeProvider->setStreamChunkSize(4);
+        $executor = $this->makeExecutor($fakeProvider);
+        $context = new GraphContext([], []);
+        $state = new BuilderWorkflowState($context, null, [
+            '__studio_run_id' => $parent->id,
+            '__studio_trace_id' => $trace->id,
+        ]);
+        $state->stepEmitter = static function (): void {};
+
+        $executor->execute([
+            'id' => 'llm-1',
+            'data' => [
+                'prompt' => 'Hello',
+                'provider' => 'openai',
+                'model' => 'gpt-4o-mini',
+                'output_key' => 'llm_response',
+                'stream' => true,
+            ],
+        ], $state, $context);
+
+        $span = StudioTraceSpan::query()
+            ->where('trace_id', $trace->id)
+            ->where('type', 'llm')
+            ->first();
+
+        $this->assertNotNull($span);
+        $this->assertSame(2000, $span->prompt_tokens);
+        $this->assertSame('0.000300', $span->estimated_cost);
+        $this->assertSame('streamed', $state->get('llm_response'));
     }
 }

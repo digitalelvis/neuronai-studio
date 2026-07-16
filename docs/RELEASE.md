@@ -194,7 +194,7 @@ Active development targets **M5 (Analítica e Faturamento)** on branch `v0.3.x`.
 |------|--------|
 | M1–M4 (cyclic graphs, RAG, structured output, HITL, parallel, queue, stream adapters, unified runs) | ✅ Published in `v0.3.0` |
 | Release bot (`RELEASE_TOKEN` + push `main` before tag) | ✅ Verified with `v0.3.3` on `main` + Packagist |
-| M5 usage analytics / cost estimation / export API | 🔜 Planned — specs TBD |
+| M5 cost estimation + usage export API (+ minimal Studio dashboard/debugger badges) | 📋 Tasked (28) — see `.specs/features/m5-analytics-billing/tasks.md` |
 
 Line `v0.2.x` is closed for new features. Consumers on `v0.2.x` / `v0.3.0` can stay until ready to adopt M5.
 

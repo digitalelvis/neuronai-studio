@@ -3,6 +3,7 @@
 namespace DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors;
 
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Runtime\AgentRunner;
 use DigitalElvis\NeuronAIStudio\Runtime\BuilderWorkflowState;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ToolApprovalRequiredException;
@@ -42,12 +43,13 @@ class AgentNodeExecutor implements NodeExecutorInterface
         $threadKey = is_string($threadKey) && $threadKey !== '' ? $threadKey : null;
 
         $definition = isset($data['agent_id']) ? AgentDefinition::findOrFail($data['agent_id']) : null;
+        $parentRun = $this->resolveParentRun($state);
 
         $resume = $state->get('__tool_approval_resume');
         if (is_array($resume) && ($resume['node_id'] ?? null) === $nodeId) {
             $state->set('__tool_approval_resume', null);
 
-            return $this->resumeApproval($nodeId, (string) $outputKey, $data, $definition, $threadKey, $resume, $state, $context);
+            return $this->resumeApproval($nodeId, (string) $outputKey, $data, $definition, $threadKey, $resume, $state, $context, $parentRun);
         }
 
         $requireApproval = array_key_exists('require_tool_approval', $data)
@@ -65,14 +67,21 @@ class AgentNodeExecutor implements NodeExecutorInterface
                 ]
                 : $data;
 
-            $response = $this->agentRunner->structuredInline($config, $userMessage, $outputClass, $definition, $threadKey);
+            $response = $this->agentRunner->structuredInline(
+                $config,
+                $userMessage,
+                $outputClass,
+                $definition,
+                $threadKey,
+                parentRun: $parentRun,
+            );
             $state->set($outputKey, $response->structured);
 
             return 'default';
         }
 
         if ($this->shouldStream($data, $requireApproval, $state)) {
-            return $this->streamResponse($nodeId, (string) $outputKey, $data, $definition, $userMessage, $threadKey, $state);
+            return $this->streamResponse($nodeId, (string) $outputKey, $data, $definition, $userMessage, $threadKey, $state, $parentRun);
         }
 
         try {
@@ -83,13 +92,14 @@ class AgentNodeExecutor implements NodeExecutorInterface
                     'instructions' => $definition->instructions,
                     'tools' => $definition->tools ?? [],
                     'require_tool_approval' => $requireApproval,
-                ], $userMessage, $definition, $threadKey);
+                ], $userMessage, $definition, $threadKey, parentRun: $parentRun);
             } else {
                 $response = $this->agentRunner->runInline(
                     array_merge($data, ['require_tool_approval' => $requireApproval]),
                     $userMessage,
                     null,
                     $threadKey,
+                    parentRun: $parentRun,
                 );
             }
         } catch (ToolApprovalRequiredException $exception) {
@@ -117,6 +127,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
         array $resume,
         WorkflowState $state,
         GraphContext $context,
+        ?StudioRun $parentRun = null,
     ): string {
         $decision = (string) ($resume['decision'] ?? 'approve');
         $serialized = (string) ($resume['interrupt'] ?? '');
@@ -133,7 +144,15 @@ class AgentNodeExecutor implements NodeExecutorInterface
             : array_merge($data, ['require_tool_approval' => true]);
 
         try {
-            $response = $this->agentRunner->resumeInlineApproval($config, $serialized, $decision, $feedback, $definition, $threadKey);
+            $response = $this->agentRunner->resumeInlineApproval(
+                $config,
+                $serialized,
+                $decision,
+                $feedback,
+                $definition,
+                $threadKey,
+                $parentRun,
+            );
         } catch (ToolApprovalRequiredException $exception) {
             throw new ToolApprovalRequiredException($nodeId, $exception->pendingTools, $exception->approvalMessage, $exception->serializedInterrupt);
         }
@@ -177,6 +196,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
         UserMessage $userMessage,
         ?string $threadKey,
         BuilderWorkflowState $state,
+        ?StudioRun $parentRun = null,
     ): string {
         $config = $definition !== null
             ? [
@@ -187,7 +207,13 @@ class AgentNodeExecutor implements NodeExecutorInterface
             ]
             : $data;
 
-        $generator = $this->agentRunner->streamInline($config, $userMessage, $definition, $threadKey);
+        $generator = $this->agentRunner->streamInline(
+            $config,
+            $userMessage,
+            $definition,
+            $threadKey,
+            parentRun: $parentRun,
+        );
 
         foreach ($generator as $chunk) {
             if ($chunk instanceof TextChunk && $chunk->content !== '') {
@@ -204,6 +230,16 @@ class AgentNodeExecutor implements NodeExecutorInterface
         $this->emitToolEvents($nodeId, $response->toolEvents, $state);
 
         return 'default';
+    }
+
+    protected function resolveParentRun(WorkflowState $state): ?StudioRun
+    {
+        $parentId = $state->get('__studio_run_id');
+        if (! is_string($parentId) || $parentId === '') {
+            return null;
+        }
+
+        return StudioRun::query()->find($parentId);
     }
 
     /**
