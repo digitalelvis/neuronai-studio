@@ -63,7 +63,7 @@ Uso de tokens/spans já persistidos (`TelemetryTracker`, `StudioTraceSpan`) para
 
 **Escopo decidido (2026-07-15):** host-first — `cost-estimation` + `usage-export-api` são P1 do milstone; `usage-analytics` é mínimo (Dashboard + Debugger + **Test Pretty**), sem página Usage/BI. Index: [m5-analytics-billing/tasks.md](../features/m5-analytics-billing/tasks.md).
 
-**Débito (2026-07-15):** CE shipped; UE + UA permanecem no roadmap com specs/design/tasks prontos, mas **não entram na fila de Execute agora** — retomada sob demanda.
+**Débito (2026-07-15):** CE shipped; UE + UA permaneceram no roadmap até retomada sob demanda. UA foi retomado e concluído em 2026-07-16; UE continua em débito.
 
 **UA expandido (2026-07-16, AD-016):** Specs/tasks do UA passam a incluir chips de tokens/custo no Test Pretty (`studio-chat`); Dashboard usa `UsageQuery::aggregate` sem esperar o HTTP completo de UE.
 
@@ -71,9 +71,9 @@ Uso de tokens/spans já persistidos (`TelemetryTracker`, `StudioTraceSpan`) para
 |-------|---------|--------|------|
 | 12 | `cost-estimation` | **done** | [spec](../features/cost-estimation/spec.md) · [design](../features/cost-estimation/design.md) · [tasks](../features/cost-estimation/tasks.md) |
 | 13 | `usage-export-api` | **debt** (tasked, not now) | [spec](../features/usage-export-api/spec.md) · [design](../features/usage-export-api/design.md) · [tasks](../features/usage-export-api/tasks.md) |
-| 14 | `usage-analytics` | **debt** (UA-T1…T11; Pretty+Dashboard+Debugger) | [spec](../features/usage-analytics/spec.md) · [design](../features/usage-analytics/design.md) · [tasks](../features/usage-analytics/tasks.md) |
+| 14 | `usage-analytics` | **done** (UA-T1…T11; Pretty+Dashboard+Debugger) | [spec](../features/usage-analytics/spec.md) · [design](../features/usage-analytics/design.md) · [tasks](../features/usage-analytics/tasks.md) |
 
-**Critério de conclusão M5:** Custo estimado configurável por modelo; API agregada + por-run para o host; Dashboard com totais 30d; Debugger com badges; Test Pretty com chips de usage. (API HTTP + UA UI ainda em débito.)
+**Critério de conclusão M5:** Custo estimado configurável por modelo; API agregada + por-run para o host; Dashboard com totais 30d; Debugger com badges; Test Pretty com chips de usage. (Somente API HTTP permanece em débito.)
 
 ---
 
@@ -84,7 +84,7 @@ Uso de tokens/spans já persistidos (`TelemetryTracker`, `StudioTraceSpan`) para
 3. ~~Especificar M5 (Discuss → Spec)~~ ✅ — context + 3 specs
 4. ~~Design M5~~ ✅ — CE / UE / UA design.md
 5. ~~Tasks M5~~ ✅ — CE 13 + UE 7 + UA 11 (Pretty expansion AD-016)
-6. Execute M5 — ~~`cost-estimation`~~ ✅; `usage-export-api` + `usage-analytics` → **débito** (não executar agora).
+6. Execute M5 — ~~`cost-estimation`~~ ✅; ~~`usage-analytics`~~ ✅; `usage-export-api` → **débito**.
 7. Aplicar ruleset da development line em `v0.4.x` (script `apply-branch-rules.sh`).
 8. PRs de feature M5 debt → `v0.4.x`.
 

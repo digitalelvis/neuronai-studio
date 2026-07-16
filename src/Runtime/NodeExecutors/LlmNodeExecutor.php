@@ -51,6 +51,7 @@ class LlmNodeExecutor implements NodeExecutorInterface
             ], $userMessage, $outputClass, threadKey: $threadKey, parentRun: $parentRun);
 
             $state->set($outputKey, $result->structured);
+            $this->captureRunUsage($state, $result->runId);
 
             return 'default';
         }
@@ -99,7 +100,7 @@ class LlmNodeExecutor implements NodeExecutorInterface
         $promptTokens = $usage ? $usage->inputTokens : 0;
         $completionTokens = $usage ? $usage->outputTokens : 0;
 
-        $this->usageRecorder->recordLlmSpan(
+        $span = $this->usageRecorder->recordLlmSpan(
             $run,
             $trace,
             $provider,
@@ -107,6 +108,16 @@ class LlmNodeExecutor implements NodeExecutorInterface
             $promptTokens,
             $completionTokens,
         );
+
+        $state->set('__step_usage', [
+            'prompt_tokens' => $span->prompt_tokens,
+            'completion_tokens' => $span->completion_tokens,
+            'total_tokens' => $span->total_tokens,
+            'estimated_cost' => $span->estimated_cost,
+            'currency' => config('neuronai-studio.usage.currency', 'USD'),
+            'provider' => $span->provider,
+            'model' => $span->model,
+        ]);
     }
 
     protected function resolveParentRun(WorkflowState $state): ?StudioRun
@@ -117,6 +128,26 @@ class LlmNodeExecutor implements NodeExecutorInterface
         }
 
         return StudioRun::query()->find($runId);
+    }
+
+    protected function captureRunUsage(WorkflowState $state, ?string $runId): void
+    {
+        if ($runId === null) {
+            return;
+        }
+
+        $run = StudioRun::query()->find($runId);
+        if ($run === null) {
+            return;
+        }
+
+        $state->set('__step_usage', [
+            'prompt_tokens' => $run->prompt_tokens ?? 0,
+            'completion_tokens' => $run->completion_tokens ?? 0,
+            'total_tokens' => $run->total_tokens ?? 0,
+            'estimated_cost' => $run->estimated_cost ?? '0.000000',
+            'currency' => config('neuronai-studio.usage.currency', 'USD'),
+        ]);
     }
 
     protected function resolveParentTrace(WorkflowState $state): ?StudioTrace

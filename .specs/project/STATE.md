@@ -1,9 +1,9 @@
 # State
 
 **Last Updated:** 2026-07-16
-**Development line:** `v0.4.x` (M5 remainder — UE + UA; CE in `v0.4.0`)
+**Development line:** `v0.4.x` (M5 remainder — UE; CE in `v0.4.0`, UA implemented)
 **Latest published:** `v0.4.0` on Packagist / `main`
-**Current Work:** Linha `v0.4.x`. UE + UA parked as M5 debt (AD-015); UA Pretty expansion (AD-016).
+**Current Work:** Linha `v0.4.x`. UA implementation complete; UE remains M5 debt.
 
 ---
 
@@ -223,7 +223,7 @@
 ## Deferred Ideas
 
 - [ ] **M5 debt:** `usage-export-api` (UE-T1…T7) — specs prontos; Execute sob demanda (AD-015)
-- [ ] **M5 debt:** `usage-analytics` (UA-T1…T11) — Dashboard + Debugger + Test Pretty; Execute sob demanda (AD-015/AD-016)
+- [x] **M5 debt:** `usage-analytics` (UA-T1…T11) — Dashboard + Debugger + Test Pretty implemented
 - [ ] Autonomia multi-turn dentro de um único nó agent (múltiplas tool rounds sem sair do nó)
 - [ ] SSE em tempo real para `RunWorkflowJob` (broadcast vs polling)
 - [ ] Remove redundant layout `<link>` tags for bundle-inlined CSS
@@ -255,5 +255,5 @@
 - [x] Tasks M5 — index + CE/UE/UA tasks.md (28)
 - [x] Execute M5 `cost-estimation` (CE-T1…T13)
 - [ ] Execute M5 `usage-export-api` — **débito** (AD-015)
-- [ ] Execute M5 `usage-analytics` (UA-T1…T11, Pretty) — **débito** (AD-015/AD-016)
+- [x] Execute M5 `usage-analytics` (UA-T1…T11, Pretty)
 - [ ] Aplicar ruleset da development line em `v0.4.x` (`apply-branch-rules.sh`)

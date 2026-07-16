@@ -10,6 +10,8 @@ use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorRegistry;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\SetStateNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\StartNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\StopNodeExecutor;
+use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorInterface;
+use NeuronAI\Workflow\WorkflowState;
 
 class GraphExecutionLoopTest extends TestCase
 {
@@ -63,6 +65,51 @@ class GraphExecutionLoopTest extends TestCase
         $this->expectExceptionMessage('global max steps');
 
         $loop->runFromNode('loop_1', $context, $state);
+    }
+
+    public function test_step_usage_is_recorded_and_emitted(): void
+    {
+        $graph = [
+            'nodes' => [
+                ['id' => 'llm_1', 'type' => 'llm', 'data' => []],
+                ['id' => 'stop_1', 'type' => 'stop', 'data' => []],
+            ],
+            'edges' => [
+                ['source' => 'llm_1', 'target' => 'stop_1', 'sourceHandle' => 'default'],
+            ],
+        ];
+        $context = new GraphContext($graph['nodes'], $graph['edges']);
+        $state = new BuilderWorkflowState($context, 1);
+        $events = [];
+        $state->stepEmitter = function (string $event, array $data) use (&$events): void {
+            $events[] = compact('event', 'data');
+        };
+
+        $registry = new NodeExecutorRegistry;
+        $registry->register('llm', new class implements NodeExecutorInterface
+        {
+            public function execute(array $nodeConfig, WorkflowState $state, GraphContext $context): string
+            {
+                $state->set('__step_usage', [
+                    'prompt_tokens' => 7,
+                    'completion_tokens' => 3,
+                    'total_tokens' => 10,
+                    'estimated_cost' => '0.000150',
+                ]);
+
+                return 'default';
+            }
+        });
+        $registry->register('stop', new StopNodeExecutor);
+
+        (new GraphExecutionLoop($registry))->runFromNode('llm_1', $context, $state);
+
+        $step = $state->get('__steps')[0];
+        $completed = collect($events)->firstWhere('event', 'step_completed')['data'];
+
+        $this->assertSame(10, $step['total_tokens']);
+        $this->assertSame('0.000150', $step['estimated_cost']);
+        $this->assertSame(10, $completed['total_tokens']);
     }
 
     /** @return array<string, mixed> */

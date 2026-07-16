@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { formatCost, formatTokens } from '@/lib/formatUsage';
 import {
     buildPartialWorkflowThread,
     buildWorkflowOutputFallback,
@@ -24,6 +25,14 @@ function ThreadEntry({ entry }) {
                 </Badge>
                 {entry.durationMs != null && (
                     <span className="text-[10px] text-muted-foreground">{entry.durationMs}ms</span>
+                )}
+                {entry.usage && (
+                    <>
+                        <span className="text-[10px] text-muted-foreground">{formatTokens(entry.usage.totalTokens)}</span>
+                        <span className="text-[10px] text-muted-foreground">
+                            {formatCost(entry.usage.estimatedCost, entry.usage.currency)}
+                        </span>
+                    </>
                 )}
                 {entry.running && <span className="animate-pulse text-[10px] text-primary">running</span>}
             </div>

@@ -78,15 +78,18 @@ class GraphExecutionLoop
             }
 
             $durationMs = (int) ((microtime(true) - $startedAt) * 1000);
+            $usage = $state->get('__step_usage');
+            $usage = is_array($usage) ? $usage : [];
+            $state->delete('__step_usage');
 
-            $this->recordStep($state, $nodeId, $nodeType, $startedAt);
+            $this->recordStep($state, $nodeId, $nodeType, $startedAt, $usage);
 
             $completedPayload = [
                 'node_id' => $nodeId,
                 'node_type' => $nodeType,
                 'handle' => $handle,
                 'duration_ms' => $durationMs,
-            ];
+            ] + $usage;
 
             if ($nodeType === 'loop') {
                 $completedPayload['iteration'] = (int) $state->get("__loop_iterations.{$nodeId}", 0);
@@ -102,7 +105,14 @@ class GraphExecutionLoop
         return $state;
     }
 
-    protected function recordStep(BuilderWorkflowState $state, string $nodeId, string $nodeType, float $startedAt): void
+    /** @param array<string, mixed> $usage */
+    protected function recordStep(
+        BuilderWorkflowState $state,
+        string $nodeId,
+        string $nodeType,
+        float $startedAt,
+        array $usage = [],
+    ): void
     {
         $steps = $state->get('__steps', []);
         $steps[] = [
@@ -110,7 +120,7 @@ class GraphExecutionLoop
             'node_type' => $nodeType,
             'state_snapshot' => $state->all(),
             'duration_ms' => (int) ((microtime(true) - $startedAt) * 1000),
-        ];
+        ] + $usage;
         $state->set('__steps', $steps);
     }
 }

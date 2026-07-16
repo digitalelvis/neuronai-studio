@@ -45,7 +45,9 @@ Event types streamed to the browser:
 | `tool_call` | Agent invoked a tool |
 | `tool_result` | Tool execution result |
 | `error` | Runtime failure |
-| `done` | Stream complete |
+| `done` | Stream complete with finalized token and estimated-cost totals |
+
+The Completed message shows total tokens and estimated cost. If an older stream payload has no usage fields, the message renders normally without usage chips.
 
 ## Conversation threads
 

@@ -188,6 +188,14 @@ export function buildWorkflowPrettyThread(output, userMessage = '') {
                     content: diff.content,
                     key: diff.key,
                     durationMs: step.duration_ms ?? null,
+                    usage:
+                        step.total_tokens != null
+                            ? {
+                                  totalTokens: step.total_tokens,
+                                  estimatedCost: step.estimated_cost,
+                                  currency: step.currency,
+                              }
+                            : null,
                 });
             }
         }
@@ -233,6 +241,7 @@ export function buildPartialWorkflowThread(stepEvents = [], userMessage = '', cu
             label: step.nodeId,
             content: null,
             durationMs: step.durationMs ?? null,
+            usage: step.usage ?? null,
             pending: true,
         });
     }

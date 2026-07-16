@@ -79,10 +79,16 @@ class WorkflowStreamController
                     return;
                 }
 
+                $trace->refresh();
                 $send('trace_completed', [
                     'trace_id' => $trace->id,
                     'status' => $trace->status,
                     'output' => $trace->output,
+                    'prompt_tokens' => $trace->prompt_tokens ?? 0,
+                    'completion_tokens' => $trace->completion_tokens ?? 0,
+                    'total_tokens' => $trace->total_tokens ?? 0,
+                    'estimated_cost' => $trace->estimated_cost ?? '0.000000',
+                    'currency' => config('neuronai-studio.usage.currency', 'USD'),
                 ]);
             } catch (StructuredOutputValidationException $exception) {
                 $send('trace_failed', [

@@ -6,10 +6,10 @@ Token usage and estimated cost are already persisted on runs/spans (CE), but the
 
 ## Goals
 
-- [ ] Show recent/window token totals (and estimated cost) on the existing Livewire Dashboard.
-- [ ] Show token (+ cost) badges on Neuron Debugger list/detail/timeline.
-- [ ] Show token (+ cost) on the Test harness **Pretty** view (Completed header + agent/llm step chips next to duration).
-- [ ] Keep UX lightweight (stats + badges) — not a new analytics product surface.
+- [x] Show recent/window token totals (and estimated cost) on the existing Livewire Dashboard.
+- [x] Show token (+ cost) badges on Neuron Debugger list/detail/timeline.
+- [x] Show token (+ cost) on the Test harness **Pretty** view (Completed header + agent/llm step chips next to duration).
+- [x] Keep UX lightweight (stats + badges) — not a new analytics product surface.
 
 ## Out of Scope
 
@@ -119,11 +119,11 @@ Token usage and estimated cost are already persisted on runs/spans (CE), but the
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| UA-01 | P1: Dashboard usage summary | Tasks | In Tasks |
-| UA-02 | P1: Debugger token badges | Tasks | In Tasks |
-| UA-03 | P2: Cost on Debugger detail | Tasks | In Tasks |
-| UA-04 | P3: Recent runs token column | Tasks | In Tasks |
-| UA-05 | P1: Test Pretty usage chips | Tasks | In Tasks |
+| UA-01 | P1: Dashboard usage summary | Execute | Complete |
+| UA-02 | P1: Debugger token badges | Execute | Complete |
+| UA-03 | P2: Cost on Debugger detail | Execute | Complete |
+| UA-04 | P3: Recent runs token column | Execute | Complete |
+| UA-05 | P1: Test Pretty usage chips | Execute | Complete |
 
 **Coverage:** 5 total, mapped in [tasks.md](./tasks.md)
 
@@ -131,10 +131,10 @@ Token usage and estimated cost are already persisted on runs/spans (CE), but the
 
 ## Success Criteria
 
-- [ ] Dashboard shows window token (+ cost) totals without a new nav item.
-- [ ] Debugger list/detail/timeline show token (+ cost) badges.
-- [ ] Test Pretty shows run-level and agent/llm step usage chips.
-- [ ] Docs: `guides/dashboard.md` + `guides/analytics/usage.md` + harness/runtime notes.
+- [x] Dashboard shows window token (+ cost) totals without a new nav item.
+- [x] Debugger list/detail/timeline show token (+ cost) badges.
+- [x] Test Pretty shows run-level and agent/llm step usage chips.
+- [x] Docs: `guides/dashboard.md` + `guides/analytics/usage.md` + harness/runtime notes.
 
 ---
 

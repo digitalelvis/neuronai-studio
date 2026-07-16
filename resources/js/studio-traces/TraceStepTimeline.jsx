@@ -1,5 +1,6 @@
 import { cn } from '@/lib/utils';
 import { formatDuration } from './TraceListItem';
+import { formatTokens } from '@/lib/formatUsage';
 
 export default function TraceStepTimeline({ steps = [], selectedStepId, onSelectStep }) {
     return (
@@ -24,9 +25,10 @@ export default function TraceStepTimeline({ steps = [], selectedStepId, onSelect
                                     <span className="font-medium">{step.node_type}</span>
                                     <span className="ml-2 text-xs text-muted-foreground">{step.node_id}</span>
                                 </span>
-                                {step.duration_ms != null && (
-                                    <span className="text-xs text-muted-foreground">{formatDuration(step.duration_ms)}</span>
-                                )}
+                                <span className="flex flex-col items-end text-xs text-muted-foreground">
+                                    {step.duration_ms != null && <span>{formatDuration(step.duration_ms)}</span>}
+                                    {step.node_type === 'llm' && <span>{formatTokens(step.total_tokens)}</span>}
+                                </span>
                             </button>
                         ))
                     )}

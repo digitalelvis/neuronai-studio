@@ -46,7 +46,7 @@ sequenceDiagram
 | `thread` | Workflow chat thread ID for the run |
 | `step_started` | Node execution begins |
 | `token` | Incremental text delta from a streaming Agent/LLM node (`node_id`, `delta`) |
-| `step_completed` | Node finished with handle and duration |
+| `step_completed` | Node finished with handle, duration, and Agent/LLM usage when available |
 | `loop_iteration` | Loop node incremented (`iteration`, `max_steps`, `node_id`) |
 | `tool_call` | Agent node invoked a tool |
 | `tool_result` | Tool returned a result during agent step |
@@ -57,7 +57,7 @@ sequenceDiagram
 | `branch_started` | A parallel branch began (`fork_id`, `branch_id`) |
 | `branch_completed` | A parallel branch finished (`fork_id`, `branch_id`, `duration_ms`) |
 | `parallel_interrupt` | A parallel branch paused for human input (`fork_id`, `branch_id`, `node_id`, `reason`) |
-| `trace_completed` | Run finished successfully |
+| `trace_completed` | Run finished successfully with finalized token and estimated-cost totals |
 | `trace_failed` | Execution failure |
 
 ## Token streaming
@@ -74,6 +74,8 @@ event: step_completed  (node_id: agent_1, handle: default)
 ```
 
 The `StudioChat` chat surface aggregates consecutive `token` deltas into the assistant bubble, so text appears incrementally. The final accumulated content is still written to the node's `output_key`, and tool events are emitted after the stream completes — downstream nodes and trace records behave exactly as in the blocking path.
+
+In the **Pretty** view, completed Agent and LLM rows show their step tokens and estimated cost beside duration. The Completed header shows finalized run-level usage.
 
 Streaming falls back to the blocking path (no `token` events) when:
 
@@ -187,7 +189,7 @@ Every run creates a `WorkflowTrace` with associated `WorkflowTraceStep` records.
 /neuronai-studio/workflows/{id}/traces
 ```
 
-Shows run status, duration, and timestamps.
+Shows run status, duration, timestamps, and total tokens.
 
 ### Trace detail
 
@@ -209,6 +211,7 @@ Each step shows:
 - Input state snapshot
 - Output / error
 - Duration
+- LLM prompt/completion/total tokens, provider/model, and estimated cost
 
 Export trace JSON:
 

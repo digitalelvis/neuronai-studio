@@ -14,8 +14,8 @@ Configurable via `NEURONAI_STUDIO_ROUTE_PREFIX`.
 
 | Section | Description |
 |---------|-------------|
-| **Stats cards** | Counts of agents, workflows, tools, and MCP servers |
-| **Recent traces** | Latest workflow execution records with status and duration |
+| **Stats cards** | Resource counts plus total tokens and estimated cost for the last 30 days |
+| **Recent traces** | Latest execution records with status, tokens, estimated cost, and start time |
 | **Quick navigation** | Sidebar links to all studio sections |
 
 <!-- SCREENSHOT: dashboard-overview -->
@@ -43,9 +43,11 @@ Use the dashboard to:
 
 - Confirm your studio is installed and connected to the database
 - Jump to recent workflow runs that need investigation
+- Monitor recent token use and estimated spend without leaving the landing page
 - Get a sense of resource counts before exporting to production
 
 ## Related
 
 - [Agents Overview](agents/overview.md)
 - [Workflows Overview](workflows/overview.md)
+- [Usage Analytics](analytics/usage.md)

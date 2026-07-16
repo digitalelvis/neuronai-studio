@@ -1,7 +1,7 @@
 # Usage Analytics — Tasks
 
 **Design**: [design.md](./design.md) · **Spec**: [spec.md](./spec.md)  
-**Status**: Debt — specs/design/tasks ready (expanded Pretty 2026-07-16); Execute deferred until pulled  
+**Status**: Complete — UA-T1…T11 implemented 2026-07-16
 **Linha**: `v0.4.x` · **Ordem M5**: 3/3 (mínimo Studio + Pretty)  
 **Blocked by**: CE done; extracts partial `UsageQuery` (does not need full UE)
 
@@ -30,8 +30,8 @@ UA-T4 + UA-T6 + UA-T9 ──→ UA-T10 (bundles) ──→ UA-T11 (docs)
 **Requirement**: UA-02, UA-03  
 
 **Done when**:
-- [ ] JSON includes new fields (0 defaults OK)
-- [ ] Existing tests updated / green
+- [x] JSON includes new fields (0 defaults OK)
+- [x] Existing tests updated / green
 
 **Tests**: feature `WorkflowTraceControllerTest`  
 **Gate**: quick  
@@ -46,7 +46,7 @@ UA-T4 + UA-T6 + UA-T9 ──→ UA-T10 (bundles) ──→ UA-T11 (docs)
 **Requirement**: UA-02, UA-05  
 
 **Done when**:
-- [ ] Helpers exported and importable from traces + chat
+- [x] Helpers exported and importable from traces + chat
 
 **Tests**: none  
 **Gate**: quick  
@@ -61,8 +61,8 @@ UA-T4 + UA-T6 + UA-T9 ──→ UA-T10 (bundles) ──→ UA-T11 (docs)
 **Requirement**: UA-02, UA-03  
 
 **Done when**:
-- [ ] List shows total tokens (including `0`)
-- [ ] Detail shows tokens + cost + currency
+- [x] List shows total tokens (including `0`)
+- [x] Detail shows tokens + cost + currency
 
 **Tests**: none (bundle / smoke)  
 **Gate**: quick  
@@ -77,7 +77,7 @@ UA-T4 + UA-T6 + UA-T9 ──→ UA-T10 (bundles) ──→ UA-T11 (docs)
 **Requirement**: UA-02  
 
 **Done when**:
-- [ ] LLM steps surface token counts in UI
+- [x] LLM steps surface token counts in UI
 
 **Tests**: none  
 **Gate**: quick  
@@ -92,11 +92,11 @@ UA-T4 + UA-T6 + UA-T9 ──→ UA-T10 (bundles) ──→ UA-T11 (docs)
 **Requirement**: UA-05  
 
 **Done when**:
-- [ ] Agent node step carries child-run token/cost fields
-- [ ] LLM node step carries span token/cost fields
-- [ ] `trace_completed` includes finalized run usage + currency
-- [ ] Agent `done` includes run usage
-- [ ] Missing usage → fields omitted or zero without crash
+- [x] Agent node step carries child-run token/cost fields
+- [x] LLM node step carries span token/cost fields
+- [x] `trace_completed` includes finalized run usage + currency
+- [x] Agent `done` includes run usage
+- [x] Missing usage → fields omitted or zero without crash
 
 **Tests**: feature stream / executor tests with FakeAIProvider Usage  
 **Gate**: full  
@@ -111,9 +111,9 @@ UA-T4 + UA-T6 + UA-T9 ──→ UA-T10 (bundles) ──→ UA-T11 (docs)
 **Requirement**: UA-05  
 
 **Done when**:
-- [ ] Completed header shows run total tokens + est. cost
-- [ ] Agent/llm Pretty rows show tokens (+ cost) beside duration when present
-- [ ] Older payloads without usage still render
+- [x] Completed header shows run total tokens + est. cost
+- [x] Agent/llm Pretty rows show tokens (+ cost) beside duration when present
+- [x] Older payloads without usage still render
 
 **Tests**: none (manual / bundle)  
 **Gate**: quick  
@@ -128,9 +128,9 @@ UA-T4 + UA-T6 + UA-T9 ──→ UA-T10 (bundles) ──→ UA-T11 (docs)
 **Requirement**: UA-01  
 
 **Done when**:
-- [ ] Empty window → zeros
-- [ ] Children excluded from totals
-- [ ] Unit/feature tests green
+- [x] Empty window → zeros
+- [x] Children excluded from totals
+- [x] Unit/feature tests green
 
 **Tests**: `UsageQueryTest`  
 **Gate**: quick  
@@ -147,8 +147,8 @@ UA-T4 + UA-T6 + UA-T9 ──→ UA-T10 (bundles) ──→ UA-T11 (docs)
 **Requirement**: UA-01  
 
 **Done when**:
-- [ ] View data includes window totals
-- [ ] Empty DB → zeros
+- [x] View data includes window totals
+- [x] Empty DB → zeros
 
 **Tests**: feature `DashboardUsageTest` (or Livewire)  
 **Gate**: quick  
@@ -163,9 +163,9 @@ UA-T4 + UA-T6 + UA-T9 ──→ UA-T10 (bundles) ──→ UA-T11 (docs)
 **Requirement**: UA-01, UA-04  
 
 **Done when**:
-- [ ] Cards visible beside existing resource counts
-- [ ] No new nav item
-- [ ] Recent rows show tokens (+ cost)
+- [x] Cards visible beside existing resource counts
+- [x] No new nav item
+- [x] Recent rows show tokens (+ cost)
 
 **Tests**: via UA-T8  
 **Gate**: quick  
@@ -180,8 +180,8 @@ UA-T4 + UA-T6 + UA-T9 ──→ UA-T10 (bundles) ──→ UA-T11 (docs)
 **Requirement**: UA-02, UA-05  
 
 **Done when**:
-- [ ] Built artifacts committed or CI-built per convention
-- [ ] Pretty + Debugger smoke in browser
+- [x] Built artifacts generated per convention
+- [x] Pretty + Debugger bundles compile successfully
 
 **Tests**: none  
 **Gate**: full (CI frontend build)  
@@ -196,8 +196,8 @@ UA-T4 + UA-T6 + UA-T9 ──→ UA-T10 (bundles) ──→ UA-T11 (docs)
 **Requirement**: UA-01, UA-05  
 
 **Done when**:
-- [ ] Docs describe Dashboard + Debugger + Pretty
-- [ ] Link to export API as host metering (still debt)
+- [x] Docs describe Dashboard + Debugger + Pretty
+- [x] Link to export API as host metering (still debt)
 
 **Tests**: none  
 **Gate**: quick  
