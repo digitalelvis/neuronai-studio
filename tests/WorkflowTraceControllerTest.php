@@ -92,6 +92,85 @@ class WorkflowTraceControllerTest extends TestCase
         $response->assertJsonPath('steps.0.node_id', 'start_1');
     }
 
+    public function test_traces_show_json_resolves_run_binding_and_returns_populated_trace(): void
+    {
+        $this->withoutMiddleware(EnsureNeuronAIStudioAuthorized::class);
+
+        $workflow = WorkflowDefinition::create([
+            'name' => 'Legacy Trace Json Flow',
+            'slug' => 'legacy-trace-json-flow',
+            'graph' => WorkflowDefinition::defaultGraph(),
+        ]);
+
+        $thread = StudioThread::create([
+            'id' => (string) Str::uuid(),
+            'entity_type' => WorkflowDefinition::class,
+            'entity_id' => $workflow->id,
+        ]);
+
+        $run = StudioRun::create([
+            'id' => (string) Str::uuid(),
+            'thread_id' => $thread->id,
+            'status' => 'completed',
+            'input' => ['message' => 'hello'],
+            'output' => ['result' => 'ok'],
+            'started_at' => now(),
+            'finished_at' => now(),
+        ]);
+
+        $trace = StudioTrace::create([
+            'id' => (string) Str::uuid(),
+            'run_id' => $run->id,
+        ]);
+
+        StudioTraceSpan::create([
+            'id' => (string) Str::uuid(),
+            'trace_id' => $trace->id,
+            'name' => 'start_1',
+            'type' => 'start',
+            'status' => 'completed',
+            'output' => ['state_snapshot' => ['input' => 'hello']],
+            'duration_ms' => 5,
+        ]);
+
+        $response = $this->getJson(route('neuronai-studio.workflows.traces.show.json', $run));
+
+        $response->assertOk();
+        $response->assertJsonPath('trace.id', $run->id);
+        $response->assertJsonPath('steps.0.node_id', 'start_1');
+    }
+
+    public function test_traces_show_redirects_to_runs_show(): void
+    {
+        $this->withoutMiddleware(EnsureNeuronAIStudioAuthorized::class);
+
+        $workflow = WorkflowDefinition::create([
+            'name' => 'Legacy Trace Redirect Flow',
+            'slug' => 'legacy-trace-redirect-flow',
+            'graph' => WorkflowDefinition::defaultGraph(),
+        ]);
+
+        $thread = StudioThread::create([
+            'id' => (string) Str::uuid(),
+            'entity_type' => WorkflowDefinition::class,
+            'entity_id' => $workflow->id,
+        ]);
+
+        $run = StudioRun::create([
+            'id' => (string) Str::uuid(),
+            'thread_id' => $thread->id,
+            'status' => 'completed',
+            'input' => ['message' => 'hello'],
+            'started_at' => now(),
+            'finished_at' => now(),
+        ]);
+
+        $response = $this->get(route('neuronai-studio.workflows.traces.show', $run));
+
+        $response->assertRedirect(route('neuronai-studio.workflows.runs.show', $run));
+        $this->assertSame(301, $response->getStatusCode());
+    }
+
     public function test_show_exposes_queued_running_and_awaiting_node_id(): void
     {
         $this->withoutMiddleware(EnsureNeuronAIStudioAuthorized::class);
