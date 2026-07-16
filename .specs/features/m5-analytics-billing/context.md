@@ -1,8 +1,9 @@
 # M5 Analítica e Faturamento — Context
 
 **Gathered:** 2026-07-15  
-**Milestone:** M5 — CE shipped in `v0.4.0`; UE + UA debt on `v0.4.x`  
-**Status:** CE done; UE + UA debt — UA tasks expanded (Pretty, AD-016)  
+**Milestone:** M5 — CE `v0.4.0` · UA `v0.5.0` · UE Execute on `v0.6.x`  
+**Status:** CE + UA done; UE ready (AD-018) — UA expanded Pretty (AD-016)  
+ 
 **Tasks index:** [tasks.md](./tasks.md)
 **Specs:** [`cost-estimation`](../cost-estimation/spec.md) · [`usage-export-api`](../usage-export-api/spec.md) · [`usage-analytics`](../usage-analytics/spec.md)  
 **Designs:** [CE](../cost-estimation/design.md) · [UE](../usage-export-api/design.md) · [UA](../usage-analytics/design.md)

@@ -2,7 +2,7 @@
 
 **Design**: [design.md](./design.md) · **Spec**: [spec.md](./spec.md)  
 **Status**: ✅ Done  
-**Linha**: `v0.4.x` · **Ordem M5**: 1/3 (done in `v0.4.0`; bloqueia UE + UA)
+**Linha**: shipped `v0.4.0` · **Ordem M5**: 1/3 (done; desbloqueia UE + UA)
 
 ---
 

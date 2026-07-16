@@ -2,10 +2,11 @@
 
 **North star:** Agentes multimodais autônomos com grafos de workflow cíclicos.
 
-**Development line:** `v0.4.x` (M5 remainder — UE + UA; CE shipped in `v0.4.0`)  
-**Latest published:** `v0.4.0` on Packagist / `main`  
+**Development line (features):** `v0.6.x` (M5 remainder — `usage-export-api`)  
+**Patch line:** `v0.5.x`  
+**Latest published:** `v0.5.0` on Packagist / `main`  
 **Última atualização:** 2026-07-16  
-**Etapa atual:** Linha `v0.4.x`. `cost-estimation` ✅ in `v0.4.0`. `usage-export-api` + `usage-analytics` → **débito** (UA specs ampliadas para Test Pretty; AD-016).
+**Etapa atual:** `v0.5.0` publicou UA. CE ✅ (`v0.4.0`) · UA ✅ (`v0.5.0`) · UE → Execute em `v0.6.x`. Linha `v0.4.x` encerrada.
 
 ---
 
@@ -55,7 +56,7 @@ Expor agentes e workflows para clients externos (Vercel AI SDK, AG-UI) via endpo
 
 **Critério de conclusão M4:** Host app consome agente via `useChat` (Vercel) e workflow via client AG-UI usando rotas configuráveis do package; workflow com Human node pausa e retoma via endpoint `resume/{protocol}`; catálogo e Connect Panel documentam URLs e snippets.
 
-**Publicação:** `v0.4.0` inclui CE + Laravel 13. Linha ativa: `v0.4.x`. Linha `v0.3.x` encerrada após release.
+**Publicação:** `v0.4.0` = CE + Laravel 13. `v0.5.0` = UA. Linhas `v0.3.x` / `v0.4.x` encerradas para features.
 
 ### M5 — Analítica e Faturamento (P1) `partial`
 
@@ -63,17 +64,17 @@ Uso de tokens/spans já persistidos (`TelemetryTracker`, `StudioTraceSpan`) para
 
 **Escopo decidido (2026-07-15):** host-first — `cost-estimation` + `usage-export-api` são P1 do milstone; `usage-analytics` é mínimo (Dashboard + Debugger + **Test Pretty**), sem página Usage/BI. Index: [m5-analytics-billing/tasks.md](../features/m5-analytics-billing/tasks.md).
 
-**Débito (2026-07-15):** CE shipped; UE + UA permaneceram no roadmap até retomada sob demanda. UA foi retomado e concluído em 2026-07-16; UE continua em débito.
-
 **UA expandido (2026-07-16, AD-016):** Specs/tasks do UA passam a incluir chips de tokens/custo no Test Pretty (`studio-chat`); Dashboard usa `UsageQuery::aggregate` sem esperar o HTTP completo de UE.
+
+**Linha UE (2026-07-16, AD-018):** `usage-analytics` shipped em `v0.5.0`. Execute de `usage-export-api` na linha `v0.6.x`; `v0.5.x` fica como patch line.
 
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
-| 12 | `cost-estimation` | **done** | [spec](../features/cost-estimation/spec.md) · [design](../features/cost-estimation/design.md) · [tasks](../features/cost-estimation/tasks.md) |
-| 13 | `usage-export-api` | **debt** (tasked, not now) | [spec](../features/usage-export-api/spec.md) · [design](../features/usage-export-api/design.md) · [tasks](../features/usage-export-api/tasks.md) |
-| 14 | `usage-analytics` | **done** (UA-T1…T11; Pretty+Dashboard+Debugger) | [spec](../features/usage-analytics/spec.md) · [design](../features/usage-analytics/design.md) · [tasks](../features/usage-analytics/tasks.md) |
+| 12 | `cost-estimation` | **done** (`v0.4.0`) | [spec](../features/cost-estimation/spec.md) · [design](../features/cost-estimation/design.md) · [tasks](../features/cost-estimation/tasks.md) |
+| 13 | `usage-export-api` | **ready** (Execute → `v0.6.x`) | [spec](../features/usage-export-api/spec.md) · [design](../features/usage-export-api/design.md) · [tasks](../features/usage-export-api/tasks.md) |
+| 14 | `usage-analytics` | **done** (`v0.5.0`; UA-T1…T11) | [spec](../features/usage-analytics/spec.md) · [design](../features/usage-analytics/design.md) · [tasks](../features/usage-analytics/tasks.md) |
 
-**Critério de conclusão M5:** Custo estimado configurável por modelo; API agregada + por-run para o host; Dashboard com totais 30d; Debugger com badges; Test Pretty com chips de usage. (Somente API HTTP permanece em débito.)
+**Critério de conclusão M5:** Custo estimado configurável por modelo; API agregada + por-run para o host; Dashboard com totais 30d; Debugger com badges; Test Pretty com chips de usage. (Somente API HTTP permanece — Execute em `v0.6.x`.)
 
 ---
 
@@ -84,9 +85,10 @@ Uso de tokens/spans já persistidos (`TelemetryTracker`, `StudioTraceSpan`) para
 3. ~~Especificar M5 (Discuss → Spec)~~ ✅ — context + 3 specs
 4. ~~Design M5~~ ✅ — CE / UE / UA design.md
 5. ~~Tasks M5~~ ✅ — CE 13 + UE 7 + UA 11 (Pretty expansion AD-016)
-6. Execute M5 — ~~`cost-estimation`~~ ✅; ~~`usage-analytics`~~ ✅; `usage-export-api` → **débito**.
-7. Aplicar ruleset da development line em `v0.4.x` (script `apply-branch-rules.sh`).
-8. PRs de feature M5 debt → `v0.4.x`.
+6. Execute M5 — ~~`cost-estimation`~~ ✅; ~~`usage-analytics`~~ ✅ (`v0.5.0`); `usage-export-api` → **`v0.6.x`**.
+7. ~~Sync ROADMAP/STATE/RELEASE pós-`v0.5.0` + abrir `v0.6.x`~~ ✅ (AD-018)
+8. ~~Ruleset `v*.*.x` (script `apply-branch-rules.sh`)~~ — reaplicar se necessário; padrão já cobre `v0.5.x` / `v0.6.x`
+9. Execute M5 `usage-export-api` (UE-T1…T7) em PRs → `v0.6.x`
 
 ---
 
@@ -110,6 +112,8 @@ Uso de tokens/spans já persistidos (`TelemetryTracker`, `StudioTraceSpan`) para
 | `workflow-parallel-execution` | ✅ done | 0.2.x → 0.3.0 |
 | `stream-adapters` | ✅ done | 0.2.x → 0.3.0 |
 | `unified-runs-and-traces` | ✅ done | 0.2.x → 0.3.0 |
+| `cost-estimation` | ✅ done | 0.4.0 |
+| `usage-analytics` | ✅ done | 0.5.0 |
 
 ---
 
