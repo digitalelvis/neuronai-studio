@@ -22,7 +22,7 @@ Quick links:
 ## Requirements
 
 - PHP 8.2+
-- Laravel 11 or 12
+- Laravel 11, 12, or 13
 - [neuron-core/neuron-laravel](https://github.com/neuron-core/neuron-laravel) ^1.0
 
 ## Quick install
