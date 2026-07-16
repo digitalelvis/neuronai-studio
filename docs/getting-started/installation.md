@@ -93,8 +93,10 @@ Configure the prefix with `NEURONAI_STUDIO_ROUTE_PREFIX` in `.env`.
 | `NEURONAI_STUDIO_QUEUE_CONNECTION` | — | Optional queue connection override |
 | `NEURONAI_STUDIO_QUEUE_TRIES` | `1` | Max job attempts |
 | `NEURONAI_STUDIO_QUEUE_BACKOFF` | `30` | Retry delay in seconds |
+| `NEURONAI_STUDIO_USAGE_EXPORT_ENABLED` | `true` | Host metering API (`GET …/usage`) |
+| `NEURONAI_STUDIO_USAGE_EVENTS_ENABLED` | `false` | Dispatch `RunUsageRecorded` on terminal runs |
 
-See [Configuration](../reference/configuration.md) for the full list.
+See [Configuration](../reference/configuration.md) for the full list. Auth for the usage export API is host-owned — set `usage.export.middleware` (e.g. `auth:sanctum`). See [Usage Export API](../guides/analytics/export-api.md).
 
 ### Async workflow runs (optional)
 
