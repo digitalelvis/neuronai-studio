@@ -1,5 +1,23 @@
 # Changelog
 
+# [0.4.0](https://github.com/digitalelvis/neuronai-studio/compare/v0.3.3...v0.4.0) (2026-07-16)
+
+
+### Features
+
+* **compat:** add Laravel 13 and Livewire 4 support ([1b3b971](https://github.com/digitalelvis/neuronai-studio/commit/1b3b971d0bdbbe818ae9773e8607b3b79b68ca2d))
+* **usage:** add cost and parent_run columns to runs and spans ([a906da8](https://github.com/digitalelvis/neuronai-studio/commit/a906da8dbe789c7b417dac2e678813ab131f7119))
+* **usage:** add currency and catalog pricing defaults ([ca5b1b9](https://github.com/digitalelvis/neuronai-studio/commit/ca5b1b9f149b5ca3118bf0da0c9a8be4175e9061))
+* **usage:** add UsageCostEstimator for config-based pricing ([4a42d72](https://github.com/digitalelvis/neuronai-studio/commit/4a42d7283ad0ff41b2ade63e441d4931b791a0b7))
+* **usage:** add UsageRecorder for LLM span metering ([150d738](https://github.com/digitalelvis/neuronai-studio/commit/150d738fec6b878dea79f7d436f8eabf457c0667))
+* **usage:** finalize run totals from own spans and children ([7a1db55](https://github.com/digitalelvis/neuronai-studio/commit/7a1db555c48eecf9476dfa5c8d3a800f681d186b))
+* **usage:** meter LLM spans through TelemetryTracker ([8142174](https://github.com/digitalelvis/neuronai-studio/commit/8142174ab8d81873d0c2615098e22a0778ba2928))
+* **usage:** meter LlmNodeExecutor chat and stream paths ([3fbb780](https://github.com/digitalelvis/neuronai-studio/commit/3fbb780c6cff8ae8452aa788e8dc4555a3ffbaa5))
+* **usage:** meter playground and integrate agent streams ([4c21122](https://github.com/digitalelvis/neuronai-studio/commit/4c2112291bd199734f9b7332557f62ee604dd4c3))
+* **usage:** pass workflow parent run into AgentNodeExecutor ([f9cedb9](https://github.com/digitalelvis/neuronai-studio/commit/f9cedb99a2501a225c95c39c2b0b5a8d2e2a4b22))
+* **usage:** wire AgentRunner metering with parent rollup ([fd69561](https://github.com/digitalelvis/neuronai-studio/commit/fd69561f82fdfde761889fdf4daae7e5e74d2c21))
+* **usage:** wire run/span models for cost and parent relations ([0c66e87](https://github.com/digitalelvis/neuronai-studio/commit/0c66e879dfab3c010fb0aa8aea8a644dc072e7e0))
+
 ## [0.3.3](https://github.com/digitalelvis/neuronai-studio/compare/v0.3.2...v0.3.3) (2026-07-15)
 
 ## [0.3.2](https://github.com/digitalelvis/neuronai-studio/compare/v0.3.1...v0.3.2) (2026-07-15)
