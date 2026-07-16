@@ -32,6 +32,39 @@ php artisan vendor:publish --tag=neuronai-studio-config
 
 Credentials are **not** stored here — they come from `config/neuron.php`.
 
+## Usage & cost estimation
+
+Approximate prices for `estimated_cost` on LLM spans and runs. Values are **estimates, not provider invoices**. Rates are per **1k tokens** in the install currency.
+
+| Key | Env | Default | Description |
+|-----|-----|---------|-------------|
+| `usage.currency` | `NEURONAI_STUDIO_USAGE_CURRENCY` | `USD` | Single currency for all estimates |
+| `usage.pricing` | — | catalog model map | `provider` → `model` → `{ prompt_per_1k, completion_per_1k }` |
+| `usage.export.enabled` | `NEURONAI_STUDIO_USAGE_EXPORT_ENABLED` | `true` | Stub for usage-export-api |
+| `usage.export.route_prefix` | `NEURONAI_STUDIO_USAGE_EXPORT_PREFIX` | `null` | Optional export route prefix |
+| `usage.export.middleware` | — | `null` | Optional export middleware |
+| `usage.events.enabled` | `NEURONAI_STUDIO_USAGE_EVENTS_ENABLED` | `false` | Stub for usage events |
+
+Lookup is exact-match on the span's `provider` + `model`. Missing keys → cost `0`. Ollama catalog entries default to `0`.
+
+Override after publishing config:
+
+```php
+'usage' => [
+    'currency' => 'USD',
+    'pricing' => [
+        'openai' => [
+            'gpt-4o-mini' => [
+                'prompt_per_1k' => 0.00015,
+                'completion_per_1k' => 0.0006,
+            ],
+        ],
+    ],
+],
+```
+
+See [Cost estimation](../guides/analytics/costs.md).
+
 ## Chat history
 
 | Key | Env | Default | Description |
@@ -184,5 +217,7 @@ Each knowledge base may override provider, model, and vector store driver indepe
 
 ## See also
 
+- [Cost estimation](../guides/analytics/costs.md)
+- [Database schema](database-schema.md)
 - [Publish Tags](publish-tags.md)
 - [Security & Access](../guides/security-and-access.md)

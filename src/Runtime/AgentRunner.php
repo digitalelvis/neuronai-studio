@@ -12,6 +12,7 @@ use DigitalElvis\NeuronAIStudio\Support\PlaygroundContext;
 use DigitalElvis\NeuronAIStudio\Support\ProviderParameters;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\StructuredOutputValidationException;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ToolApprovalRequiredException;
+use DigitalElvis\NeuronAIStudio\Usage\UsageRecorder;
 use Illuminate\Support\Str;
 use Generator;
 use NeuronAI\Agent\AgentHandler;
@@ -70,20 +71,38 @@ class AgentRunner
 
         $threadKey = $this->resolveThreadKey($definition, $payload);
         $config = $this->resolvePlaygroundConfig($definition, $payload);
+        $messageText = (string) ($payload['message'] ?? '');
+
+        [$run, $trace] = $this->createExecutionSession($definition, $threadKey, [
+            'message' => $messageText,
+        ]);
 
         $agent = $this->makeAgent($definition, $config, $threadKey);
+        $agent->setPersistence(new InMemoryPersistence, $run->id);
+
+        $tracker = $this->makeTelemetryTracker($run, $trace, $config);
+        $agent->observe($tracker);
 
         $message = $this->messages->userMessage(
-            (string) ($payload['message'] ?? ''),
+            $messageText,
             is_array($payload['attachments'] ?? null) ? $payload['attachments'] : [],
         );
 
         $handler = $agent->stream($message);
 
-        foreach ($handler->events() as $event) {
-            if ($event instanceof StreamChunk) {
-                yield $event;
+        try {
+            foreach ($handler->events() as $event) {
+                if ($event instanceof StreamChunk) {
+                    yield $event;
+                }
             }
+
+            $this->markRunCompleted($run, [
+                'output' => ['content' => $handler->getMessage()->getContent()],
+            ]);
+        } catch (\Throwable $exception) {
+            $this->markRunFailed($run, $exception);
+            throw $exception;
         }
     }
 
@@ -91,7 +110,8 @@ class AgentRunner
      * Return the agent stream handler WITHOUT consuming its events, so an
      * external integration controller can drive it through a wire-protocol
      * adapter via `$handler->events($adapter)`. The internal playground path
-     * (`stream()`) is left untouched (SA-08).
+     * (`stream()`) is left untouched (SA-08). Attaches a TelemetryTracker so
+     * integrate streams meter usage when the consumer drains events.
      *
      * @param  array<string, mixed>  $payload
      */
@@ -101,19 +121,32 @@ class AgentRunner
 
         $threadKey = $this->resolveThreadKey($definition, $payload);
         $config = $this->resolvePlaygroundConfig($definition, $payload);
+        $messageText = (string) ($payload['message'] ?? '');
+
+        [$run, $trace] = $this->createExecutionSession($definition, $threadKey, [
+            'message' => $messageText,
+        ]);
 
         $agent = $this->makeAgent($definition, $config, $threadKey);
+        $agent->setPersistence(new InMemoryPersistence, $run->id);
+
+        $tracker = $this->makeTelemetryTracker($run, $trace, $config);
+        $agent->observe($tracker);
 
         $message = $this->messages->userMessage(
-            (string) ($payload['message'] ?? ''),
+            $messageText,
             is_array($payload['attachments'] ?? null) ? $payload['attachments'] : [],
         );
 
         return $agent->stream($message);
     }
 
-    protected function createExecutionSession(?AgentDefinition $definition, ?string $threadKey = null, array $input = []): array
-    {
+    protected function createExecutionSession(
+        ?AgentDefinition $definition,
+        ?string $threadKey = null,
+        array $input = [],
+        ?StudioRun $parentRun = null,
+    ): array {
         $threadId = $threadKey;
         if ($threadId === null && $definition) {
             $threadId = (string) Str::uuid();
@@ -135,6 +168,7 @@ class AgentRunner
         $run = StudioRun::create([
             'id' => (string) Str::uuid(),
             'thread_id' => $thread ? $thread->id : (string) Str::uuid(),
+            'parent_run_id' => $parentRun?->id,
             'status' => 'running',
             'input' => $input,
             'started_at' => now(),
@@ -147,16 +181,22 @@ class AgentRunner
         return [$run, $trace];
     }
 
-    public function runInline(array $config, string|UserMessage $message, ?AgentDefinition $definition = null, ?string $threadKey = null, bool $fake = false): AgentRunResult
-    {
+    public function runInline(
+        array $config,
+        string|UserMessage $message,
+        ?AgentDefinition $definition = null,
+        ?string $threadKey = null,
+        bool $fake = false,
+        ?StudioRun $parentRun = null,
+    ): AgentRunResult {
         [$run, $trace] = $this->createExecutionSession($definition, $threadKey, [
             'message' => $message instanceof UserMessage ? $message->getContent() : $message
-        ]);
+        ], $parentRun);
 
         $agent = $this->makeAgent($definition, $config, $run->thread_id, $fake);
         $agent->setPersistence(new InMemoryPersistence, $run->id);
 
-        $tracker = new TelemetryTracker($run, $trace);
+        $tracker = $this->makeTelemetryTracker($run, $trace, $config, $parentRun);
         $agent->observe($tracker);
 
         $userMessage = $message instanceof UserMessage ? $message : new UserMessage($message);
@@ -165,10 +205,8 @@ class AgentRunner
             $handler = $agent->chat($userMessage);
             $content = $handler->getMessage()->getContent();
 
-            $run->update([
-                'status' => 'completed',
+            $this->markRunCompleted($run, [
                 'output' => ['content' => $content],
-                'finished_at' => now(),
             ]);
 
             $events = $this->toolEvents->fromChatHistory($agent->getChatHistory());
@@ -183,11 +221,7 @@ class AgentRunner
             ]);
             throw $this->toolApprovalException($interrupt, $run);
         } catch (\Throwable $exception) {
-            $run->update([
-                'status' => 'failed',
-                'error_message' => $exception->getMessage(),
-                'finished_at' => now(),
-            ]);
+            $this->markRunFailed($run, $exception);
             throw $exception;
         }
     }
@@ -206,15 +240,16 @@ class AgentRunner
         ?AgentDefinition $definition = null,
         ?string $threadKey = null,
         bool $fake = false,
+        ?StudioRun $parentRun = null,
     ): Generator {
         [$run, $trace] = $this->createExecutionSession($definition, $threadKey, [
             'message' => $message instanceof UserMessage ? $message->getContent() : $message
-        ]);
+        ], $parentRun);
 
         $agent = $this->makeAgent($definition, $config, $threadKey, $fake);
         $agent->setPersistence(new InMemoryPersistence, $run->id);
 
-        $tracker = new TelemetryTracker($run, $trace);
+        $tracker = $this->makeTelemetryTracker($run, $trace, $config, $parentRun);
         $agent->observe($tracker);
 
         $userMessage = $message instanceof UserMessage ? $message : new UserMessage($message);
@@ -228,10 +263,8 @@ class AgentRunner
             }
 
             $content = $handler->getMessage()->getContent();
-            $run->update([
-                'status' => 'completed',
+            $this->markRunCompleted($run, [
                 'output' => ['content' => $content],
-                'finished_at' => now(),
             ]);
 
             $events = $this->toolEvents->fromChatHistory($agent->getChatHistory());
@@ -246,11 +279,7 @@ class AgentRunner
             ]);
             throw $this->toolApprovalException($interrupt, $run);
         } catch (\Throwable $exception) {
-            $run->update([
-                'status' => 'failed',
-                'error_message' => $exception->getMessage(),
-                'finished_at' => now(),
-            ]);
+            $this->markRunFailed($run, $exception);
             throw $exception;
         }
     }
@@ -306,6 +335,7 @@ class AgentRunner
         ?string $feedback = null,
         ?AgentDefinition $definition = null,
         ?string $threadKey = null,
+        ?StudioRun $parentRun = null,
     ): AgentRunResult {
         if (is_string($run)) {
             if (Str::isUuid($run) || strlen($run) < 100) {
@@ -338,7 +368,12 @@ class AgentRunner
         $agent = $this->makeAgent($definition, $config, $threadKey);
         $agent->setPersistence(new InMemoryPersistence, $run->id);
 
-        $tracker = new TelemetryTracker($run, $trace);
+        $tracker = $this->makeTelemetryTracker(
+            $run,
+            $trace,
+            $config,
+            $parentRun ?? $this->resolveParentRun($run),
+        );
         $agent->observe($tracker);
 
         $persistence = new InMemoryPersistence;
@@ -350,10 +385,8 @@ class AgentRunner
             $handler = $agent->chat([], $request);
             $content = $handler->getMessage()->getContent();
 
-            $run->update([
-                'status' => 'completed',
+            $this->markRunCompleted($run, [
                 'output' => ['content' => $content],
-                'finished_at' => now(),
             ]);
 
             $events = $this->toolEvents->fromChatHistory($agent->getChatHistory());
@@ -368,11 +401,7 @@ class AgentRunner
             ]);
             throw $this->toolApprovalException($reinterrupt, $run);
         } catch (\Throwable $exception) {
-            $run->update([
-                'status' => 'failed',
-                'error_message' => $exception->getMessage(),
-                'finished_at' => now(),
-            ]);
+            $this->markRunFailed($run, $exception);
             throw $exception;
         }
     }
@@ -431,15 +460,16 @@ class AgentRunner
         ?AgentDefinition $definition = null,
         ?string $threadKey = null,
         bool $fake = false,
+        ?StudioRun $parentRun = null,
     ): AgentRunResult {
         [$run, $trace] = $this->createExecutionSession($definition, $threadKey, [
             'message' => $message instanceof UserMessage ? $message->getContent() : $message
-        ]);
+        ], $parentRun);
 
         $agent = $this->makeAgent($definition, $config, $threadKey, $fake);
         $agent->setPersistence(new InMemoryPersistence, $run->id);
 
-        $tracker = new TelemetryTracker($run, $trace);
+        $tracker = $this->makeTelemetryTracker($run, $trace, $config, $parentRun);
         $agent->observe($tracker);
 
         $userMessage = $message instanceof UserMessage ? $message : new UserMessage($message);
@@ -447,10 +477,8 @@ class AgentRunner
         try {
             $result = $agent->structured($userMessage, $outputClass);
 
-            $run->update([
-                'status' => 'completed',
+            $this->markRunCompleted($run, [
                 'output' => ['structured' => $this->normalizeStructuredOutput($result)],
-                'finished_at' => now(),
             ]);
 
             $events = $this->toolEvents->fromChatHistory($agent->getChatHistory());
@@ -460,29 +488,17 @@ class AgentRunner
                 runId: $run->id,
             );
         } catch (AgentException $exception) {
-            $run->update([
-                'status' => 'failed',
-                'error_message' => $exception->getMessage(),
-                'finished_at' => now(),
-            ]);
+            $this->markRunFailed($run, $exception);
             throw StructuredOutputValidationException::fromAgentException($exception);
         } catch (ProviderException $exception) {
-            $run->update([
-                'status' => 'failed',
-                'error_message' => $exception->getMessage(),
-                'finished_at' => now(),
-            ]);
+            $this->markRunFailed($run, $exception);
             throw new StructuredOutputValidationException(
                 $exception->getMessage(),
                 [$exception->getMessage()],
                 $exception,
             );
         } catch (\Throwable $exception) {
-            $run->update([
-                'status' => 'failed',
-                'error_message' => $exception->getMessage(),
-                'finished_at' => now(),
-            ]);
+            $this->markRunFailed($run, $exception);
             throw $exception;
         }
     }
@@ -498,6 +514,62 @@ class AgentRunner
         }
 
         return ['value' => $result];
+    }
+
+    protected function makeTelemetryTracker(
+        StudioRun $run,
+        StudioTrace $trace,
+        array $config,
+        ?StudioRun $parentRun = null,
+    ): TelemetryTracker {
+        $provider = isset($config['provider']) && is_string($config['provider']) && $config['provider'] !== ''
+            ? $config['provider']
+            : null;
+        $model = isset($config['model']) && is_string($config['model']) && $config['model'] !== ''
+            ? $config['model']
+            : null;
+
+        return new TelemetryTracker($run, $trace, true, $provider, $model, $parentRun);
+    }
+
+    /** @param  array<string, mixed>  $attributes */
+    protected function markRunCompleted(StudioRun $run, array $attributes = []): void
+    {
+        $run->update(array_merge([
+            'status' => 'completed',
+            'finished_at' => now(),
+        ], $attributes));
+
+        $this->finalizeRunUsage($run);
+    }
+
+    protected function markRunFailed(StudioRun $run, \Throwable $exception): void
+    {
+        $run->update([
+            'status' => 'failed',
+            'error_message' => $exception->getMessage(),
+            'finished_at' => now(),
+        ]);
+
+        $this->finalizeRunUsage($run);
+    }
+
+    protected function finalizeRunUsage(StudioRun $run): void
+    {
+        (new UsageRecorder)->finalizeRun($run);
+    }
+
+    protected function resolveParentRun(StudioRun $run): ?StudioRun
+    {
+        if ($run->relationLoaded('parent')) {
+            return $run->parent;
+        }
+
+        if ($run->parent_run_id === null) {
+            return null;
+        }
+
+        return StudioRun::query()->find($run->parent_run_id);
     }
 
     /**

@@ -13,7 +13,7 @@ Think of it as three layers working together:
 ## Requirements
 
 - PHP 8.2+
-- Laravel 11 or 12
+- Laravel 11, 12, or 13
 - [neuron-core/neuron-laravel](https://github.com/neuron-core/neuron-laravel) ^1.0
 
 ## Architecture
@@ -69,6 +69,7 @@ The studio stores definitions in your database. At runtime, `AgentRunner` and `W
 | Pre-built templates | [Templates](guides/templates.md) |
 | Export to PHP | [Export & Production](guides/export-and-production.md) |
 | Auth & security | [Security & Access](guides/security-and-access.md) |
+| Cost estimation | [Cost Estimation](guides/analytics/costs.md) |
 | Full config reference | [Configuration](reference/configuration.md) |
 | Extend with custom nodes | [Custom Node Types](extending/custom-node-types.md) |
 

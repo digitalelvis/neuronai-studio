@@ -2,6 +2,8 @@
 
 namespace DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors;
 
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
+use DigitalElvis\NeuronAIStudio\Models\StudioTrace;
 use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
 use DigitalElvis\NeuronAIStudio\Runtime\AgentRunner;
 use DigitalElvis\NeuronAIStudio\Runtime\BuilderWorkflowState;
@@ -9,6 +11,7 @@ use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
 use DigitalElvis\NeuronAIStudio\Runtime\MessageFactory;
 use DigitalElvis\NeuronAIStudio\Runtime\StateTemplateInterpolator;
 use DigitalElvis\NeuronAIStudio\Runtime\StructuredOutput\StructuredOutputResolver;
+use DigitalElvis\NeuronAIStudio\Usage\UsageRecorder;
 use NeuronAI\Chat\Messages\Message;
 use NeuronAI\Chat\Messages\Stream\Chunks\TextChunk;
 use NeuronAI\Workflow\WorkflowState;
@@ -20,6 +23,7 @@ class LlmNodeExecutor implements NodeExecutorInterface
         protected AgentRunner $agentRunner,
         protected MessageFactory $messages,
         protected StructuredOutputResolver $outputResolver,
+        protected UsageRecorder $usageRecorder = new UsageRecorder,
     ) {}
 
     public function execute(array $nodeConfig, WorkflowState $state, GraphContext $context): string
@@ -35,6 +39,8 @@ class LlmNodeExecutor implements NodeExecutorInterface
 
         $attachments = is_array($state->get('attachments')) ? $state->get('attachments') : [];
         $userMessage = $this->messages->resolveMessageWithAttachments((string) $prompt, $attachments);
+        $threadKey = $this->resolveThreadKey($state);
+        $parentRun = $this->resolveParentRun($state);
 
         if ($data['structured'] ?? false) {
             $outputClass = $this->outputResolver->resolve((string) ($data['output_class'] ?? ''));
@@ -42,7 +48,7 @@ class LlmNodeExecutor implements NodeExecutorInterface
                 'provider' => $provider,
                 'model' => $model,
                 'instructions' => (string) ($data['instructions'] ?? 'Extract structured data from the user message.'),
-            ], $userMessage, $outputClass);
+            ], $userMessage, $outputClass, threadKey: $threadKey, parentRun: $parentRun);
 
             $state->set($outputKey, $result->structured);
 
@@ -67,6 +73,7 @@ class LlmNodeExecutor implements NodeExecutorInterface
             /** @var Message $finalMessage */
             $finalMessage = $generator->getReturn();
             $state->set($outputKey, $finalMessage->getContent());
+            $this->recordUsage($state, (string) $provider, (string) $model, $finalMessage);
 
             return 'default';
         }
@@ -74,7 +81,58 @@ class LlmNodeExecutor implements NodeExecutorInterface
         $response = $aiProvider->chat($userMessage);
 
         $state->set($outputKey, $response->getContent());
+        $this->recordUsage($state, (string) $provider, (string) $model, $response);
 
         return 'default';
+    }
+
+    protected function recordUsage(WorkflowState $state, string $provider, string $model, Message $message): void
+    {
+        $run = $this->resolveParentRun($state);
+        $trace = $this->resolveParentTrace($state);
+
+        if ($run === null || $trace === null) {
+            return;
+        }
+
+        $usage = $message->getUsage();
+        $promptTokens = $usage ? $usage->inputTokens : 0;
+        $completionTokens = $usage ? $usage->outputTokens : 0;
+
+        $this->usageRecorder->recordLlmSpan(
+            $run,
+            $trace,
+            $provider,
+            $model,
+            $promptTokens,
+            $completionTokens,
+        );
+    }
+
+    protected function resolveParentRun(WorkflowState $state): ?StudioRun
+    {
+        $runId = $state->get('__studio_run_id');
+        if (! is_string($runId) || $runId === '') {
+            return null;
+        }
+
+        return StudioRun::query()->find($runId);
+    }
+
+    protected function resolveParentTrace(WorkflowState $state): ?StudioTrace
+    {
+        $traceId = $state->get('__studio_trace_id') ?? $state->get('__workflow_trace_id');
+        if (! is_string($traceId) || $traceId === '') {
+            return null;
+        }
+
+        return StudioTrace::query()->find($traceId);
+    }
+
+    protected function resolveThreadKey(WorkflowState $state): ?string
+    {
+        $threadKey = $state->get('__studio_thread_id');
+
+        return is_string($threadKey) && $threadKey !== '' ? $threadKey : null;
     }
 }

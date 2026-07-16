@@ -2,12 +2,18 @@
 
 **Last Updated:** 2026-07-15
 **Development line:** `v0.3.x` (target release `v0.4.0` — M5)
-**Latest published:** `v0.3.2` on Packagist / `main`
-**Current Work:** Fix do Release bot (`RELEASE_TOKEN` + push seguro). Próximo: especificar M5.
+**Latest published:** `v0.3.3` on Packagist / `main`
+**Current Work:** `cost-estimation` done on `feat/m5-analytics-billing`. UE + UA parked as M5 debt (AD-015).
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-015: UE + UA como débito M5 — não Execute agora (2026-07-15)
+
+**Decision:** Manter `usage-export-api` e `usage-analytics` no roadmap com specs/design/tasks intactos, mas **não executar** até retorno explícito. CE permanece a fatia M5 entregue nesta onda.
+**Reason:** Metering no DB (provider/model/cost + nest rollup) já desbloqueia o host via queries diretas; API de export e superfície Studio podem esperar sem invalidar o design.
+**Impact:** Status ROADMAP → `debt`; M5 fica `partial` até UE/UA. Retomada: UE-T1 → … → UA.
 
 ### AD-012: RELEASE_TOKEN para push do release em main (2026-07-15)
 
@@ -15,11 +21,23 @@
 **Reason:** Repos user-owned não permitem bypass do app GitHub Actions no ruleset; `GITHUB_TOKEN` gera tags órfãs no Packagist quando o push de `main` é rejeitado (GH013).
 **Impact:** Setup one-time em [docs/RELEASE.md](../../docs/RELEASE.md); ruleset Mantém bypass só para RepositoryRole Administrator.
 
+### AD-014: M5 design — custo denormalizado + parent rollup (2026-07-15)
+
+**Decision:** Persistir `provider`/`model`/`estimated_cost` no span LLM e `estimated_cost` (+ opcional `parent_run_id`) no run. Pricing em `neuronai-studio.usage.pricing`. Nested agent/LLM sob workflow incrementa o parent run; agregados de janela **excluem** children para não duplicar. Fechar gaps de meter em `stream`/`streamHandler` e `LlmNodeExecutor`. Export: `GET usage` + `GET usage/runs/{run}` sob prefixo/middleware de integração, independente de `stream_adapters.enabled`. Dashboard: janela fixa 30 dias via `UsageQuery`.
+**Reason:** `InferenceStop` não carrega model; workflow parent hoje fica com 0 tokens porque LLM vive em runs filhos; LlmNodeExecutor chat/stream bypassa tracker.
+**Impact:** Ver designs CE/UE/UA. Finalize de run = own spans + children aggregates.
+
+### AD-013: M5 host-first + Dashboard mínimo (2026-07-15)
+
+**Decision:** M5 prioriza `cost-estimation` + `usage-export-api` para o host meter/faturar. `usage-analytics` fica **mínimo**: evoluir o Dashboard Livewire existente + badges de tokens no Debugger — sem página dedicada Usage/BI neste milstone. Context compartilhado em `.specs/features/m5-analytics-billing/context.md`.
+**Reason:** Token persistence já existe (M4); o gap de produto é API de metering para o host app. Studio só precisa de um sinal operacional leve.
+**Impact:** Ordem de design/implementação: CE → UE → UA. Página Usage avançada, multi-tenant attribution, embeddings cost e billing providers ficam em Deferred Ideas.
+
 ### AD-010: Linha de desenvolvimento v0.3.x + M5 (2026-07-15)
 
 **Decision:** Encerrar `v0.2.x` como linha ativa; abrir `v0.3.x` a partir de `main` alinhada a Packagist `v0.3.1`. Planejar M5 (Analítica e Faturamento) em cima de tokens já persistidos em `StudioTraceSpan` / `TelemetryTracker`.
 **Reason:** M1–M4 já saíram em `v0.3.0`; `v0.3.1` corrigiu metadados de release. Nova minor series evita misturar patches de governança com features de usage/billing.
-**Impact:** PRs de feature → `v0.3.x`; release PR `v0.3.x` → `main` quando M5 estiver estável. Specs M5 ainda TBD (`usage-analytics`, `cost-estimation`, `usage-export-api`).
+**Impact:** PRs de feature → `v0.3.x`; release PR `v0.3.x` → `main` quando M5 estiver estável. Specs M5: ver AD-013.
 
 ### AD-011: Absorver tag órfã v0.3.1 na main (2026-07-15)
 
@@ -192,10 +210,16 @@
 
 ## Deferred Ideas
 
+- [ ] **M5 debt:** `usage-export-api` (UE-T1…T7) — specs prontos; Execute sob demanda (AD-015)
+- [ ] **M5 debt:** `usage-analytics` (UA-T1…T8) — Dashboard mínimo + Debugger badges; Execute sob demanda (AD-015)
 - [ ] Autonomia multi-turn dentro de um único nó agent (múltiplas tool rounds sem sair do nó)
 - [ ] SSE em tempo real para `RunWorkflowJob` (broadcast vs polling)
 - [ ] Remove redundant layout `<link>` tags for bundle-inlined CSS
 - [ ] Extract `StudioTestHarness.jsx` shell component if composition grows
+- [ ] Página dedicada Usage / charts / filtros avançados (além do Dashboard mínimo M5)
+- [ ] Multi-tenant / user attribution em usage
+- [ ] Custo de embeddings / RAG como linha separada
+- [ ] Integração com billing providers (Stripe, etc.)
 
 ---
 
@@ -213,6 +237,10 @@
 - [x] Abrir linha `v0.3.x` e atualizar ROADMAP/STATE/RELEASE
 - [x] Absorver tag órfã `v0.3.2` em `main`
 - [x] Release workflow: `RELEASE_TOKEN` + push `main` antes da tag (AD-012)
-- [ ] Criar secret `RELEASE_TOKEN` no GitHub (one-time; ver docs/RELEASE.md)
-- [ ] Especificar M5 (Discuss → Spec) — `usage-analytics`, `cost-estimation`, `usage-export-api`
+- [x] Secret `RELEASE_TOKEN` configurado; `v0.3.3` publicado com commit na ancestry de `main`
+- [x] Especificar M5 (Discuss → Spec) — AD-013; specs CE / UE / UA
+- [x] Design M5 — AD-014; design.md CE / UE / UA
+- [x] Tasks M5 — index + CE/UE/UA tasks.md (28)
+- [x] Execute M5 `cost-estimation` (CE-T1…T13)
+- [ ] Execute M5 `usage-export-api` + `usage-analytics` — **débito** (AD-015)
 - [ ] Aplicar ruleset da development line em `v0.3.x` (`apply-branch-rules.sh`)
