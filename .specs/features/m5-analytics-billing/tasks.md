@@ -1,19 +1,19 @@
 # M5 Analítica e Faturamento — Task Index
 
 **Context**: [context.md](./context.md)  
-**Status**: Partial — CE + UA done; UE **ready** (Execute on `v0.6.x`)
-**Linha**: CE `v0.4.0` · UA `v0.5.0` · UE → `v0.6.x` (AD-018)
+**Status**: Done — CE + UA + UE  
+**Linha**: CE `v0.4.0` · UA `v0.5.0` · UE `v0.6.x` (AD-018)
 
 ## Feature order
 
 | # | Feature | Tasks | Count | Status |
 |---|---------|-------|------:|--------|
 | 1 | [`cost-estimation`](../cost-estimation/tasks.md) | CE-T1…T13 | 13 | ✅ done |
-| 2 | [`usage-export-api`](../usage-export-api/tasks.md) | UE-T1…T7 | 7 | ready (`v0.6.x`) |
+| 2 | [`usage-export-api`](../usage-export-api/tasks.md) | UE-T1…T7 | 7 | ✅ done |
 | 3 | [`usage-analytics`](../usage-analytics/tasks.md) | UA-T1…T11 | 11 | ✅ done |
 
-**Total**: 31 atomic tasks (24 done, 7 ready on `v0.6.x`)
-**Note**: UA-T7 extracts `UsageQuery::aggregate` only; full UE HTTP is the remaining Execute slice.
+**Total**: 31 atomic tasks (31 done)
+**Note**: UA-T7 extracts `UsageQuery::aggregate`; UE completes HTTP + `runDetail` + events + docs.
 
 ## Cross-feature critical path
 

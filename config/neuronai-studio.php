@@ -102,8 +102,10 @@ return [
     | (completion/1000)*completion_per_1k. Override after publishing this config.
     | Missing provider/model → cost 0. Ollama defaults to 0 (local).
     |
-    | `export` / `events` stubs are owned by usage-export-api; kept here so a
-    | published config stays stable when that feature lands.
+    | Export routes register when usage.export.enabled is true, independently of
+    | stream_adapters.enabled. Null route_prefix / middleware fall back to
+    | stream_adapters.route_prefix / stream_adapters.middleware so the host can
+    | share one gate without duplicating values.
     |
     */
 
@@ -137,12 +139,16 @@ return [
         ],
 
         'export' => [
+            // Independent of stream_adapters.enabled — host can export without stream protocols.
             'enabled' => env('NEURONAI_STUDIO_USAGE_EXPORT_ENABLED', true),
+            // null ⇒ stream_adapters.route_prefix (default api/neuronai)
             'route_prefix' => env('NEURONAI_STUDIO_USAGE_EXPORT_PREFIX'),
+            // null ⇒ stream_adapters.middleware (default ['api']); host owns auth.
             'middleware' => null,
         ],
 
         'events' => [
+            // Dispatch RunUsageRecorded on terminal runs when true (separate from export HTTP).
             'enabled' => env('NEURONAI_STUDIO_USAGE_EVENTS_ENABLED', false),
         ],
     ],

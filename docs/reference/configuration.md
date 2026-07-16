@@ -40,10 +40,10 @@ Approximate prices for `estimated_cost` on LLM spans and runs. Values are **esti
 |-----|-----|---------|-------------|
 | `usage.currency` | `NEURONAI_STUDIO_USAGE_CURRENCY` | `USD` | Single currency for all estimates |
 | `usage.pricing` | — | catalog model map | `provider` → `model` → `{ prompt_per_1k, completion_per_1k }` |
-| `usage.export.enabled` | `NEURONAI_STUDIO_USAGE_EXPORT_ENABLED` | `true` | Stub for usage-export-api |
-| `usage.export.route_prefix` | `NEURONAI_STUDIO_USAGE_EXPORT_PREFIX` | `null` | Optional export route prefix |
-| `usage.export.middleware` | — | `null` | Optional export middleware |
-| `usage.events.enabled` | `NEURONAI_STUDIO_USAGE_EVENTS_ENABLED` | `false` | Stub for usage events |
+| `usage.export.enabled` | `NEURONAI_STUDIO_USAGE_EXPORT_ENABLED` | `true` | Register host metering routes (`routes/usage.php`) |
+| `usage.export.route_prefix` | `NEURONAI_STUDIO_USAGE_EXPORT_PREFIX` | `null` | Override prefix; `null` → `stream_adapters.route_prefix` |
+| `usage.export.middleware` | — | `null` | Override middleware; `null` → `stream_adapters.middleware` (host owns auth) |
+| `usage.events.enabled` | `NEURONAI_STUDIO_USAGE_EVENTS_ENABLED` | `false` | Dispatch `RunUsageRecorded` on terminal runs |
 
 Lookup is exact-match on the span's `provider` + `model`. Missing keys → cost `0`. Ollama catalog entries default to `0`.
 
@@ -63,7 +63,7 @@ Override after publishing config:
 ],
 ```
 
-See [Cost estimation](../guides/analytics/costs.md).
+See [Cost estimation](../guides/analytics/costs.md) and [Usage Export API](../guides/analytics/export-api.md).
 
 ## Chat history
 

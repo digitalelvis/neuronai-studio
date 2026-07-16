@@ -3,6 +3,7 @@
 namespace DigitalElvis\NeuronAIStudio\Runtime;
 
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
+use DigitalElvis\NeuronAIStudio\Events\RunUsageRecorded;
 use DigitalElvis\NeuronAIStudio\Models\StudioThread;
 use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Models\StudioTrace;
@@ -557,6 +558,16 @@ class AgentRunner
     protected function finalizeRunUsage(StudioRun $run): void
     {
         (new UsageRecorder)->finalizeRun($run);
+        $this->dispatchRunUsageRecorded($run->fresh() ?? $run);
+    }
+
+    protected function dispatchRunUsageRecorded(StudioRun $run): void
+    {
+        if (! config('neuronai-studio.usage.events.enabled', false)) {
+            return;
+        }
+
+        event(RunUsageRecorded::fromRun($run));
     }
 
     protected function resolveParentRun(StudioRun $run): ?StudioRun

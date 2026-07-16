@@ -58,7 +58,7 @@ Expor agentes e workflows para clients externos (Vercel AI SDK, AG-UI) via endpo
 
 **Publicação:** `v0.4.0` = CE + Laravel 13. `v0.5.0` = UA. Linhas `v0.3.x` / `v0.4.x` encerradas para features.
 
-### M5 — Analítica e Faturamento (P1) `partial`
+### M5 — Analítica e Faturamento (P1) `done`
 
 Uso de tokens/spans já persistidos (`TelemetryTracker`, `StudioTraceSpan`) para **metering no host** (prioridade) e superfície mínima no Studio (Dashboard + badges Debugger).
 
@@ -71,7 +71,7 @@ Uso de tokens/spans já persistidos (`TelemetryTracker`, `StudioTraceSpan`) para
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
 | 12 | `cost-estimation` | **done** (`v0.4.0`) | [spec](../features/cost-estimation/spec.md) · [design](../features/cost-estimation/design.md) · [tasks](../features/cost-estimation/tasks.md) |
-| 13 | `usage-export-api` | **ready** (Execute → `v0.6.x`) | [spec](../features/usage-export-api/spec.md) · [design](../features/usage-export-api/design.md) · [tasks](../features/usage-export-api/tasks.md) |
+| 13 | `usage-export-api` | **done** (`v0.6.x`) | [spec](../features/usage-export-api/spec.md) · [design](../features/usage-export-api/design.md) · [tasks](../features/usage-export-api/tasks.md) |
 | 14 | `usage-analytics` | **done** (`v0.5.0`; UA-T1…T11) | [spec](../features/usage-analytics/spec.md) · [design](../features/usage-analytics/design.md) · [tasks](../features/usage-analytics/tasks.md) |
 
 **Critério de conclusão M5:** Custo estimado configurável por modelo; API agregada + por-run para o host; Dashboard com totais 30d; Debugger com badges; Test Pretty com chips de usage. (Somente API HTTP permanece — Execute em `v0.6.x`.)

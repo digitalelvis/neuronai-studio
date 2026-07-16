@@ -3,6 +3,7 @@
 namespace DigitalElvis\NeuronAIStudio\Runtime;
 
 use DigitalElvis\NeuronAIStudio\Codegen\WorkflowClassImporter;
+use DigitalElvis\NeuronAIStudio\Events\RunUsageRecorded;
 use DigitalElvis\NeuronAIStudio\Jobs\ResumeWorkflowJob;
 use DigitalElvis\NeuronAIStudio\Jobs\RunWorkflowJob;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
@@ -663,6 +664,16 @@ class WorkflowRunner
     protected function finalizeRunUsage(StudioRun $run): void
     {
         (new UsageRecorder)->finalizeRun($run);
+        $this->dispatchRunUsageRecorded($run->fresh() ?? $run);
+    }
+
+    protected function dispatchRunUsageRecorded(StudioRun $run): void
+    {
+        if (! config('neuronai-studio.usage.events.enabled', false)) {
+            return;
+        }
+
+        event(RunUsageRecorded::fromRun($run));
     }
 
     /** @param  list<array<string, mixed>>  $steps */

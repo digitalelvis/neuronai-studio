@@ -18,7 +18,7 @@ The currency comes from `neuronai-studio.usage.currency`. Costs are estimates ba
 
 ## Host metering
 
-The Studio surfaces are intended for quick operational feedback. The Usage Export API remains the host-facing integration point for metering and external reporting when enabled.
+Use the [Usage Export API](export-api.md) for host-facing aggregates and per-run reconciliation. Studio surfaces above are for operators only.
 
 ## Related
 
