@@ -2,7 +2,8 @@
 
 **Design**: [design.md](./design.md) · **Spec**: [spec.md](./spec.md)  
 **Status**: Complete — UA-T1…T11 implemented 2026-07-16
-**Linha**: `v0.4.x` · **Ordem M5**: 3/3 (mínimo Studio + Pretty)  
+**Linha**: shipped `v0.5.0` · **Ordem M5**: 3/3 (mínimo Studio + Pretty)  
+ 
 **Blocked by**: CE done; extracts partial `UsageQuery` (does not need full UE)
 
 ---

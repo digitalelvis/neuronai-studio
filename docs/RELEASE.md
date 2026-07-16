@@ -14,23 +14,25 @@ Operational guide for versioning and publishing `digitalelvis/neuronai-studio` o
 
 ## Day-to-day development
 
-1. Branch from the active development line (currently `v0.4.x`):
+1. Branch from the active feature line (currently `v0.6.x`):
 
    ```bash
-   git checkout v0.4.x
+   git checkout v0.6.x
    git pull
    git checkout -b feat/my-feature
    ```
 
 2. Commit using [Conventional Commits](https://conventionalcommits.org) (`feat(studio):`, `fix(canvas):`, etc.).
 
-3. Open a PR targeting `v0.4.x`. CI must pass before merge.
+3. Open a PR targeting `v0.6.x`. CI must pass before merge.
+
+Patches for the published `0.5` series go to `v0.5.x` the same way.
 
 ## Standard release
 
-1. Ensure `v0.4.x` is stable and CI is green.
+1. Ensure the release-candidate line (e.g. `v0.6.x`) is stable and CI is green.
 
-2. Open a PR from `v0.4.x` → `main`. Title example: `release: v0.4.1`.
+2. Open a PR from that line → `main`. Title example: `release: v0.6.0`.
 
 3. Merge the PR. The Release workflow will:
    - Analyze commits since the last tag
@@ -42,14 +44,15 @@ Operational guide for versioning and publishing `digitalelvis/neuronai-studio` o
 
 4. Packagist picks up the new tag automatically (when auto-update is enabled).
 
-5. Back-merge `main` into `v0.4.x` to sync the changelog:
+5. Back-merge `main` into the active lines to sync the changelog:
 
    ```bash
-   git checkout v0.4.x
+   git checkout v0.6.x
    git pull
    git merge main
    git push
-```
+   # Also back-merge into v0.5.x when that patch line is still active
+   ```
 
 ## Hotfix (production emergency)
 
@@ -68,7 +71,10 @@ Operational guide for versioning and publishing `digitalelvis/neuronai-studio` o
 4. Backport to active development branches:
 
    ```bash
-   git checkout v0.4.x
+   git checkout v0.6.x
+   git merge main
+   git push
+   git checkout v0.5.x
    git merge main
    git push
    ```
@@ -129,7 +135,7 @@ Apply from the repo root (requires `gh` admin access):
 ./.github/scripts/apply-branch-rules.sh
 ```
 
-That installs **Protect main** and **Protect development lines** from `.github/rulesets/`, including Administrator bypass for release pushes. Then create the [`RELEASE_TOKEN`](#release-bot-release_token) secret.
+That installs **Protect main** and **Protect development lines** from `.github/rulesets/`, including Administrator bypass for release pushes. Development lines match `refs/heads/v*.*.x` (covers `v0.5.x`, `v0.6.x`, …). Then create the [`RELEASE_TOKEN`](#release-bot-release_token) secret.
 
 ### 3. Register on Packagist
 
@@ -180,24 +186,29 @@ Tag **`v0.1.1`** is published with the `digitalelvis/neuronai-studio` vendor. Su
 
 For future releases:
 
-1. Merge `v0.4.x` → `main` via PR.
+1. Merge the active feature line (e.g. `v0.6.x`) → `main` via PR.
 2. Release workflow creates the next semver tag (or run `npm run release:dry` locally to preview).
 3. Verify tag and GitHub Release appear on the repository.
 4. Verify Packagist shows the new version (auto-update webhook).
-5. Back-merge `main` → `v0.4.x`.
+5. Back-merge `main` → active `vX.Y.x` lines.
 
-## v0.4.x development line
+## v0.6.x / v0.5.x development lines
 
-Active development is on branch `v0.4.x`. Latest published package is **`v0.4.0`** (includes cost-estimation + Laravel 13).
+| Line | Role |
+|------|------|
+| **`v0.6.x`** | Active **feature** line — Execute M5 `usage-export-api` (UE-T1…T7) |
+| **`v0.5.x`** | **Patch** line for the published `0.5` series |
+| Latest published | **`v0.5.0`** (usage analytics in Dashboard, Debugger, Test Pretty + streams) |
 
 | Area | Status |
 |------|--------|
 | M1–M4 (cyclic graphs, RAG, structured output, HITL, parallel, queue, stream adapters, unified runs) | ✅ Published in `v0.3.0` |
-| Release bot (`RELEASE_TOKEN` + push `main` before tag) | ✅ Verified through `v0.4.0` |
+| Release bot (`RELEASE_TOKEN` + push `main` before tag) | ✅ Verified through `v0.5.0` |
 | M5 `cost-estimation` | ✅ Shipped in `v0.4.0` |
-| M5 `usage-export-api` + `usage-analytics` (Pretty + Dashboard + Debugger) | 📋 Debt — see `.specs/features/m5-analytics-billing/tasks.md` (AD-015/AD-016) |
+| M5 `usage-analytics` | ✅ Shipped in `v0.5.0` |
+| M5 `usage-export-api` | 📋 Ready — Execute on `v0.6.x` (AD-018) |
 
-Line `v0.3.x` is closed for new features. Consumers on older minors can stay until ready to adopt `v0.4.0`+.
+Lines `v0.3.x` and `v0.4.x` are closed for new features. Consumers on older minors can stay until ready to adopt `v0.5.0`+.
 
 ## Troubleshooting
 
