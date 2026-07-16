@@ -27,6 +27,7 @@ use DigitalElvis\NeuronAIStudio\Http\Livewire\Workflows\Editor;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\Workflows\Index as WorkflowsIndex;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\Workflows\TraceDetail;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\Workflows\Traces;
+use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
@@ -84,9 +85,11 @@ Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
             Route::get('/{workflow}/traces/list', [WorkflowTraceController::class, 'index'])->name('traces.index');
             Route::get('/runs/{run}', TraceDetail::class)->name('runs.show');
             Route::get('/runs/{run}/json', [WorkflowTraceController::class, 'show'])->name('runs.show.json');
-            Route::get('/traces/{trace}/json', [WorkflowTraceController::class, 'show'])->name('traces.show.json');
+            Route::get('/traces/{run}/json', [WorkflowTraceController::class, 'show'])->name('traces.show.json');
 
-            Route::redirect('/traces/{trace}', '/runs/{trace}', 301)->name('traces.show');
+            Route::get('/traces/{run}', function (StudioRun $run) {
+                return redirect()->route('neuronai-studio.workflows.runs.show', $run, 301);
+            })->name('traces.show');
             Route::match(['GET', 'POST'], '/{workflow}/run/stream', WorkflowStreamController::class)->name('run.stream');
             Route::post('/{workflow}/run', WorkflowRunController::class)->name('run');
         });
