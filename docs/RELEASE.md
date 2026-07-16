@@ -14,23 +14,23 @@ Operational guide for versioning and publishing `digitalelvis/neuronai-studio` o
 
 ## Day-to-day development
 
-1. Branch from the active development line (currently `v0.3.x`):
+1. Branch from the active development line (currently `v0.4.x`):
 
    ```bash
-   git checkout v0.3.x
+   git checkout v0.4.x
    git pull
    git checkout -b feat/my-feature
    ```
 
 2. Commit using [Conventional Commits](https://conventionalcommits.org) (`feat(studio):`, `fix(canvas):`, etc.).
 
-3. Open a PR targeting `v0.3.x`. CI must pass before merge.
+3. Open a PR targeting `v0.4.x`. CI must pass before merge.
 
 ## Standard release
 
-1. Ensure `v0.3.x` is stable and CI is green.
+1. Ensure `v0.4.x` is stable and CI is green.
 
-2. Open a PR from `v0.3.x` → `main`. Title example: `release: v0.4.0`.
+2. Open a PR from `v0.4.x` → `main`. Title example: `release: v0.4.1`.
 
 3. Merge the PR. The Release workflow will:
    - Analyze commits since the last tag
@@ -42,10 +42,10 @@ Operational guide for versioning and publishing `digitalelvis/neuronai-studio` o
 
 4. Packagist picks up the new tag automatically (when auto-update is enabled).
 
-5. Back-merge `main` into `v0.3.x` to sync the changelog:
+5. Back-merge `main` into `v0.4.x` to sync the changelog:
 
    ```bash
-   git checkout v0.3.x
+   git checkout v0.4.x
    git pull
    git merge main
    git push
@@ -68,7 +68,7 @@ Operational guide for versioning and publishing `digitalelvis/neuronai-studio` o
 4. Backport to active development branches:
 
    ```bash
-   git checkout v0.3.x
+   git checkout v0.4.x
    git merge main
    git push
    ```
@@ -180,23 +180,24 @@ Tag **`v0.1.1`** is published with the `digitalelvis/neuronai-studio` vendor. Su
 
 For future releases:
 
-1. Merge `v0.3.x` → `main` via PR.
+1. Merge `v0.4.x` → `main` via PR.
 2. Release workflow creates the next semver tag (or run `npm run release:dry` locally to preview).
 3. Verify tag and GitHub Release appear on the repository.
 4. Verify Packagist shows the new version (auto-update webhook).
-5. Back-merge `main` → `v0.3.x`.
+5. Back-merge `main` → `v0.4.x`.
 
-## v0.3.x development line
+## v0.4.x development line
 
-Active development targets **M5 (Analítica e Faturamento)** on branch `v0.3.x`. Latest published package is **`v0.3.3`**.
+Active development is on branch `v0.4.x`. Latest published package is **`v0.4.0`** (includes cost-estimation + Laravel 13).
 
 | Area | Status |
 |------|--------|
 | M1–M4 (cyclic graphs, RAG, structured output, HITL, parallel, queue, stream adapters, unified runs) | ✅ Published in `v0.3.0` |
-| Release bot (`RELEASE_TOKEN` + push `main` before tag) | ✅ Verified with `v0.3.3` on `main` + Packagist |
-| M5 cost estimation + usage export API (+ minimal Studio dashboard/debugger badges) | 📋 Tasked (28) — see `.specs/features/m5-analytics-billing/tasks.md` |
+| Release bot (`RELEASE_TOKEN` + push `main` before tag) | ✅ Verified through `v0.4.0` |
+| M5 `cost-estimation` | ✅ Shipped in `v0.4.0` |
+| M5 `usage-export-api` + `usage-analytics` (Pretty + Dashboard + Debugger) | 📋 Debt — see `.specs/features/m5-analytics-billing/tasks.md` (AD-015/AD-016) |
 
-Line `v0.2.x` is closed for new features. Consumers on `v0.2.x` / `v0.3.0` can stay until ready to adopt M5.
+Line `v0.3.x` is closed for new features. Consumers on older minors can stay until ready to adopt `v0.4.0`+.
 
 ## Troubleshooting
 
