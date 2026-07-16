@@ -4,7 +4,7 @@
 **Development line (features):** `v0.6.x` (M5 remainder — `usage-export-api`)
 **Patch line:** `v0.5.x`
 **Latest published:** `v0.5.0` on Packagist / `main`
-**Current Work:** Hygiene pós-`v0.5.0` (AD-018). Próximo Execute: UE em `v0.6.x`.
+**Current Work:** M5 `usage-export-api` implemented on `feat/usage-export-api` → `v0.6.x`.
 
 ---
 
@@ -180,7 +180,7 @@
 |---------|--------|-------|
 | `cost-estimation` | ✅ done | CE-T1…T13 — shipped `v0.4.0` |
 | `usage-analytics` | ✅ done | UA-T1…T11 — shipped `v0.5.0` |
-| `usage-export-api` | 📋 ready | UE-T1…T7 — Execute em `v0.6.x` (AD-018) |
+| `usage-export-api` | ✅ done | UE-T1…T7 — Execute em `v0.6.x` (AD-018) |
 
 ---
 
@@ -241,7 +241,7 @@
 
 ## Deferred Ideas
 
-- [ ] **M5 remaining:** `usage-export-api` (UE-T1…T7) — Execute em `v0.6.x` (AD-018); não mais “debt idle”
+- [x] **M5:** `usage-export-api` (UE-T1…T7) — shipped on `v0.6.x` line
 - [x] **M5:** `usage-analytics` (UA-T1…T11) — shipped `v0.5.0`
 - [ ] Autonomia multi-turn dentro de um único nó agent (múltiplas tool rounds sem sair do nó)
 - [ ] SSE em tempo real para `RunWorkflowJob` (broadcast vs polling)
@@ -276,4 +276,4 @@
 - [x] Execute M5 `usage-analytics` (UA-T1…T11, Pretty) — `v0.5.0`
 - [x] Sync ROADMAP/STATE/RELEASE pós-`v0.5.0` + abrir `v0.6.x` (AD-018)
 - [x] Ruleset development lines `v*.*.x` (`apply-branch-rules.sh`)
-- [ ] Execute M5 `usage-export-api` (UE-T1…T7) em `v0.6.x`
+- [x] Execute M5 `usage-export-api` (UE-T1…T7) em `v0.6.x`

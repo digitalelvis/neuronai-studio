@@ -1,7 +1,7 @@
 # Usage Export API — Tasks
 
 **Design**: [design.md](./design.md) · **Spec**: [spec.md](./spec.md)  
-**Status**: Ready — specs/design/tasks ready; Execute on `v0.6.x` (AD-018)  
+**Status**: Done — Execute on `v0.6.x` (AD-018)  
 **Linha**: `v0.6.x` · **Ordem M5**: 2/3  
  
 **Blocked by**: `cost-estimation` CE-T12 (minimum: CE-T2..T5 + denormalized columns usable)
@@ -28,8 +28,8 @@ UE-T5 → UE-T7
 **Requirement**: UE-01, UE-03  
 
 **Done when**:
-- [ ] Export can be disabled independently of stream_adapters
-- [ ] Null prefix/middleware fall back documented in code comments
+- [x] Export can be disabled independently of stream_adapters
+- [x] Null prefix/middleware fall back documented in code comments
 
 **Tests**: via UE-T4  
 **Gate**: quick  
@@ -44,10 +44,10 @@ UE-T5 → UE-T7
 **Requirement**: UE-01, UE-02, UE-04  
 
 **Done when**:
-- [ ] Empty window → zero totals
-- [ ] Children excluded from totals
-- [ ] `group_by=model` returns breakdown from llm spans
-- [ ] `runDetail` includes llm spans + entity + parent_run_id
+- [x] Empty window → zero totals
+- [x] Children excluded from totals
+- [x] `group_by=model` returns breakdown from llm spans
+- [x] `runDetail` includes llm spans + entity + parent_run_id
 
 **Tests**: unit/feature `UsageQueryTest`  
 **Gate**: quick  
@@ -62,9 +62,9 @@ UE-T5 → UE-T7
 **Requirement**: UE-01, UE-02  
 
 **Done when**:
-- [ ] 422 on from > to
-- [ ] 404 missing run
-- [ ] 200 + shape schema for happy path
+- [x] 422 on from > to
+- [x] 404 missing run
+- [x] 200 + shape schema for happy path
 
 **Tests**: via UE-T5  
 **Gate**: quick  
@@ -79,9 +79,9 @@ UE-T5 → UE-T7
 **Requirement**: UE-01  
 
 **Done when**:
-- [ ] enabled=true → routes registered
-- [ ] enabled=false → 404 / absent
-- [ ] stream_adapters=false + export=true still registers usage routes
+- [x] enabled=true → routes registered
+- [x] enabled=false → 404 / absent
+- [x] stream_adapters=false + export=true still registers usage routes
 
 **Tests**: `UsageExportRoutesTest`  
 **Gate**: quick  
@@ -96,7 +96,7 @@ UE-T5 → UE-T7
 **Requirement**: UE-01, UE-02, UE-04  
 
 **Done when**:
-- [ ] Covers ACs from spec P1 (+ UE-04 filter)
+- [x] Covers ACs from spec P1 (+ UE-04 filter)
 
 **Tests**: feature  
 **Gate**: full  
@@ -111,8 +111,8 @@ UE-T5 → UE-T7
 **Requirement**: UE-03  
 
 **Done when**:
-- [ ] `Event::fake` asserts payload (tokens, cost, currency, entity, parent_run_id)
-- [ ] Disabled flag → no dispatch
+- [x] `Event::fake` asserts payload (tokens, cost, currency, entity, parent_run_id)
+- [x] Disabled flag → no dispatch
 
 **Tests**: feature  
 **Gate**: quick  
@@ -127,8 +127,8 @@ UE-T5 → UE-T7
 **Requirement**: UE-01  
 
 **Done when**:
-- [ ] Examples for aggregate + per-run
-- [ ] Middleware/auth is host-owned
+- [x] Examples for aggregate + per-run
+- [x] Middleware/auth is host-owned
 
 **Tests**: none  
 **Gate**: quick  

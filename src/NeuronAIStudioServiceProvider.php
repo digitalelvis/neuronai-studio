@@ -170,6 +170,10 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
         if (config('neuronai-studio.stream_adapters.enabled', false)) {
             $this->loadRoutesFrom(__DIR__.'/../routes/integration.php');
         }
+
+        if (config('neuronai-studio.usage.export.enabled', true)) {
+            $this->loadRoutesFrom(__DIR__.'/../routes/usage.php');
+        }
     }
 
     protected function registerMiddleware(): void
