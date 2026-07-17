@@ -1,5 +1,12 @@
 # Changelog
 
+# [0.7.0](https://github.com/digitalelvis/neuronai-studio/compare/v0.6.0...v0.7.0) (2026-07-17)
+
+
+### Features
+
+* **runtime:** ship M6 agent tool controls, async progress, concurrent fork ([fad9777](https://github.com/digitalelvis/neuronai-studio/commit/fad97775bf7e1d1e46d3e2532a7246fe2689caab))
+
 # [0.6.0](https://github.com/digitalelvis/neuronai-studio/compare/v0.5.1...v0.6.0) (2026-07-16)
 
 
