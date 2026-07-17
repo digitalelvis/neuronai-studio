@@ -183,6 +183,29 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Async run progress (SSE tail without Echo)
+    |--------------------------------------------------------------------------
+    */
+
+    'async_progress' => [
+        'enabled' => (bool) env('NEURONAI_STUDIO_ASYNC_PROGRESS_ENABLED', true),
+        'ttl' => (int) env('NEURONAI_STUDIO_ASYNC_PROGRESS_TTL', 3600),
+        'poll_ms' => (int) env('NEURONAI_STUDIO_ASYNC_PROGRESS_POLL_MS', 200),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Parallel (interpreted fork/join)
+    |--------------------------------------------------------------------------
+    */
+
+    'parallel' => [
+        // sequential | concurrent (Amp fibers when amphp/amp is available)
+        'concurrency' => env('NEURONAI_STUDIO_PARALLEL_CONCURRENCY', 'concurrent'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Checkpoints & Persistence
     |--------------------------------------------------------------------------
     |

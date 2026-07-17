@@ -13,6 +13,7 @@ import ProviderModelFields from './ProviderModelFields';
 import StructuredOutputFields from './shared/StructuredOutputFields';
 import StreamToggleField from './shared/StreamToggleField';
 import RagFields from './shared/RagFields';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function NodeConfigForm({
     node,
@@ -111,6 +112,31 @@ export default function NodeConfigForm({
                         readOnly={readOnly}
                         onChange={(patch) => onUpdate?.({ ...data, ...patch })}
                     />
+                    <div className="space-y-2">
+                        <Label>Tool max runs (override)</Label>
+                        <Input
+                            type="number"
+                            min={1}
+                            value={data.tool_max_runs ?? ''}
+                            onChange={(e) =>
+                                updateField(
+                                    'tool_max_runs',
+                                    e.target.value === '' ? undefined : Number(e.target.value),
+                                )
+                            }
+                            placeholder="Inherit from agent"
+                            disabled={readOnly}
+                        />
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Checkbox
+                            checked={Boolean(data.parallel_tool_calls)}
+                            onCheckedChange={(checked) => updateField('parallel_tool_calls', Boolean(checked))}
+                            disabled={readOnly}
+                            id={`parallel-tools-${node.id}`}
+                        />
+                        <Label htmlFor={`parallel-tools-${node.id}`}>Parallel tool calls (override)</Label>
+                    </div>
                 </>
             )}
 

@@ -37,6 +37,10 @@ class Edit extends Component
     /** @var array<string, array{only: string, exclude: string}> */
     public array $mcpAdvanced = [];
 
+    public ?int $tool_max_runs = null;
+
+    public ?bool $parallel_tool_calls = null;
+
     public function mount(?AgentDefinition $agent = null): void
     {
         $this->agent = $agent;
@@ -48,6 +52,8 @@ class Edit extends Component
             $this->provider = $agent->provider;
             $this->model = $agent->model;
             $this->instructions = (string) $agent->instructions;
+            $this->tool_max_runs = $agent->tool_max_runs;
+            $this->parallel_tool_calls = $agent->parallel_tool_calls;
             $this->loadToolsFromAgent($agent->tools ?? []);
             $this->loadMcpFromAgent($agent);
         } else {
@@ -108,6 +114,12 @@ class Edit extends Component
         $this->toolAdvanced = $payload['toolAdvanced'] ?? [];
         $this->selectedMcpSlugs = $payload['selectedMcpSlugs'] ?? [];
         $this->mcpAdvanced = $payload['mcpAdvanced'] ?? [];
+        $this->tool_max_runs = isset($payload['tool_max_runs']) && $payload['tool_max_runs'] !== '' && $payload['tool_max_runs'] !== null
+            ? (int) $payload['tool_max_runs']
+            : null;
+        $this->parallel_tool_calls = array_key_exists('parallel_tool_calls', $payload)
+            ? (isset($payload['parallel_tool_calls']) ? (bool) $payload['parallel_tool_calls'] : null)
+            : $this->parallel_tool_calls;
 
         $this->persistAgent();
     }
@@ -120,6 +132,8 @@ class Edit extends Component
             'provider' => 'required|string',
             'model' => 'required|string',
             'instructions' => 'nullable|string',
+            'tool_max_runs' => 'nullable|integer|min:1',
+            'parallel_tool_calls' => 'nullable|boolean',
             'selectedToolRefs' => 'array',
             'selectedToolRefs.*' => 'string',
             'selectedMcpSlugs' => 'array',
@@ -129,6 +143,8 @@ class Edit extends Component
         $payload = array_merge($validated, [
             'slug' => Str::slug($this->name),
             'tools' => $this->buildToolsPayload(),
+            'tool_max_runs' => $this->tool_max_runs,
+            'parallel_tool_calls' => $this->parallel_tool_calls,
         ]);
 
         unset($payload['selectedToolRefs']);

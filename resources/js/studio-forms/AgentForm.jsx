@@ -31,6 +31,10 @@ export default function AgentForm({ config }) {
     const [toolAdvanced, setToolAdvanced] = useState(initial.toolAdvanced ?? {});
     const [selectedMcpSlugs, setSelectedMcpSlugs] = useState(initial.selectedMcpSlugs ?? []);
     const [mcpAdvanced, setMcpAdvanced] = useState(initial.mcpAdvanced ?? {});
+    const [toolMaxRuns, setToolMaxRuns] = useState(
+        initial.tool_max_runs === null || initial.tool_max_runs === undefined ? '' : String(initial.tool_max_runs),
+    );
+    const [parallelToolCalls, setParallelToolCalls] = useState(Boolean(initial.parallel_tool_calls));
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
@@ -92,6 +96,8 @@ export default function AgentForm({ config }) {
                 toolAdvanced,
                 selectedMcpSlugs,
                 mcpAdvanced,
+                tool_max_runs: toolMaxRuns === '' ? null : Number(toolMaxRuns),
+                parallel_tool_calls: parallelToolCalls,
             });
 
             const validationErrors = collectLivewireErrors(config.wireId);
@@ -173,6 +179,33 @@ export default function AgentForm({ config }) {
                                             placeholder="You are a helpful assistant..."
                                             className="font-mono text-sm"
                                         />
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div className="space-y-2">
+                                            <Label>Tool max runs</Label>
+                                            <Input
+                                                type="number"
+                                                min={1}
+                                                value={toolMaxRuns}
+                                                onChange={(e) => setToolMaxRuns(e.target.value)}
+                                                placeholder="10 (Neuron default)"
+                                            />
+                                            <p className="text-xs text-muted-foreground">
+                                                Max tool rounds per node visit. Leave empty for Neuron default.
+                                            </p>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="flex items-center gap-2">
+                                                <Checkbox
+                                                    checked={parallelToolCalls}
+                                                    onCheckedChange={(checked) => setParallelToolCalls(Boolean(checked))}
+                                                />
+                                                Parallel tool calls
+                                            </Label>
+                                            <p className="text-xs text-muted-foreground">
+                                                Run multiple tool calls in the same round concurrently when supported.
+                                            </p>
+                                        </div>
                                     </div>
                                 </CardContent>
                             </Card>

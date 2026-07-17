@@ -1,14 +1,21 @@
 # State
 
 **Last Updated:** 2026-07-16
-**Development line (features):** `v0.6.x` (M5 remainder — `usage-export-api`)
-**Patch line:** `v0.5.x`
-**Latest published:** `v0.5.0` on Packagist / `main`
-**Current Work:** M5 `usage-export-api` implemented on `feat/usage-export-api` → `v0.6.x`.
+**Development line (features):** `v0.7.x` (M6 — runtime/agent)
+**Patch line:** `v0.6.x`
+**Latest published:** `v0.6.0` on Packagist / `main`
+**Current Work:** M6 Specify → Design → Execute on `v0.7.x` (AD-019).
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-019: M6 Runtime/Agent + linha `v0.7.x` (2026-07-16)
+
+**Decision:** Após publicar `v0.6.0` (UE / M5 completo), abrir `v0.7.x` como linha de feature para M6 — desempenho e flexibilidade de runtime/agent. Patch line = `v0.6.x`. Encerrar `v0.5.x` / `v0.6.x` para features novas.
+**Scope M6 (ordem Execute):** (1) `agent-tool-controls` — `tool_max_runs` / `parallel_tool_calls` + live tool SSE; (2) `async-run-progress` — ProgressEmitter buffer + SSE tail (sem Echo); (3) `interpreted-parallel-concurrency` — Amp concurrent fork/join no path interpretado.
+**Reason:** Neuron já faz multi-round tools; gaps do Studio são knobs, observabilidade mid-loop, progresso em jobs e concorrência real (AD-007 sequencial). Billing/Usage avançado permanece deferred.
+**Impact:** ROADMAP/STATE/RELEASE + specs M6 → `v0.7.x`. Decisões abertas SSE-async e multi-turn-in-node resolvidas (ver ROADMAP). Context: [.specs/features/m6-runtime-agent/context.md](../features/m6-runtime-agent/context.md).
 
 ### AD-018: Linha `v0.5.x` (patch) + `v0.6.x` (UE / fechar M5) (2026-07-16)
 
@@ -180,7 +187,17 @@
 |---------|--------|-------|
 | `cost-estimation` | ✅ done | CE-T1…T13 — shipped `v0.4.0` |
 | `usage-analytics` | ✅ done | UA-T1…T11 — shipped `v0.5.0` |
-| `usage-export-api` | ✅ done | UE-T1…T7 — Execute em `v0.6.x` (AD-018) |
+| `usage-export-api` | ✅ done | UE-T1…T7 — shipped `v0.6.0` |
+
+---
+
+## M6 progress snapshot
+
+| Feature | Status | Notas |
+|---------|--------|-------|
+| `agent-tool-controls` | ✅ done | knobs + live tool SSE on `v0.7.x` |
+| `async-run-progress` | ✅ done | ProgressEmitter + SSE tail |
+| `interpreted-parallel-concurrency` | ✅ done | Amp concurrent fork/join + sequential fallback |
 
 ---
 
@@ -236,21 +253,25 @@
 | unified-runs-and-traces | 2026-07-07 | 0.2.x | ✅ Done |
 | cost-estimation | 2026-07-16 | 0.4.0 | ✅ Done |
 | usage-analytics | 2026-07-16 | 0.5.0 | ✅ Done |
+| usage-export-api | 2026-07-16 | 0.6.0 | ✅ Done |
 
 ---
 
 ## Deferred Ideas
 
-- [x] **M5:** `usage-export-api` (UE-T1…T7) — shipped on `v0.6.x` line
+- [x] **M5:** `usage-export-api` (UE-T1…T7) — shipped `v0.6.0`
 - [x] **M5:** `usage-analytics` (UA-T1…T11) — shipped `v0.5.0`
-- [ ] Autonomia multi-turn dentro de um único nó agent (múltiplas tool rounds sem sair do nó)
-- [ ] SSE em tempo real para `RunWorkflowJob` (broadcast vs polling)
+- [x] Autonomia multi-turn / tool rounds no nó agent — Neuron já faz; M6 expõe knobs + live SSE (`agent-tool-controls`)
+- [x] SSE em tempo real para `RunWorkflowJob` — M6 `async-run-progress` (buffer + SSE tail; Echo deferred)
+- [ ] Laravel Echo / `ShouldBroadcast` como transporte de progresso async
+- [ ] Tool approval dentro de parallel branches
 - [ ] Remove redundant layout `<link>` tags for bundle-inlined CSS
 - [ ] Extract `StudioTestHarness.jsx` shell component if composition grows
 - [ ] Página dedicada Usage / charts / filtros avançados (além do Dashboard mínimo M5)
 - [ ] Multi-tenant / user attribution em usage
 - [ ] Custo de embeddings / RAG como linha separada
 - [ ] Integração com billing providers (Stripe, etc.)
+- [ ] SO T12 loop hint; PE-08 join preview; RAG hybrid/MMR
 
 ---
 
@@ -277,3 +298,6 @@
 - [x] Sync ROADMAP/STATE/RELEASE pós-`v0.5.0` + abrir `v0.6.x` (AD-018)
 - [x] Ruleset development lines `v*.*.x` (`apply-branch-rules.sh`)
 - [x] Execute M5 `usage-export-api` (UE-T1…T7) em `v0.6.x`
+- [x] Sync ROADMAP/STATE/RELEASE pós-`v0.6.0` + abrir `v0.7.x` (AD-019)
+- [x] Especificar / design / tasks M6 (ATC + ARP + IPC)
+- [x] Execute M6 `agent-tool-controls` → `async-run-progress` → `interpreted-parallel-concurrency` em `v0.7.x`

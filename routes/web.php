@@ -7,6 +7,7 @@ use DigitalElvis\NeuronAIStudio\Http\Controllers\KnowledgeBaseSearchController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\WorkflowRunController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\WorkflowStreamController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\WorkflowTraceController;
+use DigitalElvis\NeuronAIStudio\Http\Controllers\RunEventsStreamController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\WorkflowTraceResumeController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\WorkflowTraceResumeJsonController;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\Agents\Edit;
@@ -85,6 +86,7 @@ Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
             Route::get('/{workflow}/traces/list', [WorkflowTraceController::class, 'index'])->name('traces.index');
             Route::get('/runs/{run}', TraceDetail::class)->name('runs.show');
             Route::get('/runs/{run}/json', [WorkflowTraceController::class, 'show'])->name('runs.show.json');
+            Route::get('/runs/{run}/events/stream', RunEventsStreamController::class)->name('runs.events.stream');
             Route::get('/traces/{run}/json', [WorkflowTraceController::class, 'show'])->name('traces.show.json');
 
             Route::get('/traces/{run}', function (StudioRun $run) {

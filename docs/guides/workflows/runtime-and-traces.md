@@ -73,7 +73,7 @@ event: token           (node_id: agent_1, delta: " world")
 event: step_completed  (node_id: agent_1, handle: default)
 ```
 
-The `StudioChat` chat surface aggregates consecutive `token` deltas into the assistant bubble, so text appears incrementally. The final accumulated content is still written to the node's `output_key`, and tool events are emitted after the stream completes — downstream nodes and trace records behave exactly as in the blocking path.
+The `StudioChat` chat surface aggregates consecutive `token` deltas into the assistant bubble, so text appears incrementally. On the streaming path, `tool_call` / `tool_result` events are emitted **live** as Neuron yields tool chunks (with post-history dedupe). Downstream nodes and trace records still receive the final content on `output_key`.
 
 In the **Pretty** view, completed Agent and LLM rows show their step tokens and estimated cost beside duration. The Completed header shows finalized run-level usage.
 
@@ -248,9 +248,11 @@ sequenceDiagram
 
 ### v1 behavior
 
-- Jobs run with `emitter: null` — no SSE events during background execution
-- Status polling via the existing trace JSON endpoint covers progress for v1
+- When `async_progress.enabled` is true (default), jobs use a `ProgressEmitter` that appends step events to a cache buffer and flushes incremental `async_progress_steps` on the run checkpoint
+- Live progress: `GET /workflows/runs/{run}/events/stream` (SSE tail of the buffer until `run_terminal`)
+- Status polling via the existing trace JSON endpoint remains a fallback
 - Synchronous stream endpoints (`/run/stream`, `/resume/stream`) remain unchanged when `async_runs_enabled` is `false`
+- Laravel Echo / `ShouldBroadcast` is **not** required for Studio progress
 
 ### Enable async runs
 
@@ -260,6 +262,7 @@ NEURONAI_STUDIO_QUEUE=default
 NEURONAI_STUDIO_QUEUE_CONNECTION=
 NEURONAI_STUDIO_QUEUE_TRIES=1
 NEURONAI_STUDIO_QUEUE_BACKOFF=30
+NEURONAI_STUDIO_ASYNC_PROGRESS_ENABLED=true
 ```
 
 Run a queue worker in production:

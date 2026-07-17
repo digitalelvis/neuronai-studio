@@ -12,6 +12,8 @@ use DigitalElvis\NeuronAIStudio\Runtime\MessageFactory;
 use DigitalElvis\NeuronAIStudio\Runtime\StateTemplateInterpolator;
 use DigitalElvis\NeuronAIStudio\Runtime\StructuredOutput\StructuredOutputResolver;
 use NeuronAI\Chat\Messages\Stream\Chunks\TextChunk;
+use NeuronAI\Chat\Messages\Stream\Chunks\ToolCallChunk;
+use NeuronAI\Chat\Messages\Stream\Chunks\ToolResultChunk;
 use NeuronAI\Chat\Messages\UserMessage;
 use NeuronAI\Workflow\WorkflowState;
 
@@ -64,8 +66,9 @@ class AgentNodeExecutor implements NodeExecutorInterface
                     'model' => $definition->model,
                     'instructions' => $definition->instructions,
                     'tools' => $definition->tools ?? [],
+                    ...$this->toolControlConfig($data, $definition),
                 ]
-                : $data;
+                : array_merge($data, $this->toolControlConfig($data, null));
 
             $response = $this->agentRunner->structuredInline(
                 $config,
@@ -93,10 +96,14 @@ class AgentNodeExecutor implements NodeExecutorInterface
                     'instructions' => $definition->instructions,
                     'tools' => $definition->tools ?? [],
                     'require_tool_approval' => $requireApproval,
+                    ...$this->toolControlConfig($data, $definition),
                 ], $userMessage, $definition, $threadKey, parentRun: $parentRun);
             } else {
                 $response = $this->agentRunner->runInline(
-                    array_merge($data, ['require_tool_approval' => $requireApproval]),
+                    array_merge($data, [
+                        'require_tool_approval' => $requireApproval,
+                        ...$this->toolControlConfig($data, null),
+                    ]),
                     $userMessage,
                     null,
                     $threadKey,
@@ -142,8 +149,12 @@ class AgentNodeExecutor implements NodeExecutorInterface
                 'instructions' => $definition->instructions,
                 'tools' => $definition->tools ?? [],
                 'require_tool_approval' => true,
+                ...$this->toolControlConfig($data, $definition),
             ]
-            : array_merge($data, ['require_tool_approval' => true]);
+            : array_merge($data, [
+                'require_tool_approval' => true,
+                ...$this->toolControlConfig($data, null),
+            ]);
 
         try {
             $response = $this->agentRunner->resumeInlineApproval(
@@ -207,8 +218,9 @@ class AgentNodeExecutor implements NodeExecutorInterface
                 'model' => $definition->model,
                 'instructions' => $definition->instructions,
                 'tools' => $definition->tools ?? [],
+                ...$this->toolControlConfig($data, $definition),
             ]
-            : $data;
+            : array_merge($data, $this->toolControlConfig($data, null));
 
         $generator = $this->agentRunner->streamInline(
             $config,
@@ -218,11 +230,40 @@ class AgentNodeExecutor implements NodeExecutorInterface
             parentRun: $parentRun,
         );
 
+        $emittedKeys = [];
+
         foreach ($generator as $chunk) {
             if ($chunk instanceof TextChunk && $chunk->content !== '') {
                 $state->emitStep('token', [
                     'node_id' => $nodeId,
                     'delta' => $chunk->content,
+                ]);
+
+                continue;
+            }
+
+            if ($chunk instanceof ToolCallChunk) {
+                $key = $this->toolEventKey('call', $chunk->tool->getName(), $chunk->tool->getInputs(), null);
+                $emittedKeys[$key] = true;
+                $state->emitStep('tool_call', [
+                    'node_id' => $nodeId,
+                    'name' => $chunk->tool->getName(),
+                    'inputs' => $chunk->tool->getInputs() ?? [],
+                    'result' => null,
+                ]);
+
+                continue;
+            }
+
+            if ($chunk instanceof ToolResultChunk) {
+                $result = $chunk->tool->getResult();
+                $key = $this->toolEventKey('result', $chunk->tool->getName(), $chunk->tool->getInputs(), $result);
+                $emittedKeys[$key] = true;
+                $state->emitStep('tool_result', [
+                    'node_id' => $nodeId,
+                    'name' => $chunk->tool->getName(),
+                    'inputs' => $chunk->tool->getInputs() ?? [],
+                    'result' => $result,
                 ]);
             }
         }
@@ -230,7 +271,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
         $response = $generator->getReturn();
 
         $state->set($outputKey, $response->content);
-        $this->emitToolEvents($nodeId, $response->toolEvents, $state);
+        $this->emitToolEvents($nodeId, $response->toolEvents, $state, $emittedKeys);
         $this->captureRunUsage($state, $response->runId);
 
         return 'default';
@@ -267,16 +308,52 @@ class AgentNodeExecutor implements NodeExecutorInterface
     }
 
     /**
-     * @param  array<int, array<string, mixed>>  $toolEvents
+     * @param  array<string, mixed>  $data
+     * @return array{tool_max_runs?: int, parallel_tool_calls?: bool}
      */
-    protected function emitToolEvents(string $nodeId, array $toolEvents, WorkflowState $state): void
+    protected function toolControlConfig(array $data, ?AgentDefinition $definition): array
+    {
+        $config = [];
+
+        if (array_key_exists('tool_max_runs', $data) && $data['tool_max_runs'] !== null && $data['tool_max_runs'] !== '') {
+            $config['tool_max_runs'] = (int) $data['tool_max_runs'];
+        } elseif ($definition?->tool_max_runs !== null) {
+            $config['tool_max_runs'] = (int) $definition->tool_max_runs;
+        }
+
+        if (array_key_exists('parallel_tool_calls', $data) && $data['parallel_tool_calls'] !== null && $data['parallel_tool_calls'] !== '') {
+            $config['parallel_tool_calls'] = (bool) $data['parallel_tool_calls'];
+        } elseif ($definition?->parallel_tool_calls !== null) {
+            $config['parallel_tool_calls'] = (bool) $definition->parallel_tool_calls;
+        }
+
+        return $config;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $toolEvents
+     * @param  array<string, true>  $alreadyEmitted
+     */
+    protected function emitToolEvents(string $nodeId, array $toolEvents, WorkflowState $state, array $alreadyEmitted = []): void
     {
         if (! $state instanceof BuilderWorkflowState) {
             return;
         }
 
         foreach ($toolEvents as $event) {
-            $eventName = ($event['type'] ?? '') === 'result' ? 'tool_result' : 'tool_call';
+            $type = ($event['type'] ?? '') === 'result' ? 'result' : 'call';
+            $key = $this->toolEventKey(
+                $type,
+                (string) ($event['name'] ?? 'tool'),
+                is_array($event['inputs'] ?? null) ? $event['inputs'] : [],
+                $event['result'] ?? null,
+            );
+
+            if (isset($alreadyEmitted[$key])) {
+                continue;
+            }
+
+            $eventName = $type === 'result' ? 'tool_result' : 'tool_call';
             $state->emitStep($eventName, [
                 'node_id' => $nodeId,
                 'name' => $event['name'] ?? 'tool',
@@ -284,5 +361,10 @@ class AgentNodeExecutor implements NodeExecutorInterface
                 'result' => $event['result'] ?? null,
             ]);
         }
+    }
+
+    protected function toolEventKey(string $type, string $name, mixed $inputs, mixed $result): string
+    {
+        return $type.'|'.$name.'|'.md5(json_encode([$inputs, $result]));
     }
 }
