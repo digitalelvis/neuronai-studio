@@ -38,6 +38,8 @@
                 toolAdvanced: @json($toolAdvanced),
                 selectedMcpSlugs: @json($selectedMcpSlugs),
                 mcpAdvanced: @json($mcpAdvanced),
+                tool_max_runs: @json($tool_max_runs),
+                parallel_tool_calls: @json($parallel_tool_calls),
             },
         };
     </script>

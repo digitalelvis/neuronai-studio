@@ -81,6 +81,22 @@ See [Cost estimation](../guides/analytics/costs.md) and [Usage Export API](../gu
 | `queue_tries` | `NEURONAI_STUDIO_QUEUE_TRIES` | `1` | Max attempts for workflow queue jobs |
 | `queue_backoff` | `NEURONAI_STUDIO_QUEUE_BACKOFF` | `30` | Seconds before retry after failure |
 
+## Async progress
+
+| Key | Env | Default | Description |
+|-----|-----|---------|-------------|
+| `async_progress.enabled` | `NEURONAI_STUDIO_ASYNC_PROGRESS_ENABLED` | `true` | Jobs emit step events into a cache buffer for SSE tail |
+| `async_progress.ttl` | `NEURONAI_STUDIO_ASYNC_PROGRESS_TTL` | `3600` | Buffer TTL (seconds); use Redis in multi-server setups |
+| `async_progress.poll_ms` | `NEURONAI_STUDIO_ASYNC_PROGRESS_POLL_MS` | `200` | SSE tail poll interval |
+
+Studio SSE: `GET /{prefix}/workflows/runs/{run}/events/stream` (auth Studio). Echo / `ShouldBroadcast` is not required.
+
+## Parallel (interpreted)
+
+| Key | Env | Default | Description |
+|-----|-----|---------|-------------|
+| `parallel.concurrency` | `NEURONAI_STUDIO_PARALLEL_CONCURRENCY` | `concurrent` | `concurrent` (Amp fibers) or `sequential` |
+
 ## Inspector
 
 | Key | Env | Default | Description |

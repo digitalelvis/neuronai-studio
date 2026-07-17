@@ -49,6 +49,7 @@ class AgentRunner
             'instructions' => $definition->instructions,
             'tools' => $definition->tools ?? [],
             'require_tool_approval' => (bool) $definition->require_tool_approval,
+            ...$this->toolControlConfigFromDefinition($definition),
         ], $message, $definition, fake: $fake);
     }
 
@@ -62,6 +63,7 @@ class AgentRunner
             'instructions' => $definition->instructions,
             'tools' => $definition->tools ?? [],
             'require_tool_approval' => (bool) $definition->require_tool_approval,
+            ...$this->toolControlConfigFromDefinition($definition),
         ]);
     }
 
@@ -639,7 +641,49 @@ class AgentRunner
             $agent->addGlobalMiddleware(new ToolApproval);
         }
 
+        $this->applyToolControls($agent, $config, $definition);
+
         return $agent;
+    }
+
+    /**
+     * @return array{tool_max_runs?: int, parallel_tool_calls?: bool}
+     */
+    public function toolControlConfigFromDefinition(AgentDefinition $definition): array
+    {
+        $config = [];
+
+        if ($definition->tool_max_runs !== null) {
+            $config['tool_max_runs'] = (int) $definition->tool_max_runs;
+        }
+
+        if ($definition->parallel_tool_calls !== null) {
+            $config['parallel_tool_calls'] = (bool) $definition->parallel_tool_calls;
+        }
+
+        return $config;
+    }
+
+    /**
+     * @param  array<string, mixed>  $config
+     */
+    protected function applyToolControls(DynamicAgent $agent, array $config, ?AgentDefinition $definition): void
+    {
+        $maxRuns = array_key_exists('tool_max_runs', $config)
+            ? $config['tool_max_runs']
+            : $definition?->tool_max_runs;
+
+        if ($maxRuns !== null && (int) $maxRuns >= 1) {
+            $agent->toolMaxRuns((int) $maxRuns);
+        }
+
+        $parallel = array_key_exists('parallel_tool_calls', $config)
+            ? $config['parallel_tool_calls']
+            : $definition?->parallel_tool_calls;
+
+        if ($parallel !== null) {
+            $agent->parallelToolCalls((bool) $parallel);
+        }
     }
 
     /**

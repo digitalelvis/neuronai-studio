@@ -6,20 +6,18 @@ use DigitalElvis\NeuronAIStudio\Runtime\BuilderWorkflowState;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\HumanInputRequiredException;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ParallelBranchInterruptException;
 use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
+use DigitalElvis\NeuronAIStudio\Runtime\Parallel\ConcurrentBranchScheduler;
+use DigitalElvis\NeuronAIStudio\Runtime\Parallel\SerializingEmitter;
 use DigitalElvis\NeuronAIStudio\Runtime\ParallelBranchRunner;
 use NeuronAI\Workflow\WorkflowState;
 use RuntimeException;
 
 /**
  * Spawns the branch subgraphs attached to a fork node, runs each one in an
- * isolated state up to the paired join node, and collects their results. The
- * interpreted runtime executes branches sequentially with per-branch state
- * isolation (mirroring NeuronAI `ParallelEvent` merge semantics).
+ * isolated state up to the paired join node, and collects their results.
  *
- * Graph convention:
- *  - fork --default--> join         (main continuation the loop follows)
- *  - fork --<branchId>--> entry     (one edge per parallel branch)
- *  - branchTail --default--> join   (each branch converges into the join)
+ * With `parallel.concurrency=concurrent` (default) and Amp available, pending
+ * branches run as concurrent Amp fibers; otherwise they run sequentially.
  *
  * On resume after a branch interrupt, already-completed branches are reused
  * from the checkpoint, the interrupted branch continues from its pending node
@@ -29,6 +27,7 @@ class ForkNodeExecutor implements NodeExecutorInterface
 {
     public function __construct(
         protected ParallelBranchRunner $runner,
+        protected ConcurrentBranchScheduler $scheduler = new ConcurrentBranchScheduler,
     ) {}
 
     public function execute(array $nodeConfig, WorkflowState $state, GraphContext $context): string
@@ -49,6 +48,10 @@ class ForkNodeExecutor implements NodeExecutorInterface
         $outputs = $resume !== null && is_array($resume['completed_outputs'] ?? null) ? $resume['completed_outputs'] : [];
         $pending = $resume !== null && is_array($resume['pending'] ?? null) ? $resume['pending'] : null;
 
+        (new SerializingEmitter($state->stepEmitter))->wrapStateEmitter($state);
+
+        $pendingCallables = [];
+
         foreach ($branches as $branchId => $entryNodeId) {
             if (array_key_exists($branchId, $results)) {
                 continue;
@@ -58,40 +61,115 @@ class ForkNodeExecutor implements NodeExecutorInterface
                 $outputKey = (string) ($pending['output_key'] ?? 'human_response');
                 $pendingState = is_array($pending['state'] ?? null) ? $pending['state'] : [];
                 $seededState = array_merge($pendingState, [$outputKey => $pending['response'] ?? null]);
+                $entry = (string) ($pending['node_id'] ?? $entryNodeId);
 
-                [$results, $outputs] = $this->runBranch(
+                $pendingCallables[$branchId] = function () use (
                     $forkId,
                     $joinId,
-                    (string) $branchId,
-                    (string) ($pending['node_id'] ?? $entryNodeId),
+                    $branchId,
+                    $entry,
                     $state,
                     $context,
-                    $results,
-                    $outputs,
                     $seededState,
                     $pendingState,
-                );
+                ): array {
+                    return $this->runBranchOutcome(
+                        $forkId,
+                        $joinId,
+                        (string) $branchId,
+                        $entry,
+                        $state,
+                        $context,
+                        $seededState,
+                        $pendingState,
+                    );
+                };
 
                 continue;
             }
 
-            [$results, $outputs] = $this->runBranch(
+            $pendingCallables[$branchId] = function () use (
                 $forkId,
                 $joinId,
-                (string) $branchId,
+                $branchId,
                 $entryNodeId,
                 $state,
                 $context,
-                $results,
-                $outputs,
-                null,
-                null,
-            );
+            ): array {
+                return $this->runBranchOutcome(
+                    $forkId,
+                    $joinId,
+                    (string) $branchId,
+                    $entryNodeId,
+                    $state,
+                    $context,
+                    null,
+                    null,
+                );
+            };
         }
+
+        [$results, $outputs] = $this->scheduler->run($pendingCallables, $results, $outputs);
+        $results = $this->orderByBranchKeys($branches, $results);
 
         $this->storeResults($state, $forkId, $joinId, $results, $outputs);
 
         return 'default';
+    }
+
+    /**
+     * @param  array<string, string>  $branches
+     * @param  array<string, mixed>  $results
+     * @return array<string, mixed>
+     */
+    protected function orderByBranchKeys(array $branches, array $results): array
+    {
+        $ordered = [];
+
+        foreach (array_keys($branches) as $branchId) {
+            if (array_key_exists($branchId, $results)) {
+                $ordered[$branchId] = $results[$branchId];
+            }
+        }
+
+        foreach ($results as $branchId => $value) {
+            if (! array_key_exists($branchId, $ordered)) {
+                $ordered[$branchId] = $value;
+            }
+        }
+
+        return $ordered;
+    }
+
+    /**
+     * @param  array<string, mixed>|null  $seedState
+     * @param  array<string, mixed>|null  $baseline
+     * @return array{0: array<string, mixed>, 1: array<string, mixed>}
+     */
+    protected function runBranchOutcome(
+        string $forkId,
+        string $joinId,
+        string $branchId,
+        string $entryNodeId,
+        BuilderWorkflowState $state,
+        GraphContext $context,
+        ?array $seedState,
+        ?array $baseline,
+    ): array {
+        [$partialResults, $partialOutputs] = $this->runBranch(
+            $forkId,
+            $joinId,
+            $branchId,
+            $entryNodeId,
+            $state,
+            $context,
+            [],
+            [],
+            $seedState,
+            $baseline,
+        );
+
+        return [$partialResults, $partialOutputs];
     }
 
     /**

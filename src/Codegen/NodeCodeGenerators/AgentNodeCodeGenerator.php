@@ -52,6 +52,7 @@ PHP;
 PHP;
             } else {
                 $approvalLine = $this->approvalConfigLine($data, hasDefinition: true);
+                $toolControlLine = $this->toolControlConfigLine($data, hasDefinition: true);
                 $body = <<<PHP
         {$messageSetup}
 
@@ -60,7 +61,7 @@ PHP;
             'provider' => \$agent->provider,
             'model' => \$agent->model,
             'instructions' => \$agent->instructions,
-            'tools' => \$agent->tools ?? [],{$approvalLine}
+            'tools' => \$agent->tools ?? [],{$approvalLine}{$toolControlLine}
         ], \$userMessage, \$agent, {$threadKey});
 
         \$state->set({$outputKey}, \$response->content);
@@ -163,5 +164,27 @@ PHP;
         }
 
         return '';
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function toolControlConfigLine(array $data, bool $hasDefinition): string
+    {
+        $lines = '';
+
+        if (array_key_exists('tool_max_runs', $data) && $data['tool_max_runs'] !== null && $data['tool_max_runs'] !== '') {
+            $lines .= "\n            'tool_max_runs' => ".(int) $data['tool_max_runs'].',';
+        } elseif ($hasDefinition) {
+            $lines .= "\n            'tool_max_runs' => \$agent->tool_max_runs,";
+        }
+
+        if (array_key_exists('parallel_tool_calls', $data) && $data['parallel_tool_calls'] !== null && $data['parallel_tool_calls'] !== '') {
+            $lines .= "\n            'parallel_tool_calls' => ".var_export((bool) $data['parallel_tool_calls'], true).',';
+        } elseif ($hasDefinition) {
+            $lines .= "\n            'parallel_tool_calls' => \$agent->parallel_tool_calls,";
+        }
+
+        return $lines;
     }
 }
