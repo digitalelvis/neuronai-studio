@@ -2,11 +2,11 @@
 
 **North star:** Agentes multimodais autônomos com grafos de workflow cíclicos.
 
-**Development line (features):** `v0.7.x` (M6 — runtime/agent)  
-**Patch line:** `v0.6.x`  
+**Development line (features):** `v0.8.x` (M7 — observabilidade externa)  
+**Patch line:** `v0.7.x` (após `v0.7.0`; até lá patches M6 em `v0.7.x`)  
 **Latest published:** `v0.6.0` on Packagist / `main`  
-**Última atualização:** 2026-07-16  
-**Etapa atual:** M5 ✅ (`v0.6.0`). M6 Specify → Execute em `v0.7.x` (AD-019).
+**Última atualização:** 2026-07-17  
+**Etapa atual:** M7 Execute ✅ em `feat/external-observability` (OBS-01…05). Release `v0.7.0` + abrir `v0.8.x` / merge M7 pendente.
 
 ---
 
@@ -70,7 +70,7 @@ Uso de tokens/spans já persistidos (`TelemetryTracker`, `StudioTraceSpan`) para
 
 **Critério de conclusão M5:** Custo estimado configurável por modelo; API agregada + por-run para o host; Dashboard com totais 30d; Debugger com badges; Test Pretty com chips de usage.
 
-### M6 — Runtime / Agent (P1) `in progress`
+### M6 — Runtime / Agent (P1) `done` (release pendente)
 
 Desempenho e flexibilidade de agentes e fluxos: knobs do tool-loop, progresso live em runs async, fork/join concorrente no runtime interpretado.
 
@@ -84,16 +84,29 @@ Desempenho e flexibilidade de agentes e fluxos: knobs do tool-loop, progresso li
 | 16 | `async-run-progress` | **done** | [spec](../features/async-run-progress/spec.md) · [design](../features/async-run-progress/design.md) · [tasks](../features/async-run-progress/tasks.md) |
 | 17 | `interpreted-parallel-concurrency` | **done** | [spec](../features/interpreted-parallel-concurrency/spec.md) · [design](../features/interpreted-parallel-concurrency/design.md) · [tasks](../features/interpreted-parallel-concurrency/tasks.md) |
 
-**Critério de conclusão M6:** Agent/nó configuram `tool_max_runs` / `parallel_tool_calls` com tools mid-stream; run async tem SSE de progresso (sem Echo); fork I/O-bound concorrente mais rápido que sequencial com resume parcial intacto.
+**Critério de conclusão M6:** Agent/nó configuram `tool_max_runs` / `parallel_tool_calls` com tools mid-stream; run async tem SSE de progresso (sem Echo); fork I/O-bound concorrente mais rápido que sequencial com resume parcial intacto. **Código ✅ — publicar `v0.7.0`.**
+
+### M7 — Observabilidade externa (P1) `done` (release pendente)
+
+Monitoring externo **env-first** (playbook Langflow): native Debugger permanece; Inspector (Neuron) + Langfuse como exportadores opt-in. Sem UI de secrets; sem LangSmith no MVP.
+
+**Escopo (AD-020):** Context: [external-observability/context.md](../features/external-observability/context.md). Spec: [spec.md](../features/external-observability/spec.md). Design: [design.md](../features/external-observability/design.md). Tasks: [tasks.md](../features/external-observability/tasks.md).
+
+| Ordem | Feature | Status | Spec |
+|-------|---------|--------|------|
+| 18 | `external-observability` | **done** (OBS-01…05; OBS-06 P3 deferred) | [spec](../features/external-observability/spec.md) · [design](../features/external-observability/design.md) · [tasks](../features/external-observability/tasks.md) |
+
+**Critério de conclusão M7:** Com `INSPECTOR_INGESTION_KEY`, runs do Studio aparecem no Inspector (gap EventBus corrigido); com `LANGFUSE_*` + pacote, traces exportam sem quebrar runs; `NEURONAI_STUDIO_NATIVE_TRACING=false` desliga Debugger DB; docs permitem setup em &lt; 5 min. **Código ✅ — merge → `v0.8.x` → release `v0.8.0` (após `v0.7.0`).**
 
 ---
 
 ## Próximas tarefas (ordem de execução)
 
 1. ~~Sync pós-`v0.6.0` + AD-019 + abrir `v0.7.x`~~ ✅
-2. ~~Especificar / design / tasks M6~~ — context + 3 specs
-3. Execute M6 — `agent-tool-controls` → `async-run-progress` → `interpreted-parallel-concurrency` em PRs → `v0.7.x`
-4. Release `v0.7.0` quando as 3 features estiverem estáveis
+2. ~~Especificar / design / tasks / Execute M6~~ ✅
+3. Release `v0.7.0` (M6 estável) + abrir linha `v0.8.x` (AD-020)
+4. ~~Design + tasks `external-observability` (OBS-01…05)~~ ✅
+5. ~~Execute M7 em PRs~~ ✅ (`feat/external-observability`) → merge `v0.8.x` → release `v0.8.0`
 
 ---
 
@@ -120,6 +133,10 @@ Desempenho e flexibilidade de agentes e fluxos: knobs do tool-loop, progresso li
 | `cost-estimation` | ✅ done | 0.4.0 |
 | `usage-analytics` | ✅ done | 0.5.0 |
 | `usage-export-api` | ✅ done | 0.6.0 |
+| `agent-tool-controls` | ✅ done | 0.7.x |
+| `async-run-progress` | ✅ done | 0.7.x |
+| `interpreted-parallel-concurrency` | ✅ done | 0.7.x |
+| `external-observability` | done | 0.8.x |
 
 ---
 
@@ -194,11 +211,19 @@ Mapeamento feature → arquivos `docs/` a criar/atualizar na implementação.
 | `async-run-progress` | `guides/workflows/runtime-and-traces.md`, `guides/export-and-production.md`, `reference/configuration.md` |
 | `interpreted-parallel-concurrency` | `guides/workflows/node-types/logic-nodes.md`, `guides/workflows/runtime-and-traces.md`, `reference/configuration.md` |
 
+### M7
+
+| Feature | Documentos |
+|---------|------------|
+| `external-observability` | `guides/observability/native-tracing.md`, `guides/observability/inspector.md`, `guides/observability/langfuse.md`, `guides/workflows/runtime-and-traces.md`, `reference/configuration.md`, `reference/artisan-commands.md`, `getting-started/installation.md` |
+
 ---
 
 ## Decisões em aberto (ver [STATE.md](STATE.md))
 
 - ~~SSE/broadcast vs polling para queue runner~~ → **resolvido (AD-019):** buffer + SSE tail; Echo deferred
 - ~~Multi-turn dentro do nó agent~~ → **resolvido (AD-019):** Neuron já faz; Studio expõe `tool_max_runs` / `parallel_tool_calls` + live tool SSE
+- ~~Monitoring externo (Inspector / Langfuse)~~ → **resolvido (AD-020):** M7 env-first; LangSmith deferred
 - Tool approval dentro de parallel branches (fora M6)
 - Transporte `ShouldBroadcast` / Echo para progresso async (fora M6 MVP)
+- Nó `invoke` / hook allowlisted (deferred — não bloqueia M7)
