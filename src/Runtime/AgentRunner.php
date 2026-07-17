@@ -7,6 +7,7 @@ use DigitalElvis\NeuronAIStudio\Events\RunUsageRecorded;
 use DigitalElvis\NeuronAIStudio\Models\StudioThread;
 use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Models\StudioTrace;
+use DigitalElvis\NeuronAIStudio\Observability\ObservabilityManager;
 use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
 use DigitalElvis\NeuronAIStudio\Support\ChatThreadKey;
 use DigitalElvis\NeuronAIStudio\Support\PlaygroundContext;
@@ -83,8 +84,7 @@ class AgentRunner
         $agent = $this->makeAgent($definition, $config, $threadKey);
         $agent->setPersistence(new InMemoryPersistence, $run->id);
 
-        $tracker = $this->makeTelemetryTracker($run, $trace, $config);
-        $agent->observe($tracker);
+        $this->attachObservability($agent, $run, $trace, $config);
 
         $message = $this->messages->userMessage(
             $messageText,
@@ -133,8 +133,7 @@ class AgentRunner
         $agent = $this->makeAgent($definition, $config, $threadKey);
         $agent->setPersistence(new InMemoryPersistence, $run->id);
 
-        $tracker = $this->makeTelemetryTracker($run, $trace, $config);
-        $agent->observe($tracker);
+        $this->attachObservability($agent, $run, $trace, $config);
 
         $message = $this->messages->userMessage(
             $messageText,
@@ -199,8 +198,7 @@ class AgentRunner
         $agent = $this->makeAgent($definition, $config, $run->thread_id, $fake);
         $agent->setPersistence(new InMemoryPersistence, $run->id);
 
-        $tracker = $this->makeTelemetryTracker($run, $trace, $config, $parentRun);
-        $agent->observe($tracker);
+        $this->attachObservability($agent, $run, $trace, $config, $parentRun);
 
         $userMessage = $message instanceof UserMessage ? $message : new UserMessage($message);
 
@@ -252,8 +250,7 @@ class AgentRunner
         $agent = $this->makeAgent($definition, $config, $threadKey, $fake);
         $agent->setPersistence(new InMemoryPersistence, $run->id);
 
-        $tracker = $this->makeTelemetryTracker($run, $trace, $config, $parentRun);
-        $agent->observe($tracker);
+        $this->attachObservability($agent, $run, $trace, $config, $parentRun);
 
         $userMessage = $message instanceof UserMessage ? $message : new UserMessage($message);
         $handler = $agent->stream($userMessage);
@@ -371,13 +368,13 @@ class AgentRunner
         $agent = $this->makeAgent($definition, $config, $threadKey);
         $agent->setPersistence(new InMemoryPersistence, $run->id);
 
-        $tracker = $this->makeTelemetryTracker(
+        $this->attachObservability(
+            $agent,
             $run,
             $trace,
             $config,
             $parentRun ?? $this->resolveParentRun($run),
         );
-        $agent->observe($tracker);
 
         $persistence = new InMemoryPersistence;
         $resumeToken = 'studio_tool_approval';
@@ -472,8 +469,7 @@ class AgentRunner
         $agent = $this->makeAgent($definition, $config, $threadKey, $fake);
         $agent->setPersistence(new InMemoryPersistence, $run->id);
 
-        $tracker = $this->makeTelemetryTracker($run, $trace, $config, $parentRun);
-        $agent->observe($tracker);
+        $this->attachObservability($agent, $run, $trace, $config, $parentRun);
 
         $userMessage = $message instanceof UserMessage ? $message : new UserMessage($message);
 
@@ -519,12 +515,15 @@ class AgentRunner
         return ['value' => $result];
     }
 
-    protected function makeTelemetryTracker(
+    /** @param  array<string, mixed>  $config */
+    protected function attachObservability(
+        object $target,
         StudioRun $run,
         StudioTrace $trace,
         array $config,
         ?StudioRun $parentRun = null,
-    ): TelemetryTracker {
+        bool $trackNodes = true,
+    ): void {
         $provider = isset($config['provider']) && is_string($config['provider']) && $config['provider'] !== ''
             ? $config['provider']
             : null;
@@ -532,7 +531,14 @@ class AgentRunner
             ? $config['model']
             : null;
 
-        return new TelemetryTracker($run, $trace, true, $provider, $model, $parentRun);
+        app(ObservabilityManager::class)->attach($target, [
+            'run' => $run,
+            'trace' => $trace,
+            'track_nodes' => $trackNodes,
+            'provider' => $provider,
+            'model' => $model,
+            'parent_run' => $parentRun,
+        ]);
     }
 
     /** @param  array<string, mixed>  $attributes */
