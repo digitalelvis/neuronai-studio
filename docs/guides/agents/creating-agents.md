@@ -64,8 +64,11 @@ Enable **Require tool approval** on an agent to gate its tool calls behind a hum
 | Field | Description |
 |-------|-------------|
 | `require_tool_approval` | Boolean flag on the agent definition. When `true`, all tool calls require approval |
+| `tool_max_runs` | Optional int (≥ 1). Caps Neuron tool rounds per node visit (default Neuron = 10 when unset) |
+| `parallel_tool_calls` | Optional bool. When true, Neuron uses parallel tool execution for a single model round |
 
-- The flag applies wherever the agent runs inside a workflow Agent node. A workflow Agent node can override it per node with `require_tool_approval` in the node data.
+- The approval flag applies wherever the agent runs inside a workflow Agent node. A workflow Agent node can override it per node with `require_tool_approval` in the node data.
+- Agent nodes can also override `tool_max_runs` / `parallel_tool_calls` in the inspector.
 - Approval currently gates **all** tools the agent calls (no per-tool allowlist yet).
 - Interrupts are serialized into the trace checkpoint for resume, so bind **class-based tools** — tools with inline `Closure` callbacks cannot be serialized across the pause.
 

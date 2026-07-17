@@ -91,9 +91,12 @@ Wiring convention:
 | `fork → branch entry` | `<branchId>` | One edge per branch, using the branch id as the source handle |
 | `branch tail → join` | `default` | Every branch must converge back into the same Join node |
 
-The interpreted runtime executes branches sequentially with **isolated state per branch**
+The interpreted runtime executes branches with **isolated state per branch**
 (mirroring NeuronAI's `ParallelEvent` merge semantics), so branches never see each other's
-partial writes. Each branch result is keyed by its branch id.
+partial writes. Each branch result is keyed by its branch id. With
+`parallel.concurrency=concurrent` (default) and Amp available, pending branches run as
+concurrent Amp fibers; set `sequential` to force the legacy foreach order. Tool approval
+inside a branch remains unsupported.
 
 ```mermaid
 flowchart LR

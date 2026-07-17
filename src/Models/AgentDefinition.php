@@ -19,6 +19,8 @@ class AgentDefinition extends Model
         'instructions',
         'tools',
         'require_tool_approval',
+        'tool_max_runs',
+        'parallel_tool_calls',
         'memory_config',
         'metadata',
     ];
@@ -28,6 +30,8 @@ class AgentDefinition extends Model
         return [
             'tools' => 'array',
             'require_tool_approval' => 'boolean',
+            'tool_max_runs' => 'integer',
+            'parallel_tool_calls' => 'boolean',
             'memory_config' => 'array',
             'metadata' => 'array',
         ];

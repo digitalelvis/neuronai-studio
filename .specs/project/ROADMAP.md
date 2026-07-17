@@ -2,11 +2,11 @@
 
 **North star:** Agentes multimodais autônomos com grafos de workflow cíclicos.
 
-**Development line (features):** `v0.6.x` (M5 remainder — `usage-export-api`)  
-**Patch line:** `v0.5.x`  
-**Latest published:** `v0.5.0` on Packagist / `main`  
+**Development line (features):** `v0.7.x` (M6 — runtime/agent)  
+**Patch line:** `v0.6.x`  
+**Latest published:** `v0.6.0` on Packagist / `main`  
 **Última atualização:** 2026-07-16  
-**Etapa atual:** `v0.5.0` publicou UA. CE ✅ (`v0.4.0`) · UA ✅ (`v0.5.0`) · UE → Execute em `v0.6.x`. Linha `v0.4.x` encerrada.
+**Etapa atual:** M5 ✅ (`v0.6.0`). M6 Specify → Execute em `v0.7.x` (AD-019).
 
 ---
 
@@ -56,39 +56,44 @@ Expor agentes e workflows para clients externos (Vercel AI SDK, AG-UI) via endpo
 
 **Critério de conclusão M4:** Host app consome agente via `useChat` (Vercel) e workflow via client AG-UI usando rotas configuráveis do package; workflow com Human node pausa e retoma via endpoint `resume/{protocol}`; catálogo e Connect Panel documentam URLs e snippets.
 
-**Publicação:** `v0.4.0` = CE + Laravel 13. `v0.5.0` = UA. Linhas `v0.3.x` / `v0.4.x` encerradas para features.
+**Publicação:** `v0.4.0` = CE + Laravel 13. `v0.5.0` = UA. `v0.6.0` = UE. Linhas `v0.3.x`–`v0.5.x` encerradas para features.
 
 ### M5 — Analítica e Faturamento (P1) `done`
 
 Uso de tokens/spans já persistidos (`TelemetryTracker`, `StudioTraceSpan`) para **metering no host** (prioridade) e superfície mínima no Studio (Dashboard + badges Debugger).
 
-**Escopo decidido (2026-07-15):** host-first — `cost-estimation` + `usage-export-api` são P1 do milstone; `usage-analytics` é mínimo (Dashboard + Debugger + **Test Pretty**), sem página Usage/BI. Index: [m5-analytics-billing/tasks.md](../features/m5-analytics-billing/tasks.md).
-
-**UA expandido (2026-07-16, AD-016):** Specs/tasks do UA passam a incluir chips de tokens/custo no Test Pretty (`studio-chat`); Dashboard usa `UsageQuery::aggregate` sem esperar o HTTP completo de UE.
-
-**Linha UE (2026-07-16, AD-018):** `usage-analytics` shipped em `v0.5.0`. Execute de `usage-export-api` na linha `v0.6.x`; `v0.5.x` fica como patch line.
-
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
 | 12 | `cost-estimation` | **done** (`v0.4.0`) | [spec](../features/cost-estimation/spec.md) · [design](../features/cost-estimation/design.md) · [tasks](../features/cost-estimation/tasks.md) |
-| 13 | `usage-export-api` | **done** (`v0.6.x`) | [spec](../features/usage-export-api/spec.md) · [design](../features/usage-export-api/design.md) · [tasks](../features/usage-export-api/tasks.md) |
+| 13 | `usage-export-api` | **done** (`v0.6.0`) | [spec](../features/usage-export-api/spec.md) · [design](../features/usage-export-api/design.md) · [tasks](../features/usage-export-api/tasks.md) |
 | 14 | `usage-analytics` | **done** (`v0.5.0`; UA-T1…T11) | [spec](../features/usage-analytics/spec.md) · [design](../features/usage-analytics/design.md) · [tasks](../features/usage-analytics/tasks.md) |
 
-**Critério de conclusão M5:** Custo estimado configurável por modelo; API agregada + por-run para o host; Dashboard com totais 30d; Debugger com badges; Test Pretty com chips de usage. (Somente API HTTP permanece — Execute em `v0.6.x`.)
+**Critério de conclusão M5:** Custo estimado configurável por modelo; API agregada + por-run para o host; Dashboard com totais 30d; Debugger com badges; Test Pretty com chips de usage.
+
+### M6 — Runtime / Agent (P1) `in progress`
+
+Desempenho e flexibilidade de agentes e fluxos: knobs do tool-loop, progresso live em runs async, fork/join concorrente no runtime interpretado.
+
+**Escopo (AD-019):** host/Studio runtime — sem billing avançado. Index: [m6-runtime-agent/tasks.md](../features/m6-runtime-agent/tasks.md). Context: [context.md](../features/m6-runtime-agent/context.md).
+
+**Ordem Execute:** ATC → ARP → IPC (emitter de ARP estabiliza canal usado por IPC).
+
+| Ordem | Feature | Status | Spec |
+|-------|---------|--------|------|
+| 15 | `agent-tool-controls` | **done** | [spec](../features/agent-tool-controls/spec.md) · [design](../features/agent-tool-controls/design.md) · [tasks](../features/agent-tool-controls/tasks.md) |
+| 16 | `async-run-progress` | **done** | [spec](../features/async-run-progress/spec.md) · [design](../features/async-run-progress/design.md) · [tasks](../features/async-run-progress/tasks.md) |
+| 17 | `interpreted-parallel-concurrency` | **done** | [spec](../features/interpreted-parallel-concurrency/spec.md) · [design](../features/interpreted-parallel-concurrency/design.md) · [tasks](../features/interpreted-parallel-concurrency/tasks.md) |
+
+**Critério de conclusão M6:** Agent/nó configuram `tool_max_runs` / `parallel_tool_calls` com tools mid-stream; run async tem SSE de progresso (sem Echo); fork I/O-bound concorrente mais rápido que sequencial com resume parcial intacto.
 
 ---
 
 ## Próximas tarefas (ordem de execução)
 
-1. ~~Governança — branch protection / rulesets alinhados ao CI consolidado~~ ✅
-2. ~~Abrir linha `v0.3.x` e sincronizar `main` com tag `v0.3.1`~~ ✅
-3. ~~Especificar M5 (Discuss → Spec)~~ ✅ — context + 3 specs
-4. ~~Design M5~~ ✅ — CE / UE / UA design.md
-5. ~~Tasks M5~~ ✅ — CE 13 + UE 7 + UA 11 (Pretty expansion AD-016)
-6. Execute M5 — ~~`cost-estimation`~~ ✅; ~~`usage-analytics`~~ ✅ (`v0.5.0`); `usage-export-api` → **`v0.6.x`**.
-7. ~~Sync ROADMAP/STATE/RELEASE pós-`v0.5.0` + abrir `v0.6.x`~~ ✅ (AD-018)
-8. ~~Ruleset `v*.*.x` (script `apply-branch-rules.sh`)~~ — reaplicar se necessário; padrão já cobre `v0.5.x` / `v0.6.x`
-9. Execute M5 `usage-export-api` (UE-T1…T7) em PRs → `v0.6.x`
+1. ~~Sync pós-`v0.6.0` + AD-019 + abrir `v0.7.x`~~ ✅
+2. ~~Especificar / design / tasks M6~~ — context + 3 specs
+3. Execute M6 — `agent-tool-controls` → `async-run-progress` → `interpreted-parallel-concurrency` em PRs → `v0.7.x`
+4. Release `v0.7.0` quando as 3 features estiverem estáveis
 
 ---
 
@@ -114,6 +119,7 @@ Uso de tokens/spans já persistidos (`TelemetryTracker`, `StudioTraceSpan`) para
 | `unified-runs-and-traces` | ✅ done | 0.2.x → 0.3.0 |
 | `cost-estimation` | ✅ done | 0.4.0 |
 | `usage-analytics` | ✅ done | 0.5.0 |
+| `usage-export-api` | ✅ done | 0.6.0 |
 
 ---
 
@@ -180,9 +186,19 @@ Mapeamento feature → arquivos `docs/` a criar/atualizar na implementação.
 | `usage-export-api` | `guides/analytics/export-api.md`, `reference/configuration.md`, `getting-started/installation.md` |
 | `usage-analytics` | `guides/analytics/usage.md`, `guides/dashboard.md`, `guides/workflows/runtime-and-traces.md`, `guides/agents/playground-and-threads.md` |
 
+### M6
+
+| Feature | Documentos |
+|---------|------------|
+| `agent-tool-controls` | `guides/agents/creating-agents.md`, `guides/workflows/node-types/ai-nodes.md`, `guides/workflows/runtime-and-traces.md`, `reference/configuration.md` |
+| `async-run-progress` | `guides/workflows/runtime-and-traces.md`, `guides/export-and-production.md`, `reference/configuration.md` |
+| `interpreted-parallel-concurrency` | `guides/workflows/node-types/logic-nodes.md`, `guides/workflows/runtime-and-traces.md`, `reference/configuration.md` |
+
 ---
 
 ## Decisões em aberto (ver [STATE.md](STATE.md))
 
-- SSE/broadcast vs polling para queue runner v1 (polling v1 implementado; SSE deferido)
-- Escopo de autonomia multi-turn **dentro** de um único nó agent vs entre iterações do loop
+- ~~SSE/broadcast vs polling para queue runner~~ → **resolvido (AD-019):** buffer + SSE tail; Echo deferred
+- ~~Multi-turn dentro do nó agent~~ → **resolvido (AD-019):** Neuron já faz; Studio expõe `tool_max_runs` / `parallel_tool_calls` + live tool SSE
+- Tool approval dentro de parallel branches (fora M6)
+- Transporte `ShouldBroadcast` / Echo para progresso async (fora M6 MVP)

@@ -3,6 +3,7 @@
 namespace DigitalElvis\NeuronAIStudio\Jobs;
 
 use DigitalElvis\NeuronAIStudio\Models\StudioRun;
+use DigitalElvis\NeuronAIStudio\Runtime\Progress\ProgressEmitter;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -50,14 +51,31 @@ class ResumeWorkflowJob implements ShouldQueue
 
         $run->update(['status' => 'running']);
 
-        $runner->resume(
-            $run->fresh(),
-            $this->nodeId,
-            $this->message,
-            emitter: null,
-            attachments: $this->attachments,
-            approval: $this->approval,
-        );
+        $emitter = $this->makeProgressEmitter();
+
+        try {
+            $result = $runner->resume(
+                $run->fresh(),
+                $this->nodeId,
+                $this->message,
+                emitter: $emitter,
+                attachments: $this->attachments,
+                approval: $this->approval,
+            );
+            $emitter?->terminal((string) $result->status);
+        } catch (Throwable $exception) {
+            $emitter?->terminal('failed', ['error' => $exception->getMessage()]);
+            throw $exception;
+        }
+    }
+
+    protected function makeProgressEmitter(): ?ProgressEmitter
+    {
+        if (! (bool) config('neuronai-studio.async_progress.enabled', true)) {
+            return null;
+        }
+
+        return new ProgressEmitter($this->runId);
     }
 
     public function failed(?Throwable $exception): void

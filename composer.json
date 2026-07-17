@@ -23,6 +23,7 @@
     },
     "require": {
         "php": "^8.2",
+        "amphp/amp": "^3.0",
         "illuminate/console": "^11.0|^12.0|^13.0",
         "illuminate/contracts": "^11.0|^12.0|^13.0",
         "illuminate/database": "^11.0|^12.0|^13.0",
