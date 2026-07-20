@@ -2,11 +2,11 @@
 
 **North star:** Agentes multimodais autônomos com grafos de workflow cíclicos.
 
-**Development line (features):** `v0.8.x` (M8 — performance / memory / context; Specify next)  
+**Development line (features):** `v0.9.x` (M8 Execute — branch open)  
 **Patch line:** `v0.8.x`  
-**Latest published:** `v0.8.0` on Packagist / `main`  
+**Latest published:** `v0.8.1` on Packagist / `main`  
 **Última atualização:** 2026-07-20  
-**Etapa atual:** M7 ✅ (`v0.8.0`). **M8 (AD-021):** desempenho de agentes/workflows — memória, engenharia de contexto, qualidade de runtime. Specify em seguida. LangSmith removido; OTel genérico em P3.
+**Etapa atual:** M7 ✅ (`v0.8.0`/`v0.8.1`). **M8 Execute** on `v0.9.x` (AD-022): `agent-memory-controls` in progress → `context-engineering` → `parallel-tool-approval`. LangSmith removido; OTel genérico em P3.
 
 ---
 
@@ -98,19 +98,21 @@ Monitoring externo **env-first** (playbook Langflow): native Debugger permanece;
 
 **Critério de conclusão M7:** Com `INSPECTOR_INGESTION_KEY`, runs do Studio aparecem no Inspector (gap EventBus corrigido); com `LANGFUSE_*` + pacote, traces exportam sem quebrar runs; `NEURONAI_STUDIO_NATIVE_TRACING=false` desliga Debugger DB; docs permitem setup em &lt; 5 min. **Publicado em `v0.8.0`.**
 
-### M8 — Performance, memory & context (P1) `planning`
+### M8 — Performance, memory & context (P1) `in progress`
 
-Foco total em **desempenho de agentes e workflows**: melhor uso de recursos/modelo, memória durável e controlável, engenharia de contexto (o que entra no prompt, budgets, truncamento/sumarização). Observabilidade adicional (OTel genérico, OBS-06) fica em débitos P3 — **sem** integração LangSmith dedicada (AD-021).
+Foco total em **desempenho de agentes e workflows**: memória durável e controlável (compaction com summary persistido — sem silent deletes), engenharia de contexto completa (budgets de prompt assembly: history + RAG + tool results + state), e tool approval dentro de parallel branches (P2). Observabilidade adicional (OTel genérico, OBS-06) fica em débitos P3 — **sem** integração LangSmith dedicada (AD-021).
 
-**Escopo (AD-021):** Context: [m8-performance-memory-context/context.md](../features/m8-performance-memory-context/context.md). Feature specs TBD após Discuss/Specify.
+**Escopo (AD-021/AD-022):** Context: [m8-performance-memory-context/context.md](../features/m8-performance-memory-context/context.md). Index: [m8-performance-memory-context/tasks.md](../features/m8-performance-memory-context/tasks.md). Design inline nas tasks (fase Design pulada intencionalmente).
 
-| Ordem | Feature (working titles) | Status | Spec |
-|-------|--------------------------|--------|------|
-| TBD | Agent memory controls | **planning** | — |
-| TBD | Context engineering / budgets | **planning** | — |
-| TBD | Runtime quality (incl. tool approval in parallel branches) | **planning** | — |
+**Ordem Execute:** AMC → CTX → PTA (PTA só após os dois P1). Linha `v0.9.x` abre no Execute.
 
-**Critério de conclusão M8 (rascunho):** Agentes long-running mantêm memória útil sob budget de contexto; Studio expõe controles claros de history/window; gaps de runtime que desperdiçam tokens ou quebram autonomia em paralelo estão fechados ou documentados. Critérios mensuráveis na Specify.
+| Ordem | Feature | Status | Spec |
+|-------|---------|--------|------|
+| 19 | `agent-memory-controls` (P1) | **in progress** | [spec](../features/agent-memory-controls/spec.md) · [tasks](../features/agent-memory-controls/tasks.md) |
+| 20 | `context-engineering` (P1) | **specified** | [spec](../features/context-engineering/spec.md) · [tasks](../features/context-engineering/tasks.md) |
+| 21 | `parallel-tool-approval` (P2) | **specified** | [spec](../features/parallel-tool-approval/spec.md) · [tasks](../features/parallel-tool-approval/tasks.md) |
+
+**Critério de conclusão M8:** Thread long-running fica sob o budget de contexto com summary persistido substituindo o prefixo trimado — nenhuma perda silenciosa de history; Studio expõe memory window/driver/summarization por agente e por nó (override M6-style); injeção de RAG/tool results/state respeita budgets configuráveis e registra truncamento em span metadata; (P2) tool approval dentro de um branch paralelo pausa e retoma (approve/reject) em vez de falhar o run, com paridade sequential/concurrent.
 
 ---
 
@@ -122,7 +124,10 @@ Foco total em **desempenho de agentes e workflows**: melhor uso de recursos/mode
 4. ~~Design + tasks `external-observability` (OBS-01…05)~~ ✅
 5. ~~Execute M7 + merge + release `v0.8.0`~~ ✅
 6. ~~AD-021: M8 north star; drop LangSmith; OTel → P3~~ ✅
-7. Discuss + Specify M8 (memory / context / runtime) → design → tasks → Execute
+7. ~~Discuss + Specify M8 (AD-022): specs AMC / CTX / PTA~~ ✅
+8. ~~Design inline + tasks M8 (26 tasks; índice em m8-performance-memory-context)~~ ✅
+9. ~~Abrir `v0.9.x` a partir de `main` (`v0.8.1`)~~ ✅
+10. Execute M8: `agent-memory-controls` → `context-engineering` → `parallel-tool-approval` em `v0.9.x`
 
 ---
 
@@ -233,11 +238,13 @@ Mapeamento feature → arquivos `docs/` a criar/atualizar na implementação.
 |---------|------------|
 | `external-observability` | `guides/observability/native-tracing.md`, `guides/observability/inspector.md`, `guides/observability/langfuse.md`, `guides/workflows/runtime-and-traces.md`, `reference/configuration.md`, `reference/artisan-commands.md`, `getting-started/installation.md` |
 
-### M8 (TBD after Specify)
+### M8
 
 | Feature | Documentos (expected) |
 |---------|------------------------|
-| Agent memory / context engineering | `guides/agents/creating-agents.md`, `guides/agents/playground-and-threads.md`, `guides/workflows/runtime-and-traces.md`, `guides/workflows/node-types/ai-nodes.md`, `reference/configuration.md` |
+| `agent-memory-controls` | `guides/agents/creating-agents.md`, `guides/agents/playground-and-threads.md`, `guides/workflows/node-types/ai-nodes.md`, `reference/configuration.md`, `reference/database-schema.md` |
+| `context-engineering` | `guides/workflows/node-types/ai-nodes.md`, `guides/agents/creating-agents.md`, `guides/workflows/state-and-conditions.md`, `guides/workflows/runtime-and-traces.md`, `reference/configuration.md` |
+| `parallel-tool-approval` | `guides/workflows/node-types/logic-nodes.md`, `guides/workflows/human-in-the-loop.md`, `guides/workflows/runtime-and-traces.md`, `reference/configuration.md` |
 
 ---
 
@@ -247,7 +254,7 @@ Mapeamento feature → arquivos `docs/` a criar/atualizar na implementação.
 - ~~Multi-turn dentro do nó agent~~ → **resolvido (AD-019):** Neuron já faz; Studio expõe `tool_max_runs` / `parallel_tool_calls` + live tool SSE
 - ~~Monitoring externo (Inspector / Langfuse)~~ → **resolvido (AD-020):** M7 env-first
 - ~~LangSmith dedicado~~ → **descartado (AD-021);** OTel genérico = P3 when-needed
-- M8 feature split (memory vs context vs runtime) — Specify
-- Tool approval dentro de parallel branches (candidato M8)
+- ~~M8 feature split (memory vs context vs runtime)~~ → **resolvido (AD-022):** `agent-memory-controls` + `context-engineering` (P1) + `parallel-tool-approval` (P2)
+- ~~Tool approval dentro de parallel branches~~ → **resolvido (AD-022):** feature P2 do M8 ([parallel-tool-approval](../features/parallel-tool-approval/spec.md))
 - Transporte `ShouldBroadcast` / Echo para progresso async (P3)
 - Nó `invoke` / hook allowlisted (P2 — fora do core M8)

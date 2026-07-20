@@ -14,10 +14,10 @@ Operational guide for versioning and publishing `digitalelvis/neuronai-studio` o
 
 ## Day-to-day development
 
-1. Branch from the active feature line (currently `v0.8.x` after `v0.8.0`):
+1. Branch from the active feature line (currently `v0.9.x` for M8):
 
    ```bash
-   git checkout v0.8.x
+   git checkout v0.9.x
    git pull
    git checkout -b feat/my-feature
    ```
@@ -192,14 +192,14 @@ For future releases:
 4. Verify Packagist shows the new version (auto-update webhook).
 5. Back-merge `main` → active `vX.Y.x` lines.
 
-## v0.8.x / v0.7.x / v0.6.x development lines
+## v0.9.x / v0.8.x / v0.7.x development lines
 
 | Line | Role |
 |------|------|
-| **`v0.8.x`** | Active **feature** + **patch** line after `v0.8.0` — M8 performance/memory/context (AD-021) |
+| **`v0.9.x`** | Active **feature** line for M8 — performance/memory/context (AD-021/AD-022) |
+| **`v0.8.x`** | **Patch** line for the published `0.8` series (M7) |
 | **`v0.7.x`** | **Patch** line for the published `0.7` series (M6) |
-| **`v0.6.x`** | **Patch** line for the published `0.6` series |
-| Latest published | **`v0.8.0`** (M7 external observability) |
+| Latest published | **`v0.8.1`** on Packagist / `main` |
 
 | Area | Status |
 |------|--------|
@@ -210,9 +210,9 @@ For future releases:
 | M5 `usage-export-api` | ✅ Shipped in `v0.6.0` |
 | M6 runtime/agent | ✅ Shipped in `v0.7.0` |
 | M7 external observability | ✅ Shipped in `v0.8.0` |
-| M8 performance / memory / context | 📋 Planning (AD-021) — Specify next; LangSmith dropped; OTel = P3 |
+| M8 performance / memory / context | 🚧 Execute on `v0.9.x` (AMC → CTX → PTA; AD-022) |
 
-Lines `v0.3.x`–`v0.7.x` are closed for new features. Consumers on older minors can stay until ready to adopt `v0.8.0`+.
+Lines `v0.3.x`–`v0.8.x` are closed for new features. Consumers on older minors can stay until ready to adopt `v0.8.0`+.
 
 ## Troubleshooting
 

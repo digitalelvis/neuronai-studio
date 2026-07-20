@@ -1,14 +1,21 @@
 # State
 
 **Last Updated:** 2026-07-20
-**Development line (features):** `v0.8.x` (M8 — agent/workflow performance; Specify next)
+**Development line (features):** `v0.9.x` (M8 Execute — branch open)
 **Patch line:** `v0.8.x`
-**Latest published:** `v0.8.0` on Packagist / `main`
-**Current Work:** M7 ✅ (`v0.8.0`). **M8 north star (AD-021):** agent & workflow performance — memory, context engineering, runtime quality. Specify next. Observability polish (OBS-06, OTel) demoted.
+**Latest published:** `v0.8.1` on Packagist / `main`
+**Current Work:** M8 **Execute** on `v0.9.x` (AD-022): starting `agent-memory-controls` (AMC-T1…). Order AMC → CTX → PTA. Observability polish (OBS-06, OTel) stays demoted.
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-022: M8 feature split + compaction memory + `v0.9.x` Execute line (2026-07-20)
+
+**Decision:** M8 decomposes into three features: **`agent-memory-controls`** (P1, AMC-xx) and **`context-engineering`** (P1, CTX-xx) as the MVP ("1C + prompt assembly" — memory controls + FULL context engineering including summarization; prompt assembly covers history + RAG chunks + tool results + large state fields), plus **`parallel-tool-approval`** (P2, PTA-xx — specified now, executed only after the two P1s). Memory persistence = **compaction**: when history exceeds budget, the trimmed prefix is replaced by a persisted summary message in the Eloquent thread — superseding Neuron `HistoryTrimmer` silent deletes. Summarizer = **dedicated configurable cheap model** (own provider/model config keys) with fallback to the agent's own provider/model, then to non-destructive trim on failure. Granularity = the existing dead `AgentDefinition.memory_config` JSON column activated as a **single envelope** (window, driver, summarization, budgets) + per-node override in agent-node `data` (M6 `tool_max_runs` pattern). M8 Execute targets a new **`v0.9.x`** feature line (branch opens at Execute); `v0.8.x` becomes the patch line.
+**Reason:** `memory_config` is dead config and the trim path silently destroys durable history — the biggest quality gap for long-running agents. Budgeting only history would leave RAG/tool/state injection unbounded (the actual prompt-size drivers). PTA closes the known fail-closed fork gap without blocking the memory MVP. A fresh minor line keeps `v0.8.x` clean for M7 patches.
+**Trade-off:** Design phase intentionally skipped (design inline in tasks) — spec quality must carry the load. Mechanical truncation only for RAG/tool/state (no semantic compression). One-approval-per-resume for parallel branches (no batch UX).
+**Impact:** Specs/tasks in [agent-memory-controls](../features/agent-memory-controls/spec.md), [context-engineering](../features/context-engineering/spec.md), [parallel-tool-approval](../features/parallel-tool-approval/spec.md); milestone context/index in [m8-performance-memory-context](../features/m8-performance-memory-context/context.md). ROADMAP M8 `specified` + `v0.9.x` header. Resolves open decisions "M8 feature split" and "tool approval in parallel branches."
 
 ### AD-021: M8 = performance / memory / context — drop LangSmith; OTel P3 only (2026-07-20)
 
@@ -230,13 +237,15 @@
 
 ## M8 progress snapshot
 
-| Theme | Status | Notes |
-|-------|--------|-------|
-| Agent memory | planning | AD-021; Specify next |
-| Context engineering | planning | budgets / prompt contents |
-| Runtime quality | planning | incl. tool approval in parallel branches |
+| Feature | Status | Notes |
+|---------|--------|-------|
+| `agent-memory-controls` (P1) | in progress | AMC-T1… on `v0.9.x` — [spec](../features/agent-memory-controls/spec.md) · [tasks](../features/agent-memory-controls/tasks.md) |
+| `context-engineering` (P1) | specified | CTX-01…06; after AMC — [spec](../features/context-engineering/spec.md) |
+| `parallel-tool-approval` (P2) | specified | PTA-01…04; Execute only after the P1s — [spec](../features/parallel-tool-approval/spec.md) |
 | LangSmith-specific | dropped | AD-021 |
 | Generic OTel | P3 deferred | when-needed only |
+
+**Execute order (AD-022):** AMC → CTX → PTA on `v0.9.x` (branch open from `main` @ `v0.8.1`; design inline in tasks; 26 tasks — [index](../features/m8-performance-memory-context/tasks.md)).
 
 ---
 
@@ -316,14 +325,14 @@
 
 ## Deferred Ideas
 
-### P1 — M8 north star (performance / memory / context) — AD-021
+### P1 — M8 north star (performance / memory / context) — AD-021 / AD-022
 
-Themes to Specify (feature split TBD in Discuss/Specify):
+Themes turned into specified features (AD-022 — Execute next on `v0.9.x`):
 
-- [ ] **Agent memory** — stronger Studio control over chat history / `memory_config` / Eloquent vs in-memory; durable threads that stay useful under long runs
-- [ ] **Context engineering** — token/context-window budgets, what enters prompts (state, RAG chunks, tool results), truncation/summarization policies
-- [ ] **Workflow/agent runtime quality** — fewer wasted tokens and round-trips; close known gaps that hurt production autonomy
-- [ ] **Tool approval inside parallel branches** — known M6/IPC gap (fail-closed / undocumented today); correctness under concurrent forks
+- [x] **Agent memory** → specified as [`agent-memory-controls`](../features/agent-memory-controls/spec.md) (AMC-01…05: `memory_config` envelope, compaction, summarizer, UI + node override)
+- [x] **Context engineering** → specified as [`context-engineering`](../features/context-engineering/spec.md) (CTX-01…06: prompt assembly budgets for RAG/tool/state + truncation spans)
+- [x] **Workflow/agent runtime quality** → absorbed by the two features above (token waste = unbudgeted context + silent history loss) + PTA below for concurrency correctness
+- [x] **Tool approval inside parallel branches** → specified as [`parallel-tool-approval`](../features/parallel-tool-approval/spec.md) (P2 of M8; PTA-01…04)
 
 ### P2 — Valuable later (not M8 core)
 
@@ -390,5 +399,7 @@ Themes to Specify (feature split TBD in Discuss/Specify):
 - [x] Release `v0.7.0` (M6) + open `v0.8.x` branch/line
 - [x] Merge M7 → `v0.8.x` → release `v0.8.0`
 - [x] AD-021: M8 = performance/memory/context; drop LangSmith; OTel → P3
-- [ ] Specify M8 (Discuss → feature specs) — memory, context engineering, runtime quality
-- [ ] Design + tasks M8 features → Execute on active `v0.8.x` / next minor as decided at Specify
+- [x] Specify M8 (Discuss → feature specs) — AD-022; AMC / CTX / PTA specs
+- [x] Design + tasks M8 — design inline in tasks (skipped as phase); 26 tasks, index in [m8-performance-memory-context/tasks.md](../features/m8-performance-memory-context/tasks.md)
+- [x] Open `v0.9.x` from `main` (`v0.8.1`) for M8 Execute (AD-022)
+- [ ] Execute M8: `agent-memory-controls` → `context-engineering` → `parallel-tool-approval` on `v0.9.x`
