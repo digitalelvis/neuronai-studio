@@ -226,11 +226,42 @@ return [
 
     /*
     |--------------------------------------------------------------------------
-    | Inspector Integration
+    | Observability (native Debugger + external monitoring)
     |--------------------------------------------------------------------------
+    |
+    | Env-first: enabled=true means "auto when credentials/package present".
+    | Set enabled=false to force an integration off even if keys exist.
+    |
     */
 
-    'inspector_enabled' => env('NEURONAI_STUDIO_INSPECTOR_ENABLED', false),
+    'observability' => [
+        'native_tracing' => (bool) env('NEURONAI_STUDIO_NATIVE_TRACING', true),
+
+        'inspector' => [
+            'enabled' => (bool) env('NEURONAI_STUDIO_INSPECTOR_ENABLED', true),
+        ],
+
+        'langfuse' => [
+            'enabled' => (bool) env('NEURONAI_STUDIO_LANGFUSE_ENABLED', true),
+            'public_key' => env('LANGFUSE_PUBLIC_KEY'),
+            'secret_key' => env('LANGFUSE_SECRET_KEY'),
+            'base_url' => env('LANGFUSE_BASE_URL', env('LANGFUSE_HOST')),
+        ],
+
+        'metadata' => [],
+        'tags' => [],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Inspector Integration (deprecated alias)
+    |--------------------------------------------------------------------------
+    |
+    | Prefer observability.inspector.enabled. Kept for one release.
+    |
+    */
+
+    'inspector_enabled' => env('NEURONAI_STUDIO_INSPECTOR_ENABLED', true),
 
     /*
     |--------------------------------------------------------------------------

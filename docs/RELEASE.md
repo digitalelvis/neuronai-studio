@@ -14,19 +14,19 @@ Operational guide for versioning and publishing `digitalelvis/neuronai-studio` o
 
 ## Day-to-day development
 
-1. Branch from the active feature line (currently `v0.7.x`):
+1. Branch from the active feature line (currently `v0.8.x` after `v0.7.0`; until then M6 patches stay on `v0.7.x`):
 
    ```bash
-   git checkout v0.7.x
+   git checkout v0.8.x   # or v0.7.x for M6 patches before/after 0.7.0
    git pull
    git checkout -b feat/my-feature
    ```
 
 2. Commit using [Conventional Commits](https://conventionalcommits.org) (`feat(studio):`, `fix(canvas):`, etc.).
 
-3. Open a PR targeting `v0.7.x`. CI must pass before merge.
+3. Open a PR targeting the line you branched from. CI must pass before merge.
 
-Patches for the published `0.6` series go to `v0.6.x` the same way.
+Patches for the published `0.6` series go to `v0.6.x` the same way. After `v0.7.0`, M6 patches go to `v0.7.x`.
 
 ## Standard release
 
@@ -192,24 +192,26 @@ For future releases:
 4. Verify Packagist shows the new version (auto-update webhook).
 5. Back-merge `main` → active `vX.Y.x` lines.
 
-## v0.7.x / v0.6.x development lines
+## v0.8.x / v0.7.x / v0.6.x development lines
 
 | Line | Role |
 |------|------|
-| **`v0.7.x`** | Active **feature** line — Execute M6 runtime/agent (ATC → ARP → IPC) |
+| **`v0.8.x`** | Active **feature** line — M7 external observability (AD-020) |
+| **`v0.7.x`** | **Patch** line for the published `0.7` series (M6) |
 | **`v0.6.x`** | **Patch** line for the published `0.6` series |
-| Latest published | **`v0.6.0`** (usage export API + M5 complete) |
+| Latest published | **`v0.7.0`** (M6 runtime/agent) |
 
 | Area | Status |
 |------|--------|
 | M1–M4 (cyclic graphs, RAG, structured output, HITL, parallel, queue, stream adapters, unified runs) | ✅ Published in `v0.3.0` |
-| Release bot (`RELEASE_TOKEN` + push `main` before tag) | ✅ Verified through `v0.6.0` |
+| Release bot (`RELEASE_TOKEN` + push `main` before tag) | ✅ Verified through `v0.7.0` |
 | M5 `cost-estimation` | ✅ Shipped in `v0.4.0` |
 | M5 `usage-analytics` | ✅ Shipped in `v0.5.0` |
 | M5 `usage-export-api` | ✅ Shipped in `v0.6.0` |
-| M6 runtime/agent | 📋 Ready — Execute on `v0.7.x` (AD-019) |
+| M6 runtime/agent | ✅ Shipped in `v0.7.0` |
+| M7 external observability | ✅ Execute done — merge PR → `v0.8.x` → release `v0.8.0` |
 
-Lines `v0.3.x`–`v0.5.x` are closed for new features. Consumers on older minors can stay until ready to adopt `v0.6.0`+.
+Lines `v0.3.x`–`v0.6.x` are closed for new features. Consumers on older minors can stay until ready to adopt `v0.7.0`+.
 
 ## Troubleshooting
 

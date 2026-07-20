@@ -70,6 +70,17 @@ http://localhost:8000/neuronai-studio
 
 Configure the prefix with `NEURONAI_STUDIO_ROUTE_PREFIX` in `.env`.
 
+## Optional — External observability
+
+Studio Debugger traces are on by default. To also export to Inspector or Langfuse:
+
+```bash
+php artisan neuronai-studio:install-observability inspector
+php artisan neuronai-studio:install-observability langfuse
+```
+
+See [Native tracing](../guides/observability/native-tracing.md), [Inspector](../guides/observability/inspector.md), and [Langfuse](../guides/observability/langfuse.md).
+
 <!-- SCREENSHOT: install-success-dashboard -->
 > **Screenshot pending:** Dashboard after successful installation.
 >

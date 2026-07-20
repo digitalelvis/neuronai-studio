@@ -4,6 +4,7 @@ namespace DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors;
 
 use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Models\StudioTrace;
+use DigitalElvis\NeuronAIStudio\Observability\ObservabilityManager;
 use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
 use DigitalElvis\NeuronAIStudio\Runtime\AgentRunner;
 use DigitalElvis\NeuronAIStudio\Runtime\BuilderWorkflowState;
@@ -89,16 +90,30 @@ class LlmNodeExecutor implements NodeExecutorInterface
 
     protected function recordUsage(WorkflowState $state, string $provider, string $model, Message $message): void
     {
+        $usage = $message->getUsage();
+        $promptTokens = $usage ? $usage->inputTokens : 0;
+        $completionTokens = $usage ? $usage->outputTokens : 0;
+
+        app(ObservabilityManager::class)->recordDirectLlmGeneration([
+            'name' => 'llm-node',
+            'provider' => $provider,
+            'model' => $model,
+            'input' => null,
+            'output' => $message->getContent(),
+            'prompt_tokens' => $promptTokens,
+            'completion_tokens' => $completionTokens,
+        ]);
+
+        if (! app(ObservabilityManager::class)->isNativeTracingEnabled()) {
+            return;
+        }
+
         $run = $this->resolveParentRun($state);
         $trace = $this->resolveParentTrace($state);
 
         if ($run === null || $trace === null) {
             return;
         }
-
-        $usage = $message->getUsage();
-        $promptTokens = $usage ? $usage->inputTokens : 0;
-        $completionTokens = $usage ? $usage->outputTokens : 0;
 
         $span = $this->usageRecorder->recordLlmSpan(
             $run,

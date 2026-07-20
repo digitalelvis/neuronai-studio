@@ -6,6 +6,7 @@ use DigitalElvis\NeuronAIStudio\Commands\EvalSuiteCommand;
 use DigitalElvis\NeuronAIStudio\Commands\EvaluationsCommand;
 use DigitalElvis\NeuronAIStudio\Commands\ExportCommand;
 use DigitalElvis\NeuronAIStudio\Commands\InstallCommand;
+use DigitalElvis\NeuronAIStudio\Commands\InstallObservabilityCommand;
 use DigitalElvis\NeuronAIStudio\Commands\MakeToolCommand;
 use DigitalElvis\NeuronAIStudio\Commands\PurgeCheckpointsCommand;
 use DigitalElvis\NeuronAIStudio\Http\Middleware\EnsureNeuronAIStudioAuthorized;
@@ -267,6 +268,7 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole()) {
             $this->commands([
                 InstallCommand::class,
+                InstallObservabilityCommand::class,
                 ExportCommand::class,
                 MakeToolCommand::class,
                 EvaluationsCommand::class,

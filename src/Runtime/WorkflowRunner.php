@@ -11,6 +11,7 @@ use DigitalElvis\NeuronAIStudio\Models\StudioThread;
 use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Models\StudioTrace;
 use DigitalElvis\NeuronAIStudio\Models\StudioTraceSpan;
+use DigitalElvis\NeuronAIStudio\Observability\ObservabilityManager;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\HumanInputRequiredException;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ParallelBranchInterruptException;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ToolApprovalRequiredException;
@@ -182,8 +183,11 @@ class WorkflowRunner
             $state = $this->buildInitialState($graphContext, $run, $trace, $workflow, $input, $emitter);
 
             $interpreter = new GraphInterpreterWorkflow($graphContext, $state);
-            $tracker = new TelemetryTracker($run, $trace, false);
-            $interpreter->observe($tracker);
+            app(ObservabilityManager::class)->attach($interpreter, [
+                'run' => $run,
+                'trace' => $trace,
+                'track_nodes' => false,
+            ]);
 
             $interpreter->bootstrap();
 
@@ -235,8 +239,11 @@ class WorkflowRunner
             $instance->addGlobalMiddleware($middleware);
             $instance->setState(new WorkflowState($stateData));
 
-            $tracker = new TelemetryTracker($run, $trace, false);
-            $instance->observe($tracker);
+            app(ObservabilityManager::class)->attach($instance, [
+                'run' => $run,
+                'trace' => $trace,
+                'track_nodes' => false,
+            ]);
 
             $instance->bootstrap();
 
@@ -523,8 +530,11 @@ class WorkflowRunner
             $instance->addGlobalMiddleware($middleware);
             $instance->setState(new WorkflowState($stateData));
 
-            $tracker = new TelemetryTracker($run, $trace, false);
-            $instance->observe($tracker);
+            app(ObservabilityManager::class)->attach($instance, [
+                'run' => $run,
+                'trace' => $trace,
+                'track_nodes' => false,
+            ]);
 
             $instance->bootstrap();
 

@@ -2,6 +2,14 @@
 
 Execute workflows from the test harness with server-sent events (SSE), persisted trace records, and step-by-step inspection.
 
+## External observability
+
+Native Studio traces (this page) can run alongside env-first exporters:
+
+- [Native tracing toggle](../observability/native-tracing.md)
+- [Inspector APM](../observability/inspector.md)
+- [Langfuse](../observability/langfuse.md)
+
 ## Running a workflow
 
 Open a workflow editor and use the **Test** panel (workflow chat harness). Each run:

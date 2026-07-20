@@ -97,11 +97,27 @@ Studio SSE: `GET /{prefix}/workflows/runs/{run}/events/stream` (auth Studio). Ec
 |-----|-----|---------|-------------|
 | `parallel.concurrency` | `NEURONAI_STUDIO_PARALLEL_CONCURRENCY` | `concurrent` | `concurrent` (Amp fibers) or `sequential` |
 
-## Inspector
+## Observability
+
+Env-first monitoring layers. Native Debugger is separate from external exporters.
 
 | Key | Env | Default | Description |
 |-----|-----|---------|-------------|
-| `inspector_enabled` | `NEURONAI_STUDIO_INSPECTOR_ENABLED` | `false` | Inspector APM integration (reserved) |
+| `observability.native_tracing` | `NEURONAI_STUDIO_NATIVE_TRACING` | `true` | Persist Studio Debugger spans via `TelemetryTracker` |
+| `observability.inspector.enabled` | `NEURONAI_STUDIO_INSPECTOR_ENABLED` | `true` | Attach Inspector when `INSPECTOR_INGESTION_KEY` is set |
+| `observability.langfuse.enabled` | `NEURONAI_STUDIO_LANGFUSE_ENABLED` | `true` | Attach Langfuse when keys + package present |
+| `observability.langfuse.public_key` | `LANGFUSE_PUBLIC_KEY` | — | Langfuse public key |
+| `observability.langfuse.secret_key` | `LANGFUSE_SECRET_KEY` | — | Langfuse secret key |
+| `observability.langfuse.base_url` | `LANGFUSE_BASE_URL` (`LANGFUSE_HOST` alias) | — | Langfuse API base URL |
+| `observability.metadata` / `tags` | — | `[]` | Optional metadata/tags for exporters |
+| `inspector_enabled` | `NEURONAI_STUDIO_INSPECTOR_ENABLED` | `true` | **Deprecated** alias of `observability.inspector.enabled` |
+
+See [Native tracing](../guides/observability/native-tracing.md), [Inspector](../guides/observability/inspector.md), [Langfuse](../guides/observability/langfuse.md).
+
+```bash
+php artisan neuronai-studio:install-observability inspector
+php artisan neuronai-studio:install-observability langfuse
+```
 
 ## Tools
 

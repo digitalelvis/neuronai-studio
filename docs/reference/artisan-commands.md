@@ -92,6 +92,17 @@ Exit code is non-zero when any case fails. Results are persisted to `eval_runs` 
 
 See [Evaluations](../guides/agents/evaluations.md).
 
+## neuronai-studio:install-observability
+
+Print an env-first checklist for external monitoring (Inspector or Langfuse).
+
+```bash
+php artisan neuronai-studio:install-observability inspector
+php artisan neuronai-studio:install-observability langfuse
+```
+
+Does not write `.env` or secrets. See [Inspector](../guides/observability/inspector.md) and [Langfuse](../guides/observability/langfuse.md).
+
 ## Related Neuron Laravel commands
 
 NeuronAI Studio depends on Neuron Laravel:

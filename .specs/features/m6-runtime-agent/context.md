@@ -2,7 +2,7 @@
 
 **Gathered:** 2026-07-16  
 **Milestone:** M6 — Runtime / Agent (desempenho e flexibilidade)  
-**Status:** Specify → Design → Tasks → Execute on `v0.7.x` (AD-019)  
+**Status:** Execute ✅ on `v0.7.x` (AD-019). Release `v0.7.0` pendente. M7 = [external-observability](../external-observability/context.md) (AD-020).  
 **Tasks index:** [tasks.md](./tasks.md)  
 **Specs:** [`agent-tool-controls`](../agent-tool-controls/spec.md) · [`async-run-progress`](../async-run-progress/spec.md) · [`interpreted-parallel-concurrency`](../interpreted-parallel-concurrency/spec.md)
 
