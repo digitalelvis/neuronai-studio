@@ -136,4 +136,4 @@ OBS-T1 (config) → OBS-T2 (Manager + Langfuse adapter)
 ## Out of Execute
 
 - OBS-06 Settings status page (P3)
-- LangSmith, invoke node, TraceDetail URL bridge
+- LangSmith-specific integration (dropped AD-021); generic OTel P3; invoke node; TraceDetail URL bridge

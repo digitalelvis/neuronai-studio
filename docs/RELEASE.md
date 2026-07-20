@@ -196,7 +196,7 @@ For future releases:
 
 | Line | Role |
 |------|------|
-| **`v0.8.x`** | Active **feature** + **patch** line after `v0.8.0` (M7 shipped; next milestone TBD) |
+| **`v0.8.x`** | Active **feature** + **patch** line after `v0.8.0` — M8 performance/memory/context (AD-021) |
 | **`v0.7.x`** | **Patch** line for the published `0.7` series (M6) |
 | **`v0.6.x`** | **Patch** line for the published `0.6` series |
 | Latest published | **`v0.8.0`** (M7 external observability) |
@@ -210,6 +210,7 @@ For future releases:
 | M5 `usage-export-api` | ✅ Shipped in `v0.6.0` |
 | M6 runtime/agent | ✅ Shipped in `v0.7.0` |
 | M7 external observability | ✅ Shipped in `v0.8.0` |
+| M8 performance / memory / context | 📋 Planning (AD-021) — Specify next; LangSmith dropped; OTel = P3 |
 
 Lines `v0.3.x`–`v0.7.x` are closed for new features. Consumers on older minors can stay until ready to adopt `v0.8.0`+.
 

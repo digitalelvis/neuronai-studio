@@ -2,11 +2,11 @@
 
 **North star:** Agentes multimodais autônomos com grafos de workflow cíclicos.
 
-**Development line (features):** `v0.8.x` (pós-M7; próximo milestone TBD)  
+**Development line (features):** `v0.8.x` (M8 — performance / memory / context; Specify next)  
 **Patch line:** `v0.8.x`  
 **Latest published:** `v0.8.0` on Packagist / `main`  
 **Última atualização:** 2026-07-20  
-**Etapa atual:** M7 ✅ (`v0.8.0`). Próximo: M8 / débitos (OBS-06, LangSmith, invoke).
+**Etapa atual:** M7 ✅ (`v0.8.0`). **M8 (AD-021):** desempenho de agentes/workflows — memória, engenharia de contexto, qualidade de runtime. Specify em seguida. LangSmith removido; OTel genérico em P3.
 
 ---
 
@@ -98,6 +98,20 @@ Monitoring externo **env-first** (playbook Langflow): native Debugger permanece;
 
 **Critério de conclusão M7:** Com `INSPECTOR_INGESTION_KEY`, runs do Studio aparecem no Inspector (gap EventBus corrigido); com `LANGFUSE_*` + pacote, traces exportam sem quebrar runs; `NEURONAI_STUDIO_NATIVE_TRACING=false` desliga Debugger DB; docs permitem setup em &lt; 5 min. **Publicado em `v0.8.0`.**
 
+### M8 — Performance, memory & context (P1) `planning`
+
+Foco total em **desempenho de agentes e workflows**: melhor uso de recursos/modelo, memória durável e controlável, engenharia de contexto (o que entra no prompt, budgets, truncamento/sumarização). Observabilidade adicional (OTel genérico, OBS-06) fica em débitos P3 — **sem** integração LangSmith dedicada (AD-021).
+
+**Escopo (AD-021):** Context: [m8-performance-memory-context/context.md](../features/m8-performance-memory-context/context.md). Feature specs TBD após Discuss/Specify.
+
+| Ordem | Feature (working titles) | Status | Spec |
+|-------|--------------------------|--------|------|
+| TBD | Agent memory controls | **planning** | — |
+| TBD | Context engineering / budgets | **planning** | — |
+| TBD | Runtime quality (incl. tool approval in parallel branches) | **planning** | — |
+
+**Critério de conclusão M8 (rascunho):** Agentes long-running mantêm memória útil sob budget de contexto; Studio expõe controles claros de history/window; gaps de runtime que desperdiçam tokens ou quebram autonomia em paralelo estão fechados ou documentados. Critérios mensuráveis na Specify.
+
 ---
 
 ## Próximas tarefas (ordem de execução)
@@ -107,7 +121,8 @@ Monitoring externo **env-first** (playbook Langflow): native Debugger permanece;
 3. ~~Release `v0.7.0` (M6 estável) + abrir linha `v0.8.x` (AD-020)~~ ✅
 4. ~~Design + tasks `external-observability` (OBS-01…05)~~ ✅
 5. ~~Execute M7 + merge + release `v0.8.0`~~ ✅
-6. Definir M8 / débitos (OBS-06 Settings P3, LangSmith/OTel, nó invoke)
+6. ~~AD-021: M8 north star; drop LangSmith; OTel → P3~~ ✅
+7. Discuss + Specify M8 (memory / context / runtime) → design → tasks → Execute
 
 ---
 
@@ -218,13 +233,21 @@ Mapeamento feature → arquivos `docs/` a criar/atualizar na implementação.
 |---------|------------|
 | `external-observability` | `guides/observability/native-tracing.md`, `guides/observability/inspector.md`, `guides/observability/langfuse.md`, `guides/workflows/runtime-and-traces.md`, `reference/configuration.md`, `reference/artisan-commands.md`, `getting-started/installation.md` |
 
+### M8 (TBD after Specify)
+
+| Feature | Documentos (expected) |
+|---------|------------------------|
+| Agent memory / context engineering | `guides/agents/creating-agents.md`, `guides/agents/playground-and-threads.md`, `guides/workflows/runtime-and-traces.md`, `guides/workflows/node-types/ai-nodes.md`, `reference/configuration.md` |
+
 ---
 
 ## Decisões em aberto (ver [STATE.md](STATE.md))
 
 - ~~SSE/broadcast vs polling para queue runner~~ → **resolvido (AD-019):** buffer + SSE tail; Echo deferred
 - ~~Multi-turn dentro do nó agent~~ → **resolvido (AD-019):** Neuron já faz; Studio expõe `tool_max_runs` / `parallel_tool_calls` + live tool SSE
-- ~~Monitoring externo (Inspector / Langfuse)~~ → **resolvido (AD-020):** M7 env-first; LangSmith deferred
-- Tool approval dentro de parallel branches (fora M6)
-- Transporte `ShouldBroadcast` / Echo para progresso async (fora M6 MVP)
-- Nó `invoke` / hook allowlisted (deferred — não bloqueia M7)
+- ~~Monitoring externo (Inspector / Langfuse)~~ → **resolvido (AD-020):** M7 env-first
+- ~~LangSmith dedicado~~ → **descartado (AD-021);** OTel genérico = P3 when-needed
+- M8 feature split (memory vs context vs runtime) — Specify
+- Tool approval dentro de parallel branches (candidato M8)
+- Transporte `ShouldBroadcast` / Echo para progresso async (P3)
+- Nó `invoke` / hook allowlisted (P2 — fora do core M8)
