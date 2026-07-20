@@ -167,6 +167,24 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Memory / summarization
+    |--------------------------------------------------------------------------
+    |
+    | Optional dedicated cheap model for history compaction. When unset, the
+    | agent's own provider/model is used. Failures degrade to non-destructive
+    | trim (see agent-memory-controls).
+    |
+    */
+
+    'memory' => [
+        'summarizer' => [
+            'provider' => env('NEURONAI_STUDIO_SUMMARIZER_PROVIDER'),
+            'model' => env('NEURONAI_STUDIO_SUMMARIZER_MODEL'),
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Queue Configuration
     |--------------------------------------------------------------------------
     */

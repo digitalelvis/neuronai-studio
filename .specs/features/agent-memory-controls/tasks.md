@@ -81,12 +81,13 @@ No migration needed: `memory_config` JSON column already exists (cast, fillable,
 **Inline design**: config key names = agent's discretion; summarization prompt kept internal (not user-editable in M8).  
 **Done when**:
 
-- [ ] Dedicated model used when configured; agent model when not
-- [ ] Provider failure surfaces as a typed result (for T5 fallback), never an unhandled throw
-- [ ] Summarizer tokens metered on the run
+- [x] Dedicated model used when configured; agent model when not
+- [x] Provider failure surfaces as a typed result (for T5 fallback), never an unhandled throw
+- [x] Summarizer tokens metered on the run
 
 **Tests**: unit (fake providers: configured / fallback / failing)  
-**Gate**: quick
+**Gate**: quick ✅ (5 tests)  
+**Status**: ✅ Complete
 
 ---
 
