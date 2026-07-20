@@ -1,14 +1,22 @@
 # State
 
-**Last Updated:** 2026-07-16
-**Development line (features):** `v0.7.x` (M6 — runtime/agent)
-**Patch line:** `v0.6.x`
-**Latest published:** `v0.6.0` on Packagist / `main`
-**Current Work:** M6 Specify → Design → Execute on `v0.7.x` (AD-019).
+**Last Updated:** 2026-07-20
+**Development line (features):** `v0.8.x` (M7 — observabilidade externa)
+**Patch line:** `v0.7.x`
+**Latest published:** `v0.7.0` on Packagist / `main`
+**Current Work:** M7 Execute ✅ (`feat/external-observability`). Próximo: merge PR → `v0.8.x` → release `v0.8.0`.
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-020: M7 Observabilidade externa + linha `v0.8.x` (2026-07-17)
+
+**Decision:** Após M6 Execute completo em `v0.7.x`, abrir milstone **M7 — Observabilidade externa** com feature `external-observability`. Modelo de produto alinhado ao Langflow: **native tracing** (Debugger/TelemetryTracker já existe) + **monitoring** Inspector e Langfuse **env-first**. Develop/PRs de M7 → `v0.8.x` após release `v0.7.0`; patch line = `v0.7.x`.
+**Scope M7 MVP (OBS-01…04 + docs OBS-05):** (1) toggle `NEURONAI_STUDIO_NATIVE_TRACING`; (2) wire `Inspector\Neuron\InspectorObserver` explícito (corrige gap EventBus quando TelemetryTracker já observou); (3) Langfuse via adapter com `$branchId` + keys `LANGFUSE_*`; (4) `ObservabilityManager` como único attach point. P3 Settings status e LangSmith fora do MVP.
+**Reason:** Mercado (Langflow) separa traces locais de exportadores; Studio já tem native/usage (M4/M5) mas `inspector_enabled` é config morta e Langfuse/LangSmith não existem. Env-first evita UI de secrets. LangSmith sem SDK PHP → deferred OTel.
+**Trade-off:** Não inclui nó `invoke`, Settings write, nem catálogo multi-vendor. `axyr/laravel-langfuse` precisa adapter até upstream aceitar `branchId`.
+**Impact:** Spec/context em [.specs/features/external-observability/](../features/external-observability/). ROADMAP M7. Deferred: invoke node, LangSmith, bridge URL TraceDetail, Settings P3.
 
 ### AD-019: M6 Runtime/Agent + linha `v0.7.x` (2026-07-16)
 
@@ -199,6 +207,18 @@
 | `async-run-progress` | ✅ done | ProgressEmitter + SSE tail |
 | `interpreted-parallel-concurrency` | ✅ done | Amp concurrent fork/join + sequential fallback |
 
+**M6 código ✅ — publicado em `v0.7.0`.**
+
+---
+
+## M7 progress snapshot
+
+| Feature | Status | Notas |
+|---------|--------|-------|
+| `external-observability` | ✅ done | OBS-01…05; OBS-06 P3 deferred; branch `feat/external-observability` |
+
+**M7 código ✅ — PR → `v0.8.x` → release `v0.8.0`.**
+
 ---
 
 ## Lessons Learned
@@ -223,7 +243,14 @@
 **Solution:** No resume, o `ForkNodeExecutor` itera todas as branches: pula as concluídas (do checkpoint), retoma a pendente com o input injetado, e roda as não iniciadas do zero.
 **Prevents:** Perda silenciosa de resultados de branch em workflows com >1 branch e HITL.
 
-### L-004: Slug do workflow não pode ser recalculado em todo save (2026-07-03)
+### L-004: EventBus não auto-anexa Inspector se já houve observe() (2026-07-17)
+
+**Context:** Planejamento M7 / Inspector APM.
+**Problem:** `TelemetryTracker` chama `$agent->observe(...)` e inicializa o scope no `EventBus`; com isso o Neuron **não** registra o `InspectorObserver` default mesmo com `INSPECTOR_INGESTION_KEY`.
+**Solution:** Attach explícito de `Inspector\Neuron\InspectorObserver::instance()` via `ObservabilityManager` quando enabled + key.
+**Prevents:** “Key setada mas nada no Inspector.dev” em runs do Studio.
+
+### L-005: Slug do workflow não pode ser recalculado em todo save (2026-07-03)
 
 **Context:** Auto-save do canvas antes de rodar teste (`saveGraphBeforeRun` → `Editor::save()`), com dois workflows de mesmo nome (ex.: dois installs do mesmo template).
 **Problem:** `save()` fazia `slug = Str::slug($this->name)` sempre, sobrescrevendo o sufixo de dedupe (`-1`) → `UNIQUE constraint failed: workflow_definitions.slug`.
@@ -254,6 +281,10 @@
 | cost-estimation | 2026-07-16 | 0.4.0 | ✅ Done |
 | usage-analytics | 2026-07-16 | 0.5.0 | ✅ Done |
 | usage-export-api | 2026-07-16 | 0.6.0 | ✅ Done |
+| agent-tool-controls | 2026-07-17 | 0.7.x | ✅ Done |
+| async-run-progress | 2026-07-17 | 0.7.x | ✅ Done |
+| interpreted-parallel-concurrency | 2026-07-17 | 0.7.x | ✅ Done |
+| external-observability | 2026-07-17 | 0.8.x | ✅ Done |
 
 ---
 
@@ -263,6 +294,8 @@
 - [x] **M5:** `usage-analytics` (UA-T1…T11) — shipped `v0.5.0`
 - [x] Autonomia multi-turn / tool rounds no nó agent — Neuron já faz; M6 expõe knobs + live SSE (`agent-tool-controls`)
 - [x] SSE em tempo real para `RunWorkflowJob` — M6 `async-run-progress` (buffer + SSE tail; Echo deferred)
+- [x] **M7 Specify:** monitoring externo Inspector + Langfuse (env-first) — Execute em `v0.8.x`
+- [x] **M7 Execute:** OBS-01…05 (`ObservabilityManager`, Inspector wiring, Langfuse adapter, docs)
 - [ ] Laravel Echo / `ShouldBroadcast` como transporte de progresso async
 - [ ] Tool approval dentro de parallel branches
 - [ ] Remove redundant layout `<link>` tags for bundle-inlined CSS
@@ -272,6 +305,10 @@
 - [ ] Custo de embeddings / RAG como linha separada
 - [ ] Integração com billing providers (Stripe, etc.)
 - [ ] SO T12 loop hint; PE-08 join preview; RAG hybrid/MMR
+- [ ] **Nó `invoke` / hook allowlisted** no canvas (customização simples; fora M7 observability)
+- [ ] LangSmith via OpenTelemetry (sem SDK PHP)
+- [ ] Bridge Studio TraceDetail ↔ URL Inspector/Langfuse
+- [ ] OBS-06 Settings status page read-only (P3 M7)
 
 ---
 
@@ -301,3 +338,8 @@
 - [x] Sync ROADMAP/STATE/RELEASE pós-`v0.6.0` + abrir `v0.7.x` (AD-019)
 - [x] Especificar / design / tasks M6 (ATC + ARP + IPC)
 - [x] Execute M6 `agent-tool-controls` → `async-run-progress` → `interpreted-parallel-concurrency` em `v0.7.x`
+- [x] Specify M7 `external-observability` + AD-020 + ROADMAP/STATE (2026-07-17)
+- [x] Design + tasks M7 `external-observability`
+- [x] Execute M7 OBS-01…05 (`feat/external-observability`)
+- [x] Release `v0.7.0` (M6) + abrir branch/linha `v0.8.x`
+- [ ] Merge M7 → `v0.8.x` → release `v0.8.0`
