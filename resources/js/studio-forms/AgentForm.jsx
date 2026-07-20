@@ -35,6 +35,22 @@ export default function AgentForm({ config }) {
         initial.tool_max_runs === null || initial.tool_max_runs === undefined ? '' : String(initial.tool_max_runs),
     );
     const [parallelToolCalls, setParallelToolCalls] = useState(Boolean(initial.parallel_tool_calls));
+    const [memoryContextWindow, setMemoryContextWindow] = useState(
+        initial.memory_context_window === null || initial.memory_context_window === undefined
+            ? ''
+            : String(initial.memory_context_window),
+    );
+    const [memoryDriver, setMemoryDriver] = useState(initial.memory_driver ?? '');
+    const [memorySummarizationEnabled, setMemorySummarizationEnabled] = useState(
+        initial.memory_summarization_enabled === null || initial.memory_summarization_enabled === undefined
+            ? null
+            : Boolean(initial.memory_summarization_enabled),
+    );
+    const [memorySummarizationThreshold, setMemorySummarizationThreshold] = useState(
+        initial.memory_summarization_threshold === null || initial.memory_summarization_threshold === undefined
+            ? ''
+            : String(initial.memory_summarization_threshold),
+    );
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
@@ -98,6 +114,11 @@ export default function AgentForm({ config }) {
                 mcpAdvanced,
                 tool_max_runs: toolMaxRuns === '' ? null : Number(toolMaxRuns),
                 parallel_tool_calls: parallelToolCalls,
+                memory_context_window: memoryContextWindow === '' ? null : Number(memoryContextWindow),
+                memory_driver: memoryDriver === '' ? null : memoryDriver,
+                memory_summarization_enabled: memorySummarizationEnabled,
+                memory_summarization_threshold:
+                    memorySummarizationThreshold === '' ? null : Number(memorySummarizationThreshold),
             });
 
             const validationErrors = collectLivewireErrors(config.wireId);
@@ -205,6 +226,68 @@ export default function AgentForm({ config }) {
                                             <p className="text-xs text-muted-foreground">
                                                 Run multiple tool calls in the same round concurrently when supported.
                                             </p>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-3 border-t border-border pt-4">
+                                        <p className="text-sm font-medium">Memory</p>
+                                        <div className="grid gap-4 md:grid-cols-2">
+                                            <div className="space-y-2">
+                                                <Label>Context window (tokens)</Label>
+                                                <Input
+                                                    type="number"
+                                                    min={1}
+                                                    value={memoryContextWindow}
+                                                    onChange={(e) => setMemoryContextWindow(e.target.value)}
+                                                    placeholder="Global default"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>History driver</Label>
+                                                <Select
+                                                    value={memoryDriver || '__inherit'}
+                                                    onValueChange={(value) =>
+                                                        setMemoryDriver(value === '__inherit' ? '' : value)
+                                                    }
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue placeholder="Inherit" />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="__inherit">Inherit (by thread)</SelectItem>
+                                                        <SelectItem value="eloquent">Eloquent (persist)</SelectItem>
+                                                        <SelectItem value="in_memory">In-memory</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                        </div>
+                                        <div className="grid gap-4 md:grid-cols-2">
+                                            <div className="space-y-2">
+                                                <Label className="flex items-center gap-2">
+                                                    <Checkbox
+                                                        checked={memorySummarizationEnabled === true}
+                                                        onCheckedChange={(checked) =>
+                                                            setMemorySummarizationEnabled(checked ? true : null)
+                                                        }
+                                                    />
+                                                    Summarization (compaction)
+                                                </Label>
+                                                <p className="text-xs text-muted-foreground">
+                                                    Replace trimmed history with a persisted summary. Leave off to
+                                                    inherit / disable.
+                                                </p>
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label>Summarization threshold</Label>
+                                                <Input
+                                                    type="number"
+                                                    min={0.01}
+                                                    max={1}
+                                                    step={0.05}
+                                                    value={memorySummarizationThreshold}
+                                                    onChange={(e) => setMemorySummarizationThreshold(e.target.value)}
+                                                    placeholder="0.8 (optional)"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
                                 </CardContent>

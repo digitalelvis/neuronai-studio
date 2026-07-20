@@ -155,11 +155,12 @@ No migration needed: `memory_config` JSON column already exists (cast, fillable,
 **Reuses**: M6 knob fields UX (`agent-tool-controls`)  
 **Done when**:
 
-- [ ] Round-trip save/load; field-level validation errors on invalid values
-- [ ] Untouched form → `memory_config` stays null
+- [x] Round-trip save/load; field-level validation errors on invalid values
+- [x] Untouched form → `memory_config` stays null
 
 **Tests**: feature (Livewire)  
-**Gate**: quick
+**Gate**: quick ✅ (3 tests)  
+**Status**: ✅ Complete
 
 ---
 
@@ -171,11 +172,12 @@ No migration needed: `memory_config` JSON column already exists (cast, fillable,
 **Reuses**: M6 node override fields (`tool_max_runs`)  
 **Done when**:
 
-- [ ] Empty = inherit; set values win at runtime (covered by AMC-T2 tests)
-- [ ] Bundles rebuilt (IIFE, AD-001)
+- [x] Empty = inherit; set values win at runtime (covered by AMC-T2 tests)
+- [x] Bundles rebuilt (IIFE, AD-001)
 
 **Tests**: existing runtime tests + manual canvas check  
-**Gate**: build
+**Gate**: build ✅  
+**Status**: ✅ Complete
 
 ---
 
