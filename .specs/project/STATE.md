@@ -4,7 +4,7 @@
 **Development line (features):** `v0.9.x` (M8 Execute — branch open)
 **Patch line:** `v0.8.x`
 **Latest published:** `v0.8.1` on Packagist / `main`
-**Current Work:** M8 **Execute** on `v0.9.x` (AD-022): starting `agent-memory-controls` (AMC-T1…). Order AMC → CTX → PTA. Observability polish (OBS-06, OTel) stays demoted.
+**Current Work:** M8 **Execute** on `v0.9.x` (AD-022): `agent-memory-controls` ✅; next `context-engineering` → `parallel-tool-approval`. Observability polish (OBS-06, OTel) stays demoted.
 
 ---
 
@@ -239,7 +239,7 @@
 
 | Feature | Status | Notes |
 |---------|--------|-------|
-| `agent-memory-controls` (P1) | in progress | AMC-T1… on `v0.9.x` — [spec](../features/agent-memory-controls/spec.md) · [tasks](../features/agent-memory-controls/tasks.md) |
+| `agent-memory-controls` (P1) | ✅ done | AMC-T1…T10 on `v0.9.x` — [spec](../features/agent-memory-controls/spec.md) · [tasks](../features/agent-memory-controls/tasks.md) |
 | `context-engineering` (P1) | specified | CTX-01…06; after AMC — [spec](../features/context-engineering/spec.md) |
 | `parallel-tool-approval` (P2) | specified | PTA-01…04; Execute only after the P1s — [spec](../features/parallel-tool-approval/spec.md) |
 | LangSmith-specific | dropped | AD-021 |
@@ -402,4 +402,5 @@ Themes turned into specified features (AD-022 — Execute next on `v0.9.x`):
 - [x] Specify M8 (Discuss → feature specs) — AD-022; AMC / CTX / PTA specs
 - [x] Design + tasks M8 — design inline in tasks (skipped as phase); 26 tasks, index in [m8-performance-memory-context/tasks.md](../features/m8-performance-memory-context/tasks.md)
 - [x] Open `v0.9.x` from `main` (`v0.8.1`) for M8 Execute (AD-022)
-- [ ] Execute M8: `agent-memory-controls` → `context-engineering` → `parallel-tool-approval` on `v0.9.x`
+- [x] Execute M8 `agent-memory-controls` (AMC-T1…T10) on `v0.9.x`
+- [ ] Execute M8: `context-engineering` → `parallel-tool-approval` on `v0.9.x`

@@ -9,10 +9,10 @@
 
 ## Goals
 
-- [ ] Activate `memory_config` as the single per-agent memory envelope (context window, driver, summarization settings) read at runtime by `DynamicAgent` / `AgentRunner`.
-- [ ] Replace silent-delete trimming with **compaction**: trimmed prefix becomes a persisted summary message in the Eloquent thread.
-- [ ] Ship a summarizer service with a dedicated configurable cheap model, falling back to the agent's own provider/model.
-- [ ] Expose memory controls in the Studio agent form and as per-node overrides on the agent node (M6 `tool_max_runs` pattern).
+- [x] Activate `memory_config` as the single per-agent memory envelope (context window, driver, summarization settings) read at runtime by `DynamicAgent` / `AgentRunner`.
+- [x] Replace silent-delete trimming with **compaction**: trimmed prefix becomes a persisted summary message in the Eloquent thread.
+- [x] Ship a summarizer service with a dedicated configurable cheap model, falling back to the agent's own provider/model.
+- [x] Expose memory controls in the Studio agent form and as per-node overrides on the agent node (M6 `tool_max_runs` pattern).
 
 ## Out of Scope
 
@@ -126,11 +126,11 @@
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| AMC-01 | P1: Configure memory via `memory_config` | Execute | Done (T1–T3 ✅) |
-| AMC-02 | P1: Compaction on trim | Execute | In progress (T5–T6 ✅) |
-| AMC-03 | P1: Summarizer service | Execute | Done (T4 ✅) |
-| AMC-04 | P1: Studio UI + node override | Tasks | Pending |
-| AMC-05 | P2: Codegen + docs | Tasks | Pending |
+| AMC-01 | P1: Configure memory via `memory_config` | Execute | Done |
+| AMC-02 | P1: Compaction on trim | Execute | Done |
+| AMC-03 | P1: Summarizer service | Execute | Done |
+| AMC-04 | P1: Studio UI + node override | Execute | Done |
+| AMC-05 | P2: Codegen + docs | Execute | Done |
 
 **Coverage:** 5 total, 5 mapped to tasks ([tasks.md](./tasks.md)), 0 unmapped
 
@@ -138,7 +138,7 @@
 
 ## Success Criteria
 
-- [ ] A thread seeded past its budget ends a run with 1 persisted summary + suffix, prompt under budget, zero silently deleted rows.
-- [ ] Agent form and node inspector round-trip window/driver/summarization; node override wins at runtime.
-- [ ] Summarizer failure degrades to agent model, then to non-destructive trim — run never fails because of memory management.
-- [ ] Agents without `memory_config` show zero behavior change (existing test suite stays green).
+- [x] A thread seeded past its budget ends a run with 1 persisted summary + suffix, prompt under budget, zero silently deleted rows.
+- [x] Agent form and node inspector round-trip window/driver/summarization; node override wins at runtime.
+- [x] Summarizer failure degrades to agent model, then to non-destructive trim — run never fails because of memory management.
+- [x] Agents without `memory_config` show zero behavior change (existing test suite stays green).

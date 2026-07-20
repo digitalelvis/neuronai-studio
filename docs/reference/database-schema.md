@@ -59,6 +59,8 @@ erDiagram
 - `instructions` — system prompt
 - `tools` — JSON tool binding array
 - `require_tool_approval` — pause before tool execution when true
+- `memory_config` — JSON envelope: `context_window`, `driver` (`eloquent`|`in_memory`), `summarization_enabled`, `summarization_threshold`, plus reserved budget keys for context engineering. Null = inherit global defaults.
+- `tool_max_runs`, `parallel_tool_calls` — optional tool-loop knobs
 
 ### workflow_definitions
 
@@ -91,7 +93,8 @@ Indexes include `parent_run_id` and `started_at` for nested rollups and time-win
 
 - `trace_id` — FK → `traces`
 - `parent_span_id` — optional span hierarchy
-- `name`, `type` — e.g. node name / `llm` / `tool` / `node`
+- `name`, `type` — e.g. node name / `llm` / `tool` / `node` / `memory` (`history_compaction`)
+- `output` — JSON; for compaction spans includes `mode`, `trimmed_count`, `summarizer_source` / `summarizer_fallback`, token estimates
 - `status` — running, completed, failed
 - `provider`, `model` — LLM attribution (nullable when unknown)
 - `prompt_tokens`, `completion_tokens`, `total_tokens`
@@ -101,7 +104,7 @@ Indexes include `parent_run_id` and `started_at` for nested rollups and time-win
 ### chat_messages
 
 - `thread_id` — UUID thread key (no FK; matches playground / integrate ids)
-- `role`, `content`, `meta`
+- `role`, `content`, `meta` — summary/compaction messages use `role=system` with `meta.studio_kind=summary` and content prefixed `[Studio memory summary]`
 
 ### eval_suites
 

@@ -6,7 +6,7 @@
 **Patch line:** `v0.8.x`  
 **Latest published:** `v0.8.1` on Packagist / `main`  
 **Última atualização:** 2026-07-20  
-**Etapa atual:** M7 ✅ (`v0.8.0`/`v0.8.1`). **M8 Execute** on `v0.9.x` (AD-022): `agent-memory-controls` in progress → `context-engineering` → `parallel-tool-approval`. LangSmith removido; OTel genérico em P3.
+**Etapa atual:** M7 ✅ (`v0.8.0`/`v0.8.1`). **M8 Execute** on `v0.9.x` (AD-022): `agent-memory-controls` ✅ → next `context-engineering` → `parallel-tool-approval`. LangSmith removido; OTel genérico em P3.
 
 ---
 
@@ -108,7 +108,7 @@ Foco total em **desempenho de agentes e workflows**: memória durável e control
 
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
-| 19 | `agent-memory-controls` (P1) | **in progress** | [spec](../features/agent-memory-controls/spec.md) · [tasks](../features/agent-memory-controls/tasks.md) |
+| 19 | `agent-memory-controls` (P1) | **done** | [spec](../features/agent-memory-controls/spec.md) · [tasks](../features/agent-memory-controls/tasks.md) |
 | 20 | `context-engineering` (P1) | **specified** | [spec](../features/context-engineering/spec.md) · [tasks](../features/context-engineering/tasks.md) |
 | 21 | `parallel-tool-approval` (P2) | **specified** | [spec](../features/parallel-tool-approval/spec.md) · [tasks](../features/parallel-tool-approval/tasks.md) |
 
@@ -127,7 +127,8 @@ Foco total em **desempenho de agentes e workflows**: memória durável e control
 7. ~~Discuss + Specify M8 (AD-022): specs AMC / CTX / PTA~~ ✅
 8. ~~Design inline + tasks M8 (26 tasks; índice em m8-performance-memory-context)~~ ✅
 9. ~~Abrir `v0.9.x` a partir de `main` (`v0.8.1`)~~ ✅
-10. Execute M8: `agent-memory-controls` → `context-engineering` → `parallel-tool-approval` em `v0.9.x`
+10. ~~Execute M8 `agent-memory-controls`~~ ✅
+11. Execute M8: `context-engineering` → `parallel-tool-approval` em `v0.9.x`
 
 ---
 

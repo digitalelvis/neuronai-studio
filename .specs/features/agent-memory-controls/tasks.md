@@ -1,7 +1,7 @@
 # Agent Memory Controls — Tasks
 
 **Spec**: [spec.md](./spec.md) · **Context**: [../m8-performance-memory-context/context.md](../m8-performance-memory-context/context.md)  
-**Status**: Execute in progress on `v0.9.x`  
+**Status**: ✅ Complete on `v0.9.x`  
 **Linha**: `v0.9.x` · **Ordem M8**: 1/3  
 **Design**: skipped — inline design decisions noted per task.
 
@@ -188,8 +188,9 @@ No migration needed: `memory_config` JSON column already exists (cast, fillable,
 **Depends on**: AMC-T6, AMC-T9  
 **Done when**:
 
-- [ ] Codegen snapshot includes memory setup when configured
-- [ ] Docs rows from the ROADMAP M8 index updated; "reserved for future memory features" wording removed
+- [x] Codegen snapshot includes memory setup when configured
+- [x] Docs rows from the ROADMAP M8 index updated; "reserved for future memory features" wording removed
 
 **Tests**: codegen snapshot  
-**Gate**: docs
+**Gate**: docs ✅ (2 tests)  
+**Status**: ✅ Complete

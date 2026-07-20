@@ -57,7 +57,7 @@ Agents are stored in the `agent_definitions` table (prefix configurable). Key fi
 - `provider`, `model` — LLM configuration
 - `instructions` — system prompt
 - `tools` — JSON array of tool binding references
-- `memory_config` — reserved for future memory features
+- `memory_config` — per-agent memory envelope (context window, history driver, summarization / compaction). Null inherits the global `chat_history_context_window` default.
 
 ## Knowledge Bases
 

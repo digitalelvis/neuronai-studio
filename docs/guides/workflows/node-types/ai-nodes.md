@@ -15,6 +15,9 @@ AI nodes invoke language models, agents, tools, and MCP connectors within a work
 | `output_class` | FQCN or short name of a PHP output class (required when `structured` is on) |
 | `require_tool_approval` | Optional per-node override. Pause for human approval before the agent runs any tool (see [Tool approval](#tool-approval)) |
 | `stream` | When `true`, stream the response token-by-token via SSE during the step (see [Streaming](#streaming)) |
+| `context_window` | Optional per-node memory override (tokens). Empty inherits the agent's `memory_config` |
+| `driver` | Optional `eloquent` / `in_memory` override for this visit |
+| `summarization_enabled` | Optional compaction override for this visit |
 
 Example message:
 
