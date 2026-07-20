@@ -17,7 +17,7 @@ Additionally, `inspector_enabled` is reserved but **not wired**: calling `$agent
 
 | Item | Reason |
 |------|--------|
-| LangSmith driver | No official PHP SDK; Langflow wires via LangChain env — OTel roadmap |
+| LangSmith-specific driver | Dropped (AD-021) — LangChain-centric; no PHP SDK. Generic OTel may come later as P3 |
 | Settings UI that edits `.env` / secrets | Anti-pattern; docs + env are enough (read-only status = P3) |
 | Canvas `invoke` / hook node | General extension; not required for monitoring — deferred |
 | Arize / Opik / Traceloop / Grafana catalog | Overkill; host Laravel owns generic logs/APM |

@@ -9,7 +9,9 @@
 
 ## Feature Boundary
 
-M7 delivers **env-first external monitoring** (Inspector + Langfuse) on top of existing **native tracing** (M4/M5 Debugger + usage). It does not deliver LangSmith, a Settings UI that writes secrets, an `invoke` node, or a multi-vendor catalog.
+M7 delivers **env-first external monitoring** (Inspector + Langfuse) on top of existing **native tracing** (M4/M5 Debugger + usage). It does not deliver a Settings UI that writes secrets, an `invoke` node, or a multi-vendor catalog.
+
+**Post-M7 (AD-021):** LangSmith-specific integration is **dropped**. Generic OpenTelemetry export may come later as a portable OTLP exporter (P3), not as LangChain/LangSmith parity.
 
 Product inspiration: [Langflow Observability](https://docs.langflow.org/logging) playbook — native traces + integrations via env, short docs, disable = env.
 
@@ -42,7 +44,7 @@ No page that edits `.env`. Docs are the happy path. Read-only Settings status = 
 ### Out of this milestone
 
 - Canvas `invoke` / allowlisted hook — deferred idea (workflow customization, not monitoring)
-- LangSmith — deferred (OTel)
+- LangSmith-specific integration — **dropped (AD-021)**; optional future = generic OTel only
 - TraceDetail URL bridge — deferred
 
 ---
