@@ -119,12 +119,14 @@ No migration needed: `memory_config` JSON column already exists (cast, fillable,
 **Inline design**: summary role/marker format = agent's discretion; must round-trip `EloquentChatHistory` and render distinguishably in thread UI.  
 **Done when**:
 
-- [ ] One active summary max per thread; second compaction rolls forward
-- [ ] Fallback chain verified with failing summarizer (run completes, `summarizer_fallback` recorded)
-- [ ] Summary survives pause/resume (checkpoint restore includes it)
+- [x] One active summary max per thread; second compaction rolls forward
+- [x] Fallback chain verified with failing summarizer (run completes, `summarizer_fallback` recorded)
+- [x] Summary survives pause/resume (checkpoint restore includes it)
 
 **Tests**: feature (compaction, roll-forward, fallback, resume)  
-**Gate**: full suite subset
+**Gate**: full suite subset ✅ (3 compaction + existing memory tests)  
+**Status**: ✅ Complete  
+**Note**: Summary is a normal `StudioChatMessage` row; Eloquent reload includes it (resume-safe).
 
 ---
 

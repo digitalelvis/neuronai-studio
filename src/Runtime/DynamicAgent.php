@@ -4,6 +4,7 @@ namespace DigitalElvis\NeuronAIStudio\Runtime;
 
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use DigitalElvis\NeuronAIStudio\Models\StudioChatMessage;
+use DigitalElvis\NeuronAIStudio\Runtime\Memory\HistorySummarizer;
 use DigitalElvis\NeuronAIStudio\Runtime\Memory\MemoryConfig;
 use DigitalElvis\NeuronAIStudio\Runtime\Memory\StudioEloquentChatHistory;
 use DigitalElvis\NeuronAIStudio\Runtime\Memory\StudioInMemoryChatHistory;
@@ -60,17 +61,29 @@ class DynamicAgent extends Agent
         $summarization = $this->memoryConfig->summarizationEnabled() === true;
 
         if ($forceInMemory || $this->threadId === null) {
-            return new StudioInMemoryChatHistory(
+            $history = new StudioInMemoryChatHistory(
+                contextWindow: $contextWindow,
+                summarization: $summarization,
+            );
+        } else {
+            $history = new StudioEloquentChatHistory(
+                threadId: $this->threadId,
+                modelClass: StudioChatMessage::class,
                 contextWindow: $contextWindow,
                 summarization: $summarization,
             );
         }
 
-        return new StudioEloquentChatHistory(
-            threadId: $this->threadId,
-            modelClass: StudioChatMessage::class,
-            contextWindow: $contextWindow,
-            summarization: $summarization,
-        );
+        if ($summarization) {
+            $history->enableCompaction(
+                app(HistorySummarizer::class),
+                [
+                    'provider' => (string) ($this->definition?->provider ?? config('neuronai-studio.default_provider')),
+                    'model' => (string) ($this->definition?->model ?? config('neuronai-studio.default_model')),
+                ],
+            );
+        }
+
+        return $history;
     }
 }

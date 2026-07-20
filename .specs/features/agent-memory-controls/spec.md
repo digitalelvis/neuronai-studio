@@ -126,8 +126,8 @@
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| AMC-01 | P1: Configure memory via `memory_config` | Execute | In progress (T1–T3 ✅) |
-| AMC-02 | P1: Compaction on trim | Tasks | Pending |
+| AMC-01 | P1: Configure memory via `memory_config` | Execute | Done (T1–T3 ✅) |
+| AMC-02 | P1: Compaction on trim | Execute | In progress (T5–T6 ✅) |
 | AMC-03 | P1: Summarizer service | Execute | Done (T4 ✅) |
 | AMC-04 | P1: Studio UI + node override | Tasks | Pending |
 | AMC-05 | P2: Codegen + docs | Tasks | Pending |
