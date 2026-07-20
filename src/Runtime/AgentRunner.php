@@ -7,6 +7,7 @@ use DigitalElvis\NeuronAIStudio\Events\RunUsageRecorded;
 use DigitalElvis\NeuronAIStudio\Models\StudioThread;
 use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Models\StudioTrace;
+use DigitalElvis\NeuronAIStudio\Models\StudioTraceSpan;
 use DigitalElvis\NeuronAIStudio\Observability\ObservabilityManager;
 use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
 use DigitalElvis\NeuronAIStudio\Support\ChatThreadKey;
@@ -101,6 +102,7 @@ class AgentRunner
                 }
             }
 
+            $this->recordCompactionSpan($agent, $trace);
             $this->markRunCompleted($run, [
                 'output' => ['content' => $handler->getMessage()->getContent()],
             ]);
@@ -196,7 +198,7 @@ class AgentRunner
             'message' => $message instanceof UserMessage ? $message->getContent() : $message
         ], $parentRun);
 
-        $agent = $this->makeAgent($definition, $config, $run->thread_id, $fake);
+        $agent = $this->makeAgent($definition, $config, $threadKey ?? $run->thread_id, $fake);
         $agent->setPersistence(new InMemoryPersistence, $run->id);
 
         $this->attachObservability($agent, $run, $trace, $config, $parentRun);
@@ -207,6 +209,7 @@ class AgentRunner
             $handler = $agent->chat($userMessage);
             $content = $handler->getMessage()->getContent();
 
+            $this->recordCompactionSpan($agent, $trace);
             $this->markRunCompleted($run, [
                 'output' => ['content' => $content],
             ]);
@@ -264,6 +267,7 @@ class AgentRunner
             }
 
             $content = $handler->getMessage()->getContent();
+            $this->recordCompactionSpan($agent, $trace);
             $this->markRunCompleted($run, [
                 'output' => ['content' => $content],
             ]);
@@ -539,6 +543,44 @@ class AgentRunner
             'provider' => $provider,
             'model' => $model,
             'parent_run' => $parentRun,
+        ]);
+    }
+
+    /**
+     * Persist compaction/trim metadata as a memory span when native tracing is on.
+     */
+    protected function recordCompactionSpan(DynamicAgent $agent, StudioTrace $trace): void
+    {
+        if (! (bool) config('neuronai-studio.observability.native_tracing', true)) {
+            return;
+        }
+
+        $history = $agent->getChatHistory();
+        if (! is_object($history) || ! method_exists($history, 'pullCompactionMeta')) {
+            return;
+        }
+
+        /** @var array<string, mixed>|null $meta */
+        $meta = $history->pullCompactionMeta();
+        if ($meta === null) {
+            return;
+        }
+
+        $trimmed = (int) ($meta['trimmed_count'] ?? 0);
+        $overBudget = (bool) ($meta['over_budget_single'] ?? false);
+        if ($trimmed < 1 && ! $overBudget) {
+            return;
+        }
+
+        StudioTraceSpan::create([
+            'trace_id' => $trace->id,
+            'name' => 'history_compaction',
+            'type' => 'memory',
+            'status' => 'completed',
+            'output' => $meta,
+            'started_at' => now(),
+            'finished_at' => now(),
+            'duration_ms' => 0,
         ]);
     }
 

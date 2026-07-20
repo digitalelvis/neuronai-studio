@@ -138,11 +138,12 @@ No migration needed: `memory_config` JSON column already exists (cast, fillable,
 **Reuses**: `StudioTraceSpan` metadata; pattern to be shared with CTX-T6  
 **Done when**:
 
-- [ ] Span metadata present when compaction ran; absent otherwise
-- [ ] Works with `NEURONAI_STUDIO_NATIVE_TRACING=false` (no error, metadata skipped)
+- [x] Span metadata present when compaction ran; absent otherwise
+- [x] Works with `NEURONAI_STUDIO_NATIVE_TRACING=false` (no error, metadata skipped)
 
 **Tests**: feature  
-**Gate**: quick
+**Gate**: quick ✅ (2 tests)  
+**Status**: ✅ Complete
 
 ---
 
