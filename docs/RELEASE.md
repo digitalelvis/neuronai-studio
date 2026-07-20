@@ -14,10 +14,10 @@ Operational guide for versioning and publishing `digitalelvis/neuronai-studio` o
 
 ## Day-to-day development
 
-1. Branch from the active feature line (currently `v0.8.x` after `v0.7.0`; until then M6 patches stay on `v0.7.x`):
+1. Branch from the active feature line (currently `v0.8.x` after `v0.8.0`):
 
    ```bash
-   git checkout v0.8.x   # or v0.7.x for M6 patches before/after 0.7.0
+   git checkout v0.8.x
    git pull
    git checkout -b feat/my-feature
    ```
@@ -26,7 +26,7 @@ Operational guide for versioning and publishing `digitalelvis/neuronai-studio` o
 
 3. Open a PR targeting the line you branched from. CI must pass before merge.
 
-Patches for the published `0.6` series go to `v0.6.x` the same way. After `v0.7.0`, M6 patches go to `v0.7.x`.
+Patches for the published `0.8` series go to `v0.8.x`. Older patch lines: `v0.7.x` / `v0.6.x`.
 
 ## Standard release
 
@@ -196,22 +196,22 @@ For future releases:
 
 | Line | Role |
 |------|------|
-| **`v0.8.x`** | Active **feature** line — M7 external observability (AD-020) |
+| **`v0.8.x`** | Active **feature** + **patch** line after `v0.8.0` (M7 shipped; next milestone TBD) |
 | **`v0.7.x`** | **Patch** line for the published `0.7` series (M6) |
 | **`v0.6.x`** | **Patch** line for the published `0.6` series |
-| Latest published | **`v0.7.0`** (M6 runtime/agent) |
+| Latest published | **`v0.8.0`** (M7 external observability) |
 
 | Area | Status |
 |------|--------|
 | M1–M4 (cyclic graphs, RAG, structured output, HITL, parallel, queue, stream adapters, unified runs) | ✅ Published in `v0.3.0` |
-| Release bot (`RELEASE_TOKEN` + push `main` before tag) | ✅ Verified through `v0.7.0` |
+| Release bot (`RELEASE_TOKEN` + push `main` before tag) | ✅ Verified through `v0.8.0` |
 | M5 `cost-estimation` | ✅ Shipped in `v0.4.0` |
 | M5 `usage-analytics` | ✅ Shipped in `v0.5.0` |
 | M5 `usage-export-api` | ✅ Shipped in `v0.6.0` |
 | M6 runtime/agent | ✅ Shipped in `v0.7.0` |
-| M7 external observability | ✅ Execute done — merge PR → `v0.8.x` → release `v0.8.0` |
+| M7 external observability | ✅ Shipped in `v0.8.0` |
 
-Lines `v0.3.x`–`v0.6.x` are closed for new features. Consumers on older minors can stay until ready to adopt `v0.7.0`+.
+Lines `v0.3.x`–`v0.7.x` are closed for new features. Consumers on older minors can stay until ready to adopt `v0.8.0`+.
 
 ## Troubleshooting
 

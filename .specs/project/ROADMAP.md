@@ -2,11 +2,11 @@
 
 **North star:** Agentes multimodais autônomos com grafos de workflow cíclicos.
 
-**Development line (features):** `v0.8.x` (M7 — observabilidade externa)  
-**Patch line:** `v0.7.x`  
-**Latest published:** `v0.7.0` on Packagist / `main`  
+**Development line (features):** `v0.8.x` (pós-M7; próximo milestone TBD)  
+**Patch line:** `v0.8.x`  
+**Latest published:** `v0.8.0` on Packagist / `main`  
 **Última atualização:** 2026-07-20  
-**Etapa atual:** M6 ✅ (`v0.7.0`). M7 Execute ✅ — merge `feat/external-observability` → `v0.8.x` → release `v0.8.0`.
+**Etapa atual:** M7 ✅ (`v0.8.0`). Próximo: M8 / débitos (OBS-06, LangSmith, invoke).
 
 ---
 
@@ -86,7 +86,7 @@ Desempenho e flexibilidade de agentes e fluxos: knobs do tool-loop, progresso li
 
 **Critério de conclusão M6:** Agent/nó configuram `tool_max_runs` / `parallel_tool_calls` com tools mid-stream; run async tem SSE de progresso (sem Echo); fork I/O-bound concorrente mais rápido que sequencial com resume parcial intacto. **Publicado em `v0.7.0`.**
 
-### M7 — Observabilidade externa (P1) `done` (merge pendente)
+### M7 — Observabilidade externa (P1) `done`
 
 Monitoring externo **env-first** (playbook Langflow): native Debugger permanece; Inspector (Neuron) + Langfuse como exportadores opt-in. Sem UI de secrets; sem LangSmith no MVP.
 
@@ -96,7 +96,7 @@ Monitoring externo **env-first** (playbook Langflow): native Debugger permanece;
 |-------|---------|--------|------|
 | 18 | `external-observability` | **done** (OBS-01…05; OBS-06 P3 deferred) | [spec](../features/external-observability/spec.md) · [design](../features/external-observability/design.md) · [tasks](../features/external-observability/tasks.md) |
 
-**Critério de conclusão M7:** Com `INSPECTOR_INGESTION_KEY`, runs do Studio aparecem no Inspector (gap EventBus corrigido); com `LANGFUSE_*` + pacote, traces exportam sem quebrar runs; `NEURONAI_STUDIO_NATIVE_TRACING=false` desliga Debugger DB; docs permitem setup em &lt; 5 min. **Código ✅ — merge → `v0.8.x` → release `v0.8.0`.**
+**Critério de conclusão M7:** Com `INSPECTOR_INGESTION_KEY`, runs do Studio aparecem no Inspector (gap EventBus corrigido); com `LANGFUSE_*` + pacote, traces exportam sem quebrar runs; `NEURONAI_STUDIO_NATIVE_TRACING=false` desliga Debugger DB; docs permitem setup em &lt; 5 min. **Publicado em `v0.8.0`.**
 
 ---
 
@@ -106,7 +106,8 @@ Monitoring externo **env-first** (playbook Langflow): native Debugger permanece;
 2. ~~Especificar / design / tasks / Execute M6~~ ✅
 3. ~~Release `v0.7.0` (M6 estável) + abrir linha `v0.8.x` (AD-020)~~ ✅
 4. ~~Design + tasks `external-observability` (OBS-01…05)~~ ✅
-5. ~~Execute M7~~ ✅ (`feat/external-observability`) → merge `v0.8.x` → release `v0.8.0`
+5. ~~Execute M7 + merge + release `v0.8.0`~~ ✅
+6. Definir M8 / débitos (OBS-06 Settings P3, LangSmith/OTel, nó invoke)
 
 ---
 
@@ -136,7 +137,7 @@ Monitoring externo **env-first** (playbook Langflow): native Debugger permanece;
 | `agent-tool-controls` | ✅ done | 0.7.x |
 | `async-run-progress` | ✅ done | 0.7.x |
 | `interpreted-parallel-concurrency` | ✅ done | 0.7.x |
-| `external-observability` | done | 0.8.x |
+| `external-observability` | ✅ done | 0.8.0 |
 
 ---
 

@@ -1,10 +1,10 @@
 # State
 
 **Last Updated:** 2026-07-20
-**Development line (features):** `v0.8.x` (M7 — observabilidade externa)
-**Patch line:** `v0.7.x`
-**Latest published:** `v0.7.0` on Packagist / `main`
-**Current Work:** M7 Execute ✅ (`feat/external-observability`). Próximo: merge PR → `v0.8.x` → release `v0.8.0`.
+**Development line (features):** `v0.8.x` (pós-M7; próximo milestone TBD)
+**Patch line:** `v0.8.x`
+**Latest published:** `v0.8.0` on Packagist / `main`
+**Current Work:** M7 ✅ publicado em `v0.8.0`. Próximo: definir M8 / débitos (OBS-06, LangSmith/OTel, invoke).
 
 ---
 
@@ -217,7 +217,7 @@
 |---------|--------|-------|
 | `external-observability` | ✅ done | OBS-01…05; OBS-06 P3 deferred; branch `feat/external-observability` |
 
-**M7 código ✅ — PR → `v0.8.x` → release `v0.8.0`.**
+**M7 código ✅ — publicado em `v0.8.0`.**
 
 ---
 
@@ -342,4 +342,5 @@
 - [x] Design + tasks M7 `external-observability`
 - [x] Execute M7 OBS-01…05 (`feat/external-observability`)
 - [x] Release `v0.7.0` (M6) + abrir branch/linha `v0.8.x`
-- [ ] Merge M7 → `v0.8.x` → release `v0.8.0`
+- [x] Merge M7 → `v0.8.x` → release `v0.8.0`
+- [ ] Definir próximo milestone (M8) / débitos OBS-06 · LangSmith · invoke
