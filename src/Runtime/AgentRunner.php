@@ -14,6 +14,7 @@ use DigitalElvis\NeuronAIStudio\Support\PlaygroundContext;
 use DigitalElvis\NeuronAIStudio\Support\ProviderParameters;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\StructuredOutputValidationException;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ToolApprovalRequiredException;
+use DigitalElvis\NeuronAIStudio\Runtime\Memory\MemoryConfig;
 use DigitalElvis\NeuronAIStudio\Usage\UsageRecorder;
 use Illuminate\Support\Str;
 use Generator;
@@ -633,6 +634,7 @@ class AgentRunner
         }
 
         $tools = $this->toolResolver->resolveMany($config['tools'] ?? []);
+        $memory = $this->resolveMemoryConfig($definition, $config);
 
         $agent = new DynamicAgent(
             $provider,
@@ -641,6 +643,8 @@ class AgentRunner
             $tools,
             $this->mcpToolResolver,
             $threadKey,
+            $memory->contextWindow(),
+            $memory,
         );
 
         if (($config['require_tool_approval'] ?? false) === true) {
@@ -650,6 +654,48 @@ class AgentRunner
         $this->applyToolControls($agent, $config, $definition);
 
         return $agent;
+    }
+
+    /**
+     * @param  array<string, mixed>  $config
+     */
+    public function resolveMemoryConfig(?AgentDefinition $definition, array $config = []): MemoryConfig
+    {
+        $base = MemoryConfig::fromArray(
+            is_array($definition?->memory_config) ? $definition->memory_config : null,
+        );
+
+        return $base->merge(MemoryConfig::fromArray($this->memoryOverrideFromConfig($config)));
+    }
+
+    /**
+     * @param  array<string, mixed>  $config
+     * @return array<string, mixed>|null
+     */
+    protected function memoryOverrideFromConfig(array $config): ?array
+    {
+        if (isset($config['memory_config']) && is_array($config['memory_config'])) {
+            return $config['memory_config'];
+        }
+
+        $keys = [
+            'context_window',
+            'driver',
+            'summarization_enabled',
+            'summarization_threshold',
+            'budget_rag',
+            'budget_tool_results',
+            'budget_state',
+        ];
+
+        $flat = [];
+        foreach ($keys as $key) {
+            if (array_key_exists($key, $config) && $config[$key] !== null && $config[$key] !== '') {
+                $flat[$key] = $config[$key];
+            }
+        }
+
+        return $flat === [] ? null : $flat;
     }
 
     /**

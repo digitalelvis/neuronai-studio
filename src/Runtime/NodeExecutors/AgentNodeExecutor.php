@@ -67,8 +67,9 @@ class AgentNodeExecutor implements NodeExecutorInterface
                     'instructions' => $definition->instructions,
                     'tools' => $definition->tools ?? [],
                     ...$this->toolControlConfig($data, $definition),
+                    ...$this->memoryOverrideConfig($data, $definition),
                 ]
-                : array_merge($data, $this->toolControlConfig($data, null));
+                : array_merge($data, $this->toolControlConfig($data, null), $this->memoryOverrideConfig($data, null));
 
             $response = $this->agentRunner->structuredInline(
                 $config,
@@ -97,12 +98,14 @@ class AgentNodeExecutor implements NodeExecutorInterface
                     'tools' => $definition->tools ?? [],
                     'require_tool_approval' => $requireApproval,
                     ...$this->toolControlConfig($data, $definition),
+                    ...$this->memoryOverrideConfig($data, $definition),
                 ], $userMessage, $definition, $threadKey, parentRun: $parentRun);
             } else {
                 $response = $this->agentRunner->runInline(
                     array_merge($data, [
                         'require_tool_approval' => $requireApproval,
                         ...$this->toolControlConfig($data, null),
+                        ...$this->memoryOverrideConfig($data, null),
                     ]),
                     $userMessage,
                     null,
@@ -150,10 +153,12 @@ class AgentNodeExecutor implements NodeExecutorInterface
                 'tools' => $definition->tools ?? [],
                 'require_tool_approval' => true,
                 ...$this->toolControlConfig($data, $definition),
+                ...$this->memoryOverrideConfig($data, $definition),
             ]
             : array_merge($data, [
                 'require_tool_approval' => true,
                 ...$this->toolControlConfig($data, null),
+                ...$this->memoryOverrideConfig($data, null),
             ]);
 
         try {
@@ -219,8 +224,9 @@ class AgentNodeExecutor implements NodeExecutorInterface
                 'instructions' => $definition->instructions,
                 'tools' => $definition->tools ?? [],
                 ...$this->toolControlConfig($data, $definition),
+                ...$this->memoryOverrideConfig($data, $definition),
             ]
-            : array_merge($data, $this->toolControlConfig($data, null));
+            : array_merge($data, $this->toolControlConfig($data, null), $this->memoryOverrideConfig($data, null));
 
         $generator = $this->agentRunner->streamInline(
             $config,
@@ -328,6 +334,43 @@ class AgentNodeExecutor implements NodeExecutorInterface
         }
 
         return $config;
+    }
+
+    /**
+     * Node-level memory overrides only (empty = inherit agent envelope at makeAgent).
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function memoryOverrideConfig(array $data, ?AgentDefinition $definition): array
+    {
+        unset($definition);
+
+        if (isset($data['memory_config']) && is_array($data['memory_config'])) {
+            return array_filter(
+                $data['memory_config'],
+                static fn ($value) => $value !== null && $value !== '',
+            );
+        }
+
+        $keys = [
+            'context_window',
+            'driver',
+            'summarization_enabled',
+            'summarization_threshold',
+            'budget_rag',
+            'budget_tool_results',
+            'budget_state',
+        ];
+
+        $override = [];
+        foreach ($keys as $key) {
+            if (array_key_exists($key, $data) && $data[$key] !== null && $data[$key] !== '') {
+                $override[$key] = $data[$key];
+            }
+        }
+
+        return $override;
     }
 
     /**

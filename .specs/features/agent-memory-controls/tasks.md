@@ -47,11 +47,12 @@ No migration needed: `memory_config` JSON column already exists (cast, fillable,
 **Reuses**: M6 override resolution pattern (`tool_max_runs` / `parallel_tool_calls` in `agent-tool-controls`)  
 **Done when**:
 
-- [ ] Configured window reaches `DynamicAgent::chatHistory()`; null envelope = today's global config path (zero regression)
-- [ ] Node override wins over agent envelope for that visit
+- [x] Configured window reaches `DynamicAgent::chatHistory()`; null envelope = today's global config path (zero regression)
+- [x] Node override wins over agent envelope for that visit
 
 **Tests**: unit/feature (resolution matrix: none / agent / agent+node)  
-**Gate**: quick
+**Gate**: quick ✅ (7 tests)  
+**Status**: ✅ Complete
 
 ---
 

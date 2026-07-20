@@ -4,6 +4,7 @@ namespace DigitalElvis\NeuronAIStudio\Runtime;
 
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use DigitalElvis\NeuronAIStudio\Models\StudioChatMessage;
+use DigitalElvis\NeuronAIStudio\Runtime\Memory\MemoryConfig;
 use NeuronAI\Agent\Agent;
 use NeuronAI\Chat\History\ChatHistoryInterface;
 use NeuronAI\Chat\History\EloquentChatHistory;
@@ -26,6 +27,7 @@ class DynamicAgent extends Agent
         protected ?McpToolResolver $mcpToolResolver = null,
         protected ?string $threadId = null,
         protected ?int $contextWindow = null,
+        protected MemoryConfig $memoryConfig = new MemoryConfig,
     ) {
         parent::__construct();
         $this->setAiProvider($aiProvider);
