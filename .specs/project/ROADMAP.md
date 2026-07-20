@@ -3,10 +3,10 @@
 **North star:** Agentes multimodais autônomos com grafos de workflow cíclicos.
 
 **Development line (features):** `v0.8.x` (M7 — observabilidade externa)  
-**Patch line:** `v0.7.x` (após `v0.7.0`; até lá patches M6 em `v0.7.x`)  
-**Latest published:** `v0.6.0` on Packagist / `main`  
-**Última atualização:** 2026-07-17  
-**Etapa atual:** M7 Execute ✅ em `feat/external-observability` (OBS-01…05). Release `v0.7.0` + abrir `v0.8.x` / merge M7 pendente.
+**Patch line:** `v0.7.x`  
+**Latest published:** `v0.7.0` on Packagist / `main`  
+**Última atualização:** 2026-07-20  
+**Etapa atual:** M6 ✅ (`v0.7.0`). M7 Execute ✅ — merge `feat/external-observability` → `v0.8.x` → release `v0.8.0`.
 
 ---
 
@@ -70,7 +70,7 @@ Uso de tokens/spans já persistidos (`TelemetryTracker`, `StudioTraceSpan`) para
 
 **Critério de conclusão M5:** Custo estimado configurável por modelo; API agregada + por-run para o host; Dashboard com totais 30d; Debugger com badges; Test Pretty com chips de usage.
 
-### M6 — Runtime / Agent (P1) `done` (release pendente)
+### M6 — Runtime / Agent (P1) `done`
 
 Desempenho e flexibilidade de agentes e fluxos: knobs do tool-loop, progresso live em runs async, fork/join concorrente no runtime interpretado.
 
@@ -84,9 +84,9 @@ Desempenho e flexibilidade de agentes e fluxos: knobs do tool-loop, progresso li
 | 16 | `async-run-progress` | **done** | [spec](../features/async-run-progress/spec.md) · [design](../features/async-run-progress/design.md) · [tasks](../features/async-run-progress/tasks.md) |
 | 17 | `interpreted-parallel-concurrency` | **done** | [spec](../features/interpreted-parallel-concurrency/spec.md) · [design](../features/interpreted-parallel-concurrency/design.md) · [tasks](../features/interpreted-parallel-concurrency/tasks.md) |
 
-**Critério de conclusão M6:** Agent/nó configuram `tool_max_runs` / `parallel_tool_calls` com tools mid-stream; run async tem SSE de progresso (sem Echo); fork I/O-bound concorrente mais rápido que sequencial com resume parcial intacto. **Código ✅ — publicar `v0.7.0`.**
+**Critério de conclusão M6:** Agent/nó configuram `tool_max_runs` / `parallel_tool_calls` com tools mid-stream; run async tem SSE de progresso (sem Echo); fork I/O-bound concorrente mais rápido que sequencial com resume parcial intacto. **Publicado em `v0.7.0`.**
 
-### M7 — Observabilidade externa (P1) `done` (release pendente)
+### M7 — Observabilidade externa (P1) `done` (merge pendente)
 
 Monitoring externo **env-first** (playbook Langflow): native Debugger permanece; Inspector (Neuron) + Langfuse como exportadores opt-in. Sem UI de secrets; sem LangSmith no MVP.
 
@@ -96,7 +96,7 @@ Monitoring externo **env-first** (playbook Langflow): native Debugger permanece;
 |-------|---------|--------|------|
 | 18 | `external-observability` | **done** (OBS-01…05; OBS-06 P3 deferred) | [spec](../features/external-observability/spec.md) · [design](../features/external-observability/design.md) · [tasks](../features/external-observability/tasks.md) |
 
-**Critério de conclusão M7:** Com `INSPECTOR_INGESTION_KEY`, runs do Studio aparecem no Inspector (gap EventBus corrigido); com `LANGFUSE_*` + pacote, traces exportam sem quebrar runs; `NEURONAI_STUDIO_NATIVE_TRACING=false` desliga Debugger DB; docs permitem setup em &lt; 5 min. **Código ✅ — merge → `v0.8.x` → release `v0.8.0` (após `v0.7.0`).**
+**Critério de conclusão M7:** Com `INSPECTOR_INGESTION_KEY`, runs do Studio aparecem no Inspector (gap EventBus corrigido); com `LANGFUSE_*` + pacote, traces exportam sem quebrar runs; `NEURONAI_STUDIO_NATIVE_TRACING=false` desliga Debugger DB; docs permitem setup em &lt; 5 min. **Código ✅ — merge → `v0.8.x` → release `v0.8.0`.**
 
 ---
 
@@ -104,9 +104,9 @@ Monitoring externo **env-first** (playbook Langflow): native Debugger permanece;
 
 1. ~~Sync pós-`v0.6.0` + AD-019 + abrir `v0.7.x`~~ ✅
 2. ~~Especificar / design / tasks / Execute M6~~ ✅
-3. Release `v0.7.0` (M6 estável) + abrir linha `v0.8.x` (AD-020)
+3. ~~Release `v0.7.0` (M6 estável) + abrir linha `v0.8.x` (AD-020)~~ ✅
 4. ~~Design + tasks `external-observability` (OBS-01…05)~~ ✅
-5. ~~Execute M7 em PRs~~ ✅ (`feat/external-observability`) → merge `v0.8.x` → release `v0.8.0`
+5. ~~Execute M7~~ ✅ (`feat/external-observability`) → merge `v0.8.x` → release `v0.8.0`
 
 ---
 

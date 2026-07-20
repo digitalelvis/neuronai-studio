@@ -196,22 +196,22 @@ For future releases:
 
 | Line | Role |
 |------|------|
-| **`v0.8.x`** | Active **feature** line — Execute M7 external observability (AD-020); open after `v0.7.0` |
-| **`v0.7.x`** | M6 runtime/agent (ATC → ARP → IPC) — Execute ✅; **patch** line after `v0.7.0` |
+| **`v0.8.x`** | Active **feature** line — M7 external observability (AD-020) |
+| **`v0.7.x`** | **Patch** line for the published `0.7` series (M6) |
 | **`v0.6.x`** | **Patch** line for the published `0.6` series |
-| Latest published | **`v0.6.0`** (usage export API + M5 complete) |
+| Latest published | **`v0.7.0`** (M6 runtime/agent) |
 
 | Area | Status |
 |------|--------|
 | M1–M4 (cyclic graphs, RAG, structured output, HITL, parallel, queue, stream adapters, unified runs) | ✅ Published in `v0.3.0` |
-| Release bot (`RELEASE_TOKEN` + push `main` before tag) | ✅ Verified through `v0.6.0` |
+| Release bot (`RELEASE_TOKEN` + push `main` before tag) | ✅ Verified through `v0.7.0` |
 | M5 `cost-estimation` | ✅ Shipped in `v0.4.0` |
 | M5 `usage-analytics` | ✅ Shipped in `v0.5.0` |
 | M5 `usage-export-api` | ✅ Shipped in `v0.6.0` |
-| M6 runtime/agent | ✅ Execute done on `v0.7.x` — release `v0.7.0` pending |
-| M7 external observability | 📋 Specify done — Design/Tasks/Execute on `v0.8.x` (AD-020) |
+| M6 runtime/agent | ✅ Shipped in `v0.7.0` |
+| M7 external observability | ✅ Execute done — merge PR → `v0.8.x` → release `v0.8.0` |
 
-Lines `v0.3.x`–`v0.5.x` are closed for new features. Consumers on older minors can stay until ready to adopt `v0.6.0`+.
+Lines `v0.3.x`–`v0.6.x` are closed for new features. Consumers on older minors can stay until ready to adopt `v0.7.0`+.
 
 ## Troubleshooting
 

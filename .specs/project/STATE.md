@@ -1,10 +1,10 @@
 # State
 
-**Last Updated:** 2026-07-17
+**Last Updated:** 2026-07-20
 **Development line (features):** `v0.8.x` (M7 — observabilidade externa)
-**Patch line:** `v0.7.x` (após `v0.7.0`; até release, patches M6 em `v0.7.x`)
-**Latest published:** `v0.6.0` on Packagist / `main`
-**Current Work:** M7 Execute ✅ (`external-observability` OBS-01…05). Próximo: Release `v0.7.0` + abrir `v0.8.x` + merge PR M7 → `v0.8.0`.
+**Patch line:** `v0.7.x`
+**Latest published:** `v0.7.0` on Packagist / `main`
+**Current Work:** M7 Execute ✅ (`feat/external-observability`). Próximo: merge PR → `v0.8.x` → release `v0.8.0`.
 
 ---
 
@@ -207,7 +207,7 @@
 | `async-run-progress` | ✅ done | ProgressEmitter + SSE tail |
 | `interpreted-parallel-concurrency` | ✅ done | Amp concurrent fork/join + sequential fallback |
 
-**M6 código ✅ — release `v0.7.0` pendente.**
+**M6 código ✅ — publicado em `v0.7.0`.**
 
 ---
 
@@ -217,7 +217,7 @@
 |---------|--------|-------|
 | `external-observability` | ✅ done | OBS-01…05; OBS-06 P3 deferred; branch `feat/external-observability` |
 
-**M7 código ✅ — merge → `v0.8.x` + release `v0.8.0` após `v0.7.0`.**
+**M7 código ✅ — PR → `v0.8.x` → release `v0.8.0`.**
 
 ---
 
@@ -341,5 +341,5 @@
 - [x] Specify M7 `external-observability` + AD-020 + ROADMAP/STATE (2026-07-17)
 - [x] Design + tasks M7 `external-observability`
 - [x] Execute M7 OBS-01…05 (`feat/external-observability`)
-- [ ] Release `v0.7.0` (M6) + abrir branch/linha `v0.8.x`
+- [x] Release `v0.7.0` (M6) + abrir branch/linha `v0.8.x`
 - [ ] Merge M7 → `v0.8.x` → release `v0.8.0`
