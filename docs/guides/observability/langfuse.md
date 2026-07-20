@@ -25,6 +25,8 @@ LANGFUSE_BASE_URL=https://cloud.langfuse.com
 
 `LANGFUSE_HOST` is accepted as an alias for `LANGFUSE_BASE_URL`.
 
+**Do not set** `LANGFUSE_NEURON_AI_ENABLED=true`. The package’s built-in `NeuronAiObserver` is incompatible with Neuron AI 3.15+ (`onEvent` missing `?string $branchId`) and fatals on autoload. Studio attaches its own observer instead.
+
 3. Run an agent or workflow.
 4. Open the Langfuse dashboard and confirm traces/generations.
 
@@ -38,7 +40,9 @@ Env-first default: enabled is `true`; attachment requires both keys **and** the 
 
 ## Studio adapter
 
-Studio attaches a `LangfuseNeuronObserverAdapter` that implements Neuron’s full `ObserverInterface` (including `?string $branchId`) and forwards events to `Axyr\Langfuse\NeuronAi\NeuronAiObserver` when available.
+Studio attaches a `LangfuseNeuronObserverAdapter` that implements Neuron’s full `ObserverInterface` (including `?string $branchId`) and talks to the Langfuse **client** from `axyr/laravel-langfuse`. It does **not** load `Axyr\Langfuse\NeuronAi\NeuronAiObserver`.
+
+**Sessions:** Studio maps `StudioThread` (`thread_id`) → Langfuse `sessionId`, so multiple runs in the same chat/playground thread appear under one session. Each `StudioRun` opens a new Langfuse trace. Optional `user_id` can be passed via attach meta.
 
 Direct LLM node calls (outside the Agent loop) also attempt a best-effort Langfuse generation via the package facade.
 

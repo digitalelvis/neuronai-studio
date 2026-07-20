@@ -56,11 +56,12 @@ class InstallObservabilityCommand extends Command
         $this->line('   LANGFUSE_SECRET_KEY=sk-lf-...');
         $this->line('   LANGFUSE_BASE_URL=https://cloud.langfuse.com');
         $this->line('   # LANGFUSE_HOST is accepted as an alias for BASE_URL');
+        $this->line('   # Leave LANGFUSE_NEURON_AI_ENABLED unset/false — Studio owns Neuron wiring');
         $this->line('   # Optional force-off:');
         $this->line('   # NEURONAI_STUDIO_LANGFUSE_ENABLED=false');
         $this->newLine();
-        $this->line('3. Run an agent/workflow — Studio attaches a Neuron observer adapter');
-        $this->line('   compatible with parallel branchId.');
+        $this->line('3. Run an agent/workflow — Studio attaches its own Langfuse observer');
+        $this->line('   (compatible with Neuron 3.15+ branchId; do not use package NeuronAiObserver).');
         $this->newLine();
         $this->line('Docs: docs/guides/observability/langfuse.md');
 

@@ -206,42 +206,150 @@ class ObservabilityManagerTest extends TestCase
         $this->assertTrue(true);
     }
 
-    public function test_langfuse_adapter_forwards_events_with_branch_id(): void
+    public function test_langfuse_adapter_maps_thread_to_session_id(): void
     {
-        $inner = new class implements ObserverInterface
-        {
-            public array $calls = [];
+        if (! class_exists('Axyr\\Langfuse\\Dto\\TraceBody')) {
+            eval(<<<'PHP'
+namespace Axyr\Langfuse\Dto;
+class TraceBody {
+    public function __construct(
+        public ?string $name = null,
+        public ?string $sessionId = null,
+        public ?string $userId = null,
+        public mixed $input = null,
+        public mixed $output = null,
+        public ?array $metadata = null,
+    ) {}
+}
+PHP);
+        }
 
-            public function onEvent(string $event, object $source, mixed $data = null, ?string $branchId = null): void
+        $client = new class
+        {
+            /** @var list<object> */
+            public array $traces = [];
+
+            public function currentTrace(): object
             {
-                $this->calls[] = [$event, $source, $data, $branchId];
+                return new class {};
             }
+
+            public function trace(object $body): object
+            {
+                $this->traces[] = $body;
+
+                return new class
+                {
+                    public function update(object $body): void {}
+                };
+            }
+
+            public function setCurrentTrace(object $trace): void {}
+
+            public function flush(): void {}
         };
 
-        $adapter = new LangfuseNeuronObserverAdapter($inner);
-        $source = new \stdClass;
-        $adapter->onEvent('inference-stop', $source, ['x' => 1], 'branch-a');
+        $threadId = 'thread-session-1';
+        $adapter = new LangfuseNeuronObserverAdapter($client, [
+            'session_id' => $threadId,
+            'user_id' => 'user-42',
+            'run_id' => 'run-99',
+            'studio_trace_id' => 'trace-7',
+        ]);
 
-        $this->assertSame([['inference-stop', $source, ['x' => 1], 'branch-a']], $inner->calls);
+        $adapter->onEvent('workflow-start', new \stdClass, null, null);
+
+        $this->assertCount(1, $client->traces);
+        $body = $client->traces[0];
+        $this->assertSame($threadId, $body->sessionId);
+        $this->assertSame('user-42', $body->userId);
+        $this->assertSame($threadId, $body->metadata['thread_id'] ?? null);
+        $this->assertSame('run-99', $body->metadata['run_id'] ?? null);
+        $this->assertSame('trace-7', $body->metadata['studio_trace_id'] ?? null);
     }
 
-    public function test_langfuse_adapter_drops_branch_id_for_legacy_inner(): void
+    public function test_langfuse_context_from_run_thread_id(): void
     {
-        $inner = new class
-        {
-            public array $calls = [];
+        [$run, $trace] = $this->makeRunAndTrace();
 
-            public function onEvent(string $event, object $source, mixed $data = null): void
+        $manager = app(ObservabilityManager::class);
+        $method = new \ReflectionMethod($manager, 'langfuseContextFromMeta');
+        $method->setAccessible(true);
+
+        $context = $method->invoke($manager, [
+            'run' => $run,
+            'trace' => $trace,
+            'user_id' => 'auth-user-1',
+        ]);
+
+        $this->assertSame($run->thread_id, $context['session_id']);
+        $this->assertSame('auth-user-1', $context['user_id']);
+        $this->assertSame((string) $run->id, $context['run_id']);
+        $this->assertSame((string) $trace->id, $context['studio_trace_id']);
+    }
+
+    public function test_langfuse_adapter_accepts_branch_id_without_loading_package_observer(): void
+    {
+        $client = new class
+        {
+            public array $traces = [];
+
+            public array $flushed = [];
+
+            public function currentTrace(): object
             {
-                $this->calls[] = [$event, $source, $data];
+                return new class {};
+            }
+
+            public function trace(object $body): object
+            {
+                $this->traces[] = $body;
+
+                return new class
+                {
+                    public array $generations = [];
+
+                    public function generation(object $body): object
+                    {
+                        $this->generations[] = $body;
+
+                        return new class
+                        {
+                            public array $ends = [];
+
+                            public function end(...$args): void
+                            {
+                                $this->ends[] = $args;
+                            }
+                        };
+                    }
+                };
+            }
+
+            public function setCurrentTrace(object $trace): void {}
+
+            public function flush(): void
+            {
+                $this->flushed[] = true;
             }
         };
 
-        $adapter = new LangfuseNeuronObserverAdapter($inner);
+        $adapter = new LangfuseNeuronObserverAdapter($client);
         $source = new \stdClass;
-        $adapter->onEvent('inference-stop', $source, ['x' => 1], 'branch-a');
 
-        $this->assertSame([['inference-stop', $source, ['x' => 1]]], $inner->calls);
+        // Must not fatal: full ObserverInterface signature including branchId.
+        $adapter->onEvent('inference-start', $source, null, 'branch-a');
+        $adapter->onEvent('workflow-start', $source, null, 'branch-a');
+
+        $this->assertTrue(true);
+    }
+
+    public function test_langfuse_make_never_loads_broken_neuron_observer_class(): void
+    {
+        // Regression: class_exists(NeuronAiObserver) fatals under Neuron 3.15+
+        // because the package signature omits ?string $branchId.
+        $this->assertNull(LangfuseNeuronObserverAdapter::make());
+        $this->assertFalse(class_exists('Axyr\\Langfuse\\NeuronAi\\NeuronAiObserver', false));
     }
 
     /**

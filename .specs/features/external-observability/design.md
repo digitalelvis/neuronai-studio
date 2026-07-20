@@ -33,7 +33,7 @@ Single attach point: runners call `ObservabilityManager::attach($target, $meta)`
 | Inspector default | `observability.inspector.enabled` defaults **true** (env-first: key present = on). `enabled=false` forces off even with key |
 | Alias | Keep top-level `inspector_enabled` reading the same env; docs mark deprecated in favor of `observability.inspector.enabled` |
 | Langfuse package | Optional `axyr/laravel-langfuse`. Manager uses `class_exists`; missing package → warn once + no-op |
-| branchId adapter | `LangfuseNeuronObserverAdapter` implements full `ObserverInterface`; forwards to package observer, dropping `$branchId` if inner signature rejects it |
+| branchId adapter | `LangfuseNeuronObserverAdapter` implements full `ObserverInterface` and talks to Langfuse client DTOs directly (never loads package `NeuronAiObserver`, which fatals on autoload) |
 | LlmNodeExecutor (OBS-03.3) | After direct `chat`/`stream`, call `ObservabilityManager::recordDirectLlmGeneration(...)` (best-effort Langfuse generation via package facade if available) |
 | Interpreted resume | No GraphInterpreterWorkflow instance — agent/LLM nodes still attach via AgentRunner. Native resume keeps `attach`. No forced EventBus scope on interpreted resume |
 | Errors | Wrap each `observe` / flush in try/catch; log warning; never fail the run |

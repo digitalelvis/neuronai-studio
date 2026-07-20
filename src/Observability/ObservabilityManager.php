@@ -19,6 +19,8 @@ class ObservabilityManager
      *     provider?: string|null,
      *     model?: string|null,
      *     parent_run?: StudioRun|null,
+     *     session_id?: string|null,
+     *     user_id?: string|null,
      * }  $meta
      */
     public function attach(object $target, array $meta = []): void
@@ -56,7 +58,7 @@ class ObservabilityManager
         }
 
         if ($this->isLangfuseActive()) {
-            $langfuse = LangfuseNeuronObserverAdapter::make();
+            $langfuse = LangfuseNeuronObserverAdapter::make($this->langfuseContextFromMeta($meta));
             if ($langfuse !== null) {
                 $observers[] = $langfuse;
             } else {
@@ -65,6 +67,42 @@ class ObservabilityManager
         }
 
         return $observers;
+    }
+
+    /**
+     * Map Studio thread → Langfuse session; run → trace metadata.
+     *
+     * @param  array<string, mixed>  $meta
+     * @return array{
+     *     session_id?: string|null,
+     *     user_id?: string|null,
+     *     run_id?: string|null,
+     *     studio_trace_id?: string|null,
+     * }
+     */
+    protected function langfuseContextFromMeta(array $meta): array
+    {
+        $run = ($meta['run'] ?? null) instanceof StudioRun ? $meta['run'] : null;
+        $trace = ($meta['trace'] ?? null) instanceof StudioTrace ? $meta['trace'] : null;
+
+        $sessionId = $meta['session_id'] ?? null;
+        if ((! is_string($sessionId) || $sessionId === '') && $run !== null) {
+            $sessionId = is_string($run->thread_id) && $run->thread_id !== ''
+                ? $run->thread_id
+                : null;
+        }
+
+        $userId = $meta['user_id'] ?? null;
+        if (! is_string($userId) || $userId === '') {
+            $userId = null;
+        }
+
+        return array_filter([
+            'session_id' => is_string($sessionId) && $sessionId !== '' ? $sessionId : null,
+            'user_id' => $userId,
+            'run_id' => $run !== null ? (string) $run->id : null,
+            'studio_trace_id' => $trace !== null ? (string) $trace->id : null,
+        ], fn ($v) => $v !== null && $v !== '');
     }
 
     public function isNativeTracingEnabled(): bool

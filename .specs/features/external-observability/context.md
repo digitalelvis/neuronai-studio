@@ -33,7 +33,7 @@ Multiple layers may be active at the same time.
 
 ### Langfuse adapter
 
-`axyr/laravel-langfuse` `NeuronAiObserver::onEvent` currently lacks `?string $branchId` → incompatible with Neuron 3.15. Studio uses a local **adapter** until upstream fixes it. The package remains **optional** (`composer require`).
+`axyr/laravel-langfuse` `NeuronAiObserver::onEvent` currently lacks `?string $branchId` → incompatible with Neuron 3.15 (autoload fatals). Studio ships a local **observer** that uses the Langfuse **client** only — never loads `NeuronAiObserver`. Keep `LANGFUSE_NEURON_AI_ENABLED` false. The package remains **optional** (`composer require`).
 
 ### Env-first (not UI-first)
 
