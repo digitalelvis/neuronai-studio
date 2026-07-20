@@ -1,5 +1,19 @@
 # Changelog
 
+# [0.8.0](https://github.com/digitalelvis/neuronai-studio/compare/v0.7.0...v0.8.0) (2026-07-20)
+
+
+### Bug Fixes
+
+* **observability:** drive Langfuse via client and map thread sessions ([32a526b](https://github.com/digitalelvis/neuronai-studio/commit/32a526bf26aede3e1acf559f6b9479f2e5958a81))
+
+
+### Features
+
+* **observability:** add observability config section ([c6bb7be](https://github.com/digitalelvis/neuronai-studio/commit/c6bb7bea8bd301f52dd904a0fb722073c3133947))
+* **observability:** add ObservabilityManager and Langfuse adapter ([00f7624](https://github.com/digitalelvis/neuronai-studio/commit/00f762442b97c386f64b7e068a045d69097bf303))
+* **observability:** wire Manager into runners and LLM nodes ([4fd5330](https://github.com/digitalelvis/neuronai-studio/commit/4fd53303a0bb0c5fc00c6b82b7f7fedd874655ef))
+
 # [0.7.0](https://github.com/digitalelvis/neuronai-studio/compare/v0.6.0...v0.7.0) (2026-07-17)
 
 
