@@ -137,6 +137,48 @@ export default function NodeConfigForm({
                         />
                         <Label htmlFor={`parallel-tools-${node.id}`}>Parallel tool calls (override)</Label>
                     </div>
+                    <div className="space-y-2 border-t border-border pt-3">
+                        <Label className="text-xs font-medium uppercase text-muted-foreground">Memory override</Label>
+                        <Input
+                            type="number"
+                            min={1}
+                            value={data.context_window ?? ''}
+                            onChange={(e) =>
+                                updateField(
+                                    'context_window',
+                                    e.target.value === '' ? undefined : Number(e.target.value),
+                                )
+                            }
+                            placeholder="Context window (inherit)"
+                            disabled={readOnly}
+                        />
+                        <Select
+                            value={data.driver || '__inherit'}
+                            onValueChange={(value) =>
+                                updateField('driver', value === '__inherit' ? undefined : value)
+                            }
+                            disabled={readOnly}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Driver (inherit)" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="__inherit">Driver: inherit</SelectItem>
+                                <SelectItem value="eloquent">Eloquent</SelectItem>
+                                <SelectItem value="in_memory">In-memory</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <label className="flex items-center gap-2 text-sm">
+                            <Checkbox
+                                checked={data.summarization_enabled === true}
+                                onCheckedChange={(checked) =>
+                                    updateField('summarization_enabled', checked ? true : undefined)
+                                }
+                                disabled={readOnly}
+                            />
+                            Summarization override
+                        </label>
+                    </div>
                 </>
             )}
 
