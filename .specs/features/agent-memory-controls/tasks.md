@@ -30,11 +30,12 @@ No migration needed: `memory_config` JSON column already exists (cast, fillable,
 **Inline design**: exact key names = agent's discretion (context.md); unknown keys ignored for forward compatibility.  
 **Done when**:
 
-- [ ] Envelope parses/validates from array; invalid values (window ≤ 0, unknown driver, bad thresholds) rejected
-- [ ] Null/empty envelope = explicit "inherit everything" state
+- [x] Envelope parses/validates from array; invalid values (window ≤ 0, unknown driver, bad thresholds) rejected
+- [x] Null/empty envelope = explicit "inherit everything" state
 
 **Tests**: unit (envelope parsing + validation)  
-**Gate**: quick
+**Gate**: quick ✅ (12 tests)  
+**Status**: ✅ Complete
 
 ---
 
