@@ -56,8 +56,9 @@ class DynamicAgent extends Agent
     protected function chatHistory(): ChatHistoryInterface
     {
         $contextWindow = $this->contextWindow ?? (int) config('neuronai-studio.chat_history_context_window', 150000);
+        $forceInMemory = $this->memoryConfig->driver() === MemoryConfig::DRIVER_IN_MEMORY;
 
-        if ($this->threadId === null) {
+        if ($forceInMemory || $this->threadId === null) {
             return new InMemoryChatHistory(contextWindow: $contextWindow);
         }
 

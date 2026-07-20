@@ -64,10 +64,11 @@ No migration needed: `memory_config` JSON column already exists (cast, fillable,
 **Reuses**: existing `InMemoryChatHistory` / `EloquentChatHistory` selection logic  
 **Done when**:
 
-- [ ] Driver matrix covered: absent (today's behavior), `eloquent`, `in_memory` with/without thread id
+- [x] Driver matrix covered: absent (today's behavior), `eloquent`, `in_memory` with/without thread id
 
 **Tests**: unit  
-**Gate**: quick
+**Gate**: quick ✅ (5 tests)  
+**Status**: ✅ Complete
 
 ---
 
