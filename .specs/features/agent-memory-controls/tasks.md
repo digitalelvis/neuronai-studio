@@ -100,12 +100,13 @@ No migration needed: `memory_config` JSON column already exists (cast, fillable,
 **Inline design**: interception point (wrapper vs subclass) = agent's discretion; must survive checkpoint/resume restore.  
 **Done when**:
 
-- [ ] Over-budget thread: no rows physically deleted in any mode
-- [ ] Summarization off → prompt excludes oldest messages but rows persist
-- [ ] Budget smaller than a single message → latest message kept, condition recorded
+- [x] Over-budget thread: no rows physically deleted in any mode
+- [x] Summarization off → prompt excludes oldest messages but rows persist
+- [x] Budget smaller than a single message → latest message kept, condition recorded
 
 **Tests**: feature (seeded over-budget threads, both modes)  
-**Gate**: quick
+**Gate**: quick ✅ (4 tests)  
+**Status**: ✅ Complete
 
 ---
 

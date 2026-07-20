@@ -5,10 +5,10 @@ namespace DigitalElvis\NeuronAIStudio\Runtime;
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use DigitalElvis\NeuronAIStudio\Models\StudioChatMessage;
 use DigitalElvis\NeuronAIStudio\Runtime\Memory\MemoryConfig;
+use DigitalElvis\NeuronAIStudio\Runtime\Memory\StudioEloquentChatHistory;
+use DigitalElvis\NeuronAIStudio\Runtime\Memory\StudioInMemoryChatHistory;
 use NeuronAI\Agent\Agent;
 use NeuronAI\Chat\History\ChatHistoryInterface;
-use NeuronAI\Chat\History\EloquentChatHistory;
-use NeuronAI\Chat\History\InMemoryChatHistory;
 use NeuronAI\Providers\AIProviderInterface;
 use NeuronAI\Tools\ProviderToolInterface;
 use NeuronAI\Tools\ToolInterface;
@@ -57,15 +57,20 @@ class DynamicAgent extends Agent
     {
         $contextWindow = $this->contextWindow ?? (int) config('neuronai-studio.chat_history_context_window', 150000);
         $forceInMemory = $this->memoryConfig->driver() === MemoryConfig::DRIVER_IN_MEMORY;
+        $summarization = $this->memoryConfig->summarizationEnabled() === true;
 
         if ($forceInMemory || $this->threadId === null) {
-            return new InMemoryChatHistory(contextWindow: $contextWindow);
+            return new StudioInMemoryChatHistory(
+                contextWindow: $contextWindow,
+                summarization: $summarization,
+            );
         }
 
-        return new EloquentChatHistory(
+        return new StudioEloquentChatHistory(
             threadId: $this->threadId,
             modelClass: StudioChatMessage::class,
             contextWindow: $contextWindow,
+            summarization: $summarization,
         );
     }
 }
