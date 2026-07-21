@@ -49,6 +49,12 @@ class Edit extends Component
 
     public $memory_summarization_threshold = null;
 
+    public ?int $memory_budget_rag = null;
+
+    public ?int $memory_budget_tool_results = null;
+
+    public ?int $memory_budget_state = null;
+
     public function mount(?AgentDefinition $agent = null): void
     {
         $this->agent = $agent;
@@ -83,6 +89,9 @@ class Edit extends Component
         $this->memory_driver = $memory->driver();
         $this->memory_summarization_enabled = $memory->summarizationEnabled();
         $this->memory_summarization_threshold = $memory->summarizationThreshold();
+        $this->memory_budget_rag = $memory->budgetRag();
+        $this->memory_budget_tool_results = $memory->budgetToolResults();
+        $this->memory_budget_state = $memory->budgetState();
     }
 
     /** @param  array<int, array<string, mixed>>  $tools */
@@ -156,6 +165,15 @@ class Edit extends Component
         $this->memory_summarization_threshold = isset($payload['memory_summarization_threshold']) && $payload['memory_summarization_threshold'] !== '' && $payload['memory_summarization_threshold'] !== null
             ? (float) $payload['memory_summarization_threshold']
             : null;
+        $this->memory_budget_rag = isset($payload['memory_budget_rag']) && $payload['memory_budget_rag'] !== '' && $payload['memory_budget_rag'] !== null
+            ? (int) $payload['memory_budget_rag']
+            : null;
+        $this->memory_budget_tool_results = isset($payload['memory_budget_tool_results']) && $payload['memory_budget_tool_results'] !== '' && $payload['memory_budget_tool_results'] !== null
+            ? (int) $payload['memory_budget_tool_results']
+            : null;
+        $this->memory_budget_state = isset($payload['memory_budget_state']) && $payload['memory_budget_state'] !== '' && $payload['memory_budget_state'] !== null
+            ? (int) $payload['memory_budget_state']
+            : null;
 
         $this->persistAgent();
     }
@@ -174,6 +192,9 @@ class Edit extends Component
             'memory_driver' => 'nullable|string|in:eloquent,in_memory',
             'memory_summarization_enabled' => 'nullable|boolean',
             'memory_summarization_threshold' => 'nullable|numeric|gt:0|lte:1',
+            'memory_budget_rag' => 'nullable|integer|min:1',
+            'memory_budget_tool_results' => 'nullable|integer|min:1',
+            'memory_budget_state' => 'nullable|integer|min:1',
             'selectedToolRefs' => 'array',
             'selectedToolRefs.*' => 'string',
             'selectedMcpSlugs' => 'array',
@@ -226,6 +247,15 @@ class Edit extends Component
         }
         if ($this->memory_summarization_threshold !== null && $this->memory_summarization_threshold !== '') {
             $raw['summarization_threshold'] = (float) $this->memory_summarization_threshold;
+        }
+        if ($this->memory_budget_rag !== null) {
+            $raw['budget_rag'] = $this->memory_budget_rag;
+        }
+        if ($this->memory_budget_tool_results !== null) {
+            $raw['budget_tool_results'] = $this->memory_budget_tool_results;
+        }
+        if ($this->memory_budget_state !== null) {
+            $raw['budget_state'] = $this->memory_budget_state;
         }
 
         if ($raw === []) {

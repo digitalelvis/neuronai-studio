@@ -1,7 +1,7 @@
 # Context Engineering — Tasks
 
 **Spec**: [spec.md](./spec.md) · **Context**: [../m8-performance-memory-context/context.md](../m8-performance-memory-context/context.md)  
-**Status**: Specified — Execute on `v0.9.x` after AMC  
+**Status**: Done — Execute on `v0.9.x` after AMC  
 **Linha**: `v0.9.x` · **Ordem M8**: 2/3  
 **Design**: skipped — inline design decisions noted per task.
 

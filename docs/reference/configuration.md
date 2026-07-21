@@ -82,6 +82,18 @@ Per-agent settings live in `AgentDefinition.memory_config` (Studio form + node o
 
 When summarization is enabled and history exceeds the window, Studio persists a summary message and keeps durable rows (no silent deletes). On summarizer failure, Studio falls back to non-destructive trim (exclude from prompt, keep rows).
 
+### Prompt assembly budgets (`memory_config`)
+
+Optional integer keys (min 1). Unset = disabled (byte-identical pass-through):
+
+| Key | Description |
+|-----|-------------|
+| `budget_rag` | Cap interpolated RAG context (`rag_context`) |
+| `budget_tool_results` | Cap tool results in the agent tool loop / chat history |
+| `budget_state` | Cap each non-RAG interpolated state field |
+
+Per-node overrides use the same flat keys on agent-node `data`. Token estimates align with Neuron `TokenCounter` (~4 characters per token).
+
 ## Queue
 
 | Key | Env | Default | Description |

@@ -37,6 +37,9 @@ class AgentMemoryFormTest extends TestCase
                 'memory_driver' => 'in_memory',
                 'memory_summarization_enabled' => true,
                 'memory_summarization_threshold' => 0.75,
+                'memory_budget_rag' => 800,
+                'memory_budget_tool_results' => 1000,
+                'memory_budget_state' => 500,
             ])
             ->assertHasNoErrors();
 
@@ -46,6 +49,9 @@ class AgentMemoryFormTest extends TestCase
             'driver' => 'in_memory',
             'summarization_enabled' => true,
             'summarization_threshold' => 0.75,
+            'budget_rag' => 800,
+            'budget_tool_results' => 1000,
+            'budget_state' => 500,
         ], $agent->memory_config);
     }
 
@@ -106,5 +112,32 @@ class AgentMemoryFormTest extends TestCase
                 'memory_context_window' => 0,
             ])
             ->assertHasErrors(['memory_context_window']);
+    }
+
+    public function test_rejects_invalid_budget_values(): void
+    {
+        $agent = AgentDefinition::create([
+            'name' => 'Invalid Budget Agent',
+            'slug' => 'invalid-budget-'.uniqid(),
+            'provider' => 'openai',
+            'model' => 'gpt-4o-mini',
+            'instructions' => 'Test',
+            'tools' => [],
+        ]);
+
+        Livewire::test(Edit::class, ['agent' => $agent])
+            ->call('saveFromReact', [
+                'name' => $agent->name,
+                'description' => '',
+                'provider' => 'openai',
+                'model' => 'gpt-4o-mini',
+                'instructions' => 'Test',
+                'selectedToolRefs' => [],
+                'toolAdvanced' => [],
+                'selectedMcpSlugs' => [],
+                'mcpAdvanced' => [],
+                'memory_budget_rag' => 0,
+            ])
+            ->assertHasErrors(['memory_budget_rag']);
     }
 }

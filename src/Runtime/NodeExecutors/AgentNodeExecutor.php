@@ -38,13 +38,18 @@ class AgentNodeExecutor implements NodeExecutorInterface
             $rawMessage = (string) $state->get('input', '');
         }
 
-        $message = StateTemplateInterpolator::interpolate($rawMessage, $state);
+        $definition = isset($data['agent_id']) ? AgentDefinition::findOrFail($data['agent_id']) : null;
+        $memory = $this->agentRunner->resolveMemoryConfig($definition, $this->memoryOverrideConfig($data, $definition));
+        $truncationEvents = [];
+        $message = StateTemplateInterpolator::interpolate($rawMessage, $state, $memory, $truncationEvents);
+        if ($truncationEvents !== []) {
+            $state->set('__studio_context_truncations', $truncationEvents);
+        }
         $attachments = is_array($state->get('attachments')) ? $state->get('attachments') : [];
         $userMessage = $this->messages->resolveMessageWithAttachments($message, $attachments);
         $threadKey = $state->get('__studio_thread_id');
         $threadKey = is_string($threadKey) && $threadKey !== '' ? $threadKey : null;
 
-        $definition = isset($data['agent_id']) ? AgentDefinition::findOrFail($data['agent_id']) : null;
         $parentRun = $this->resolveParentRun($state);
 
         $resume = $state->get('__tool_approval_resume');
@@ -81,6 +86,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
             );
             $state->set($outputKey, $response->structured);
             $this->captureRunUsage($state, $response->runId);
+            $this->flushContextTruncations($state, $response->runId);
 
             return 'default';
         }
@@ -120,6 +126,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
         $state->set($outputKey, $response->content);
         $this->emitToolEvents($nodeId, $response->toolEvents, $state);
         $this->captureRunUsage($state, $response->runId);
+        $this->flushContextTruncations($state, $response->runId);
 
         return 'default';
     }
@@ -279,8 +286,21 @@ class AgentNodeExecutor implements NodeExecutorInterface
         $state->set($outputKey, $response->content);
         $this->emitToolEvents($nodeId, $response->toolEvents, $state, $emittedKeys);
         $this->captureRunUsage($state, $response->runId);
+        $this->flushContextTruncations($state, $response->runId);
 
         return 'default';
+    }
+
+    protected function flushContextTruncations(WorkflowState $state, ?string $runId): void
+    {
+        $events = $state->get('__studio_context_truncations');
+        $state->set('__studio_context_truncations', null);
+
+        if (! is_array($events) || $events === []) {
+            return;
+        }
+
+        $this->agentRunner->attachContextTruncationsToRun($runId, $events);
     }
 
     protected function captureRunUsage(WorkflowState $state, ?string $runId): void

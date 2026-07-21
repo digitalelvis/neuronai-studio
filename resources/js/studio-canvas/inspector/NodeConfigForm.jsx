@@ -178,6 +178,45 @@ export default function NodeConfigForm({
                             />
                             Summarization override
                         </label>
+                        <Input
+                            type="number"
+                            min={1}
+                            value={data.budget_rag ?? ''}
+                            onChange={(e) =>
+                                updateField(
+                                    'budget_rag',
+                                    e.target.value === '' ? undefined : Number(e.target.value),
+                                )
+                            }
+                            placeholder="RAG budget (inherit)"
+                            disabled={readOnly}
+                        />
+                        <Input
+                            type="number"
+                            min={1}
+                            value={data.budget_tool_results ?? ''}
+                            onChange={(e) =>
+                                updateField(
+                                    'budget_tool_results',
+                                    e.target.value === '' ? undefined : Number(e.target.value),
+                                )
+                            }
+                            placeholder="Tool results budget (inherit)"
+                            disabled={readOnly}
+                        />
+                        <Input
+                            type="number"
+                            min={1}
+                            value={data.budget_state ?? ''}
+                            onChange={(e) =>
+                                updateField(
+                                    'budget_state',
+                                    e.target.value === '' ? undefined : Number(e.target.value),
+                                )
+                            }
+                            placeholder="State fields budget (inherit)"
+                            disabled={readOnly}
+                        />
                     </div>
                 </>
             )}

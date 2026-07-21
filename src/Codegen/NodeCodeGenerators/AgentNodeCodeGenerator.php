@@ -201,6 +201,9 @@ PHP;
             'driver' => 'string',
             'summarization_enabled' => 'bool',
             'summarization_threshold' => 'float',
+            'budget_rag' => 'int',
+            'budget_tool_results' => 'int',
+            'budget_state' => 'int',
         ];
 
         $lines = '';

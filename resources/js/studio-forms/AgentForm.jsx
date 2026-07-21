@@ -51,6 +51,21 @@ export default function AgentForm({ config }) {
             ? ''
             : String(initial.memory_summarization_threshold),
     );
+    const [memoryBudgetRag, setMemoryBudgetRag] = useState(
+        initial.memory_budget_rag === null || initial.memory_budget_rag === undefined
+            ? ''
+            : String(initial.memory_budget_rag),
+    );
+    const [memoryBudgetToolResults, setMemoryBudgetToolResults] = useState(
+        initial.memory_budget_tool_results === null || initial.memory_budget_tool_results === undefined
+            ? ''
+            : String(initial.memory_budget_tool_results),
+    );
+    const [memoryBudgetState, setMemoryBudgetState] = useState(
+        initial.memory_budget_state === null || initial.memory_budget_state === undefined
+            ? ''
+            : String(initial.memory_budget_state),
+    );
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
 
@@ -119,6 +134,9 @@ export default function AgentForm({ config }) {
                 memory_summarization_enabled: memorySummarizationEnabled,
                 memory_summarization_threshold:
                     memorySummarizationThreshold === '' ? null : Number(memorySummarizationThreshold),
+                memory_budget_rag: memoryBudgetRag === '' ? null : Number(memoryBudgetRag),
+                memory_budget_tool_results: memoryBudgetToolResults === '' ? null : Number(memoryBudgetToolResults),
+                memory_budget_state: memoryBudgetState === '' ? null : Number(memoryBudgetState),
             });
 
             const validationErrors = collectLivewireErrors(config.wireId);
@@ -287,6 +305,45 @@ export default function AgentForm({ config }) {
                                                     onChange={(e) => setMemorySummarizationThreshold(e.target.value)}
                                                     placeholder="0.8 (optional)"
                                                 />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2 border-t border-border pt-3">
+                                            <p className="text-sm font-medium">Prompt assembly budgets</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                Optional token caps for RAG chunks, tool results, and interpolated
+                                                state fields. Empty = disabled (pass-through).
+                                            </p>
+                                            <div className="grid gap-4 md:grid-cols-3">
+                                                <div className="space-y-2">
+                                                    <Label>RAG budget</Label>
+                                                    <Input
+                                                        type="number"
+                                                        min={1}
+                                                        value={memoryBudgetRag}
+                                                        onChange={(e) => setMemoryBudgetRag(e.target.value)}
+                                                        placeholder="Off"
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>Tool results budget</Label>
+                                                    <Input
+                                                        type="number"
+                                                        min={1}
+                                                        value={memoryBudgetToolResults}
+                                                        onChange={(e) => setMemoryBudgetToolResults(e.target.value)}
+                                                        placeholder="Off"
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>State fields budget</Label>
+                                                    <Input
+                                                        type="number"
+                                                        min={1}
+                                                        value={memoryBudgetState}
+                                                        onChange={(e) => setMemoryBudgetState(e.target.value)}
+                                                        placeholder="Off"
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                     </div>

@@ -53,4 +53,24 @@ class AgentNodeMemoryOverrideTest extends TestCase
 
         $this->assertSame([], $override);
     }
+
+    public function test_node_override_extracts_budget_keys(): void
+    {
+        $executor = app(AgentNodeExecutor::class);
+        $method = new ReflectionMethod($executor, 'memoryOverrideConfig');
+        $method->setAccessible(true);
+
+        $override = $method->invoke($executor, [
+            'budget_rag' => 200,
+            'budget_tool_results' => 400,
+            'budget_state' => 100,
+            'tool_max_runs' => 3,
+        ], null);
+
+        $this->assertSame([
+            'budget_rag' => 200,
+            'budget_tool_results' => 400,
+            'budget_state' => 100,
+        ], $override);
+    }
 }

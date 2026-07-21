@@ -12,18 +12,22 @@ use NeuronAI\Chat\Messages\Message;
 class StudioEloquentChatHistory extends EloquentChatHistory
 {
     use NonDestructiveHistoryTrim;
+    use ToolResultBudgeting;
 
     public function __construct(
         string $threadId,
         string $modelClass,
         int $contextWindow = 50000,
         protected bool $summarization = false,
+        ?int $toolResultBudget = null,
     ) {
         parent::__construct($threadId, $modelClass, $contextWindow);
+        $this->toolResultBudget = $toolResultBudget;
     }
 
     public function addMessage(Message $message): \NeuronAI\Chat\History\ChatHistoryInterface
     {
+        $message = $this->maybeTruncateToolResult($message);
         $this->history[] = $message;
 
         $this->trimHistory();

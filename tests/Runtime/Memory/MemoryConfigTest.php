@@ -153,4 +153,32 @@ class MemoryConfigTest extends TestCase
         $this->assertTrue($validator->errors()->has('memory_config.context_window'));
         $this->assertTrue($validator->errors()->has('memory_config.driver'));
     }
+
+    public function test_validation_rules_reject_invalid_budgets(): void
+    {
+        $validator = validator(
+            ['memory_config' => [
+                'budget_rag' => 0,
+                'budget_tool_results' => 'nope',
+                'budget_state' => -5,
+            ]],
+            MemoryConfig::validationRules('memory_config'),
+        );
+
+        $this->assertTrue($validator->fails());
+        $this->assertTrue($validator->errors()->has('memory_config.budget_rag'));
+        $this->assertTrue($validator->errors()->has('memory_config.budget_tool_results'));
+        $this->assertTrue($validator->errors()->has('memory_config.budget_state'));
+    }
+
+    public function test_merge_budget_override_alone_activates_budgeting(): void
+    {
+        $merged = MemoryConfig::fromArray(null)->merge(MemoryConfig::fromArray([
+            'budget_rag' => 200,
+        ]));
+
+        $this->assertSame(200, $merged->budgetRag());
+        $this->assertNull($merged->budgetToolResults());
+        $this->assertNull($merged->contextWindow());
+    }
 }
