@@ -41,6 +41,8 @@ sequenceDiagram
 
 Downstream nodes reference the reply with `{{human_response}}` in templates.
 
+When a Human node is visited again inside a **loop**, the previous reply does not auto-complete the node — each visit pauses for fresh input. Resume injects a one-shot passthrough so parallel/native re-entry still works.
+
 ## Resume flow
 
 1. Workflow reaches a Human node

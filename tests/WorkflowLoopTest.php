@@ -116,6 +116,35 @@ class WorkflowLoopTest extends TestCase
         $this->assertEquals('done', $resumed->output['result'] ?? null);
     }
 
+    public function test_human_inside_loop_awaits_on_every_visit(): void
+    {
+        $workflow = WorkflowDefinition::create([
+            'name' => 'Loop Multi HITL Flow',
+            'slug' => 'loop-multi-hitl-flow',
+            'graph' => $this->loopWithRepeatedHumanGraph(),
+        ]);
+
+        $runner = app(WorkflowRunner::class);
+        $paused = $runner->run($workflow, ['message' => 'run']);
+
+        $this->assertEquals('awaiting_input', $paused->status);
+        $this->assertEquals('human_1', $paused->awaiting_node_id);
+
+        $pausedAgain = $runner->resume($paused, 'human_1', 'first-reply');
+
+        $this->assertEquals('awaiting_input', $pausedAgain->status, 'Stale human_response must not auto-skip the next Human visit.');
+        $this->assertEquals('human_1', $pausedAgain->awaiting_node_id);
+        $this->assertStringContainsString('first-reply', (string) ($pausedAgain->checkpoint_state['state']['collected'] ?? ''));
+
+        $completed = $runner->resume($pausedAgain, 'human_1', 'DONE');
+
+        $this->assertEquals('completed', $completed->status);
+        $this->assertEquals('done', $completed->output['result'] ?? null);
+        $this->assertStringContainsString('first-reply', (string) ($completed->output['collected'] ?? ''));
+        $this->assertStringContainsString('DONE', (string) ($completed->output['collected'] ?? ''));
+        $this->assertSame(3, $completed->output['__loop_iterations']['loop_1'] ?? null);
+    }
+
     public function test_lead_qualification_loop_template_is_valid(): void
     {
         $workflow = app(TemplateInstaller::class)->installWorkflow('lead-qualification-loop');
@@ -254,6 +283,44 @@ class WorkflowLoopTest extends TestCase
                 ['id' => 'e2', 'source' => 'loop_1', 'target' => 'human_1', 'sourceHandle' => 'continue'],
                 ['id' => 'e3', 'source' => 'human_1', 'target' => 'set_ready', 'sourceHandle' => 'default'],
                 ['id' => 'e4', 'source' => 'set_ready', 'target' => 'loop_1', 'sourceHandle' => 'default'],
+                ['id' => 'e5', 'source' => 'loop_1', 'target' => 'set_done', 'sourceHandle' => 'exit'],
+                ['id' => 'e6', 'source' => 'set_done', 'target' => 'stop_1', 'sourceHandle' => 'default'],
+            ],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    protected function loopWithRepeatedHumanGraph(): array
+    {
+        return [
+            'version' => 1,
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                ['id' => 'loop_1', 'type' => 'loop', 'position' => ['x' => 200, 'y' => 0], 'data' => [
+                    'max_steps' => 5,
+                    'state_key' => 'collected',
+                    'operator' => 'contains',
+                    'value' => 'DONE',
+                ]],
+                ['id' => 'human_1', 'type' => 'human', 'position' => ['x' => 400, 'y' => 100], 'data' => [
+                    'prompt' => 'Provide the next value',
+                    'output_key' => 'human_response',
+                ]],
+                ['id' => 'set_append', 'type' => 'set_state', 'position' => ['x' => 600, 'y' => 100], 'data' => [
+                    'key' => 'collected',
+                    'append_from_key' => 'human_response',
+                ]],
+                ['id' => 'set_done', 'type' => 'set_state', 'position' => ['x' => 400, 'y' => 0], 'data' => [
+                    'key' => 'result',
+                    'value' => 'done',
+                ]],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 600, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'loop_1', 'sourceHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'loop_1', 'target' => 'human_1', 'sourceHandle' => 'continue'],
+                ['id' => 'e3', 'source' => 'human_1', 'target' => 'set_append', 'sourceHandle' => 'default'],
+                ['id' => 'e4', 'source' => 'set_append', 'target' => 'loop_1', 'sourceHandle' => 'default'],
                 ['id' => 'e5', 'source' => 'loop_1', 'target' => 'set_done', 'sourceHandle' => 'exit'],
                 ['id' => 'e6', 'source' => 'set_done', 'target' => 'stop_1', 'sourceHandle' => 'default'],
             ],

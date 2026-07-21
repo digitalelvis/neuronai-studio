@@ -60,8 +60,11 @@ class ForkNodeExecutor implements NodeExecutorInterface
             if ($pending !== null && (string) ($pending['branch_id'] ?? '') === (string) $branchId) {
                 $outputKey = (string) ($pending['output_key'] ?? 'human_response');
                 $pendingState = is_array($pending['state'] ?? null) ? $pending['state'] : [];
-                $seededState = array_merge($pendingState, [$outputKey => $pending['response'] ?? null]);
                 $entry = (string) ($pending['node_id'] ?? $entryNodeId);
+                $seededState = array_merge($pendingState, [
+                    $outputKey => $pending['response'] ?? null,
+                    HumanNodeExecutor::PASSTHROUGH_STATE_KEY => $entry,
+                ]);
 
                 $pendingCallables[$branchId] = function () use (
                     $forkId,

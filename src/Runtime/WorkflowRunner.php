@@ -16,6 +16,7 @@ use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\HumanInputRequiredException;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ParallelBranchInterruptException;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ToolApprovalRequiredException;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\WorkflowExecutionException;
+use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\HumanNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Support\ChatThreadKey;
 use DigitalElvis\NeuronAIStudio\Usage\UsageRecorder;
 use Illuminate\Support\Str;
@@ -504,6 +505,10 @@ class WorkflowRunner
         $outputKey = (string) ($checkpoint['output_key'] ?? 'human_response');
         $stateData = is_array($checkpoint['state'] ?? null) ? $checkpoint['state'] : [];
         $stateData[$outputKey] = $message;
+        $passthroughNodeId = (string) ($checkpoint['node_id'] ?? $run->awaiting_node_id ?? '');
+        if ($passthroughNodeId !== '') {
+            $stateData[HumanNodeExecutor::PASSTHROUGH_STATE_KEY] = $passthroughNodeId;
+        }
 
         if ($attachments !== []) {
             $stateData['attachments'] = $attachments;
