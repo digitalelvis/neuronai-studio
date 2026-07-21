@@ -22,6 +22,9 @@ class AgentNodeMemoryCodegenTest extends TestCase
                 'context_window' => 2000,
                 'driver' => 'in_memory',
                 'summarization_enabled' => true,
+                'budget_rag' => 800,
+                'budget_tool_results' => 1000,
+                'budget_state' => 500,
             ],
             'returnType' => 'default',
         ], $context);
@@ -29,6 +32,9 @@ class AgentNodeMemoryCodegenTest extends TestCase
         $this->assertStringContainsString("'context_window' => 2000,", $result['body']);
         $this->assertStringContainsString("'driver' => 'in_memory',", $result['body']);
         $this->assertStringContainsString("'summarization_enabled' => true,", $result['body']);
+        $this->assertStringContainsString("'budget_rag' => 800,", $result['body']);
+        $this->assertStringContainsString("'budget_tool_results' => 1000,", $result['body']);
+        $this->assertStringContainsString("'budget_state' => 500,", $result['body']);
     }
 
     public function test_emits_runtime_inherit_comment_when_no_override(): void
