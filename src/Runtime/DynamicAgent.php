@@ -64,6 +64,7 @@ class DynamicAgent extends Agent
             $history = new StudioInMemoryChatHistory(
                 contextWindow: $contextWindow,
                 summarization: $summarization,
+                toolResultBudget: $this->memoryConfig->budgetToolResults(),
             );
         } else {
             $history = new StudioEloquentChatHistory(
@@ -71,6 +72,7 @@ class DynamicAgent extends Agent
                 modelClass: StudioChatMessage::class,
                 contextWindow: $contextWindow,
                 summarization: $summarization,
+                toolResultBudget: $this->memoryConfig->budgetToolResults(),
             );
         }
 
