@@ -1,0 +1,154 @@
+{
+  "meta": {
+    "id": "parallel-refund-approval",
+    "name": "Parallel Refund Approval",
+    "description": "Forks a refund request into an LLM eligibility analysis and an approval-gated refund agent. The agent pauses for tool approval inside the parallel branch; after approve/reject, join merges both results and the triage composer drafts the customer-facing reply.",
+    "complexity": "advanced",
+    "category": "support",
+    "tags": ["parallel", "fork", "join", "tool-approval", "refund", "hitl"],
+    "agents": ["refund-actions-agent", "support-triage-composer"]
+  },
+  "graph": {
+    "version": 1,
+    "nodes": [
+      {
+        "id": "start_1",
+        "type": "start",
+        "position": { "x": 40, "y": 280 },
+        "data": {}
+      },
+      {
+        "id": "set_ticket",
+        "type": "set_state",
+        "position": { "x": 200, "y": 280 },
+        "data": {
+          "key": "ticket",
+          "from_key": "input"
+        }
+      },
+      {
+        "id": "fork_1",
+        "type": "fork",
+        "position": { "x": 400, "y": 280 },
+        "data": {
+          "join": "join_1"
+        }
+      },
+      {
+        "id": "llm_eligibility",
+        "type": "llm",
+        "position": { "x": 640, "y": 120 },
+        "data": {
+          "provider": "openai",
+          "model": "gpt-4o-mini",
+          "checkpoint": true,
+          "prompt": "You are a refund eligibility analyst. Assess ONLY whether the following support ticket looks eligible for a refund and note any risk factors.\n\nReturn at most 6 lines covering:\n- Eligibility: eligible | needs_review | not_eligible\n- Risk level: low | medium | high\n- Key policy signals (defective product, duplicate charge, within return window, etc.)\n- One-line recommendation for the refund operator\n\nDo not invent missing facts. Do not process the refund.\n\nTicket:\n{{ticket}}",
+          "output_key": "eligibility_analysis"
+        }
+      },
+      {
+        "id": "agent_refund",
+        "type": "agent",
+        "position": { "x": 640, "y": 400 },
+        "data": {
+          "agent_ref": "refund-actions-agent",
+          "require_tool_approval": true,
+          "checkpoint": true,
+          "message": "Process this refund request. Extract order_id, amount, and reason from the ticket and call issue_refund.\n\nTicket:\n{{ticket}}",
+          "output_key": "refund_result"
+        }
+      },
+      {
+        "id": "join_1",
+        "type": "join",
+        "position": { "x": 900, "y": 280 },
+        "data": {
+          "output_key": "analyses"
+        }
+      },
+      {
+        "id": "agent_compose",
+        "type": "agent",
+        "position": { "x": 1100, "y": 280 },
+        "data": {
+          "agent_ref": "support-triage-composer",
+          "checkpoint": true,
+          "message": "Support ticket:\n{{ticket}}\n\n--- Analysis 1: refund eligibility ---\n{{eligibility_analysis}}\n\n--- Analysis 2: refund action result ---\n{{refund_result}}\n\nProduce the triage summary and the suggested reply. Treat the refund action result as the source of truth for whether a refund was issued or rejected.",
+          "output_key": "triage_summary"
+        }
+      },
+      {
+        "id": "stop_1",
+        "type": "stop",
+        "position": { "x": 1320, "y": 280 },
+        "data": {}
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge_start_set",
+        "source": "start_1",
+        "target": "set_ticket",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_set_fork",
+        "source": "set_ticket",
+        "target": "fork_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_fork_join",
+        "source": "fork_1",
+        "target": "join_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_fork_eligibility",
+        "source": "fork_1",
+        "target": "llm_eligibility",
+        "sourceHandle": "eligibility",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_fork_refund",
+        "source": "fork_1",
+        "target": "agent_refund",
+        "sourceHandle": "refund",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_eligibility_join",
+        "source": "llm_eligibility",
+        "target": "join_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_refund_join",
+        "source": "agent_refund",
+        "target": "join_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_join_agent",
+        "source": "join_1",
+        "target": "agent_compose",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_agent_stop",
+        "source": "agent_compose",
+        "target": "stop_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      }
+    ],
+    "viewport": { "x": 0, "y": 0, "zoom": 1 }
+  }
+}
