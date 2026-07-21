@@ -1,10 +1,10 @@
 # State
 
-**Last Updated:** 2026-07-20
+**Last Updated:** 2026-07-21
 **Development line (features):** `v0.9.x` (M8 Execute — branch open)
 **Patch line:** `v0.8.x`
 **Latest published:** `v0.8.1` on Packagist / `main`
-**Current Work:** M8 **Execute** on `v0.9.x` (AD-022): `agent-memory-controls` ✅; next `context-engineering` → `parallel-tool-approval`. Observability polish (OBS-06, OTel) stays demoted.
+**Current Work:** M8 **Execute** on `v0.9.x` (AD-022): `agent-memory-controls` ✅; `context-engineering` ✅; next `parallel-tool-approval`. Observability polish (OBS-06, OTel) stays demoted.
 
 ---
 
@@ -240,7 +240,7 @@
 | Feature | Status | Notes |
 |---------|--------|-------|
 | `agent-memory-controls` (P1) | ✅ done | AMC-T1…T10 on `v0.9.x` — [spec](../features/agent-memory-controls/spec.md) · [tasks](../features/agent-memory-controls/tasks.md) |
-| `context-engineering` (P1) | specified | CTX-01…06; after AMC — [spec](../features/context-engineering/spec.md) |
+| `context-engineering` (P1) | ✅ done | CTX-T1…T9 on `v0.9.x` — [spec](../features/context-engineering/spec.md) · [tasks](../features/context-engineering/tasks.md) |
 | `parallel-tool-approval` (P2) | specified | PTA-01…04; Execute only after the P1s — [spec](../features/parallel-tool-approval/spec.md) |
 | LangSmith-specific | dropped | AD-021 |
 | Generic OTel | P3 deferred | when-needed only |
@@ -320,6 +320,8 @@
 | async-run-progress | 2026-07-17 | 0.7.x | ✅ Done |
 | interpreted-parallel-concurrency | 2026-07-17 | 0.7.x | ✅ Done |
 | external-observability | 2026-07-17 | 0.8.x | ✅ Done |
+| agent-memory-controls | 2026-07-20 | 0.9.x | ✅ Done |
+| context-engineering | 2026-07-21 | 0.9.x | ✅ Done |
 
 ---
 
@@ -403,4 +405,5 @@ Themes turned into specified features (AD-022 — Execute next on `v0.9.x`):
 - [x] Design + tasks M8 — design inline in tasks (skipped as phase); 26 tasks, index in [m8-performance-memory-context/tasks.md](../features/m8-performance-memory-context/tasks.md)
 - [x] Open `v0.9.x` from `main` (`v0.8.1`) for M8 Execute (AD-022)
 - [x] Execute M8 `agent-memory-controls` (AMC-T1…T10) on `v0.9.x`
-- [ ] Execute M8: `context-engineering` → `parallel-tool-approval` on `v0.9.x`
+- [x] Execute M8 `context-engineering` (CTX-T1…T9) on `v0.9.x`
+- [ ] Execute M8: `parallel-tool-approval` on `v0.9.x`

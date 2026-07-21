@@ -227,6 +227,21 @@ Export trace JSON:
 /neuronai-studio/traces/{id}/json
 ```
 
+### Context truncation spans
+
+When prompt-assembly budgets truncate RAG, tool results, or state fields, Studio writes a span with:
+
+| Field | Value |
+|-------|--------|
+| `type` | `context` |
+| `name` | `context_truncation` |
+| `output.kind` | `rag_context` / `tool_result` / `state_field` |
+| `output.field` or `output.tool` | Source name |
+| `output.tokens_before` / `tokens_after` | Estimate (~4 chars/token) |
+| `output.strategy` | `sentence` / `hard` |
+
+Spans are skipped when `NEURONAI_STUDIO_NATIVE_TRACING=false`, but truncation still applies. History compaction uses a separate `memory` / `history_compaction` span.
+
 ## Queue runner
 
 When async runs are enabled, workflows can execute in a Laravel queue worker instead of blocking the HTTP request. The test harness still uses synchronous SSE by default; async mode is API-first for production integrations and long-running graphs.

@@ -18,6 +18,9 @@ AI nodes invoke language models, agents, tools, and MCP connectors within a work
 | `context_window` | Optional per-node memory override (tokens). Empty inherits the agent's `memory_config` |
 | `driver` | Optional `eloquent` / `in_memory` override for this visit |
 | `summarization_enabled` | Optional compaction override for this visit |
+| `budget_rag` | Optional token cap for `rag_context` interpolation on this visit |
+| `budget_tool_results` | Optional token cap for Neuron tool-loop results on this visit |
+| `budget_state` | Optional per-field token cap for other interpolated state keys |
 
 Example message:
 
@@ -25,6 +28,16 @@ Example message:
 Customer inquiry: {{input}}
 Previous context: {{rag_context}}
 ```
+
+### Prompt assembly budgets
+
+When `budget_*` values are set on the agent or node, Studio truncates oversized prompt inputs before the model call:
+
+- **RAG** (`budget_rag`): applies to `rag_context` / `rag_context.context`; keeps whole `\n\n---\n\n` chunks first, then truncates the last chunk (sentence boundary when possible). Takes precedence over `budget_state` for RAG fields.
+- **Tool results** (`budget_tool_results`): caps each tool result before it is stored in chat history (persisted form matches what the model saw).
+- **State fields** (`budget_state`): caps each interpolated field independently (arrays/objects use their JSON form).
+
+Truncated text ends with an explicit `\n\n[truncated]` marker. Empty budgets leave content unchanged.
 
 ### Tool approval
 

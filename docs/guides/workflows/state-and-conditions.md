@@ -47,6 +47,17 @@ Customer tier: gold
 
 This works in agent messages, LLM prompts, tool inputs, and template JSON files.
 
+### Budgets (agent nodes)
+
+Agent nodes may apply optional token budgets from `memory_config` / node overrides when interpolating the message:
+
+| Budget | Applies to |
+|--------|------------|
+| `budget_rag` | `rag_context` fields only |
+| `budget_state` | Every other interpolated field (per field, not the whole message) |
+
+See [AI Nodes → Prompt assembly budgets](node-types/ai-nodes.md#prompt-assembly-budgets).
+
 ## Condition node
 
 The Condition node reads `state_key` from workflow state (default: `input`), applies an **operator**, and returns handle `true` or `false`.

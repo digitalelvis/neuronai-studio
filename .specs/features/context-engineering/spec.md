@@ -9,9 +9,9 @@ Everything that enters an agent prompt besides chat history is unbudgeted today:
 
 ## Goals
 
-- [ ] Enforce configurable token budgets for the three prompt-assembly inputs: RAG chunks (`rag_context`), tool results, and large state fields interpolated via `StateTemplateInterpolator`.
-- [ ] Resolve budgets per agent (defaults in the `memory_config` envelope) with per-node overrides in agent-node `data` (M6 pattern).
-- [ ] Record every truncation in trace span metadata — no silent context loss.
+- [x] Enforce configurable token budgets for the three prompt-assembly inputs: RAG chunks (`rag_context`), tool results, and large state fields interpolated via `StateTemplateInterpolator`.
+- [x] Resolve budgets per agent (defaults in the `memory_config` envelope) with per-node overrides in agent-node `data` (M6 pattern).
+- [x] Record every truncation in trace span metadata — no silent context loss.
 
 ## Out of Scope
 
@@ -141,12 +141,12 @@ Everything that enters an agent prompt besides chat history is unbudgeted today:
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| CTX-01 | P1: Budget RAG chunks | Tasks | Pending |
-| CTX-02 | P1: Budget tool results | Tasks | Pending |
-| CTX-03 | P1: Budget state fields | Tasks | Pending |
-| CTX-04 | P1: Defaults + overrides + UI | Tasks | Pending |
-| CTX-05 | P1: Truncation observability | Tasks | Pending |
-| CTX-06 | P2: Codegen + docs | Tasks | Pending |
+| CTX-01 | P1: Budget RAG chunks | Execute | Done |
+| CTX-02 | P1: Budget tool results | Execute | Done |
+| CTX-03 | P1: Budget state fields | Execute | Done |
+| CTX-04 | P1: Defaults + overrides + UI | Execute | Done |
+| CTX-05 | P1: Truncation observability | Execute | Done |
+| CTX-06 | P2: Codegen + docs | Execute | Done |
 
 **Coverage:** 6 total, 6 mapped to tasks ([tasks.md](./tasks.md)), 0 unmapped
 
@@ -154,7 +154,7 @@ Everything that enters an agent prompt besides chat history is unbudgeted today:
 
 ## Success Criteria
 
-- [ ] A workflow with oversized RAG + verbose tool + big state field completes with each input at/under its budget and truncations visible in span metadata.
-- [ ] With no budgets configured, prompt assembly is byte-identical to today (suite stays green).
-- [ ] Budgets configurable per agent and per node in Studio, override wins.
-- [ ] RAG truncation ends at sentence boundaries within tolerance in tests with prose content.
+- [x] A workflow with oversized RAG + verbose tool + big state field completes with each input at/under its budget and truncations visible in span metadata.
+- [x] With no budgets configured, prompt assembly is byte-identical to today (suite stays green).
+- [x] Budgets configurable per agent and per node in Studio, override wins.
+- [x] RAG truncation ends at sentence boundaries within tolerance in tests with prose content.
