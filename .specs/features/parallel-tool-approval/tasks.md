@@ -1,7 +1,7 @@
 # Parallel Tool Approval — Tasks
 
 **Spec**: [spec.md](./spec.md) · **Context**: [../m8-performance-memory-context/context.md](../m8-performance-memory-context/context.md)  
-**Status**: Specified (P2) — Execute on `v0.9.x` only after AMC + CTX  
+**Status**: ✅ Done (P2) — Execute on `v0.9.x` after AMC + CTX  
 **Linha**: `v0.9.x` · **Ordem M8**: 3/3  
 **Design**: skipped — inline design decisions noted per task.
 
@@ -25,8 +25,8 @@ Sequential by nature: exception shape → sequential catch → concurrent schedu
 **Reuses**: existing human-interrupt fields; serialization approach from AD-005 (class-based tools only)  
 **Done when**:
 
-- [ ] Exception round-trips serialize/restore with tool-approval payload
-- [ ] Existing human-in-branch tests unaffected
+- [x] Exception round-trips serialize/restore with tool-approval payload
+- [x] Existing human-in-branch tests unaffected
 
 **Tests**: unit  
 **Gate**: quick
@@ -41,7 +41,7 @@ Sequential by nature: exception shape → sequential catch → concurrent schedu
 **Reuses**: existing human-catch block (mirror, don't fork logic)  
 **Done when**:
 
-- [ ] Sequential fork with approval-gated agent raises `ParallelBranchInterruptException` (reason tool_approval), not a failed run
+- [x] Sequential fork with approval-gated agent raises `ParallelBranchInterruptException` (reason tool_approval), not a failed run
 
 **Tests**: feature (two-branch fork, sequential config)  
 **Gate**: quick
@@ -57,8 +57,8 @@ Sequential by nature: exception shape → sequential catch → concurrent schedu
 **Inline design**: deterministic choice when multiple branches interrupt in the same tick = lowest branch order first (documented in code); siblings' spans/tokens still metered.  
 **Done when**:
 
-- [ ] Concurrent fork pauses instead of failing; sibling results captured
-- [ ] Multiple simultaneous interrupts surface one at a time deterministically
+- [x] Concurrent fork pauses instead of failing; sibling results captured
+- [x] Multiple simultaneous interrupts surface one at a time deterministically
 
 **Tests**: feature (concurrent config; fake slow sibling)  
 **Gate**: full suite subset
@@ -73,8 +73,8 @@ Sequential by nature: exception shape → sequential catch → concurrent schedu
 **Reuses**: `pauseForToolApproval` (linear) + `kind: parallel` checkpoint from PE/L-003  
 **Done when**:
 
-- [ ] Run status/checkpoint verified in DB; SSE payload includes branch id + tool payload
-- [ ] Harness (Test tab) shows the approval prompt (existing tool-approval UI, branch-aware label)
+- [x] Run status/checkpoint verified in DB; SSE payload includes branch id + tool payload
+- [x] Harness (Test tab) shows the approval prompt (existing tool-approval UI, branch-aware label)
 
 **Tests**: feature (SSE assertion)  
 **Gate**: quick
@@ -89,10 +89,10 @@ Sequential by nature: exception shape → sequential catch → concurrent schedu
 **Reuses**: L-003 resume iteration (human-in-branch); existing resume endpoints (sync stream + async job) — no new endpoint  
 **Done when**:
 
-- [ ] Approve: pending branch's tool runs; join output identical to a no-pause run
-- [ ] Reject: rejected handle/feedback path taken; sibling results intact
-- [ ] Human-shaped resume payload (`response`) against a tool-approval pause → validation error
-- [ ] Unrestorable interrupt (Closure tool) → explicit error, branch not dropped silently
+- [x] Approve: pending branch's tool runs; join output identical to a no-pause run
+- [x] Reject: rejected handle/feedback path taken; sibling results intact
+- [x] Human-shaped resume payload (`response`) against a tool-approval pause → validation error
+- [x] Unrestorable interrupt (Closure tool) → explicit error, branch not dropped silently
 
 **Tests**: feature (approve, reject, invalid payload, async job resume)  
 **Gate**: full suite subset
@@ -107,8 +107,8 @@ Sequential by nature: exception shape → sequential catch → concurrent schedu
 **Reuses**: existing parallel-execution test helpers  
 **Done when**:
 
-- [ ] Three-branch / two-approval scenario green under both `parallel.concurrency` values
-- [ ] Mixed human + tool-approval fork green; checkpoints don't corrupt each other
+- [x] Three-branch / two-approval scenario green under both `parallel.concurrency` values
+- [x] Mixed human + tool-approval fork green; checkpoints don't corrupt each other
 
 **Tests**: feature (matrix)  
 **Gate**: full
@@ -122,8 +122,8 @@ Sequential by nature: exception shape → sequential catch → concurrent schedu
 **Depends on**: PTA-T6  
 **Done when**:
 
-- [ ] Docs rows from the ROADMAP M8 index updated; unsupported wording gone
-- [ ] Codegen snapshot for fork + approval-gated agent compiles
+- [x] Docs rows from the ROADMAP M8 index updated; unsupported wording gone
+- [x] Codegen snapshot for fork + approval-gated agent compiles
 
 **Tests**: codegen snapshot  
 **Gate**: docs

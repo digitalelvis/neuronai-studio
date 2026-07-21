@@ -11,9 +11,9 @@
 |---|---------|----------|-------|------:|--------|
 | 1 | [`agent-memory-controls`](../agent-memory-controls/tasks.md) | P1 | AMC-T1…T10 | 10 | done |
 | 2 | [`context-engineering`](../context-engineering/tasks.md) | P1 | CTX-T1…T9 | 9 | done |
-| 3 | [`parallel-tool-approval`](../parallel-tool-approval/tasks.md) | P2 | PTA-T1…T7 | 7 | specified |
+| 3 | [`parallel-tool-approval`](../parallel-tool-approval/tasks.md) | P2 | PTA-T1…T7 | 7 | done |
 
-**Total**: 26 atomic tasks (19 done)
+**Total**: 26 atomic tasks (26 done)
 
 ## Cross-feature critical path
 
