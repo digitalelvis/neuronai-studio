@@ -10,7 +10,7 @@ Human-in-the-Loop (HITL) pauses workflow execution at a **Human** node, waits fo
 | Missing information | Agent needs data only a human can provide |
 | Quality review | Classify intent → human verifies → route |
 
-The bundled `support-rag-hitl` template demonstrates a full HITL flow.
+The bundled `support-rag-hitl` template demonstrates a full HITL flow. For **tool approval inside a parallel fork**, use `parallel-refund-approval` (eligibility LLM + approval-gated refund agent).
 
 ## How it works
 
@@ -160,6 +160,14 @@ support-rag-hitl
 ```
 
 This workflow combines intent classification, RAG retrieval, and human approval before sending a response.
+
+For **tool approval inside a parallel branch**, install **Parallel Refund Approval**:
+
+```
+parallel-refund-approval
+```
+
+One fork branch runs an LLM eligibility check; the other runs `refund-actions-agent` with `require_tool_approval` and the class-based `IssueRefundTool`. Approve in the harness to continue past `awaiting_tool_approval`, then join + compose.
 
 ## Related code
 
