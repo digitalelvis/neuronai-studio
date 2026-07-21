@@ -42,6 +42,7 @@ class TemplateInstaller
             'model' => (string) config('neuronai-studio.default_model', 'gpt-4o-mini'),
             'instructions' => (string) ($definition['instructions'] ?? ''),
             'tools' => is_array($definition['tools'] ?? null) ? $definition['tools'] : [],
+            'require_tool_approval' => (bool) ($definition['require_tool_approval'] ?? false),
             'memory_config' => is_array($definition['memory_config'] ?? null) ? $definition['memory_config'] : null,
             'metadata' => is_array($definition['metadata'] ?? null) ? $definition['metadata'] : null,
         ]);
