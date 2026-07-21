@@ -60,11 +60,11 @@ sequenceDiagram
 | `tool_result` | Tool returned a result during agent step |
 | `rag_query` | RAG node completed retrieval (`query`, `knowledge_base_id`, `chunk_count`, `top_score`) |
 | `human_input_required` | Workflow paused at Human node |
-| `tool_approval_required` | Agent node paused before running a tool (`node_id`, `pending_tools`, `message`) |
-| `tool_approval_resolved` | Approval decision applied on resume (`approved: bool`) |
+| `tool_approval_required` | Agent node paused before running a tool (`node_id`, `pending_tools`, `message`; includes `branch_id` when paused inside a fork) |
+| `tool_approval_resolved` | Tool approval decision applied on resume (`approved`; includes `branch_id` for parallel pauses) |
 | `branch_started` | A parallel branch began (`fork_id`, `branch_id`) |
 | `branch_completed` | A parallel branch finished (`fork_id`, `branch_id`, `duration_ms`) |
-| `parallel_interrupt` | A parallel branch paused for human input (`fork_id`, `branch_id`, `node_id`, `reason`) |
+| `parallel_interrupt` | A parallel branch paused for human input or tool approval (`fork_id`, `branch_id`, `node_id`, `reason`) |
 | `trace_completed` | Run finished successfully with finalized token and estimated-cost totals |
 | `trace_failed` | Execution failure |
 
@@ -155,10 +155,12 @@ event: step_completed  (node_id: fork_1)
 event: step_started    (node_id: join_1, node_type: join)
 ```
 
-If a branch pauses (a Human node inside the branch), the runner persists a **parallel
-checkpoint** and emits `parallel_interrupt` followed by `human_input_required`. Resuming
-continues only the interrupted branch and re-runs any branches that had not started yet,
-reusing the results of branches that already completed. See
+If a branch pauses (a Human node or an approval-gated Agent inside the branch), the runner
+persists a **parallel checkpoint** (`kind: parallel`) and emits `parallel_interrupt` followed
+by `human_input_required` or `tool_approval_required` (including `branch_id`). Status is
+`awaiting_input` or `awaiting_tool_approval` to match the interrupt reason. Resuming continues
+only the interrupted branch and re-runs any branches that had not started yet, reusing the
+results of branches that already completed. See
 [Parallel branches](human-in-the-loop.md#parallel-branches).
 
 ## Node checkpoints
