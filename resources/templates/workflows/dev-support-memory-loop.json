@@ -1,0 +1,188 @@
+{
+  "meta": {
+    "id": "dev-support-memory-loop",
+    "name": "Dev Support Memory Loop",
+    "description": "Long-running tech-support loop with RAG, human-in-the-loop clarifications, multimodal attachments, tools, and per-node memory overrides. Select a knowledge base on the RAG node after installing; context is empty until configured.",
+    "complexity": "advanced",
+    "category": "support",
+    "tags": ["memory", "rag", "loop", "human", "tools", "multimodal"],
+    "agents": ["dev-support-specialist"]
+  },
+  "graph": {
+    "version": 1,
+    "nodes": [
+      {
+        "id": "start_1",
+        "type": "start",
+        "position": { "x": 60, "y": 240 },
+        "data": {}
+      },
+      {
+        "id": "set_ticket_message",
+        "type": "set_state",
+        "position": { "x": 220, "y": 240 },
+        "data": {
+          "key": "ticket_message",
+          "from_key": "input"
+        }
+      },
+      {
+        "id": "loop_1",
+        "type": "loop",
+        "position": { "x": 400, "y": 240 },
+        "data": {
+          "max_steps": 12,
+          "state_key": "support_reply",
+          "operator": "contains",
+          "value": "RESOLVED:"
+        }
+      },
+      {
+        "id": "rag_1",
+        "type": "rag",
+        "position": { "x": 600, "y": 360 },
+        "data": {
+          "query": "{{ticket_message}}",
+          "top_k": 5,
+          "output_key": "rag_context"
+        }
+      },
+      {
+        "id": "agent_support",
+        "type": "agent",
+        "position": { "x": 820, "y": 360 },
+        "data": {
+          "agent_ref": "dev-support-specialist",
+          "message": "Troubleshoot this support ticket using the conversation, any attachments, and knowledge-base context.\n\nConversation:\n{{ticket_message}}\n\nKnowledge base context:\n{{rag_context.context}}\n\nIf you can resolve the issue, explain briefly and end with:\nRESOLVED: <one-line summary>\n\nOtherwise ask ONE clarifying question for the most important missing fact. Do not invent data.",
+          "output_key": "support_reply",
+          "context_window": 6000,
+          "driver": "eloquent",
+          "summarization_enabled": true
+        }
+      },
+      {
+        "id": "cond_resolved",
+        "type": "condition",
+        "position": { "x": 1040, "y": 360 },
+        "data": {
+          "state_key": "support_reply",
+          "operator": "contains",
+          "value": "RESOLVED:"
+        }
+      },
+      {
+        "id": "human_clarify",
+        "type": "human",
+        "position": { "x": 1260, "y": 460 },
+        "data": {
+          "prompt": "{{support_reply}}",
+          "output_key": "human_response"
+        }
+      },
+      {
+        "id": "set_append_message",
+        "type": "set_state",
+        "position": { "x": 1260, "y": 560 },
+        "data": {
+          "key": "ticket_message",
+          "append_from_key": "human_response"
+        }
+      },
+      {
+        "id": "set_resolved",
+        "type": "set_state",
+        "position": { "x": 600, "y": 100 },
+        "data": {
+          "key": "result",
+          "value": "resolved"
+        }
+      },
+      {
+        "id": "stop_resolved",
+        "type": "stop",
+        "position": { "x": 820, "y": 100 },
+        "data": {}
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge_start_set",
+        "source": "start_1",
+        "target": "set_ticket_message",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_set_loop",
+        "source": "set_ticket_message",
+        "target": "loop_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_loop_continue",
+        "source": "loop_1",
+        "target": "rag_1",
+        "sourceHandle": "continue",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_rag_agent",
+        "source": "rag_1",
+        "target": "agent_support",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_agent_cond",
+        "source": "agent_support",
+        "target": "cond_resolved",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_cond_loop",
+        "source": "cond_resolved",
+        "target": "loop_1",
+        "sourceHandle": "true",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_cond_human",
+        "source": "cond_resolved",
+        "target": "human_clarify",
+        "sourceHandle": "false",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_human_append",
+        "source": "human_clarify",
+        "target": "set_append_message",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_append_loop",
+        "source": "set_append_message",
+        "target": "loop_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_loop_exit",
+        "source": "loop_1",
+        "target": "set_resolved",
+        "sourceHandle": "exit",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_set_stop",
+        "source": "set_resolved",
+        "target": "stop_resolved",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      }
+    ],
+    "viewport": { "x": 0, "y": 0, "zoom": 0.85 }
+  }
+}
