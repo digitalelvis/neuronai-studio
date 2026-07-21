@@ -103,6 +103,7 @@ class AgentRunner
             }
 
             $this->recordCompactionSpan($agent, $trace);
+            $this->recordContextTruncationSpans($agent, $trace);
             $this->markRunCompleted($run, [
                 'output' => ['content' => $handler->getMessage()->getContent()],
             ]);
@@ -210,6 +211,7 @@ class AgentRunner
             $content = $handler->getMessage()->getContent();
 
             $this->recordCompactionSpan($agent, $trace);
+            $this->recordContextTruncationSpans($agent, $trace);
             $this->markRunCompleted($run, [
                 'output' => ['content' => $content],
             ]);
@@ -268,6 +270,7 @@ class AgentRunner
 
             $content = $handler->getMessage()->getContent();
             $this->recordCompactionSpan($agent, $trace);
+            $this->recordContextTruncationSpans($agent, $trace);
             $this->markRunCompleted($run, [
                 'output' => ['content' => $content],
             ]);
@@ -481,6 +484,7 @@ class AgentRunner
         try {
             $result = $agent->structured($userMessage, $outputClass);
 
+            $this->recordContextTruncationSpans($agent, $trace);
             $this->markRunCompleted($run, [
                 'output' => ['structured' => $this->normalizeStructuredOutput($result)],
             ]);
@@ -582,6 +586,69 @@ class AgentRunner
             'finished_at' => now(),
             'duration_ms' => 0,
         ]);
+    }
+
+    /**
+     * Persist prompt-assembly truncation metadata as context spans when native tracing is on.
+     *
+     * @param  list<array<string, mixed>>  $extraEvents
+     */
+    public function recordContextTruncationSpans(DynamicAgent|null $agent, StudioTrace $trace, array $extraEvents = []): void
+    {
+        if (! (bool) config('neuronai-studio.observability.native_tracing', true)) {
+            return;
+        }
+
+        $events = $extraEvents;
+        if ($agent !== null) {
+            $history = $agent->getChatHistory();
+            if (is_object($history) && method_exists($history, 'pullToolTruncationEvents')) {
+                /** @var list<array<string, mixed>> $toolEvents */
+                $toolEvents = $history->pullToolTruncationEvents();
+                $events = array_merge($events, $toolEvents);
+            }
+        }
+
+        foreach ($events as $event) {
+            if (! is_array($event) || ($event['kind'] ?? null) === null) {
+                continue;
+            }
+
+            StudioTraceSpan::create([
+                'trace_id' => $trace->id,
+                'name' => 'context_truncation',
+                'type' => 'context',
+                'status' => 'completed',
+                'output' => $event,
+                'started_at' => now(),
+                'finished_at' => now(),
+                'duration_ms' => 0,
+            ]);
+        }
+    }
+
+    /**
+     * Attach interpolator truncation events to an existing run's trace.
+     *
+     * @param  list<array<string, mixed>>  $events
+     */
+    public function attachContextTruncationsToRun(?string $runId, array $events): void
+    {
+        if ($runId === null || $events === []) {
+            return;
+        }
+
+        if (! (bool) config('neuronai-studio.observability.native_tracing', true)) {
+            return;
+        }
+
+        $run = StudioRun::query()->find($runId);
+        $trace = $run?->traces()->latest('created_at')->first() ?? $run?->traces()->first();
+        if ($trace === null) {
+            return;
+        }
+
+        $this->recordContextTruncationSpans(null, $trace, $events);
     }
 
     /** @param  array<string, mixed>  $attributes */
