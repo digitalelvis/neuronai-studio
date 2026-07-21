@@ -112,6 +112,44 @@ class MemoryConfigResolutionTest extends TestCase
         $this->assertSame(4000, $prop->getValue($history));
     }
 
+    public function test_budget_resolution_none_agent_and_override(): void
+    {
+        $runner = app(AgentRunner::class);
+
+        $none = $runner->resolveMemoryConfig($this->makeAgentDefinition());
+        $this->assertNull($none->budgetRag());
+        $this->assertNull($none->budgetToolResults());
+        $this->assertNull($none->budgetState());
+
+        $agentDefault = $runner->resolveMemoryConfig($this->makeAgentDefinition([
+            'memory_config' => [
+                'budget_rag' => 800,
+                'budget_tool_results' => 1000,
+                'budget_state' => 500,
+            ],
+        ]));
+        $this->assertSame(800, $agentDefault->budgetRag());
+        $this->assertSame(1000, $agentDefault->budgetToolResults());
+        $this->assertSame(500, $agentDefault->budgetState());
+
+        $overrideWins = $runner->resolveMemoryConfig(
+            $this->makeAgentDefinition([
+                'memory_config' => ['budget_rag' => 800, 'budget_state' => 500],
+            ]),
+            ['budget_rag' => 200],
+        );
+        $this->assertSame(200, $overrideWins->budgetRag());
+        $this->assertSame(500, $overrideWins->budgetState());
+        $this->assertNull($overrideWins->budgetToolResults());
+
+        $overrideAlone = $runner->resolveMemoryConfig(
+            $this->makeAgentDefinition(),
+            ['budget_tool_results' => 300],
+        );
+        $this->assertNull($overrideAlone->budgetRag());
+        $this->assertSame(300, $overrideAlone->budgetToolResults());
+    }
+
     /**
      * @param  array<string, mixed>  $extra
      */
