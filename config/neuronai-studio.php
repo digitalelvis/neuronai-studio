@@ -395,6 +395,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Invoke Node Hooks
+    |--------------------------------------------------------------------------
+    |
+    | Fail-closed allowlist of FQCNs the canvas `invoke` node may call.
+    | Empty = no hooks allowed. Each class must be container-resolvable and
+    | implement __invoke(\NeuronAI\Workflow\WorkflowState $state): mixed.
+    |
+    */
+
+    'invoke_hooks' => [
+        // \App\Neuron\Hooks\EnrichLead::class,
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Node Types
     |--------------------------------------------------------------------------
     */
@@ -428,6 +443,11 @@ return [
         'set_state' => [
             'label' => 'Set State',
             'icon' => 'database',
+            'category' => 'logic',
+        ],
+        'invoke' => [
+            'label' => 'Invoke',
+            'icon' => 'code',
             'category' => 'logic',
         ],
         'tool' => [

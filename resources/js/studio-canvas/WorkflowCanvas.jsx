@@ -279,7 +279,9 @@ function WorkflowCanvasInner({
                       }
                     : type === 'agent'
                       ? { stream: true }
-                      : {};
+                      : type === 'invoke'
+                        ? { output_key: 'invoke_result' }
+                        : {};
 
             const node = buildFlowNode(type, nodePosition, nodeTypesMeta, defaultConfig);
             const nextNodes = [...currentNodes, node];

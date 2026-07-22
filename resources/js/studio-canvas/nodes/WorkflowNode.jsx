@@ -13,6 +13,7 @@ const ICONS = {
     'git-fork': '⋔',
     'git-merge': '⋈',
     database: '⛁',
+    code: '</>',
     wrench: '🔧',
     search: '🔍',
     clock: '⏱',

@@ -3,6 +3,7 @@
 namespace DigitalElvis\NeuronAIStudio\Tests;
 
 use DigitalElvis\NeuronAIStudio\Runtime\GraphValidator;
+use DigitalElvis\NeuronAIStudio\Tests\Fixtures\InvokeTestHook;
 
 class GraphValidatorTest extends TestCase
 {
@@ -71,6 +72,76 @@ class GraphValidatorTest extends TestCase
                 ['id' => 'e2', 'source' => 'loop_1', 'target' => 'set_1', 'sourceHandle' => 'continue'],
                 ['id' => 'e3', 'source' => 'set_1', 'target' => 'loop_1', 'sourceHandle' => 'default'],
                 ['id' => 'e4', 'source' => 'loop_1', 'target' => 'stop_1', 'sourceHandle' => 'exit'],
+            ],
+        ]);
+
+        $this->assertTrue($result['valid'], implode(' ', $result['errors']));
+    }
+
+    public function test_rejects_invoke_without_hook_class(): void
+    {
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate([
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                ['id' => 'invoke_1', 'type' => 'invoke', 'position' => ['x' => 100, 'y' => 0], 'data' => []],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'invoke_1', 'sourceHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'invoke_1', 'target' => 'stop_1', 'sourceHandle' => 'default'],
+            ],
+        ]);
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('hook_class', implode(' ', $result['errors']));
+    }
+
+    public function test_rejects_invoke_outside_allowlist(): void
+    {
+        config(['neuronai-studio.invoke_hooks' => []]);
+
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate([
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                [
+                    'id' => 'invoke_1',
+                    'type' => 'invoke',
+                    'position' => ['x' => 100, 'y' => 0],
+                    'data' => ['hook_class' => InvokeTestHook::class],
+                ],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'invoke_1', 'sourceHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'invoke_1', 'target' => 'stop_1', 'sourceHandle' => 'default'],
+            ],
+        ]);
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('invoke_hooks', implode(' ', $result['errors']));
+    }
+
+    public function test_accepts_allowlisted_invoke_hook(): void
+    {
+        config(['neuronai-studio.invoke_hooks' => [InvokeTestHook::class]]);
+
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate([
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                [
+                    'id' => 'invoke_1',
+                    'type' => 'invoke',
+                    'position' => ['x' => 100, 'y' => 0],
+                    'data' => ['hook_class' => InvokeTestHook::class],
+                ],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'invoke_1', 'sourceHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'invoke_1', 'target' => 'stop_1', 'sourceHandle' => 'default'],
             ],
         ]);
 
