@@ -11,6 +11,7 @@ use DigitalElvis\NeuronAIStudio\Runtime\BuilderWorkflowState;
 use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
 use DigitalElvis\NeuronAIStudio\Runtime\GraphValidator;
 use DigitalElvis\NeuronAIStudio\Runtime\McpToolResolver;
+use DigitalElvis\NeuronAIStudio\Runtime\Memory\MemoryConfig;
 use DigitalElvis\NeuronAIStudio\Runtime\MessageFactory;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\AgentNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorRegistry;
@@ -193,6 +194,7 @@ class AutonomousMultimodalAgentsTest extends TestCase
         $registry->method('resolve')->willReturn(new FakeAIProvider(new AssistantMessage('ok')));
 
         $agentRunner = $this->createMock(AgentRunner::class);
+        $agentRunner->method('resolveMemoryConfig')->willReturn(new MemoryConfig);
         $agentRunner->method('runInline')->willReturn(new \DigitalElvis\NeuronAIStudio\Runtime\AgentRunResult(
             'ok',
             [['name' => 'calculator', 'inputs' => ['expression' => '1+1'], 'result' => '2', 'type' => 'call']],
@@ -340,6 +342,7 @@ class AutonomousMultimodalAgentsTest extends TestCase
     protected function bindFakeAgentRunnerWithToolEvents(AssistantMessage $response, array $toolEvents): AgentRunner
     {
         $agentRunner = $this->createMock(AgentRunner::class);
+        $agentRunner->method('resolveMemoryConfig')->willReturn(new MemoryConfig);
         $agentRunner->method('runInline')->willReturn(new \DigitalElvis\NeuronAIStudio\Runtime\AgentRunResult(
             $response->getContent(),
             $toolEvents,
