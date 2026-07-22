@@ -2,11 +2,11 @@
 
 **North star:** Agentes multimodais autônomos com grafos de workflow cíclicos.
 
-**Development line (features):** `v0.9.x` (M8 Execute — branch open)  
+**Development line (features):** `v0.9.x` (post-M8)  
 **Patch line:** `v0.8.x`  
-**Latest published:** `v0.8.1` on Packagist / `main`  
+**Latest published:** `v0.9.0` on Packagist / `main`  
 **Última atualização:** 2026-07-21  
-**Etapa atual:** M7 ✅ (`v0.8.0`/`v0.8.1`). **M8 Execute** on `v0.9.x` (AD-022): `agent-memory-controls` ✅ → `context-engineering` ✅ → `parallel-tool-approval` ✅ — M8 complete. LangSmith removido; OTel genérico em P3.
+**Etapa atual:** M8 ✅ (`v0.9.0`). `canvas-invoke-node` ✅ on `v0.9.x`. TraceDetail bridge permanece deferred.
 
 ---
 
@@ -130,6 +130,8 @@ Foco total em **desempenho de agentes e workflows**: memória durável e control
 10. ~~Execute M8 `agent-memory-controls`~~ ✅
 11. ~~Execute M8 `context-engineering`~~ ✅
 12. ~~Execute M8: `parallel-tool-approval` em `v0.9.x`~~ ✅
+13. ~~Release `v0.9.0` (M8)~~ ✅
+14. ~~Execute `canvas-invoke-node` on `v0.9.x`~~ ✅ — [spec](../features/canvas-invoke-node/spec.md) · [tasks](../features/canvas-invoke-node/tasks.md)
 
 ---
 
@@ -160,6 +162,10 @@ Foco total em **desempenho de agentes e workflows**: memória durável e control
 | `async-run-progress` | ✅ done | 0.7.x |
 | `interpreted-parallel-concurrency` | ✅ done | 0.7.x |
 | `external-observability` | ✅ done | 0.8.0 |
+| `agent-memory-controls` | ✅ done | 0.9.x |
+| `context-engineering` | ✅ done | 0.9.x |
+| `parallel-tool-approval` | ✅ done | 0.9.x |
+| `canvas-invoke-node` | ✅ done | 0.9.x |
 
 ---
 
@@ -259,4 +265,5 @@ Mapeamento feature → arquivos `docs/` a criar/atualizar na implementação.
 - ~~M8 feature split (memory vs context vs runtime)~~ → **resolvido (AD-022):** `agent-memory-controls` + `context-engineering` (P1) + `parallel-tool-approval` (P2)
 - ~~Tool approval dentro de parallel branches~~ → **resolvido (AD-022):** feature P2 do M8 ([parallel-tool-approval](../features/parallel-tool-approval/spec.md))
 - Transporte `ShouldBroadcast` / Echo para progresso async (P3)
-- Nó `invoke` / hook allowlisted (P2 — fora do core M8)
+- ~~Nó `invoke` / hook allowlisted~~ → **done:** [`canvas-invoke-node`](../features/canvas-invoke-node/spec.md) on `v0.9.x`
+- TraceDetail ↔ Inspector/Langfuse URL bridge (P2 deferred)

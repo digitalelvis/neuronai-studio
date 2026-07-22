@@ -1,10 +1,10 @@
 # State
 
 **Last Updated:** 2026-07-21
-**Development line (features):** `v0.9.x` (M8 Execute — branch open)
+**Development line (features):** `v0.9.x` (post-M8)
 **Patch line:** `v0.8.x`
-**Latest published:** `v0.8.1` on Packagist / `main`
-**Current Work:** M8 **Execute** on `v0.9.x` (AD-022): `agent-memory-controls` ✅; `context-engineering` ✅; `parallel-tool-approval` ✅ — M8 complete. Observability polish (OBS-06, OTel) stays demoted.
+**Latest published:** `v0.9.0` on Packagist / `main`
+**Current Work:** `canvas-invoke-node` ✅ on `feat/canvas-invoke`. M8 complete (`v0.9.0`). TraceDetail bridge + OBS-06/OTel stay deferred.
 
 ---
 
@@ -322,6 +322,7 @@
 | external-observability | 2026-07-17 | 0.8.x | ✅ Done |
 | agent-memory-controls | 2026-07-20 | 0.9.x | ✅ Done |
 | context-engineering | 2026-07-21 | 0.9.x | ✅ Done |
+| canvas-invoke-node | 2026-07-21 | 0.9.x | ✅ Done |
 
 ---
 
@@ -338,7 +339,7 @@ Themes turned into specified features (AD-022 — Execute next on `v0.9.x`):
 
 ### P2 — Valuable later (not M8 core)
 
-- [ ] **Canvas `invoke` / allowlisted hook node** — simple workflow customization; deferred from M7
+- [x] **Canvas `invoke` / allowlisted hook node** — done: [`canvas-invoke-node`](../features/canvas-invoke-node/spec.md) on `v0.9.x`
 - [ ] Dedicated Usage page / advanced charts / filters (beyond M5 minimal Dashboard)
 - [ ] Multi-tenant / user attribution in usage
 - [ ] Embeddings / RAG cost as a separate line item
@@ -407,3 +408,4 @@ Themes turned into specified features (AD-022 — Execute next on `v0.9.x`):
 - [x] Execute M8 `agent-memory-controls` (AMC-T1…T10) on `v0.9.x`
 - [x] Execute M8 `context-engineering` (CTX-T1…T9) on `v0.9.x`
 - [x] Execute M8: `parallel-tool-approval` on `v0.9.x`
+- [x] Execute `canvas-invoke-node` (INV-T1…T6) on `v0.9.x`
