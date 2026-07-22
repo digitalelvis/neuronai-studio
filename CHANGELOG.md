@@ -1,5 +1,40 @@
 # Changelog
 
+# [0.9.0](https://github.com/digitalelvis/neuronai-studio/compare/v0.8.1...v0.9.0) (2026-07-22)
+
+
+### Bug Fixes
+
+* **workflow:** re-prompt Human nodes on loop revisits ([8fe86e1](https://github.com/digitalelvis/neuronai-studio/commit/8fe86e1f4623b87a375ee10524f70a1a9886fd16))
+
+
+### Features
+
+* **context:** add TokenBudgetTruncator for prompt assembly budgets ([30a603c](https://github.com/digitalelvis/neuronai-studio/commit/30a603cb7ae2e292bc6394f52fe2cae4dc973e49))
+* **context:** apply RAG token budget to rag_context interpolation ([d299157](https://github.com/digitalelvis/neuronai-studio/commit/d299157bf3d74d7269457db8e5abf8502d3e32f3))
+* **context:** cap tool results before they re-enter history ([904a932](https://github.com/digitalelvis/neuronai-studio/commit/904a9322db2f331d053ae6f0ac9bd408fa1a54bb))
+* **context:** emit budget overrides in agent node codegen ([fe4b5d2](https://github.com/digitalelvis/neuronai-studio/commit/fe4b5d288d047b3d5c91569e4c26dd3265e8df80))
+* **context:** expose prompt assembly budgets in agent and node UI ([e46ebd4](https://github.com/digitalelvis/neuronai-studio/commit/e46ebd4659907075072a10ff8178a41756364573))
+* **context:** record truncation events as context trace spans ([d0ee0b3](https://github.com/digitalelvis/neuronai-studio/commit/d0ee0b3f2704bf092b07b5a2ebb8a352625487fc))
+* **memory:** add agent-node memory overrides in the canvas inspector ([d896a67](https://github.com/digitalelvis/neuronai-studio/commit/d896a672ee6196c778af1386aaaaf057e530de55))
+* **memory:** add HistorySummarizer with dedicated model fallback ([8300471](https://github.com/digitalelvis/neuronai-studio/commit/8300471dde2bb1c4d328b55f88d0fe2d6f5f8018))
+* **memory:** add MemoryConfig envelope schema and validation ([8b37d5b](https://github.com/digitalelvis/neuronai-studio/commit/8b37d5b0e5c65118d67379076d8fddb8229c6cdf))
+* **memory:** compact over-budget history into a persisted summary ([a2d3062](https://github.com/digitalelvis/neuronai-studio/commit/a2d30623f7c520fd814e1fad4549b041e621ff46))
+* **memory:** expose memory controls on the agent editor form ([cd3ddd3](https://github.com/digitalelvis/neuronai-studio/commit/cd3ddd3d751291ddfc476fe005cd00a7165e29a7))
+* **memory:** honor in_memory driver even with thread id ([e04002e](https://github.com/digitalelvis/neuronai-studio/commit/e04002ee6e8b24b9ad72b77fb6e6ba7bebc7d10c))
+* **memory:** non-destructive history trim for Studio chats ([97876f5](https://github.com/digitalelvis/neuronai-studio/commit/97876f53a1c1a447263f021fb37472af50500545))
+* **memory:** record history compaction spans when native tracing is on ([ee12d03](https://github.com/digitalelvis/neuronai-studio/commit/ee12d036cd95846c67d1675b747fc3dcf43220e8))
+* **memory:** resolve memory_config in AgentRunner and node overrides ([31d3c2a](https://github.com/digitalelvis/neuronai-studio/commit/31d3c2ac69d9a3fd15da1eb612fedf1ea6998ef3))
+* **runtime:** catch tool approval inside fork branches ([b718fe7](https://github.com/digitalelvis/neuronai-studio/commit/b718fe73fb23c94a6bcbde3fc7d32453d7eff311))
+* **runtime:** extend parallel interrupt for tool approval ([bd7b1e1](https://github.com/digitalelvis/neuronai-studio/commit/bd7b1e107a7ee53d036316ff7162cacd92d3a875))
+* **runtime:** pause and resume parallel tool approval ([e656fe8](https://github.com/digitalelvis/neuronai-studio/commit/e656fe8114f384362060cdbcf0c80f02c4ca0dd6))
+* **runtime:** preserve sibling results on parallel interrupts ([13ded6d](https://github.com/digitalelvis/neuronai-studio/commit/13ded6d13b96126ebb4455eb9f2162b307587279))
+* **templates:** add Dev Support Memory Loop reference workflow ([a5cb98c](https://github.com/digitalelvis/neuronai-studio/commit/a5cb98c43383e6f9df97e53c7c7cef8a0e2c0c2c))
+* **templates:** add parallel-refund-approval workflow ([1f8cdd3](https://github.com/digitalelvis/neuronai-studio/commit/1f8cdd3fb4199631c1d1bbd1c34130a710b938ce))
+* **templates:** add refund-actions-agent with tool approval ([5ea28c7](https://github.com/digitalelvis/neuronai-studio/commit/5ea28c70f9f444f8ff7888db50c026f11e14fe1c))
+* **templates:** persist require_tool_approval on agent install ([fdd1369](https://github.com/digitalelvis/neuronai-studio/commit/fdd13696f606317db36fbfc4dae49b71aa7428f5))
+* **tools:** add class-based IssueRefundTool for approval demos ([13a033e](https://github.com/digitalelvis/neuronai-studio/commit/13a033ee328a38b9eb48ad220fb9a042b7dabf8e))
+
 ## [0.8.1](https://github.com/digitalelvis/neuronai-studio/compare/v0.8.0...v0.8.1) (2026-07-20)
 
 # [0.8.0](https://github.com/digitalelvis/neuronai-studio/compare/v0.7.0...v0.8.0) (2026-07-20)
