@@ -228,11 +228,17 @@ php artisan neuronai-studio:checkpoints:purge
 | `webhook_allowed_hosts` | `NEURONAI_STUDIO_WEBHOOK_ALLOWED_HOSTS` | `*` | Host allowlist for webhook tools |
 | `webhook_timeout` | `NEURONAI_STUDIO_WEBHOOK_TIMEOUT` | `15` | Request timeout in seconds |
 
+## Invoke hooks
+
+| Key | Default | Description |
+|-----|---------|-------------|
+| `invoke_hooks` | `[]` | Fail-closed FQCN allowlist for the canvas `invoke` node. Each class must be container-resolvable and implement `__invoke(WorkflowState): mixed`. |
+
 ## Node types
 
 | Key | Description |
 |-----|-------------|
-| `node_types` | Metadata (label, icon, category) for canvas palette |
+| `node_types` | Metadata (label, icon, category) for canvas palette (includes built-in `invoke`) |
 
 ## Attachments
 

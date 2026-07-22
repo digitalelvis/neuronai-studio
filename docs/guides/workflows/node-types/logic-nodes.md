@@ -75,6 +75,45 @@ flowchart TD
     Cond -->|false| Std[Standard Agent]
 ```
 
+## Invoke
+
+**Purpose:** Call an allowlisted host PHP hook from the graph and write the return value into workflow state.
+
+| Config | Description |
+|--------|-------------|
+| `hook_class` | Fully qualified class name (FQCN) that implements `__invoke(WorkflowState): mixed` |
+| `output_key` | State key for the return value (default: `invoke_result`) |
+
+The host must list each FQCN under `neuronai-studio.invoke_hooks` (fail-closed: empty list allows nothing). Studio resolves the class from the Laravel container and calls `__invoke` with the current `WorkflowState`.
+
+Use Invoke when you need a one-off host callback without registering a full custom node type. Prefer a [custom node type](../../../extending/custom-node-types.md) when you need a reusable palette entry, multiple handles, or rich inspector fields.
+
+```php
+// config/neuronai-studio.php
+'invoke_hooks' => [
+    \App\Neuron\Hooks\EnrichLead::class,
+],
+
+// app/Neuron/Hooks/EnrichLead.php
+namespace App\Neuron\Hooks;
+
+use NeuronAI\Workflow\WorkflowState;
+
+class EnrichLead
+{
+    public function __invoke(WorkflowState $state): array
+    {
+        return ['tier' => 'gold', 'email' => $state->get('email')];
+    }
+}
+```
+
+```mermaid
+flowchart LR
+    Start[Start] --> Invoke[Invoke EnrichLead]
+    Invoke --> Cond{Condition}
+```
+
 ## Fork
 
 **Purpose:** Run several branch subgraphs in parallel, then converge into a Join node.
