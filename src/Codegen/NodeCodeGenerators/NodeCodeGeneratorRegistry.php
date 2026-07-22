@@ -11,6 +11,7 @@ class NodeCodeGeneratorRegistry
     {
         $this->generators = [
             new SetStateNodeCodeGenerator,
+            new InvokeNodeCodeGenerator,
             new LlmNodeCodeGenerator,
             new AgentNodeCodeGenerator,
             new ConditionNodeCodeGenerator,
