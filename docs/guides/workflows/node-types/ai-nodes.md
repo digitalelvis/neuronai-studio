@@ -226,7 +226,7 @@ The canvas inspector binds a knowledge base, query, retrieval limits, and includ
 
 Create and ingest documents under **Knowledge Bases** in the studio (`/neuronai-studio/knowledge-bases`). Upload PDFs or paste text; ingestion chunks, embeds, and indexes content into the configured vector store driver.
 
-See [Agents Overview](../../agents/overview.md#knowledge-bases) and [Configuration](../../../reference/configuration.md#rag).
+See [Knowledge Bases](../../knowledge-bases/overview.md), [Retrieval](../../knowledge-bases/retrieval.md), and [Configuration](../../../reference/configuration.md#rag).
 
 ## AI node comparison
 

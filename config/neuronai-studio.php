@@ -524,17 +524,127 @@ return [
         // Root directory for file-based vector stores (one file per knowledge base).
         'storage_path' => env('NEURONAI_STUDIO_RAG_STORAGE_PATH', storage_path('app/neuronai-studio/rag')),
 
-        // Vector store drivers surfaced in the UI. Built-in resolvers: file, memory.
-        // Additional drivers (pinecone, qdrant, chroma, pgvector, ...) can be enabled
-        // by registering a resolver via VectorStoreFactory::extend().
+        // Disk + relative path for persisted source files (uploads and pasted text).
+        'documents_disk' => env('NEURONAI_STUDIO_RAG_DOCUMENTS_DISK', 'local'),
+        'documents_path' => env('NEURONAI_STUDIO_RAG_DOCUMENTS_PATH', 'neuronai-studio/knowledge-documents'),
+
+        // When true, Studio UI queues ingest/reindex jobs instead of running inline.
+        'async_ingest' => (bool) env('NEURONAI_STUDIO_RAG_ASYNC_INGEST', true),
+
+        // Vector store drivers surfaced in the UI. Built-in Neuron resolvers cover
+        // file/memory plus remote stores. Optional clients (elasticsearch,
+        // opensearch, typesense, phpvector) need a composer require — see suggest.
+        // Override or add drivers via VectorStoreFactory::extend().
+        // `fields` drive the knowledge-base edit form (stored in vector_store_config).
         'vector_stores' => [
             'file' => [
                 'label' => 'File (local disk)',
                 'description' => 'Persists embeddings to disk. Zero infra, ideal for local/dev.',
+                'fields' => [
+                    ['key' => 'directory', 'label' => 'Directory (optional)', 'type' => 'text', 'placeholder' => 'Uses rag.storage_path'],
+                ],
             ],
             'memory' => [
                 'label' => 'In-memory',
                 'description' => 'Volatile store, resets each request. Useful for tests.',
+                'fields' => [],
+            ],
+            'pinecone' => [
+                'label' => 'Pinecone',
+                'description' => 'Managed cloud vector database.',
+                'fields' => [
+                    ['key' => 'key_env', 'label' => 'API Key Env', 'type' => 'text', 'default' => 'PINECONE_API_KEY'],
+                    ['key' => 'index_url', 'label' => 'Index URL', 'type' => 'text', 'required' => true],
+                    ['key' => 'namespace', 'label' => 'Namespace', 'type' => 'text', 'default' => '__default__'],
+                ],
+            ],
+            'qdrant' => [
+                'label' => 'Qdrant',
+                'description' => 'Open-source vector DB. Provide a collection URL.',
+                'fields' => [
+                    ['key' => 'collection_url', 'label' => 'Collection URL', 'type' => 'text', 'required' => true, 'placeholder' => 'http://localhost:6333/collections/neuron-ai/'],
+                    ['key' => 'key_env', 'label' => 'API Key Env', 'type' => 'text', 'default' => 'QDRANT_API_KEY'],
+                    ['key' => 'dimension', 'label' => 'Vector Dimension', 'type' => 'number', 'default' => '1024'],
+                ],
+            ],
+            'chroma' => [
+                'label' => 'ChromaDB',
+                'description' => 'Open-source embedding database.',
+                'fields' => [
+                    ['key' => 'collection', 'label' => 'Collection', 'type' => 'text', 'required' => true, 'default' => 'neuron-ai'],
+                    ['key' => 'host', 'label' => 'Host', 'type' => 'text', 'default' => 'http://localhost:8000'],
+                    ['key' => 'key_env', 'label' => 'API Key Env', 'type' => 'text', 'default' => 'CHROMA_API_KEY'],
+                    ['key' => 'tenant', 'label' => 'Tenant', 'type' => 'text', 'default' => 'default_tenant'],
+                    ['key' => 'database', 'label' => 'Database', 'type' => 'text', 'default' => 'default_database'],
+                ],
+            ],
+            'weaviate' => [
+                'label' => 'Weaviate',
+                'description' => 'Vector search engine (local or cloud).',
+                'fields' => [
+                    ['key' => 'collection', 'label' => 'Collection', 'type' => 'text', 'required' => true],
+                    ['key' => 'host', 'label' => 'Host', 'type' => 'text', 'default' => 'http://localhost:8080'],
+                    ['key' => 'key_env', 'label' => 'API Key Env', 'type' => 'text', 'default' => 'WEAVIATE_API_KEY'],
+                ],
+            ],
+            'meilisearch' => [
+                'label' => 'Meilisearch',
+                'description' => 'Hybrid search engine used here as a vector store.',
+                'fields' => [
+                    ['key' => 'index_uid', 'label' => 'Index UID', 'type' => 'text', 'required' => true],
+                    ['key' => 'host', 'label' => 'Host', 'type' => 'text', 'default' => 'http://localhost:7700'],
+                    ['key' => 'key_env', 'label' => 'API Key Env', 'type' => 'text', 'default' => 'MEILISEARCH_API_KEY'],
+                    ['key' => 'embedder', 'label' => 'Embedder', 'type' => 'text', 'default' => 'default'],
+                    ['key' => 'dimension', 'label' => 'Vector Dimension', 'type' => 'number', 'default' => '1024'],
+                ],
+            ],
+            'mariadb' => [
+                'label' => 'MariaDB',
+                'description' => 'MariaDB ≥11.7 VECTOR column. Requires rag_documents table.',
+                'fields' => [
+                    ['key' => 'connection', 'label' => 'DB Connection', 'type' => 'text', 'placeholder' => 'Uses default connection'],
+                    ['key' => 'table', 'label' => 'Table', 'type' => 'text', 'default' => 'rag_documents'],
+                ],
+            ],
+            'elasticsearch' => [
+                'label' => 'Elasticsearch',
+                'description' => 'Requires composer require elasticsearch/elasticsearch.',
+                'package' => 'elasticsearch/elasticsearch',
+                'fields' => [
+                    ['key' => 'hosts', 'label' => 'Hosts (comma-separated)', 'type' => 'text', 'default' => 'http://localhost:9200'],
+                    ['key' => 'api_key_env', 'label' => 'API Key Env', 'type' => 'text', 'default' => 'ELASTICSEARCH_API_KEY'],
+                    ['key' => 'index', 'label' => 'Index', 'type' => 'text', 'default' => 'neuron-ai'],
+                ],
+            ],
+            'opensearch' => [
+                'label' => 'OpenSearch',
+                'description' => 'Requires composer require opensearch-project/opensearch-php.',
+                'package' => 'opensearch-project/opensearch-php',
+                'fields' => [
+                    ['key' => 'base_uri', 'label' => 'Base URI', 'type' => 'text', 'default' => 'http://localhost:9200'],
+                    ['key' => 'index', 'label' => 'Index', 'type' => 'text', 'default' => 'neuron-ai'],
+                ],
+            ],
+            'typesense' => [
+                'label' => 'Typesense',
+                'description' => 'Requires composer require typesense/typesense-php.',
+                'package' => 'typesense/typesense-php',
+                'fields' => [
+                    ['key' => 'api_key_env', 'label' => 'API Key Env', 'type' => 'text', 'default' => 'TYPESENSE_API_KEY'],
+                    ['key' => 'host', 'label' => 'Host', 'type' => 'text', 'default' => 'localhost'],
+                    ['key' => 'port', 'label' => 'Port', 'type' => 'text', 'default' => '8108'],
+                    ['key' => 'protocol', 'label' => 'Protocol', 'type' => 'text', 'default' => 'http'],
+                    ['key' => 'collection', 'label' => 'Collection', 'type' => 'text', 'default' => 'neuron-ai'],
+                    ['key' => 'vector_dimension', 'label' => 'Vector Dimension', 'type' => 'number', 'default' => '1024'],
+                ],
+            ],
+            'phpvector' => [
+                'label' => 'PHPVector',
+                'description' => 'Pure-PHP HNSW store. Requires composer require neuron-core/php-vector.',
+                'package' => 'neuron-core/php-vector',
+                'fields' => [
+                    ['key' => 'path', 'label' => 'Database Path', 'type' => 'text', 'placeholder' => 'Auto under rag.storage_path/phpvector'],
+                ],
             ],
         ],
 

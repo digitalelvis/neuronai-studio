@@ -232,6 +232,11 @@ export default function ToolBuilder({ config }) {
                                                 No knowledge bases yet. Create one under Knowledge Bases first.
                                             </p>
                                         )}
+                                        {knowledgeBases.length > 0 && (
+                                            <p className="text-xs text-muted-foreground">
+                                                After saving, bind this tool on an agent so the model can search on demand.
+                                            </p>
+                                        )}
                                         {fieldError(fieldErrors, 'knowledgeBaseId') && (
                                             <p className="text-xs text-destructive">{fieldError(fieldErrors, 'knowledgeBaseId')}</p>
                                         )}

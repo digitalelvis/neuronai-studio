@@ -3,6 +3,7 @@
 namespace DigitalElvis\NeuronAIStudio\Http\Livewire\KnowledgeBases;
 
 use DigitalElvis\NeuronAIStudio\Models\KnowledgeBase;
+use DigitalElvis\NeuronAIStudio\Runtime\Rag\DocumentIngestService;
 use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
 use Livewire\Component;
 
@@ -10,9 +11,10 @@ class Index extends Component
 {
     public string $filter = '';
 
-    public function delete(int $knowledgeBaseId): void
+    public function delete(int $knowledgeBaseId, DocumentIngestService $ingest): void
     {
-        KnowledgeBase::findOrFail($knowledgeBaseId)->delete();
+        $knowledgeBase = KnowledgeBase::findOrFail($knowledgeBaseId);
+        $ingest->removeKnowledgeBase($knowledgeBase);
         session()->flash('success', 'Knowledge base deleted.');
     }
 

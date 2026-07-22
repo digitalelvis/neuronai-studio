@@ -51,6 +51,29 @@ class KnowledgeBaseCrudTest extends TestCase
         $this->assertSame(0.25, $kb->retrieval_defaults['threshold']);
     }
 
+    public function test_create_persists_vector_store_config_fields(): void
+    {
+        Livewire::test(Edit::class)
+            ->set('name', 'Pinecone Docs')
+            ->set('embeddingsProvider', 'fake')
+            ->set('vectorStoreDriver', 'pinecone')
+            ->set('vectorStoreConfig', [
+                'key_env' => 'PINECONE_API_KEY',
+                'index_url' => 'https://example.pinecone.io',
+                'namespace' => 'studio',
+            ])
+            ->call('save')
+            ->assertHasNoErrors()
+            ->assertRedirect();
+
+        $kb = KnowledgeBase::firstWhere('slug', 'pinecone-docs');
+
+        $this->assertNotNull($kb);
+        $this->assertSame('pinecone', $kb->vector_store_driver);
+        $this->assertSame('https://example.pinecone.io', $kb->vector_store_config['index_url']);
+        $this->assertSame('studio', $kb->vector_store_config['namespace']);
+    }
+
     public function test_create_requires_name(): void
     {
         Livewire::test(Edit::class)

@@ -64,6 +64,7 @@ The studio stores definitions in your database. At runtime, `AgentRunner` and `W
 | Dashboard overview | [Dashboard](guides/dashboard.md) |
 | Agent CRUD & playground | [Agents](guides/agents/overview.md) |
 | Custom & webhook tools | [Tools](guides/tools/overview.md) |
+| Knowledge bases & RAG | [Knowledge Bases](guides/knowledge-bases/overview.md) |
 | MCP server connectors | [MCP Servers](guides/mcp-servers/overview.md) |
 | Visual workflow editor | [Workflows](guides/workflows/overview.md) |
 | Pre-built templates | [Templates](guides/templates.md) |

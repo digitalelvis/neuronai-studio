@@ -41,6 +41,8 @@ abstract class TestCase extends Orchestra
             'model' => 'gpt-4o-mini',
             'parameters' => [],
         ]);
+        // Sync ingest in tests so Livewire assertions see completed documents immediately.
+        $app['config']->set('neuronai-studio.rag.async_ingest', false);
     }
 
     protected function defineDatabaseMigrations(): void

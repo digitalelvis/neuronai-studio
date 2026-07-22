@@ -257,6 +257,9 @@ In workflow runs, attachments uploaded in the test harness are stored in `state.
 |-----|-----|---------|-------------|
 | `rag.default_vector_store` | `NEURONAI_STUDIO_RAG_VECTOR_STORE` | `file` | Default vector store driver |
 | `rag.storage_path` | `NEURONAI_STUDIO_RAG_STORAGE_PATH` | `storage/app/neuronai-studio/rag` | Root path for file-based stores |
+| `rag.documents_disk` | `NEURONAI_STUDIO_RAG_DOCUMENTS_DISK` | `local` | Disk for persisted source files |
+| `rag.documents_path` | `NEURONAI_STUDIO_RAG_DOCUMENTS_PATH` | `neuronai-studio/knowledge-documents` | Relative path for uploads / pasted text |
+| `rag.async_ingest` | `NEURONAI_STUDIO_RAG_ASYNC_INGEST` | `true` | Queue ingest/reindex jobs from the UI |
 | `rag.default_embeddings_provider` | `NEURONAI_STUDIO_RAG_EMBEDDINGS_PROVIDER` | `openai` | Default embeddings provider |
 | `rag.default_embeddings_model` | `NEURONAI_STUDIO_RAG_EMBEDDINGS_MODEL` | `text-embedding-3-small` | Default embeddings model |
 | `rag.retrieval.top_k` | `NEURONAI_STUDIO_RAG_TOP_K` | `5` | Default chunks to retrieve |
@@ -264,14 +267,19 @@ In workflow runs, attachments uploaded in the test harness are stored in `state.
 | `rag.chunk.max_words` | `NEURONAI_STUDIO_RAG_CHUNK_MAX_WORDS` | `200` | Ingest chunk size |
 | `rag.chunk.overlap_words` | `NEURONAI_STUDIO_RAG_CHUNK_OVERLAP_WORDS` | `20` | Chunk overlap |
 
+Built-in drivers: `file`, `memory`, `pinecone`, `qdrant`, `chroma`, `weaviate`, `meilisearch`, `mariadb`, `elasticsearch`, `opensearch`, `typesense`, `phpvector`. See [Vector stores](../guides/knowledge-bases/vector-stores.md).
+
 Register custom vector stores or embeddings providers at runtime:
 
 ```php
 use DigitalElvis\NeuronAIStudio\Runtime\Rag\VectorStoreFactory;
 use DigitalElvis\NeuronAIStudio\Runtime\Rag\EmbeddingsFactory;
 
-VectorStoreFactory::extend('pinecone', fn () => /* ... */);
-EmbeddingsFactory::extend('custom', fn () => /* ... */);
+app(VectorStoreFactory::class)->extend('my-store', function ($kb, array $options) {
+    return new \App\Neuron\MyVectorStore(/* ... */);
+});
+
+app(EmbeddingsFactory::class)->extend('custom', fn () => /* ... */);
 ```
 
 Each knowledge base may override provider, model, and vector store driver independently of these defaults.

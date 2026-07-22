@@ -58,6 +58,12 @@
             }
         }
     },
+    "suggest": {
+        "elasticsearch/elasticsearch": "Required for the Elasticsearch knowledge-base vector store driver.",
+        "opensearch-project/opensearch-php": "Required for the OpenSearch knowledge-base vector store driver.",
+        "typesense/typesense-php": "Required for the Typesense knowledge-base vector store driver.",
+        "neuron-core/php-vector": "Required for the PHPVector (HNSW) knowledge-base vector store driver."
+    },
     "minimum-stability": "stable",
     "prefer-stable": true,
     "config": {
