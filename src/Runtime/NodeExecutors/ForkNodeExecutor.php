@@ -5,6 +5,7 @@ namespace DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors;
 use DigitalElvis\NeuronAIStudio\Runtime\BuilderWorkflowState;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\HumanInputRequiredException;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ParallelBranchInterruptException;
+use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ToolApprovalRequiredException;
 use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
 use DigitalElvis\NeuronAIStudio\Runtime\Parallel\ConcurrentBranchScheduler;
 use DigitalElvis\NeuronAIStudio\Runtime\Parallel\SerializingEmitter;
@@ -58,10 +59,9 @@ class ForkNodeExecutor implements NodeExecutorInterface
             }
 
             if ($pending !== null && (string) ($pending['branch_id'] ?? '') === (string) $branchId) {
-                $outputKey = (string) ($pending['output_key'] ?? 'human_response');
                 $pendingState = is_array($pending['state'] ?? null) ? $pending['state'] : [];
-                $seededState = array_merge($pendingState, [$outputKey => $pending['response'] ?? null]);
                 $entry = (string) ($pending['node_id'] ?? $entryNodeId);
+                $seededState = $this->seedPendingBranchState($pending, $pendingState, $entry);
 
                 $pendingCallables[$branchId] = function () use (
                     $forkId,
@@ -216,10 +216,25 @@ class ForkNodeExecutor implements NodeExecutorInterface
                 $exception->nodeId,
                 $exception->outputKey,
                 $exception->prompt,
-                'human',
+                ParallelBranchInterruptException::REASON_HUMAN,
                 $this->snapshot($isolated),
                 $results,
                 $outputs,
+            );
+        } catch (ToolApprovalRequiredException $exception) {
+            throw new ParallelBranchInterruptException(
+                $forkId,
+                $joinId,
+                $branchId,
+                $exception->nodeId,
+                '',
+                $exception->approvalMessage,
+                ParallelBranchInterruptException::REASON_TOOL_APPROVAL,
+                $this->snapshot($isolated),
+                $results,
+                $outputs,
+                $exception->pendingTools,
+                $exception->serializedInterrupt,
             );
         }
 
@@ -234,6 +249,35 @@ class ForkNodeExecutor implements NodeExecutorInterface
         ]);
 
         return [$results, $outputs];
+    }
+
+    /**
+     * Build the isolated state used to resume a pending branch after a
+     * parallel interrupt (human reply or tool-approval decision).
+     *
+     * @param  array<string, mixed>  $pending
+     * @param  array<string, mixed>  $pendingState
+     * @return array<string, mixed>
+     */
+    protected function seedPendingBranchState(array $pending, array $pendingState, string $entry): array
+    {
+        if (($pending['reason'] ?? ParallelBranchInterruptException::REASON_HUMAN) === ParallelBranchInterruptException::REASON_TOOL_APPROVAL) {
+            return array_merge($pendingState, [
+                '__tool_approval_resume' => [
+                    'node_id' => $entry,
+                    'decision' => (string) ($pending['decision'] ?? 'approve'),
+                    'feedback' => is_string($pending['feedback'] ?? null) ? $pending['feedback'] : '',
+                    'interrupt' => (string) ($pending['interrupt'] ?? ''),
+                ],
+            ]);
+        }
+
+        $outputKey = (string) ($pending['output_key'] ?? 'human_response');
+
+        return array_merge($pendingState, [
+            $outputKey => $pending['response'] ?? null,
+            HumanNodeExecutor::PASSTHROUGH_STATE_KEY => $entry,
+        ]);
     }
 
     /**

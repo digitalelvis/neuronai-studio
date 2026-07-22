@@ -65,15 +65,22 @@ Each agent playground session uses a UUID-based thread. Threads persist message 
 
 - **New thread** — starts a fresh conversation
 - **Switch thread** — loads persisted history for that UUID
-- **Context window** — older messages are trimmed based on `chat_history_context_window` in config
+- **Context window** — older messages are trimmed (or compacted into a summary when summarization is enabled) based on the agent's `memory_config.context_window`, falling back to `chat_history_context_window` in config
 
-Configure the context window:
+Configure the global default context window:
 
 ```env
 NEURONAI_STUDIO_CHAT_HISTORY_CONTEXT_WINDOW=150000
 ```
 
-Set this ~5–10% below your model's token limit to leave room for the system prompt and tool payloads.
+Optional dedicated summarizer model for compaction:
+
+```env
+NEURONAI_STUDIO_SUMMARIZER_PROVIDER=openai
+NEURONAI_STUDIO_SUMMARIZER_MODEL=gpt-4o-mini
+```
+
+When unset, compaction uses the agent's own provider/model. Set the per-agent window/driver/summarization on the agent form (or override on an Agent node). Set this ~5–10% below your model's token limit to leave room for the system prompt and tool payloads.
 
 ## Workflow threads
 

@@ -16,6 +16,7 @@ use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\HumanInputRequiredException;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ParallelBranchInterruptException;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ToolApprovalRequiredException;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\WorkflowExecutionException;
+use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\HumanNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Support\ChatThreadKey;
 use DigitalElvis\NeuronAIStudio\Usage\UsageRecorder;
 use Illuminate\Support\Str;
@@ -283,6 +284,12 @@ class WorkflowRunner
 
     public function resumeInterpreted(StudioRun $run, string $nodeId, string $message, ?callable $emitter = null, array $attachments = [], ?string $approval = null): StudioRun
     {
+        if ($approval === null && $this->checkpointRequiresToolApproval($run)) {
+            throw new \InvalidArgumentException(
+                'Workflow run is awaiting tool approval; resume with approval=approve|reject.',
+            );
+        }
+
         if ($approval !== null) {
             return $this->resumeToolApproval($run, $nodeId, $approval, $message, $emitter);
         }
@@ -370,6 +377,12 @@ class WorkflowRunner
         $checkpoint = $run->checkpoint_state ?? [];
         $parallel = is_array($checkpoint['parallel'] ?? null) ? $checkpoint['parallel'] : [];
 
+        if (($parallel['reason'] ?? ParallelBranchInterruptException::REASON_HUMAN) === ParallelBranchInterruptException::REASON_TOOL_APPROVAL) {
+            throw new \InvalidArgumentException(
+                'Workflow run is awaiting tool approval; resume with approval=approve|reject.',
+            );
+        }
+
         $graphContext = new GraphContext(
             $workflow->graph['nodes'] ?? [],
             $workflow->graph['edges'] ?? [],
@@ -389,6 +402,7 @@ class WorkflowRunner
                 'branch_id' => (string) ($parallel['pending_branch'] ?? ''),
                 'node_id' => (string) ($parallel['pending_node'] ?? ''),
                 'output_key' => (string) ($parallel['output_key'] ?? 'human_response'),
+                'reason' => ParallelBranchInterruptException::REASON_HUMAN,
                 'response' => $message,
                 'state' => is_array($parallel['pending_state'] ?? null) ? $parallel['pending_state'] : [],
             ],
@@ -438,8 +452,13 @@ class WorkflowRunner
         string $feedback,
         ?callable $emitter,
     ): StudioRun {
-        $workflow = $run->thread->entity ?? WorkflowDefinition::findOrFail($run->input['workflow_definition_id'] ?? null);
         $checkpoint = $run->checkpoint_state ?? [];
+
+        if (($checkpoint['kind'] ?? null) === 'parallel') {
+            return $this->resumeParallelToolApproval($run, $nodeId, $approval, $feedback, $emitter);
+        }
+
+        $workflow = $run->thread->entity ?? WorkflowDefinition::findOrFail($run->input['workflow_definition_id'] ?? null);
 
         $graphContext = new GraphContext(
             $workflow->graph['nodes'] ?? [],
@@ -486,6 +505,97 @@ class WorkflowRunner
             return $this->finalizeRun($run, $trace, $finalState);
         } catch (HumanInputRequiredException $exception) {
             return $this->pauseForHumanInput($run, $exception, $state, $emitter);
+        } catch (ParallelBranchInterruptException $exception) {
+            return $this->pauseForParallelInterrupt($run, $exception, $state, $emitter);
+        } catch (ToolApprovalRequiredException $exception) {
+            return $this->pauseForToolApproval($run, $exception, $state, $emitter);
+        } catch (Throwable $exception) {
+            throw new WorkflowExecutionException(
+                $this->finalizeFailedRun($run, $trace, $state, $exception),
+                $exception,
+            );
+        }
+    }
+
+    protected function resumeParallelToolApproval(
+        StudioRun $run,
+        string $nodeId,
+        string $approval,
+        string $feedback,
+        ?callable $emitter,
+    ): StudioRun {
+        $workflow = $run->thread->entity ?? WorkflowDefinition::findOrFail($run->input['workflow_definition_id'] ?? null);
+        $checkpoint = $run->checkpoint_state ?? [];
+        $parallel = is_array($checkpoint['parallel'] ?? null) ? $checkpoint['parallel'] : [];
+
+        $serializedInterrupt = (string) ($parallel['interrupt'] ?? $checkpoint['interrupt'] ?? '');
+        if ($serializedInterrupt === '') {
+            throw new \RuntimeException(
+                'Cannot resume parallel tool approval: serialized interrupt is missing. Class-based tools are required for approval across a pause.',
+            );
+        }
+
+        $graphContext = new GraphContext(
+            $workflow->graph['nodes'] ?? [],
+            $workflow->graph['edges'] ?? [],
+        );
+
+        $forkId = (string) ($parallel['fork_id'] ?? '');
+        $pendingNodeId = $nodeId !== ''
+            ? $nodeId
+            : (string) ($parallel['pending_node'] ?? $run->awaiting_node_id ?? '');
+
+        $stateData = is_array($checkpoint['state'] ?? null) ? $checkpoint['state'] : [];
+        unset($stateData['__steps']);
+
+        $stateData['__parallel_resume'] = [
+            'fork_id' => $forkId,
+            'join_id' => (string) ($parallel['join_id'] ?? ''),
+            'completed' => is_array($parallel['completed'] ?? null) ? $parallel['completed'] : [],
+            'completed_outputs' => is_array($parallel['completed_outputs'] ?? null) ? $parallel['completed_outputs'] : [],
+            'pending' => [
+                'branch_id' => (string) ($parallel['pending_branch'] ?? ''),
+                'node_id' => $pendingNodeId,
+                'reason' => ParallelBranchInterruptException::REASON_TOOL_APPROVAL,
+                'decision' => $approval,
+                'feedback' => $feedback,
+                'interrupt' => $serializedInterrupt,
+                'state' => is_array($parallel['pending_state'] ?? null) ? $parallel['pending_state'] : [],
+            ],
+        ];
+
+        $state = new BuilderWorkflowState($graphContext, null, $stateData);
+
+        if ($emitter !== null) {
+            $state->stepEmitter = fn (string $event, array $data) => $emitter($event, array_merge($data, [
+                'trace_id' => $run->id,
+            ]));
+        }
+
+        $run->update([
+            'status' => 'running',
+        ]);
+
+        $trace = $run->traces()->latest()->first() ?? StudioTrace::create(['run_id' => $run->id]);
+
+        if ($emitter !== null) {
+            $emitter('tool_approval_resolved', [
+                'trace_id' => $run->id,
+                'node_id' => $pendingNodeId,
+                'branch_id' => (string) ($parallel['pending_branch'] ?? ''),
+                'approved' => $approval !== 'reject',
+            ]);
+        }
+
+        try {
+            $state->set('__current_node_id', $forkId);
+            $finalState = $this->executionLoop->runFromNode($forkId, $graphContext, $state);
+
+            return $this->finalizeRun($run, $trace, $finalState);
+        } catch (HumanInputRequiredException $exception) {
+            return $this->pauseForHumanInput($run, $exception, $state, $emitter);
+        } catch (ParallelBranchInterruptException $exception) {
+            return $this->pauseForParallelInterrupt($run, $exception, $state, $emitter);
         } catch (ToolApprovalRequiredException $exception) {
             return $this->pauseForToolApproval($run, $exception, $state, $emitter);
         } catch (Throwable $exception) {
@@ -504,6 +614,10 @@ class WorkflowRunner
         $outputKey = (string) ($checkpoint['output_key'] ?? 'human_response');
         $stateData = is_array($checkpoint['state'] ?? null) ? $checkpoint['state'] : [];
         $stateData[$outputKey] = $message;
+        $passthroughNodeId = (string) ($checkpoint['node_id'] ?? $run->awaiting_node_id ?? '');
+        if ($passthroughNodeId !== '') {
+            $stateData[HumanNodeExecutor::PASSTHROUGH_STATE_KEY] = $passthroughNodeId;
+        }
 
         if ($attachments !== []) {
             $stateData['attachments'] = $attachments;
@@ -712,6 +826,25 @@ class WorkflowRunner
         }
     }
 
+    /**
+     * True when the persisted checkpoint is a tool-approval pause (linear or parallel),
+     * including after async jobs flip status to running before resume.
+     */
+    protected function checkpointRequiresToolApproval(StudioRun $run): bool
+    {
+        if ($run->status === 'awaiting_tool_approval') {
+            return true;
+        }
+
+        $checkpoint = $run->checkpoint_state ?? [];
+
+        if (($checkpoint['parallel']['reason'] ?? null) === ParallelBranchInterruptException::REASON_TOOL_APPROVAL) {
+            return true;
+        }
+
+        return is_array($checkpoint['pending_tools'] ?? null);
+    }
+
     protected function pauseForHumanInput(
         StudioRun $run,
         HumanInputRequiredException $exception,
@@ -747,24 +880,36 @@ class WorkflowRunner
         ?BuilderWorkflowState $state,
         ?callable $emitter,
     ): StudioRun {
+        $isToolApproval = $exception->isToolApproval();
+
+        $parallel = [
+            'fork_id' => $exception->forkId,
+            'join_id' => $exception->joinId,
+            'pending_branch' => $exception->branchId,
+            'pending_node' => $exception->pendingNodeId,
+            'output_key' => $exception->outputKey,
+            'reason' => $exception->reason,
+            'pending_state' => $exception->pendingState,
+            'completed' => $exception->completedResults,
+            'completed_outputs' => $exception->completedOutputs,
+        ];
+
+        if ($isToolApproval) {
+            $parallel['pending_tools'] = $exception->pendingTools;
+            $parallel['interrupt'] = $exception->serializedInterrupt;
+        }
+
         $run->update([
-            'status' => 'awaiting_input',
+            'status' => $isToolApproval ? 'awaiting_tool_approval' : 'awaiting_input',
             'awaiting_node_id' => $exception->pendingNodeId,
             'checkpoint_state' => [
                 'state' => $state?->all() ?? [],
-                'node_id' => $exception->forkId,
+                'node_id' => $isToolApproval ? $exception->pendingNodeId : $exception->forkId,
                 'kind' => 'parallel',
                 'output_key' => $exception->outputKey,
-                'parallel' => [
-                    'fork_id' => $exception->forkId,
-                    'join_id' => $exception->joinId,
-                    'pending_branch' => $exception->branchId,
-                    'pending_node' => $exception->pendingNodeId,
-                    'output_key' => $exception->outputKey,
-                    'pending_state' => $exception->pendingState,
-                    'completed' => $exception->completedResults,
-                    'completed_outputs' => $exception->completedOutputs,
-                ],
+                'pending_tools' => $isToolApproval ? $exception->pendingTools : null,
+                'interrupt' => $isToolApproval ? $exception->serializedInterrupt : null,
+                'parallel' => $parallel,
             ],
             'finished_at' => null,
         ]);
@@ -778,12 +923,22 @@ class WorkflowRunner
                 'reason' => $exception->reason,
             ]);
 
-            $emitter('human_input_required', [
-                'trace_id' => $run->id,
-                'node_id' => $exception->pendingNodeId,
-                'prompt' => $exception->prompt,
-                'output_key' => $exception->outputKey,
-            ]);
+            if ($isToolApproval) {
+                $emitter('tool_approval_required', [
+                    'trace_id' => $run->id,
+                    'node_id' => $exception->pendingNodeId,
+                    'branch_id' => $exception->branchId,
+                    'pending_tools' => $exception->pendingTools,
+                    'message' => $exception->prompt,
+                ]);
+            } else {
+                $emitter('human_input_required', [
+                    'trace_id' => $run->id,
+                    'node_id' => $exception->pendingNodeId,
+                    'prompt' => $exception->prompt,
+                    'output_key' => $exception->outputKey,
+                ]);
+            }
         }
 
         return $run->fresh();

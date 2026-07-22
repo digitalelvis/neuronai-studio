@@ -38,13 +38,18 @@ class AgentNodeExecutor implements NodeExecutorInterface
             $rawMessage = (string) $state->get('input', '');
         }
 
-        $message = StateTemplateInterpolator::interpolate($rawMessage, $state);
+        $definition = isset($data['agent_id']) ? AgentDefinition::findOrFail($data['agent_id']) : null;
+        $memory = $this->agentRunner->resolveMemoryConfig($definition, $this->memoryOverrideConfig($data, $definition));
+        $truncationEvents = [];
+        $message = StateTemplateInterpolator::interpolate($rawMessage, $state, $memory, $truncationEvents);
+        if ($truncationEvents !== []) {
+            $state->set('__studio_context_truncations', $truncationEvents);
+        }
         $attachments = is_array($state->get('attachments')) ? $state->get('attachments') : [];
         $userMessage = $this->messages->resolveMessageWithAttachments($message, $attachments);
         $threadKey = $state->get('__studio_thread_id');
         $threadKey = is_string($threadKey) && $threadKey !== '' ? $threadKey : null;
 
-        $definition = isset($data['agent_id']) ? AgentDefinition::findOrFail($data['agent_id']) : null;
         $parentRun = $this->resolveParentRun($state);
 
         $resume = $state->get('__tool_approval_resume');
@@ -67,8 +72,9 @@ class AgentNodeExecutor implements NodeExecutorInterface
                     'instructions' => $definition->instructions,
                     'tools' => $definition->tools ?? [],
                     ...$this->toolControlConfig($data, $definition),
+                    ...$this->memoryOverrideConfig($data, $definition),
                 ]
-                : array_merge($data, $this->toolControlConfig($data, null));
+                : array_merge($data, $this->toolControlConfig($data, null), $this->memoryOverrideConfig($data, null));
 
             $response = $this->agentRunner->structuredInline(
                 $config,
@@ -80,6 +86,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
             );
             $state->set($outputKey, $response->structured);
             $this->captureRunUsage($state, $response->runId);
+            $this->flushContextTruncations($state, $response->runId);
 
             return 'default';
         }
@@ -97,12 +104,14 @@ class AgentNodeExecutor implements NodeExecutorInterface
                     'tools' => $definition->tools ?? [],
                     'require_tool_approval' => $requireApproval,
                     ...$this->toolControlConfig($data, $definition),
+                    ...$this->memoryOverrideConfig($data, $definition),
                 ], $userMessage, $definition, $threadKey, parentRun: $parentRun);
             } else {
                 $response = $this->agentRunner->runInline(
                     array_merge($data, [
                         'require_tool_approval' => $requireApproval,
                         ...$this->toolControlConfig($data, null),
+                        ...$this->memoryOverrideConfig($data, null),
                     ]),
                     $userMessage,
                     null,
@@ -117,6 +126,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
         $state->set($outputKey, $response->content);
         $this->emitToolEvents($nodeId, $response->toolEvents, $state);
         $this->captureRunUsage($state, $response->runId);
+        $this->flushContextTruncations($state, $response->runId);
 
         return 'default';
     }
@@ -150,10 +160,12 @@ class AgentNodeExecutor implements NodeExecutorInterface
                 'tools' => $definition->tools ?? [],
                 'require_tool_approval' => true,
                 ...$this->toolControlConfig($data, $definition),
+                ...$this->memoryOverrideConfig($data, $definition),
             ]
             : array_merge($data, [
                 'require_tool_approval' => true,
                 ...$this->toolControlConfig($data, null),
+                ...$this->memoryOverrideConfig($data, null),
             ]);
 
         try {
@@ -219,8 +231,9 @@ class AgentNodeExecutor implements NodeExecutorInterface
                 'instructions' => $definition->instructions,
                 'tools' => $definition->tools ?? [],
                 ...$this->toolControlConfig($data, $definition),
+                ...$this->memoryOverrideConfig($data, $definition),
             ]
-            : array_merge($data, $this->toolControlConfig($data, null));
+            : array_merge($data, $this->toolControlConfig($data, null), $this->memoryOverrideConfig($data, null));
 
         $generator = $this->agentRunner->streamInline(
             $config,
@@ -273,8 +286,21 @@ class AgentNodeExecutor implements NodeExecutorInterface
         $state->set($outputKey, $response->content);
         $this->emitToolEvents($nodeId, $response->toolEvents, $state, $emittedKeys);
         $this->captureRunUsage($state, $response->runId);
+        $this->flushContextTruncations($state, $response->runId);
 
         return 'default';
+    }
+
+    protected function flushContextTruncations(WorkflowState $state, ?string $runId): void
+    {
+        $events = $state->get('__studio_context_truncations');
+        $state->set('__studio_context_truncations', null);
+
+        if (! is_array($events) || $events === []) {
+            return;
+        }
+
+        $this->agentRunner->attachContextTruncationsToRun($runId, $events);
     }
 
     protected function captureRunUsage(WorkflowState $state, ?string $runId): void
@@ -328,6 +354,43 @@ class AgentNodeExecutor implements NodeExecutorInterface
         }
 
         return $config;
+    }
+
+    /**
+     * Node-level memory overrides only (empty = inherit agent envelope at makeAgent).
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function memoryOverrideConfig(array $data, ?AgentDefinition $definition): array
+    {
+        unset($definition);
+
+        if (isset($data['memory_config']) && is_array($data['memory_config'])) {
+            return array_filter(
+                $data['memory_config'],
+                static fn ($value) => $value !== null && $value !== '',
+            );
+        }
+
+        $keys = [
+            'context_window',
+            'driver',
+            'summarization_enabled',
+            'summarization_threshold',
+            'budget_rag',
+            'budget_tool_results',
+            'budget_state',
+        ];
+
+        $override = [];
+        foreach ($keys as $key) {
+            if (array_key_exists($key, $data) && $data[$key] !== null && $data[$key] !== '') {
+                $override[$key] = $data[$key];
+            }
+        }
+
+        return $override;
     }
 
     /**

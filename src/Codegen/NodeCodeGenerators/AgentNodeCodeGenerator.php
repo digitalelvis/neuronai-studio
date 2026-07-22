@@ -53,6 +53,7 @@ PHP;
             } else {
                 $approvalLine = $this->approvalConfigLine($data, hasDefinition: true);
                 $toolControlLine = $this->toolControlConfigLine($data, hasDefinition: true);
+                $memoryLine = $this->memoryConfigLine($data, hasDefinition: true);
                 $body = <<<PHP
         {$messageSetup}
 
@@ -61,7 +62,7 @@ PHP;
             'provider' => \$agent->provider,
             'model' => \$agent->model,
             'instructions' => \$agent->instructions,
-            'tools' => \$agent->tools ?? [],{$approvalLine}{$toolControlLine}
+            'tools' => \$agent->tools ?? [],{$approvalLine}{$toolControlLine}{$memoryLine}
         ], \$userMessage, \$agent, {$threadKey});
 
         \$state->set({$outputKey}, \$response->content);
@@ -183,6 +184,50 @@ PHP;
             $lines .= "\n            'parallel_tool_calls' => ".var_export((bool) $data['parallel_tool_calls'], true).',';
         } elseif ($hasDefinition) {
             $lines .= "\n            'parallel_tool_calls' => \$agent->parallel_tool_calls,";
+        }
+
+        return $lines;
+    }
+
+    /**
+     * Emit expressible memory overrides; agent envelope is applied at runtime via AgentRunner.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    protected function memoryConfigLine(array $data, bool $hasDefinition): string
+    {
+        $keys = [
+            'context_window' => 'int',
+            'driver' => 'string',
+            'summarization_enabled' => 'bool',
+            'summarization_threshold' => 'float',
+            'budget_rag' => 'int',
+            'budget_tool_results' => 'int',
+            'budget_state' => 'int',
+        ];
+
+        $lines = '';
+        $emitted = false;
+
+        foreach ($keys as $key => $type) {
+            if (! array_key_exists($key, $data) || $data[$key] === null || $data[$key] === '') {
+                continue;
+            }
+
+            $value = match ($type) {
+                'int' => (int) $data[$key],
+                'bool' => var_export((bool) $data[$key], true),
+                'float' => (float) $data[$key],
+                default => var_export((string) $data[$key], true),
+            };
+
+            $lines .= "\n            '{$key}' => {$value},";
+            $emitted = true;
+        }
+
+        if (! $emitted && $hasDefinition) {
+            // AgentDefinition.memory_config is read by AgentRunner::resolveMemoryConfig at runtime.
+            $lines .= "\n            // memory_config: inherited from AgentDefinition at runtime";
         }
 
         return $lines;

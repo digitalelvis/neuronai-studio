@@ -4,10 +4,12 @@ namespace DigitalElvis\NeuronAIStudio\Runtime;
 
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use DigitalElvis\NeuronAIStudio\Models\StudioChatMessage;
+use DigitalElvis\NeuronAIStudio\Runtime\Memory\HistorySummarizer;
+use DigitalElvis\NeuronAIStudio\Runtime\Memory\MemoryConfig;
+use DigitalElvis\NeuronAIStudio\Runtime\Memory\StudioEloquentChatHistory;
+use DigitalElvis\NeuronAIStudio\Runtime\Memory\StudioInMemoryChatHistory;
 use NeuronAI\Agent\Agent;
 use NeuronAI\Chat\History\ChatHistoryInterface;
-use NeuronAI\Chat\History\EloquentChatHistory;
-use NeuronAI\Chat\History\InMemoryChatHistory;
 use NeuronAI\Providers\AIProviderInterface;
 use NeuronAI\Tools\ProviderToolInterface;
 use NeuronAI\Tools\ToolInterface;
@@ -26,6 +28,7 @@ class DynamicAgent extends Agent
         protected ?McpToolResolver $mcpToolResolver = null,
         protected ?string $threadId = null,
         protected ?int $contextWindow = null,
+        protected MemoryConfig $memoryConfig = new MemoryConfig,
     ) {
         parent::__construct();
         $this->setAiProvider($aiProvider);
@@ -54,15 +57,35 @@ class DynamicAgent extends Agent
     protected function chatHistory(): ChatHistoryInterface
     {
         $contextWindow = $this->contextWindow ?? (int) config('neuronai-studio.chat_history_context_window', 150000);
+        $forceInMemory = $this->memoryConfig->driver() === MemoryConfig::DRIVER_IN_MEMORY;
+        $summarization = $this->memoryConfig->summarizationEnabled() === true;
 
-        if ($this->threadId === null) {
-            return new InMemoryChatHistory(contextWindow: $contextWindow);
+        if ($forceInMemory || $this->threadId === null) {
+            $history = new StudioInMemoryChatHistory(
+                contextWindow: $contextWindow,
+                summarization: $summarization,
+                toolResultBudget: $this->memoryConfig->budgetToolResults(),
+            );
+        } else {
+            $history = new StudioEloquentChatHistory(
+                threadId: $this->threadId,
+                modelClass: StudioChatMessage::class,
+                contextWindow: $contextWindow,
+                summarization: $summarization,
+                toolResultBudget: $this->memoryConfig->budgetToolResults(),
+            );
         }
 
-        return new EloquentChatHistory(
-            threadId: $this->threadId,
-            modelClass: StudioChatMessage::class,
-            contextWindow: $contextWindow,
-        );
+        if ($summarization) {
+            $history->enableCompaction(
+                app(HistorySummarizer::class),
+                [
+                    'provider' => (string) ($this->definition?->provider ?? config('neuronai-studio.default_provider')),
+                    'model' => (string) ($this->definition?->model ?? config('neuronai-studio.default_model')),
+                ],
+            );
+        }
+
+        return $history;
     }
 }

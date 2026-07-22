@@ -40,6 +40,13 @@
                 mcpAdvanced: @json($mcpAdvanced),
                 tool_max_runs: @json($tool_max_runs),
                 parallel_tool_calls: @json($parallel_tool_calls),
+                memory_context_window: @json($memory_context_window),
+                memory_driver: @json($memory_driver),
+                memory_summarization_enabled: @json($memory_summarization_enabled),
+                memory_summarization_threshold: @json($memory_summarization_threshold),
+                memory_budget_rag: @json($memory_budget_rag),
+                memory_budget_tool_results: @json($memory_budget_tool_results),
+                memory_budget_state: @json($memory_budget_state),
             },
         };
     </script>

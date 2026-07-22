@@ -69,7 +69,30 @@ See [Cost estimation](../guides/analytics/costs.md) and [Usage Export API](../gu
 
 | Key | Env | Default | Description |
 |-----|-----|---------|-------------|
-| `chat_history_context_window` | `NEURONAI_STUDIO_CHAT_HISTORY_CONTEXT_WINDOW` | `150000` | Max tokens loaded for agent threads |
+| `chat_history_context_window` | `NEURONAI_STUDIO_CHAT_HISTORY_CONTEXT_WINDOW` | `150000` | Global default max tokens for agent threads when `memory_config.context_window` is unset |
+
+## Memory / summarization
+
+Per-agent settings live in `AgentDefinition.memory_config` (Studio form + node overrides). Optional dedicated summarizer:
+
+| Key | Env | Default | Description |
+|-----|-----|---------|-------------|
+| `memory.summarizer.provider` | `NEURONAI_STUDIO_SUMMARIZER_PROVIDER` | `null` | Provider for history compaction; falls back to the agent's provider |
+| `memory.summarizer.model` | `NEURONAI_STUDIO_SUMMARIZER_MODEL` | `null` | Model for history compaction; falls back to the agent's model |
+
+When summarization is enabled and history exceeds the window, Studio persists a summary message and keeps durable rows (no silent deletes). On summarizer failure, Studio falls back to non-destructive trim (exclude from prompt, keep rows).
+
+### Prompt assembly budgets (`memory_config`)
+
+Optional integer keys (min 1). Unset = disabled (byte-identical pass-through):
+
+| Key | Description |
+|-----|-------------|
+| `budget_rag` | Cap interpolated RAG context (`rag_context`) |
+| `budget_tool_results` | Cap tool results in the agent tool loop / chat history |
+| `budget_state` | Cap each non-RAG interpolated state field |
+
+Per-node overrides use the same flat keys on agent-node `data`. Token estimates align with Neuron `TokenCounter` (~4 characters per token).
 
 ## Queue
 

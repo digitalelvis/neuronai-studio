@@ -32,6 +32,8 @@ Repeating the same workflow template creates a new workflow. Agents referenced b
 | `knowledge-agent` | Knowledge Agent |
 | `lead-qualifier` | Lead Qualifier (tools + multimodal) |
 | `support-triage-composer` | Support Triage Composer (parallel synthesis) |
+| `refund-actions-agent` | Refund Actions Agent (class-based tool + approval) |
+| `dev-support-specialist` | Dev Support Specialist (memory + tools + multimodal) |
 
 ### Workflows
 
@@ -44,6 +46,8 @@ Repeating the same workflow template creates a new workflow. Agents referenced b
 | `parallel-support-triage` | Intermediate | Fork/join parallel analysis + checkpoints |
 | `support-rag-hitl` | Advanced | Intent routing, RAG, human-in-the-loop |
 | `parallel-triage-hitl` | Advanced | Parallel analysis + human review branch + checkpoint resume |
+| `parallel-refund-approval` | Advanced | Parallel eligibility + approval-gated refund tool |
+| `dev-support-memory-loop` | Advanced | Tech-support loop with memory, RAG, HITL, tools, attachments |
 
 ## Lead Qualification (loop)
 
@@ -62,6 +66,60 @@ Template `autonomous-lead-qualification` runs the `lead-qualifier` agent inside 
 5. When `lead_profile` contains `@`, the loop exits and the workflow completes as `qualified`.
 
 Requires cyclic graphs, multimodal attachments (`state.attachments`, `MessageFactory`), and harness resume support.
+
+## Dev Support Memory Loop (M8 memory reference)
+
+Template `dev-support-memory-loop` installs the `dev-support-specialist` agent and runs a long troubleshooting loop. It is the recommended starting point for exercising **agent memory controls** together with the rest of the Studio surface.
+
+### What it demonstrates
+
+| Capability | Where |
+|------------|--------|
+| Per-agent `memory_config` (window, eloquent driver, summarization) | Agent editor → Memory |
+| Long multi-turn playground chat | Same agent, Playground tab |
+| Workflow loop + stable thread | Loop node (`max_steps` 12, exit on `RESOLVED:`) |
+| Tools | `toolkit:calculator` on the agent |
+| Human-in-the-loop | Human node pauses for clarifications; harness resume appends the reply |
+| Attachments (PDF / image) | Harness attachments + agent instructions |
+| Per-node memory override | Agent node: `context_window` **6000** (agent default **8000**) |
+| RAG | RAG node each loop iteration; select a knowledge base after install |
+
+### Setup
+
+1. Install **Dev Support Memory Loop** from Templates (creates the agent if needed).
+2. Configure a provider API key (see [Installation](../getting-started/installation.md)).
+3. Optional but recommended for grounded answers: open the **RAG** node and select a knowledge base (same pattern as [RAG Knowledge Q&A](#bundled-templates)). Until configured, retrieval context is empty and the agent should say so.
+4. Optional summarizer for cheaper compaction:
+
+```env
+NEURONAI_STUDIO_SUMMARIZER_PROVIDER=openai
+NEURONAI_STUDIO_SUMMARIZER_MODEL=gpt-4o-mini
+```
+
+### Harness script (HITL + resolution)
+
+1. Open the workflow Test tab. Optionally attach a log PDF or screenshot.
+2. Paste a long ticket, for example:
+
+```text
+We're seeing intermittent 502s on the checkout API after deploying Laravel 11.
+Stack: PHP 8.3, Octane/Swoole, Redis queue, MySQL 8.
+Error snippet: "upstream prematurely closed connection while reading response"
+Started after we raised workers from 4 to 12. Need a safe rollback or config fix.
+```
+
+3. The agent should ask **one** clarifying question → workflow status `awaiting_input` on the Human node.
+4. Reply with the missing fact (e.g. nginx vs cloudflare, recent Octane config).
+5. Continue until the agent ends with `RESOLVED: ...` → loop exits and `result` is `resolved`.
+
+Confirm memory override: agent form shows context window **8000**; the Agent node inspector shows **6000**.
+
+### Playground script (compaction)
+
+1. Open **Dev Support Specialist** → Playground → new thread.
+2. Temporarily lower **Context window** to `400`–`800` (and keep summarization on) so compaction triggers in a few turns. Restore `8000` after the test.
+3. Send 3–5 long turns that introduce stack facts, then ask the agent to recapitulate what it knows.
+4. Expect a persisted summary message (`meta.studio_kind = summary`, content prefixed with `[Studio memory summary]`) when history exceeds the window — see [Playground & Threads](agents/playground-and-threads.md) and [Creating Agents → Memory](agents/creating-agents.md).
 
 ## Parallel Support Triage (M3 reference templates)
 
@@ -99,6 +157,23 @@ sexta (04/07), senão vou cancelar. E-mail: joao.pereira@empresa.com.br
 ```
 
 **Expected result** — `triage_summary` contains a `## Triage` block (sentiment, key facts, priority `urgent`, route to `billing`) followed by a short `## Suggested reply` to the customer. In the HITL variant, the reviewer note you provide during the pause is woven into the reply.
+
+### `parallel-refund-approval` (advanced)
+
+Demonstrates **tool approval inside a parallel branch**:
+
+1. `set_state` stores the ticket.
+2. A **fork** launches two branches: an LLM eligibility analysis (no tools) and the `refund-actions-agent` with `require_tool_approval: true`.
+3. The refund agent calls `issue_refund` (class-based `IssueRefundTool`) and pauses with status `awaiting_tool_approval` (`tool_approval_required` includes `branch_id`).
+4. After Approve / Reject in the harness, the join merges eligibility + refund result and `support-triage-composer` drafts `triage_summary`.
+
+**Example input:**
+
+```text
+Order #4821 — customer requests a refund of 189.90 for a defective product purchased on 2026-07-10. Please process the refund.
+```
+
+**Expected result** — eligibility branch completes first; refund branch pauses for approval; after Approve, join + composer finish and the workflow status is `completed`. Reject skips the tool but still joins and composes.
 
 See [Logic Nodes → Fork / Join](workflows/node-types/logic-nodes.md), [Runtime & Traces](workflows/runtime-and-traces.md), and [Human-in-the-Loop](workflows/human-in-the-loop.md).
 

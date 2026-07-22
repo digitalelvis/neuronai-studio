@@ -7,6 +7,7 @@ use DigitalElvis\NeuronAIStudio\Events\RunUsageRecorded;
 use DigitalElvis\NeuronAIStudio\Models\StudioThread;
 use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Models\StudioTrace;
+use DigitalElvis\NeuronAIStudio\Models\StudioTraceSpan;
 use DigitalElvis\NeuronAIStudio\Observability\ObservabilityManager;
 use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
 use DigitalElvis\NeuronAIStudio\Support\ChatThreadKey;
@@ -14,6 +15,7 @@ use DigitalElvis\NeuronAIStudio\Support\PlaygroundContext;
 use DigitalElvis\NeuronAIStudio\Support\ProviderParameters;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\StructuredOutputValidationException;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ToolApprovalRequiredException;
+use DigitalElvis\NeuronAIStudio\Runtime\Memory\MemoryConfig;
 use DigitalElvis\NeuronAIStudio\Usage\UsageRecorder;
 use Illuminate\Support\Str;
 use Generator;
@@ -100,6 +102,8 @@ class AgentRunner
                 }
             }
 
+            $this->recordCompactionSpan($agent, $trace);
+            $this->recordContextTruncationSpans($agent, $trace);
             $this->markRunCompleted($run, [
                 'output' => ['content' => $handler->getMessage()->getContent()],
             ]);
@@ -195,7 +199,7 @@ class AgentRunner
             'message' => $message instanceof UserMessage ? $message->getContent() : $message
         ], $parentRun);
 
-        $agent = $this->makeAgent($definition, $config, $run->thread_id, $fake);
+        $agent = $this->makeAgent($definition, $config, $threadKey ?? $run->thread_id, $fake);
         $agent->setPersistence(new InMemoryPersistence, $run->id);
 
         $this->attachObservability($agent, $run, $trace, $config, $parentRun);
@@ -206,6 +210,8 @@ class AgentRunner
             $handler = $agent->chat($userMessage);
             $content = $handler->getMessage()->getContent();
 
+            $this->recordCompactionSpan($agent, $trace);
+            $this->recordContextTruncationSpans($agent, $trace);
             $this->markRunCompleted($run, [
                 'output' => ['content' => $content],
             ]);
@@ -263,6 +269,8 @@ class AgentRunner
             }
 
             $content = $handler->getMessage()->getContent();
+            $this->recordCompactionSpan($agent, $trace);
+            $this->recordContextTruncationSpans($agent, $trace);
             $this->markRunCompleted($run, [
                 'output' => ['content' => $content],
             ]);
@@ -476,6 +484,7 @@ class AgentRunner
         try {
             $result = $agent->structured($userMessage, $outputClass);
 
+            $this->recordContextTruncationSpans($agent, $trace);
             $this->markRunCompleted($run, [
                 'output' => ['structured' => $this->normalizeStructuredOutput($result)],
             ]);
@@ -539,6 +548,107 @@ class AgentRunner
             'model' => $model,
             'parent_run' => $parentRun,
         ]);
+    }
+
+    /**
+     * Persist compaction/trim metadata as a memory span when native tracing is on.
+     */
+    protected function recordCompactionSpan(DynamicAgent $agent, StudioTrace $trace): void
+    {
+        if (! (bool) config('neuronai-studio.observability.native_tracing', true)) {
+            return;
+        }
+
+        $history = $agent->getChatHistory();
+        if (! is_object($history) || ! method_exists($history, 'pullCompactionMeta')) {
+            return;
+        }
+
+        /** @var array<string, mixed>|null $meta */
+        $meta = $history->pullCompactionMeta();
+        if ($meta === null) {
+            return;
+        }
+
+        $trimmed = (int) ($meta['trimmed_count'] ?? 0);
+        $overBudget = (bool) ($meta['over_budget_single'] ?? false);
+        if ($trimmed < 1 && ! $overBudget) {
+            return;
+        }
+
+        StudioTraceSpan::create([
+            'trace_id' => $trace->id,
+            'name' => 'history_compaction',
+            'type' => 'memory',
+            'status' => 'completed',
+            'output' => $meta,
+            'started_at' => now(),
+            'finished_at' => now(),
+            'duration_ms' => 0,
+        ]);
+    }
+
+    /**
+     * Persist prompt-assembly truncation metadata as context spans when native tracing is on.
+     *
+     * @param  list<array<string, mixed>>  $extraEvents
+     */
+    public function recordContextTruncationSpans(DynamicAgent|null $agent, StudioTrace $trace, array $extraEvents = []): void
+    {
+        if (! (bool) config('neuronai-studio.observability.native_tracing', true)) {
+            return;
+        }
+
+        $events = $extraEvents;
+        if ($agent !== null) {
+            $history = $agent->getChatHistory();
+            if (is_object($history) && method_exists($history, 'pullToolTruncationEvents')) {
+                /** @var list<array<string, mixed>> $toolEvents */
+                $toolEvents = $history->pullToolTruncationEvents();
+                $events = array_merge($events, $toolEvents);
+            }
+        }
+
+        foreach ($events as $event) {
+            if (! is_array($event) || ($event['kind'] ?? null) === null) {
+                continue;
+            }
+
+            StudioTraceSpan::create([
+                'trace_id' => $trace->id,
+                'name' => 'context_truncation',
+                'type' => 'context',
+                'status' => 'completed',
+                'output' => $event,
+                'started_at' => now(),
+                'finished_at' => now(),
+                'duration_ms' => 0,
+            ]);
+        }
+    }
+
+    /**
+     * Attach interpolator truncation events to an existing run's trace.
+     *
+     * @param  list<array<string, mixed>>  $events
+     */
+    public function attachContextTruncationsToRun(?string $runId, array $events): void
+    {
+        if ($runId === null || $events === []) {
+            return;
+        }
+
+        if (! (bool) config('neuronai-studio.observability.native_tracing', true)) {
+            return;
+        }
+
+        $run = StudioRun::query()->find($runId);
+        $trace = $run?->traces()->latest('created_at')->first() ?? $run?->traces()->first();
+        if ($trace === null) {
+            return;
+        }
+
+        $this->recordContextTruncationSpans(null, $trace, $events);
     }
 
     /** @param  array<string, mixed>  $attributes */
@@ -633,6 +743,7 @@ class AgentRunner
         }
 
         $tools = $this->toolResolver->resolveMany($config['tools'] ?? []);
+        $memory = $this->resolveMemoryConfig($definition, $config);
 
         $agent = new DynamicAgent(
             $provider,
@@ -641,6 +752,8 @@ class AgentRunner
             $tools,
             $this->mcpToolResolver,
             $threadKey,
+            $memory->contextWindow(),
+            $memory,
         );
 
         if (($config['require_tool_approval'] ?? false) === true) {
@@ -650,6 +763,48 @@ class AgentRunner
         $this->applyToolControls($agent, $config, $definition);
 
         return $agent;
+    }
+
+    /**
+     * @param  array<string, mixed>  $config
+     */
+    public function resolveMemoryConfig(?AgentDefinition $definition, array $config = []): MemoryConfig
+    {
+        $base = MemoryConfig::fromArray(
+            is_array($definition?->memory_config) ? $definition->memory_config : null,
+        );
+
+        return $base->merge(MemoryConfig::fromArray($this->memoryOverrideFromConfig($config)));
+    }
+
+    /**
+     * @param  array<string, mixed>  $config
+     * @return array<string, mixed>|null
+     */
+    protected function memoryOverrideFromConfig(array $config): ?array
+    {
+        if (isset($config['memory_config']) && is_array($config['memory_config'])) {
+            return $config['memory_config'];
+        }
+
+        $keys = [
+            'context_window',
+            'driver',
+            'summarization_enabled',
+            'summarization_threshold',
+            'budget_rag',
+            'budget_tool_results',
+            'budget_state',
+        ];
+
+        $flat = [];
+        foreach ($keys as $key) {
+            if (array_key_exists($key, $config) && $config[$key] !== null && $config[$key] !== '') {
+                $flat[$key] = $config[$key];
+            }
+        }
+
+        return $flat === [] ? null : $flat;
     }
 
     /**

@@ -74,6 +74,33 @@ Enable **Require tool approval** on an agent to gate its tool calls behind a hum
 
 See [Human-in-the-Loop → Tool approval](../workflows/human-in-the-loop.md#tool-approval), [AI Nodes → Tool approval](../workflows/node-types/ai-nodes.md#tool-approval), and [Security & Access](../security-and-access.md#approving-sensitive-tools).
 
+## Memory
+
+Configure per-agent memory on the editor form (stored in `memory_config`):
+
+| Field | Description |
+|-------|-------------|
+| **Context window** | Token budget for chat history. Empty inherits `NEURONAI_STUDIO_CHAT_HISTORY_CONTEXT_WINDOW` |
+| **History driver** | `eloquent` (persist to thread) or `in_memory` (even when a thread id exists). Empty keeps today's thread-based behavior |
+| **Summarization** | When on, over-budget history is compacted into a persisted summary message instead of silent deletes |
+| **Summarization threshold** | Optional 0–1 fraction hint for when to compact |
+| **RAG budget** | Optional token cap for interpolated `rag_context` (whole chunks first). Empty = no truncation |
+| **Tool results budget** | Optional token cap for tool results before they re-enter the prompt/history. Empty = pass-through |
+| **State fields budget** | Optional per-field token cap for other `{{placeholders}}`. Empty = pass-through |
+
+Agent nodes can override the same keys in the canvas inspector (`context_window`, `driver`, `summarization_enabled`, `budget_rag`, `budget_tool_results`, `budget_state`). Empty override = inherit from the agent.
+
+Budgets are **opt-in**: with nothing configured, prompt assembly matches prior behavior. Truncations are recorded as `context` / `context_truncation` spans when native tracing is on (see [Runtime & Traces](../workflows/runtime-and-traces.md#context-truncation-spans)).
+
+Optional dedicated cheap summarizer model (falls back to the agent's provider/model):
+
+```env
+NEURONAI_STUDIO_SUMMARIZER_PROVIDER=openai
+NEURONAI_STUDIO_SUMMARIZER_MODEL=gpt-4o-mini
+```
+
+See [Playground & Threads](playground-and-threads.md) and [Configuration](../../reference/configuration.md#memory--summarization).
+
 ## Output classes
 
 Workflow **Agent** and **LLM** nodes can request typed responses using PHP output classes — the same `SchemaProperty` pattern used by NeuronAI structured output. Classes are shared between agent playground exports and workflow nodes; define them once under your export path and reference them from the canvas.

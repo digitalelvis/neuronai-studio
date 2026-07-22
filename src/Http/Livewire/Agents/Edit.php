@@ -41,6 +41,20 @@ class Edit extends Component
 
     public ?bool $parallel_tool_calls = null;
 
+    public ?int $memory_context_window = null;
+
+    public ?string $memory_driver = null;
+
+    public ?bool $memory_summarization_enabled = null;
+
+    public $memory_summarization_threshold = null;
+
+    public ?int $memory_budget_rag = null;
+
+    public ?int $memory_budget_tool_results = null;
+
+    public ?int $memory_budget_state = null;
+
     public function mount(?AgentDefinition $agent = null): void
     {
         $this->agent = $agent;
@@ -54,12 +68,30 @@ class Edit extends Component
             $this->instructions = (string) $agent->instructions;
             $this->tool_max_runs = $agent->tool_max_runs;
             $this->parallel_tool_calls = $agent->parallel_tool_calls;
+            $this->hydrateMemoryFromConfig($agent->memory_config);
             $this->loadToolsFromAgent($agent->tools ?? []);
             $this->loadMcpFromAgent($agent);
         } else {
             $models = config('neuronai-studio.providers.'.$this->provider.'.models', []);
             $this->model = $models[0] ?? config('neuronai-studio.default_model', 'gpt-4o-mini');
         }
+    }
+
+    /** @param  array<string, mixed>|null  $config */
+    protected function hydrateMemoryFromConfig(?array $config): void
+    {
+        if (! is_array($config) || $config === []) {
+            return;
+        }
+
+        $memory = \DigitalElvis\NeuronAIStudio\Runtime\Memory\MemoryConfig::fromArray($config);
+        $this->memory_context_window = $memory->contextWindow();
+        $this->memory_driver = $memory->driver();
+        $this->memory_summarization_enabled = $memory->summarizationEnabled();
+        $this->memory_summarization_threshold = $memory->summarizationThreshold();
+        $this->memory_budget_rag = $memory->budgetRag();
+        $this->memory_budget_tool_results = $memory->budgetToolResults();
+        $this->memory_budget_state = $memory->budgetState();
     }
 
     /** @param  array<int, array<string, mixed>>  $tools */
@@ -121,6 +153,28 @@ class Edit extends Component
             ? (isset($payload['parallel_tool_calls']) ? (bool) $payload['parallel_tool_calls'] : null)
             : $this->parallel_tool_calls;
 
+        $this->memory_context_window = isset($payload['memory_context_window']) && $payload['memory_context_window'] !== '' && $payload['memory_context_window'] !== null
+            ? (int) $payload['memory_context_window']
+            : null;
+        $this->memory_driver = isset($payload['memory_driver']) && $payload['memory_driver'] !== ''
+            ? (string) $payload['memory_driver']
+            : null;
+        $this->memory_summarization_enabled = array_key_exists('memory_summarization_enabled', $payload)
+            ? (isset($payload['memory_summarization_enabled']) ? (bool) $payload['memory_summarization_enabled'] : null)
+            : $this->memory_summarization_enabled;
+        $this->memory_summarization_threshold = isset($payload['memory_summarization_threshold']) && $payload['memory_summarization_threshold'] !== '' && $payload['memory_summarization_threshold'] !== null
+            ? (float) $payload['memory_summarization_threshold']
+            : null;
+        $this->memory_budget_rag = isset($payload['memory_budget_rag']) && $payload['memory_budget_rag'] !== '' && $payload['memory_budget_rag'] !== null
+            ? (int) $payload['memory_budget_rag']
+            : null;
+        $this->memory_budget_tool_results = isset($payload['memory_budget_tool_results']) && $payload['memory_budget_tool_results'] !== '' && $payload['memory_budget_tool_results'] !== null
+            ? (int) $payload['memory_budget_tool_results']
+            : null;
+        $this->memory_budget_state = isset($payload['memory_budget_state']) && $payload['memory_budget_state'] !== '' && $payload['memory_budget_state'] !== null
+            ? (int) $payload['memory_budget_state']
+            : null;
+
         $this->persistAgent();
     }
 
@@ -134,20 +188,33 @@ class Edit extends Component
             'instructions' => 'nullable|string',
             'tool_max_runs' => 'nullable|integer|min:1',
             'parallel_tool_calls' => 'nullable|boolean',
+            'memory_context_window' => 'nullable|integer|min:1',
+            'memory_driver' => 'nullable|string|in:eloquent,in_memory',
+            'memory_summarization_enabled' => 'nullable|boolean',
+            'memory_summarization_threshold' => 'nullable|numeric|gt:0|lte:1',
+            'memory_budget_rag' => 'nullable|integer|min:1',
+            'memory_budget_tool_results' => 'nullable|integer|min:1',
+            'memory_budget_state' => 'nullable|integer|min:1',
             'selectedToolRefs' => 'array',
             'selectedToolRefs.*' => 'string',
             'selectedMcpSlugs' => 'array',
             'selectedMcpSlugs.*' => 'string',
         ]);
 
-        $payload = array_merge($validated, [
+        $memoryConfig = $this->buildMemoryConfigPayload();
+
+        $payload = [
+            'name' => $validated['name'],
+            'description' => $validated['description'] ?? null,
+            'provider' => $validated['provider'],
+            'model' => $validated['model'],
+            'instructions' => $validated['instructions'] ?? null,
             'slug' => Str::slug($this->name),
             'tools' => $this->buildToolsPayload(),
             'tool_max_runs' => $this->tool_max_runs,
             'parallel_tool_calls' => $this->parallel_tool_calls,
-        ]);
-
-        unset($payload['selectedToolRefs']);
+            'memory_config' => $memoryConfig,
+        ];
 
         if ($this->agent?->exists) {
             $this->agent->update($payload);
@@ -160,6 +227,42 @@ class Edit extends Component
         session()->flash('success', 'Agent saved successfully.');
 
         $this->redirect(route('neuronai-studio.agents.index'));
+    }
+
+    /**
+     * @return array<string, mixed>|null
+     */
+    protected function buildMemoryConfigPayload(): ?array
+    {
+        $raw = [];
+
+        if ($this->memory_context_window !== null) {
+            $raw['context_window'] = $this->memory_context_window;
+        }
+        if ($this->memory_driver !== null && $this->memory_driver !== '') {
+            $raw['driver'] = $this->memory_driver;
+        }
+        if ($this->memory_summarization_enabled !== null) {
+            $raw['summarization_enabled'] = $this->memory_summarization_enabled;
+        }
+        if ($this->memory_summarization_threshold !== null && $this->memory_summarization_threshold !== '') {
+            $raw['summarization_threshold'] = (float) $this->memory_summarization_threshold;
+        }
+        if ($this->memory_budget_rag !== null) {
+            $raw['budget_rag'] = $this->memory_budget_rag;
+        }
+        if ($this->memory_budget_tool_results !== null) {
+            $raw['budget_tool_results'] = $this->memory_budget_tool_results;
+        }
+        if ($this->memory_budget_state !== null) {
+            $raw['budget_state'] = $this->memory_budget_state;
+        }
+
+        if ($raw === []) {
+            return null;
+        }
+
+        return \DigitalElvis\NeuronAIStudio\Runtime\Memory\MemoryConfig::fromArray($raw)->toArray();
     }
 
     /** @return array<int, array<string, mixed>> */

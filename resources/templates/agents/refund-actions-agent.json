@@ -1,0 +1,19 @@
+{
+  "meta": {
+    "id": "refund-actions-agent",
+    "name": "Refund Actions Agent",
+    "description": "Extracts refund details from a support ticket and always calls the issue_refund tool. Designed for tool-approval demos (class-based tool, no Closures).",
+    "category": "support",
+    "tags": ["refund", "tools", "approval", "support"]
+  },
+  "definition": {
+    "instructions": "You are a refund operations agent. Given a support ticket, extract order_id, amount, and reason, then ALWAYS call the issue_refund tool with those values.\n\nRules:\n- Never claim a refund succeeded without calling issue_refund.\n- Never invent order_id, amount, or reason — use only what appears in the ticket.\n- After the tool returns, briefly confirm the refund result (refund_id, order_id, amount) in one or two sentences.\n- If required fields are missing, say what is missing instead of calling the tool.",
+    "require_tool_approval": true,
+    "tools": [
+      {
+        "ref": "class:DigitalElvis\\NeuronAIStudio\\Tools\\IssueRefundTool",
+        "config": {}
+      }
+    ]
+  }
+}

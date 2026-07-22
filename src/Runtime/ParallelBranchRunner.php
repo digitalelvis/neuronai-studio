@@ -2,6 +2,8 @@
 
 namespace DigitalElvis\NeuronAIStudio\Runtime;
 
+use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\HumanNodeExecutor;
+
 /**
  * Runs a single parallel branch subgraph in an isolated workflow state until it
  * reaches the join node. The interpreted runtime executes branches
@@ -11,7 +13,15 @@ namespace DigitalElvis\NeuronAIStudio\Runtime;
 class ParallelBranchRunner
 {
     /** @var list<string> */
-    protected array $volatileKeys = ['__steps', '__current_node_id', '__loop_iterations', '__parallel_resume', '__parallel_results'];
+    protected array $volatileKeys = [
+        '__steps',
+        '__current_node_id',
+        '__loop_iterations',
+        '__parallel_resume',
+        '__parallel_results',
+        '__tool_approval_resume',
+        HumanNodeExecutor::PASSTHROUGH_STATE_KEY,
+    ];
 
     public function __construct(
         protected GraphExecutionLoop $loop,
