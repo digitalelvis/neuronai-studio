@@ -1,5 +1,14 @@
 # Changelog
 
+# [0.10.0](https://github.com/digitalelvis/neuronai-studio/compare/v0.9.0...v0.10.0) (2026-07-22)
+
+
+### Features
+
+* **canvas:** expose invoke node inspector and defaults ([5aeb4a8](https://github.com/digitalelvis/neuronai-studio/commit/5aeb4a8de66452c4f86efd84d9cdaf1a1db659e6))
+* **codegen:** emit invoke node host hook calls ([5f8e248](https://github.com/digitalelvis/neuronai-studio/commit/5f8e248f0fe57d20543e2d51a73954bcf160aab2))
+* **runtime:** add allowlisted invoke workflow node ([1b018ef](https://github.com/digitalelvis/neuronai-studio/commit/1b018efac5c93de0074d992a2dbdbf7762f6ca1e))
+
 # [0.9.0](https://github.com/digitalelvis/neuronai-studio/compare/v0.8.1...v0.9.0) (2026-07-22)
 
 
