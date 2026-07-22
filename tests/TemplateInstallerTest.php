@@ -120,6 +120,45 @@ class TemplateInstallerTest extends TestCase
         $this->assertNotNull($nodes->first(fn (array $node) => ($node['type'] ?? '') === 'fork'));
     }
 
+    public function test_install_parallel_refund_approval_wires_tool_approval(): void
+    {
+        $workflow = app(TemplateInstaller::class)->installWorkflow('parallel-refund-approval');
+
+        $result = app(GraphValidator::class)->validate($workflow->graph);
+        $this->assertTrue($result['valid'], implode(' ', $result['errors']));
+
+        $nodes = collect($workflow->graph['nodes'] ?? []);
+
+        $this->assertNotNull($nodes->first(fn (array $node) => ($node['type'] ?? '') === 'fork'));
+        $this->assertNotNull($nodes->first(fn (array $node) => ($node['type'] ?? '') === 'join'));
+
+        $refundAgent = AgentDefinition::where('slug', 'refund-actions-agent')->first();
+        $this->assertNotNull($refundAgent);
+        $this->assertTrue((bool) $refundAgent->require_tool_approval);
+        $this->assertSame(
+            'class:DigitalElvis\\NeuronAIStudio\\Tools\\IssueRefundTool',
+            $refundAgent->tools[0]['ref'] ?? null,
+        );
+
+        $composer = AgentDefinition::where('slug', 'support-triage-composer')->first();
+        $this->assertNotNull($composer);
+
+        $refundNode = $nodes->first(
+            fn (array $node) => ($node['type'] ?? '') === 'agent'
+                && ($node['data']['agent_id'] ?? null) === $refundAgent->id
+        );
+        $this->assertNotNull($refundNode);
+        $this->assertTrue((bool) ($refundNode['data']['require_tool_approval'] ?? false));
+        $this->assertArrayNotHasKey('agent_ref', $refundNode['data'] ?? []);
+
+        $composeNode = $nodes->first(
+            fn (array $node) => ($node['type'] ?? '') === 'agent'
+                && ($node['data']['agent_id'] ?? null) === $composer->id
+        );
+        $this->assertNotNull($composeNode);
+        $this->assertArrayNotHasKey('agent_ref', $composeNode['data'] ?? []);
+    }
+
     public function test_install_workflow_reuses_existing_agents(): void
     {
         $installer = app(TemplateInstaller::class);

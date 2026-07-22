@@ -4,7 +4,7 @@
 **Development line (features):** `v0.9.x` (M8 Execute — branch open)
 **Patch line:** `v0.8.x`
 **Latest published:** `v0.8.1` on Packagist / `main`
-**Current Work:** M8 **Execute** on `v0.9.x` (AD-022): `agent-memory-controls` ✅; `context-engineering` ✅; next `parallel-tool-approval`. Observability polish (OBS-06, OTel) stays demoted.
+**Current Work:** M8 **Execute** on `v0.9.x` (AD-022): `agent-memory-controls` ✅; `context-engineering` ✅; `parallel-tool-approval` ✅ — M8 complete. Observability polish (OBS-06, OTel) stays demoted.
 
 ---
 
@@ -241,7 +241,7 @@
 |---------|--------|-------|
 | `agent-memory-controls` (P1) | ✅ done | AMC-T1…T10 on `v0.9.x` — [spec](../features/agent-memory-controls/spec.md) · [tasks](../features/agent-memory-controls/tasks.md) |
 | `context-engineering` (P1) | ✅ done | CTX-T1…T9 on `v0.9.x` — [spec](../features/context-engineering/spec.md) · [tasks](../features/context-engineering/tasks.md) |
-| `parallel-tool-approval` (P2) | specified | PTA-01…04; Execute only after the P1s — [spec](../features/parallel-tool-approval/spec.md) |
+| `parallel-tool-approval` (P2) | ✅ done | PTA-T1…T7 on `v0.9.x` — [spec](../features/parallel-tool-approval/spec.md) · [tasks](../features/parallel-tool-approval/tasks.md) |
 | LangSmith-specific | dropped | AD-021 |
 | Generic OTel | P3 deferred | when-needed only |
 
@@ -406,4 +406,4 @@ Themes turned into specified features (AD-022 — Execute next on `v0.9.x`):
 - [x] Open `v0.9.x` from `main` (`v0.8.1`) for M8 Execute (AD-022)
 - [x] Execute M8 `agent-memory-controls` (AMC-T1…T10) on `v0.9.x`
 - [x] Execute M8 `context-engineering` (CTX-T1…T9) on `v0.9.x`
-- [ ] Execute M8: `parallel-tool-approval` on `v0.9.x`
+- [x] Execute M8: `parallel-tool-approval` on `v0.9.x`

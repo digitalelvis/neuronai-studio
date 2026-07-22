@@ -6,7 +6,7 @@
 **Patch line:** `v0.8.x`  
 **Latest published:** `v0.8.1` on Packagist / `main`  
 **Última atualização:** 2026-07-21  
-**Etapa atual:** M7 ✅ (`v0.8.0`/`v0.8.1`). **M8 Execute** on `v0.9.x` (AD-022): `agent-memory-controls` ✅ → `context-engineering` ✅ → next `parallel-tool-approval`. LangSmith removido; OTel genérico em P3.
+**Etapa atual:** M7 ✅ (`v0.8.0`/`v0.8.1`). **M8 Execute** on `v0.9.x` (AD-022): `agent-memory-controls` ✅ → `context-engineering` ✅ → `parallel-tool-approval` ✅ — M8 complete. LangSmith removido; OTel genérico em P3.
 
 ---
 
@@ -98,7 +98,7 @@ Monitoring externo **env-first** (playbook Langflow): native Debugger permanece;
 
 **Critério de conclusão M7:** Com `INSPECTOR_INGESTION_KEY`, runs do Studio aparecem no Inspector (gap EventBus corrigido); com `LANGFUSE_*` + pacote, traces exportam sem quebrar runs; `NEURONAI_STUDIO_NATIVE_TRACING=false` desliga Debugger DB; docs permitem setup em &lt; 5 min. **Publicado em `v0.8.0`.**
 
-### M8 — Performance, memory & context (P1) `in progress`
+### M8 — Performance, memory & context (P1) `done`
 
 Foco total em **desempenho de agentes e workflows**: memória durável e controlável (compaction com summary persistido — sem silent deletes), engenharia de contexto completa (budgets de prompt assembly: history + RAG + tool results + state), e tool approval dentro de parallel branches (P2). Observabilidade adicional (OTel genérico, OBS-06) fica em débitos P3 — **sem** integração LangSmith dedicada (AD-021).
 
@@ -110,7 +110,7 @@ Foco total em **desempenho de agentes e workflows**: memória durável e control
 |-------|---------|--------|------|
 | 19 | `agent-memory-controls` (P1) | **done** | [spec](../features/agent-memory-controls/spec.md) · [tasks](../features/agent-memory-controls/tasks.md) |
 | 20 | `context-engineering` (P1) | **done** | [spec](../features/context-engineering/spec.md) · [tasks](../features/context-engineering/tasks.md) |
-| 21 | `parallel-tool-approval` (P2) | **specified** | [spec](../features/parallel-tool-approval/spec.md) · [tasks](../features/parallel-tool-approval/tasks.md) |
+| 21 | `parallel-tool-approval` (P2) | **done** | [spec](../features/parallel-tool-approval/spec.md) · [tasks](../features/parallel-tool-approval/tasks.md) |
 
 **Critério de conclusão M8:** Thread long-running fica sob o budget de contexto com summary persistido substituindo o prefixo trimado — nenhuma perda silenciosa de history; Studio expõe memory window/driver/summarization por agente e por nó (override M6-style); injeção de RAG/tool results/state respeita budgets configuráveis e registra truncamento em span metadata; (P2) tool approval dentro de um branch paralelo pausa e retoma (approve/reject) em vez de falhar o run, com paridade sequential/concurrent.
 
@@ -129,7 +129,7 @@ Foco total em **desempenho de agentes e workflows**: memória durável e control
 9. ~~Abrir `v0.9.x` a partir de `main` (`v0.8.1`)~~ ✅
 10. ~~Execute M8 `agent-memory-controls`~~ ✅
 11. ~~Execute M8 `context-engineering`~~ ✅
-12. Execute M8: `parallel-tool-approval` em `v0.9.x`
+12. ~~Execute M8: `parallel-tool-approval` em `v0.9.x`~~ ✅
 
 ---
 

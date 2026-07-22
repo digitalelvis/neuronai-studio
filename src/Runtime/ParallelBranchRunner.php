@@ -19,6 +19,7 @@ class ParallelBranchRunner
         '__loop_iterations',
         '__parallel_resume',
         '__parallel_results',
+        '__tool_approval_resume',
         HumanNodeExecutor::PASSTHROUGH_STATE_KEY,
     ];
 

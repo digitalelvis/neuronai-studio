@@ -32,6 +32,7 @@ Repeating the same workflow template creates a new workflow. Agents referenced b
 | `knowledge-agent` | Knowledge Agent |
 | `lead-qualifier` | Lead Qualifier (tools + multimodal) |
 | `support-triage-composer` | Support Triage Composer (parallel synthesis) |
+| `refund-actions-agent` | Refund Actions Agent (class-based tool + approval) |
 | `dev-support-specialist` | Dev Support Specialist (memory + tools + multimodal) |
 
 ### Workflows
@@ -45,6 +46,7 @@ Repeating the same workflow template creates a new workflow. Agents referenced b
 | `parallel-support-triage` | Intermediate | Fork/join parallel analysis + checkpoints |
 | `support-rag-hitl` | Advanced | Intent routing, RAG, human-in-the-loop |
 | `parallel-triage-hitl` | Advanced | Parallel analysis + human review branch + checkpoint resume |
+| `parallel-refund-approval` | Advanced | Parallel eligibility + approval-gated refund tool |
 | `dev-support-memory-loop` | Advanced | Tech-support loop with memory, RAG, HITL, tools, attachments |
 
 ## Lead Qualification (loop)
@@ -155,6 +157,23 @@ sexta (04/07), senão vou cancelar. E-mail: joao.pereira@empresa.com.br
 ```
 
 **Expected result** — `triage_summary` contains a `## Triage` block (sentiment, key facts, priority `urgent`, route to `billing`) followed by a short `## Suggested reply` to the customer. In the HITL variant, the reviewer note you provide during the pause is woven into the reply.
+
+### `parallel-refund-approval` (advanced)
+
+Demonstrates **tool approval inside a parallel branch**:
+
+1. `set_state` stores the ticket.
+2. A **fork** launches two branches: an LLM eligibility analysis (no tools) and the `refund-actions-agent` with `require_tool_approval: true`.
+3. The refund agent calls `issue_refund` (class-based `IssueRefundTool`) and pauses with status `awaiting_tool_approval` (`tool_approval_required` includes `branch_id`).
+4. After Approve / Reject in the harness, the join merges eligibility + refund result and `support-triage-composer` drafts `triage_summary`.
+
+**Example input:**
+
+```text
+Order #4821 — customer requests a refund of 189.90 for a defective product purchased on 2026-07-10. Please process the refund.
+```
+
+**Expected result** — eligibility branch completes first; refund branch pauses for approval; after Approve, join + composer finish and the workflow status is `completed`. Reject skips the tool but still joins and composes.
 
 See [Logic Nodes → Fork / Join](workflows/node-types/logic-nodes.md), [Runtime & Traces](workflows/runtime-and-traces.md), and [Human-in-the-Loop](workflows/human-in-the-loop.md).
 

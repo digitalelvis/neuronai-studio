@@ -95,8 +95,12 @@ The interpreted runtime executes branches with **isolated state per branch**
 (mirroring NeuronAI's `ParallelEvent` merge semantics), so branches never see each other's
 partial writes. Each branch result is keyed by its branch id. With
 `parallel.concurrency=concurrent` (default) and Amp available, pending branches run as
-concurrent Amp fibers; set `sequential` to force the legacy foreach order. Tool approval
-inside a branch remains unsupported.
+concurrent Amp fibers; set `sequential` to force the legacy foreach order.
+
+Human nodes and **tool approval** inside a branch are supported: the run pauses with a
+`kind: parallel` checkpoint, completed siblings are preserved, and resume continues only
+the pending branch (then runs any not-yet-started branches). See
+[Human-in-the-Loop → Parallel branches](../human-in-the-loop.md#parallel-branches).
 
 ```mermaid
 flowchart LR

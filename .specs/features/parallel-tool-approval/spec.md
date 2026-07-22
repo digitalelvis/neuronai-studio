@@ -9,10 +9,10 @@ Tool approval works on the linear path (`WorkflowRunner::pauseForToolApproval` /
 
 ## Goals
 
-- [ ] A tool-approval request inside a parallel branch pauses the run with a parallel checkpoint instead of failing it — in both sequential and Amp concurrent scheduling.
-- [ ] Resume with approve/reject targets the pending branch, preserving completed-branch results and running not-yet-started branches (L-003 pattern).
-- [ ] SSE and harness UX match the linear tool-approval experience, with branch identification.
-- [ ] Docs no longer list tool approval in branches as unsupported.
+- [x] A tool-approval request inside a parallel branch pauses the run with a parallel checkpoint instead of failing it — in both sequential and Amp concurrent scheduling.
+- [x] Resume with approve/reject targets the pending branch, preserving completed-branch results and running not-yet-started branches (L-003 pattern).
+- [x] SSE and harness UX match the linear tool-approval experience, with branch identification.
+- [x] Docs no longer list tool approval in branches as unsupported.
 
 ## Out of Scope
 
@@ -102,10 +102,10 @@ Tool approval works on the linear path (`WorkflowRunner::pauseForToolApproval` /
 
 | Requirement ID | Story | Phase | Status |
 | -------------- | ----- | ----- | ------ |
-| PTA-01 | P2: Pause in branch (both schedulers) | Tasks | Pending |
-| PTA-02 | P2: Resume approve/reject per branch | Tasks | Pending |
-| PTA-03 | P2: Scheduler parity + multi-approval | Tasks | Pending |
-| PTA-04 | P2: Codegen + docs | Tasks | Pending |
+| PTA-01 | P2: Pause in branch (both schedulers) | Tasks | Done |
+| PTA-02 | P2: Resume approve/reject per branch | Tasks | Done |
+| PTA-03 | P2: Scheduler parity + multi-approval | Tasks | Done |
+| PTA-04 | P2: Codegen + docs | Tasks | Done |
 
 **Coverage:** 4 total, 4 mapped to tasks ([tasks.md](./tasks.md)), 0 unmapped
 
@@ -113,7 +113,7 @@ Tool approval works on the linear path (`WorkflowRunner::pauseForToolApproval` /
 
 ## Success Criteria
 
-- [ ] Fork + approval-gated agent no longer fails the run: pauses with `awaiting_tool_approval` and a `kind: parallel` checkpoint, under both scheduler modes.
-- [ ] Approve and reject resumes produce correct join output with completed branches preserved and unstarted branches executed.
-- [ ] Multi-approval forks complete via successive pause/resume cycles.
-- [ ] Docs updated; "unsupported" statements removed.
+- [x] Fork + approval-gated agent no longer fails the run: pauses with `awaiting_tool_approval` and a `kind: parallel` checkpoint, under both scheduler modes.
+- [x] Approve and reject resumes produce correct join output with completed branches preserved and unstarted branches executed.
+- [x] Multi-approval forks complete via successive pause/resume cycles.
+- [x] Docs updated; "unsupported" statements removed.
