@@ -71,6 +71,18 @@ An empty array allows all commands.
 
 HTTP MCP servers use `token_env` to reference bearer tokens from `.env` — never hardcode secrets in config files.
 
+## Invoke node hooks
+
+The canvas **Invoke** node may only call FQCNs listed in `invoke_hooks` (empty = nothing allowed):
+
+```php
+'invoke_hooks' => [
+    \App\Neuron\Hooks\EnrichLead::class,
+],
+```
+
+Each class must be resolvable from the container and implement `__invoke(\NeuronAI\Workflow\WorkflowState $state): mixed`. See [Logic Nodes — Invoke](workflows/node-types/logic-nodes.md#invoke).
+
 ## Approving sensitive tools
 
 Agents can call tools that perform destructive or high-impact actions (deleting files, transferring money, sending emails). **Tool approval** adds a human gate: when enabled on an agent (or overridden on a workflow Agent node), execution pauses before any tool runs and requires an explicit approve/reject decision in the workflow test harness.
@@ -94,6 +106,7 @@ See [Human-in-the-Loop → Tool approval](workflows/human-in-the-loop.md#tool-ap
 | Environment | Disable open access outside `local` |
 | Webhooks | Set explicit host allowlist |
 | MCP stdio | Keep command allowlist minimal |
+| Invoke hooks | Keep `invoke_hooks` minimal (fail-closed) |
 | Attachments | Use dedicated disk with size limits |
 | API keys | Keep in `config/neuron.php` / `.env` only |
 | Sensitive tools | Require tool approval for destructive agent actions |

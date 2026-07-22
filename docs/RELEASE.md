@@ -9,7 +9,7 @@ Operational guide for versioning and publishing `digitalelvis/neuronai-studio` o
 | `release-it` | Semver bump, `CHANGELOG.md`, Git tag, GitHub Release |
 | `.github/workflows/release.yml` | Runs `release-it --ci` on every push to `main` (skips `[skip ci]` commits) |
 | `RELEASE_TOKEN` (repo secret) | Administrator fine-grained PAT used to push the release commit past the `Protect main` ruleset |
-| `.github/workflows/ci.yml` | PHPUnit + frontend build gate on PRs to `main` and `v*.*.x` |
+| `.github/workflows/ci.yml` | PR gate: smoke (PHP 8.3 + Laravel 12) on feature lines; full PHP/Laravel matrix on PRs to `main`. Required check: `CI`. No push trigger (avoids double-run after merge). |
 | Packagist | Consumes Git tags (`v1.2.3`) — no `version` field in `composer.json` |
 
 ## Day-to-day development
@@ -135,7 +135,7 @@ Apply from the repo root (requires `gh` admin access):
 ./.github/scripts/apply-branch-rules.sh
 ```
 
-That installs **Protect main** and **Protect development lines** from `.github/rulesets/`, including Administrator bypass for release pushes. Development lines match `refs/heads/v*.*.x` (covers `v0.5.x`, `v0.6.x`, …). Then create the [`RELEASE_TOKEN`](#release-bot-release_token) secret.
+That installs **Protect main** and **Protect development lines** from `.github/rulesets/`, including Administrator bypass for release pushes. Development lines match `refs/heads/v*.*.x` (covers `v0.5.x`, `v0.6.x`, …). Both rulesets require the aggregate status check **`CI`** (not individual matrix job names). Re-run this script whenever `.github/rulesets/*.json` changes, or merges will stay blocked on stale required checks. Then create the [`RELEASE_TOKEN`](#release-bot-release_token) secret.
 
 ### 3. Register on Packagist
 

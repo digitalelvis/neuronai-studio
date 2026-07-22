@@ -93,9 +93,15 @@ Custom node fields appear in the inspector when you extend the React inspector c
 
 See the registered types in `NeuronAIStudioServiceProvider::registerNodeTypes()`:
 
-- start, stop, agent, llm, condition, set_state, loop, tool, rag, delay, mcp, human, fork, join
+- start, stop, agent, llm, condition, set_state, invoke, loop, tool, rag, delay, mcp, human, fork, join
 
 Use these as reference implementations in `src/Runtime/NodeExecutors/`.
+
+### Invoke vs custom node
+
+For a one-off host callable, prefer the built-in **invoke** node: list the FQCN in `config('neuronai-studio.invoke_hooks')` and place an Invoke node on the canvas (`hook_class` + `output_key`). Register a full custom node type when you need a named palette entry, multiple output handles, checkpointing, or a dedicated inspector UX.
+
+See [Logic Nodes — Invoke](../guides/workflows/node-types/logic-nodes.md#invoke).
 
 ### The fork/join pattern
 

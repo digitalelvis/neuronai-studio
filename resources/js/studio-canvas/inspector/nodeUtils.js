@@ -30,6 +30,12 @@ export function normalizeNodeForEdit(node) {
         data.output_key = 'llm_response';
     }
 
+    if (node.type === 'invoke') {
+        if (!data.output_key) {
+            data.output_key = 'invoke_result';
+        }
+    }
+
     return { ...node, data };
 }
 
