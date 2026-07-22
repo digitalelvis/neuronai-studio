@@ -305,6 +305,32 @@ export default function NodeConfigForm({
                 </>
             )}
 
+            {node.type === 'invoke' && (
+                <>
+                    <div className="space-y-2">
+                        <Label>Hook class (FQCN)</Label>
+                        <Input
+                            value={data.hook_class ?? ''}
+                            onChange={(e) => updateField('hook_class', e.target.value)}
+                            placeholder="App\Neuron\Hooks\EnrichLead"
+                            disabled={readOnly}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                            Must be listed in <code>neuronai-studio.invoke_hooks</code> and implement{' '}
+                            <code>__invoke(WorkflowState)</code>.
+                        </p>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Output Key</Label>
+                        <Input
+                            value={data.output_key ?? 'invoke_result'}
+                            onChange={(e) => updateField('output_key', e.target.value)}
+                            disabled={readOnly}
+                        />
+                    </div>
+                </>
+            )}
+
             {node.type === 'condition' && (
                 <>
                     <div className="space-y-2">
