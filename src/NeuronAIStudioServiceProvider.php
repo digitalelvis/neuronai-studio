@@ -27,6 +27,7 @@ use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\ConditionNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\DelayNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\ForkNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\HumanNodeExecutor;
+use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\InvokeNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\JoinNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\LoopNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\LlmNodeExecutor;
@@ -210,6 +211,7 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
             'llm' => LlmNodeExecutor::class,
             'condition' => ConditionNodeExecutor::class,
             'set_state' => SetStateNodeExecutor::class,
+            'invoke' => InvokeNodeExecutor::class,
             'tool' => ToolNodeExecutor::class,
             'rag' => RagNodeExecutor::class,
             'delay' => DelayNodeExecutor::class,

@@ -3,6 +3,7 @@
 namespace DigitalElvis\NeuronAIStudio\Runtime;
 
 use DigitalElvis\NeuronAIStudio\Registry\NodeTypeRegistry;
+use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\InvokeNodeExecutor;
 use InvalidArgumentException;
 
 class GraphValidator
@@ -79,6 +80,7 @@ class GraphValidator
 
         $errors = array_merge($errors, $this->validateCycles($nodes, $edges));
         $errors = array_merge($errors, $this->validateParallel($nodes, $edges));
+        $errors = array_merge($errors, $this->validateInvokeNodes($nodes));
 
         if (empty($errors) && ! empty($startNodes)) {
             $startId = array_values($startNodes)[0]['id'];
@@ -220,6 +222,50 @@ class GraphValidator
         }
 
         return [];
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $nodes
+     * @return array<int, string>
+     */
+    protected function validateInvokeNodes(array $nodes): array
+    {
+        $errors = [];
+        $executor = new InvokeNodeExecutor;
+
+        foreach ($nodes as $node) {
+            if (($node['type'] ?? '') !== 'invoke') {
+                continue;
+            }
+
+            $id = (string) ($node['id'] ?? 'unknown');
+            $data = is_array($node['data'] ?? null) ? $node['data'] : [];
+            $hookClass = is_string($data['hook_class'] ?? null) ? ltrim(trim($data['hook_class']), '\\') : '';
+
+            if ($hookClass === '') {
+                $errors[] = "Invoke node {$id} requires data.hook_class (FQCN).";
+
+                continue;
+            }
+
+            if (! $executor->isAllowlisted($hookClass)) {
+                $errors[] = "Invoke node {$id}: hook [{$hookClass}] is not in config('neuronai-studio.invoke_hooks').";
+
+                continue;
+            }
+
+            if (! class_exists($hookClass)) {
+                $errors[] = "Invoke node {$id}: hook class [{$hookClass}] does not exist.";
+
+                continue;
+            }
+
+            if (! method_exists($hookClass, '__invoke')) {
+                $errors[] = "Invoke node {$id}: hook [{$hookClass}] must implement __invoke().";
+            }
+        }
+
+        return $errors;
     }
 
     protected function canReachStop(string $startId, array $nodes, array $edges): bool
