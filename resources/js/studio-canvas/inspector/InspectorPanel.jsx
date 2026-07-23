@@ -1,15 +1,13 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import GraphJsonPanel from '../GraphJsonPanel';
 import WorkflowCodePanel from '../WorkflowCodePanel';
-import StudioTestHarness from '../../studio-chat/StudioTestHarness';
-import { WorkflowSessionAdapter } from '../../studio-chat/adapters/WorkflowSessionAdapter';
 import { TraceList, TraceDetailSheet } from '../../studio-traces';
 import ConnectPanel from '../../components/ConnectPanel';
 
 export default function InspectorPanel({
     workflowConfig = {},
-    onBeforeRun,
 }) {
     const [tab, setTab] = useState('test');
     const [selectedTraceId, setSelectedTraceId] = useState(null);
@@ -50,29 +48,16 @@ export default function InspectorPanel({
         return () => window.removeEventListener('workflow-view-trace', onViewTrace);
     }, []);
 
-    const workflowAdapter = useMemo(() => {
-        if (!workflowConfig.streamUrl) {
-            return null;
-        }
-
-        return new WorkflowSessionAdapter({
-            streamUrl: workflowConfig.streamUrl,
-            resumeUrlTemplate: workflowConfig.resumeUrlTemplate,
-            uploadUrl: workflowConfig.uploadUrl,
-            onBeforeRun,
-            syncCanvas: true,
-        });
-    }, [workflowConfig.streamUrl, workflowConfig.resumeUrlTemplate, workflowConfig.uploadUrl, onBeforeRun]);
+    useEffect(() => {
+        const onTraceFinished = () => setTracesRefreshToken((current) => current + 1);
+        window.addEventListener('workflow-trace-finished', onTraceFinished);
+        return () => window.removeEventListener('workflow-trace-finished', onTraceFinished);
+    }, []);
 
     const handleTraceSelect = (trace) => {
         setSelectedTraceId(trace.id);
         setTraceSheetOpen(true);
     };
-
-    const handleTraceFinished = useCallback(() => {
-        setTracesRefreshToken((current) => current + 1);
-        window.dispatchEvent(new CustomEvent('workflow-trace-finished'));
-    }, []);
 
     const canPreview = workflowConfig.canPreview !== false;
     const canExport = workflowConfig.canExport !== false;
@@ -93,19 +78,18 @@ export default function InspectorPanel({
                     forceMount
                     className="mt-0 flex-1 overflow-hidden data-[state=inactive]:hidden"
                 >
-                    {workflowAdapter ? (
-                        <StudioTestHarness
-                            adapter={workflowAdapter}
-                            mode="workflow"
-                            entityId={workflowConfig.workflowId}
-                            enableAttachments={Boolean(workflowConfig.uploadUrl)}
-                            uploadUrl={workflowConfig.uploadUrl}
-                            embedded
-                            onRunCompleted={handleTraceFinished}
-                        />
-                    ) : (
-                        <p className="p-4 text-sm text-muted-foreground">Save the workflow first to enable testing.</p>
-                    )}
+                    <div className="flex h-full flex-col items-center justify-center gap-3 p-6 text-center">
+                        <p className="text-sm text-muted-foreground">
+                            Open the Playground to chat, manage sessions, and inspect traces.
+                        </p>
+                        <Button
+                            size="sm"
+                            disabled={!workflowConfig.workflowId}
+                            onClick={() => window.dispatchEvent(new CustomEvent('workflow-open-test'))}
+                        >
+                            Open Playground
+                        </Button>
+                    </div>
                 </TabsContent>
 
                 <TabsContent value="traces" className="mt-0 flex-1 overflow-hidden data-[state=inactive]:hidden">

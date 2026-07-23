@@ -1,14 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-    Sheet,
-    SheetContent,
-    SheetDescription,
-    SheetHeader,
-    SheetTitle,
-} from '@/components/ui/sheet';
 import StudioTestHarness from '../../studio-chat/StudioTestHarness';
+import PlaygroundShell from '../../studio-chat/PlaygroundShell';
 import { WorkflowSessionAdapter } from '../../studio-chat/adapters/WorkflowSessionAdapter';
 
 export default function PlaygroundOverlay({ workflowConfig = {}, onBeforeRun }) {
@@ -52,37 +46,29 @@ export default function PlaygroundOverlay({ workflowConfig = {}, onBeforeRun }) 
                 Playground
             </Button>
 
-            <Sheet open={open} onOpenChange={setOpen}>
-                <SheetContent
-                    side="right"
-                    className="flex w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-lg"
-                >
-                    <SheetHeader className="shrink-0 space-y-1 border-b border-border px-4 py-3 text-left">
-                        <SheetTitle>Playground</SheetTitle>
-                        <SheetDescription>Run and chat with this workflow</SheetDescription>
-                    </SheetHeader>
-
-                    <div className="min-h-0 flex-1 overflow-hidden">
-                        {workflowAdapter ? (
-                            <StudioTestHarness
-                                adapter={workflowAdapter}
-                                mode="workflow"
-                                entityId={workflowConfig.workflowId}
-                                enableAttachments={Boolean(workflowConfig.uploadUrl)}
-                                uploadUrl={workflowConfig.uploadUrl}
-                                embedded
-                                onRunCompleted={() =>
-                                    window.dispatchEvent(new CustomEvent('workflow-trace-finished'))
-                                }
-                            />
-                        ) : (
-                            <p className="p-4 text-sm text-muted-foreground">
-                                Save the workflow first to enable testing.
-                            </p>
-                        )}
-                    </div>
-                </SheetContent>
-            </Sheet>
+            <PlaygroundShell open={open} onOpenChange={setOpen}>
+                {workflowAdapter ? (
+                    <StudioTestHarness
+                        adapter={workflowAdapter}
+                        mode="workflow"
+                        entityId={workflowConfig.workflowId}
+                        enableAttachments={Boolean(workflowConfig.uploadUrl)}
+                        uploadUrl={workflowConfig.uploadUrl}
+                        embedded
+                        showCloseButton
+                        onClose={() => setOpen(false)}
+                        threadsIndexUrl={workflowConfig.threadsIndexUrl}
+                        tracesIndexUrl={workflowConfig.tracesIndexUrl}
+                        traceShowJsonUrlTemplate={workflowConfig.traceShowJsonUrlTemplate}
+                        traceShowUrlTemplate={workflowConfig.traceShowUrlTemplate}
+                        onRunCompleted={() =>
+                            window.dispatchEvent(new CustomEvent('workflow-trace-finished'))
+                        }
+                    />
+                ) : (
+                    <p className="p-6 text-sm text-muted-foreground">Save the workflow first to enable testing.</p>
+                )}
+            </PlaygroundShell>
         </>
     );
 }
