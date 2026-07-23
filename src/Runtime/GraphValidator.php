@@ -17,7 +17,10 @@ class GraphValidator
     public function validate(array $graph): array
     {
         $errors = [];
-        $nodes = $graph['nodes'] ?? [];
+        $nodes = array_values(array_filter(
+            $graph['nodes'] ?? [],
+            fn ($n) => ($n['type'] ?? '') !== 'note',
+        ));
         $edges = $graph['edges'] ?? [];
 
         if (empty($nodes)) {
@@ -78,13 +81,16 @@ class GraphValidator
             }
         }
 
-        $errors = array_merge($errors, $this->validateCycles($nodes, $edges));
-        $errors = array_merge($errors, $this->validateParallel($nodes, $edges));
+        $controlEdges = $this->controlFlowEdges($edges);
+        $errors = array_merge($errors, $this->validateCycles($nodes, $controlEdges));
+        $errors = array_merge($errors, $this->validateParallel($nodes, $controlEdges));
         $errors = array_merge($errors, $this->validateInvokeNodes($nodes));
+        $errors = array_merge($errors, $this->validateAgentNodes($nodes));
+        $errors = array_merge($errors, $this->validateToolBindingEdges($nodes, $edges));
 
         if (empty($errors) && ! empty($startNodes)) {
             $startId = array_values($startNodes)[0]['id'];
-            if (! $this->canReachStop($startId, $nodes, $edges)) {
+            if (! $this->canReachStop($startId, $nodes, $controlEdges)) {
                 $errors[] = 'No path from start to stop node exists.';
             }
         }
@@ -93,6 +99,122 @@ class GraphValidator
             'valid' => empty($errors),
             'errors' => $errors,
         ];
+    }
+
+    /**
+     * Edges that participate in workflow control flow (excludes tool-binding pins).
+     *
+     * @param  array<int, array<string, mixed>>  $edges
+     * @return array<int, array<string, mixed>>
+     */
+    protected function controlFlowEdges(array $edges): array
+    {
+        return array_values(array_filter(
+            $edges,
+            static fn (array $edge) => ($edge['targetHandle'] ?? 'default') !== 'tools',
+        ));
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $nodes
+     * @return array<int, string>
+     */
+    protected function validateAgentNodes(array $nodes): array
+    {
+        $errors = [];
+
+        foreach ($nodes as $node) {
+            if (($node['type'] ?? '') !== 'agent') {
+                continue;
+            }
+
+            $id = (string) ($node['id'] ?? 'unknown');
+            $data = is_array($node['data'] ?? null) ? $node['data'] : [];
+            $mode = $this->resolveAgentConfigMode($data);
+
+            if ($mode === 'existing') {
+                if (! isset($data['agent_id']) || $data['agent_id'] === '' || $data['agent_id'] === null) {
+                    $errors[] = "Agent node {$id} in existing mode requires data.agent_id.";
+                }
+
+                continue;
+            }
+
+            $provider = trim((string) ($data['provider'] ?? ''));
+            $model = trim((string) ($data['model'] ?? ''));
+
+            if ($provider === '' || $model === '') {
+                $errors[] = "Agent node {$id} in inline mode requires data.provider and data.model.";
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $nodes
+     * @param  array<int, array<string, mixed>>  $edges
+     * @return array<int, string>
+     */
+    protected function validateToolBindingEdges(array $nodes, array $edges): array
+    {
+        $errors = [];
+        $typeById = [];
+        $modeById = [];
+
+        foreach ($nodes as $node) {
+            $id = (string) ($node['id'] ?? '');
+            if ($id === '') {
+                continue;
+            }
+
+            $typeById[$id] = (string) ($node['type'] ?? '');
+            $data = is_array($node['data'] ?? null) ? $node['data'] : [];
+            $modeById[$id] = $this->resolveAgentConfigMode($data);
+        }
+
+        foreach ($edges as $edge) {
+            if (($edge['targetHandle'] ?? 'default') !== 'tools') {
+                continue;
+            }
+
+            $source = (string) ($edge['source'] ?? '');
+            $target = (string) ($edge['target'] ?? '');
+            $sourceType = $typeById[$source] ?? '';
+            $targetType = $typeById[$target] ?? '';
+
+            if ($targetType !== 'agent') {
+                $errors[] = "Tools edge target must be an agent node (got {$target}).";
+
+                continue;
+            }
+
+            if (($modeById[$target] ?? 'inline') !== 'inline') {
+                $errors[] = "Tools edges are only allowed on inline agent nodes ({$target}).";
+            }
+
+            if (! in_array($sourceType, ['tool', 'mcp'], true)) {
+                $errors[] = "Tools edge source must be a tool or mcp node (got {$sourceType} on {$source}).";
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function resolveAgentConfigMode(array $data): string
+    {
+        $mode = (string) ($data['config_mode'] ?? '');
+
+        if ($mode === 'inline' || $mode === 'existing') {
+            return $mode;
+        }
+
+        return isset($data['agent_id']) && $data['agent_id'] !== '' && $data['agent_id'] !== null
+            ? 'existing'
+            : 'inline';
     }
 
     /**

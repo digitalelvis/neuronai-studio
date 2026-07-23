@@ -4,8 +4,9 @@ import { normalizeNodeForEdit } from './nodeUtils';
 export function useNodeEditor() {
     const [editingNode, setEditingNode] = useState(null);
     const [sheetOpen, setSheetOpen] = useState(false);
+    const [section, setSection] = useState('all');
 
-    const openNodeEditor = useCallback((node) => {
+    const openNodeEditor = useCallback((node, nextSection = 'all') => {
         const normalized = normalizeNodeForEdit(node);
 
         if (!normalized) {
@@ -13,6 +14,7 @@ export function useNodeEditor() {
         }
 
         setEditingNode(normalized);
+        setSection(nextSection);
         setSheetOpen(true);
     }, []);
 
@@ -50,7 +52,7 @@ export function useNodeEditor() {
     useEffect(() => {
         const onEdit = (event) => {
             if (event.detail?.id) {
-                openNodeEditor(event.detail);
+                openNodeEditor(event.detail, event.detail.section || 'all');
             }
         };
 
@@ -78,12 +80,14 @@ export function useNodeEditor() {
 
         if (!open) {
             setEditingNode(null);
+            setSection('all');
         }
     }, []);
 
     return {
         editingNode,
         sheetOpen,
+        section,
         setSheetOpen: handleOpenChange,
         openNodeEditor,
         syncNode,

@@ -104,12 +104,19 @@ See [Human-in-the-Loop → Tool approval](workflows/human-in-the-loop.md#tool-ap
 |---------|----------------|
 | Studio access | Restrict gate to admin/developer roles |
 | Environment | Disable open access outside `local` |
+| CodeGen | Keep `codegen.*` off outside local (or enable selectively); see [Export & Production](export-and-production.md#codegen-feature-flags) |
 | Webhooks | Set explicit host allowlist |
 | MCP stdio | Keep command allowlist minimal |
 | Invoke hooks | Keep `invoke_hooks` minimal (fail-closed) |
 | Attachments | Use dedicated disk with size limits |
 | API keys | Keep in `config/neuron.php` / `.env` only |
 | Sensitive tools | Require tool approval for destructive agent actions |
+
+## CodeGen
+
+Code generation (export to disk, class preview, `make-tool`, import-to-studio) is controlled by `neuronai-studio.codegen` flags. Defaults are on only in `local`. In staging/production leave them off unless you intentionally allow developers to write PHP under `export_path`.
+
+Already-exported classes continue to resolve at runtime regardless of these flags.
 
 ## File uploads
 

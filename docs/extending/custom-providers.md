@@ -25,9 +25,9 @@ Providers are defined in `config/neuronai-studio.php`:
 
 The studio UI reads this list for the provider/model picker. Credentials are **not** configured here.
 
-## Credentials via Neuron Laravel
+## Credentials via Neuron AI
 
-API keys and provider drivers come from `config/neuron.php` (Neuron Laravel):
+API keys and provider drivers come from `config/neuron.php` (Neuron AI):
 
 ```env
 OPENAI_KEY=sk-...
@@ -35,7 +35,7 @@ ANTHROPIC_KEY=sk-ant-...
 NEURON_AI_PROVIDER=openai
 ```
 
-Ensure your custom provider key matches a driver registered in Neuron Laravel.
+Ensure your custom provider key matches a driver registered in Neuron AI.
 
 ## Default provider/model
 

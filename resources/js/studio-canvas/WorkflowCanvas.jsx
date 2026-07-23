@@ -10,19 +10,21 @@ import {
     useEdgesState,
     useNodesState,
     useReactFlow,
+    useStore,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 
 import { CanvasUiProvider } from './CanvasUiContext';
 import WorkflowEdge from './edges/WorkflowEdge';
 import WorkflowNode from './nodes/WorkflowNode';
-import { dispatchNodeEdit } from './inspector/nodeUtils';
+import StickyNote from './nodes/StickyNote';
 import { useUndoRedo } from './hooks/useUndoRedo';
 import { layoutWithDagre } from './layout';
 import {
     buildFlowEdge,
     buildFlowNode,
     canSpliceNodeType,
+    createNodeId,
     dropFlowPosition,
     edgeMidpoint,
     findEdgeNearPoint,
@@ -35,8 +37,30 @@ import {
 } from './graph';
 import './canvas.css';
 
-const nodeTypes = { workflowNode: WorkflowNode };
+const nodeTypes = { workflowNode: WorkflowNode, stickyNote: StickyNote };
 const edgeTypes = { workflowEdge: WorkflowEdge };
+
+function ZoomPercent() {
+    const zoom = useStore((state) => state.transform[2] ?? 1);
+    return <span className="ab-zoom-percent">{Math.round(zoom * 100)}%</span>;
+}
+
+function CanvasEmptyState({ visible }) {
+    if (!visible) {
+        return null;
+    }
+
+    return (
+        <div className="ab-canvas-empty pointer-events-none absolute inset-0 z-10 flex items-center justify-center">
+            <div className="rounded-xl border border-border/70 bg-card/80 px-6 py-5 text-center shadow-lg backdrop-blur-sm">
+                <p className="text-sm font-medium text-foreground">Build your workflow</p>
+                <p className="mt-1 max-w-xs text-xs text-muted-foreground">
+                    Drag components from the left palette onto the canvas. Search to find agents, tools, and logic nodes.
+                </p>
+            </div>
+        </div>
+    );
+}
 
 function WorkflowCanvasInner({
     graph,
@@ -46,16 +70,27 @@ function WorkflowCanvasInner({
     defaultProvider = '',
     defaultModel = '',
     agents = [],
+    tools = [],
+    mcpServers = [],
+    knowledgeBases = [],
+    ragSearchUrlTemplate = '',
+    outputClasses = [],
+    providers = {},
+    providerModels = {},
 }) {
-    const initialNodes = useMemo(() => toFlowNodes(graph?.nodes, nodeTypesMeta), []);
+    const initialNodes = useMemo(
+        () => toFlowNodes(graph?.nodes, nodeTypesMeta, graph?.annotations),
+        [],
+    );
     const initialEdges = useMemo(() => toFlowEdges(graph?.edges), []);
     const initialViewport = graph?.viewport || { x: 0, y: 0, zoom: 1 };
 
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     const [runStatus, setRunStatus] = useState(null);
+    const [minimapOpen, setMinimapOpen] = useState(false);
     const isTestRunning = runStatus === 'running';
-    const { getViewport, setViewport, deleteElements, screenToFlowPosition, fitView, getNodes, getEdges } =
+    const { getViewport, setViewport, deleteElements, screenToFlowPosition, fitView, getNodes, getEdges, setCenter } =
         useReactFlow();
     const selectedNodeIdRef = useRef(null);
     const historySeededRef = useRef(false);
@@ -96,6 +131,11 @@ function WorkflowCanvasInner({
             didFitViewRef.current = true;
         }
     }, [initialViewport, nodes.length, setViewport, fitView]);
+
+    const showEmptyState = useMemo(() => {
+        const workflowNodes = nodes.filter((node) => node.data?.nodeType !== 'note');
+        return workflowNodes.every((node) => ['start', 'stop'].includes(node.data?.nodeType));
+    }, [nodes]);
 
     const setExecutionStatus = useCallback(
         (nodeId, status) => {
@@ -176,7 +216,7 @@ function WorkflowCanvasInner({
                 return;
             }
 
-            const flowNodes = toFlowNodes(nextGraph.nodes, nodeTypesMeta);
+            const flowNodes = toFlowNodes(nextGraph.nodes, nodeTypesMeta, nextGraph.annotations);
             const flowEdges = toFlowEdges(nextGraph.edges);
             const viewport = nextGraph.viewport || { x: 0, y: 0, zoom: 1 };
 
@@ -206,9 +246,50 @@ function WorkflowCanvasInner({
         window.__workflowCanvasLoadGraph = loadGraph;
     }, [loadGraph]);
 
+    const isValidConnection = useCallback(
+        (connection) => {
+            const source = getNodes().find((node) => node.id === connection.source);
+            const target = getNodes().find((node) => node.id === connection.target);
+
+            if (!source || !target) {
+                return false;
+            }
+
+            if (source.data?.nodeType === 'note' || target.data?.nodeType === 'note') {
+                return false;
+            }
+
+            const targetHandle = connection.targetHandle || 'default';
+
+            if (targetHandle === 'tools') {
+                if (target.data?.nodeType !== 'agent') {
+                    return false;
+                }
+
+                const mode = target.data?.config?.config_mode;
+                const isInline =
+                    mode === 'inline' ||
+                    (mode !== 'existing' && !(target.data?.config?.agent_id != null && target.data?.config?.agent_id !== ''));
+
+                if (!isInline) {
+                    return false;
+                }
+
+                return source.data?.nodeType === 'tool' || source.data?.nodeType === 'mcp';
+            }
+
+            return true;
+        },
+        [getNodes],
+    );
+
     const onReconnect = useCallback(
         (oldEdge, newConnection) => {
             if (readOnly) {
+                return;
+            }
+
+            if (!isValidConnection(newConnection)) {
                 return;
             }
 
@@ -218,7 +299,7 @@ function WorkflowCanvasInner({
                 ),
             );
         },
-        [readOnly, setEdges],
+        [isValidConnection, readOnly, setEdges],
     );
 
     const onConnect = useCallback(
@@ -227,9 +308,13 @@ function WorkflowCanvasInner({
                 return;
             }
 
+            if (!isValidConnection(connection)) {
+                return;
+            }
+
             setEdges((current) => addEdge(buildFlowEdge(connection), current));
         },
-        [readOnly, setEdges],
+        [isValidConnection, readOnly, setEdges],
     );
 
     const onSelectionChange = useCallback(
@@ -256,7 +341,7 @@ function WorkflowCanvasInner({
                 y: position.y + FLOW_NODE_HEIGHT / 2,
             };
 
-            const nearEdge = findEdgeNearPoint(currentNodes, currentEdges, dropCenter);
+            const nearEdge = type === 'note' ? null : findEdgeNearPoint(currentNodes, currentEdges, dropCenter);
             const shouldSplice = nearEdge && canSpliceNodeType(type);
 
             let nodePosition = position;
@@ -278,10 +363,18 @@ function WorkflowCanvasInner({
                           stream: true,
                       }
                     : type === 'agent'
-                      ? { stream: true }
+                      ? {
+                            config_mode: 'inline',
+                            stream: true,
+                            provider: defaultProvider,
+                            model: defaultModel,
+                            output_key: 'agent_response',
+                        }
                       : type === 'invoke'
                         ? { output_key: 'invoke_result' }
-                        : {};
+                        : type === 'note'
+                          ? { text: '' }
+                          : {};
 
             const node = buildFlowNode(type, nodePosition, nodeTypesMeta, defaultConfig);
             const nextNodes = [...currentNodes, node];
@@ -293,7 +386,6 @@ function WorkflowCanvasInner({
             }
 
             syncSelection(node.id, nextNodes);
-            dispatchNodeEdit(node);
         },
         [getEdges, getNodes, nodeTypesMeta, readOnly, setEdges, setNodes, syncSelection, defaultProvider, defaultModel],
     );
@@ -301,6 +393,18 @@ function WorkflowCanvasInner({
     const updateNodeData = useCallback(
         (nodeId, data) => {
             setNodes((current) => {
+                const previous = current.find((node) => node.id === nodeId);
+                const previousMode = previous?.data?.config?.config_mode;
+                const nextMode = data?.config_mode;
+
+                if (nextMode === 'existing' && previousMode !== 'existing') {
+                    setEdges((edges) =>
+                        edges.filter(
+                            (edge) => !(edge.target === nodeId && (edge.targetHandle || 'default') === 'tools'),
+                        ),
+                    );
+                }
+
                 const next = current.map((node) =>
                     node.id === nodeId
                         ? { ...node, data: { ...node.data, config: { ...node.data.config, ...data } } }
@@ -317,7 +421,7 @@ function WorkflowCanvasInner({
                 return next;
             });
         },
-        [setNodes, syncSelection],
+        [setEdges, setNodes, syncSelection],
     );
 
     const removeSelectedNode = useCallback(
@@ -342,11 +446,47 @@ function WorkflowCanvasInner({
         [deleteElements, getNodes, readOnly, syncSelection],
     );
 
+    const duplicateNode = useCallback(
+        (nodeId) => {
+            if (readOnly || !nodeId) {
+                return;
+            }
+
+            const current = getNodes();
+            const source = current.find((node) => node.id === nodeId);
+            if (!source || source.data.nodeType === 'start' || source.data.nodeType === 'stop') {
+                return;
+            }
+
+            const clone = {
+                ...source,
+                id: createNodeId(source.data.nodeType),
+                position: {
+                    x: source.position.x + 40,
+                    y: source.position.y + 40,
+                },
+                selected: true,
+                data: {
+                    ...source.data,
+                    config: { ...(source.data.config || {}) },
+                    executionStatus: null,
+                },
+            };
+
+            const nextNodes = current.map((node) => ({ ...node, selected: false })).concat(clone);
+            setNodes(nextNodes);
+            syncSelection(clone.id, nextNodes);
+        },
+        [getNodes, readOnly, setNodes, syncSelection],
+    );
+
     const autoLayout = useCallback(() => {
         setNodes((current) => {
-            const layouted = layoutWithDagre(current, edges);
+            const workflowOnly = current.filter((node) => node.data?.nodeType !== 'note');
+            const notes = current.filter((node) => node.data?.nodeType === 'note');
+            const layouted = layoutWithDagre(workflowOnly, edges);
             window.requestAnimationFrame(() => fitView({ padding: 0.2, duration: 300 }));
-            return layouted;
+            return [...layouted, ...notes];
         });
     }, [edges, fitView, setNodes]);
 
@@ -380,12 +520,33 @@ function WorkflowCanvasInner({
             }
         };
         const onRemoveNode = (event) => removeSelectedNode(event.detail?.id);
+        const onDuplicateNode = (event) => duplicateNode(event.detail?.id);
         const onAutoLayout = () => {
             if (!readOnly) {
                 autoLayout();
             }
         };
         const onLoadGraph = (event) => loadGraph(event.detail);
+        const onFocusNode = (event) => {
+            const nodeId = event.detail?.id;
+            if (!nodeId) {
+                return;
+            }
+
+            const node = getNodes().find((item) => item.id === nodeId);
+            if (!node) {
+                return;
+            }
+
+            setNodes((current) =>
+                current.map((item) => ({ ...item, selected: item.id === nodeId })),
+            );
+            syncSelection(nodeId);
+            setCenter(node.position.x + FLOW_NODE_WIDTH / 2, node.position.y + FLOW_NODE_HEIGHT / 2, {
+                zoom: 1,
+                duration: 300,
+            });
+        };
         const onRunStart = () => {
             clearExecutionStatus();
             setRunStatus('running');
@@ -423,7 +584,9 @@ function WorkflowCanvasInner({
 
         window.addEventListener('canvas-node-updated', onNodeUpdated);
         window.addEventListener('canvas-remove-node', onRemoveNode);
+        window.addEventListener('canvas-duplicate-node', onDuplicateNode);
         window.addEventListener('canvas-auto-layout', onAutoLayout);
+        window.addEventListener('canvas-focus-node', onFocusNode);
         window.addEventListener('canvas-trace-start', onRunStart);
         window.addEventListener('canvas-run-start', onRunStart);
         window.addEventListener('canvas-execution-event', onExecutionEvent);
@@ -432,7 +595,9 @@ function WorkflowCanvasInner({
         return () => {
             window.removeEventListener('canvas-node-updated', onNodeUpdated);
             window.removeEventListener('canvas-remove-node', onRemoveNode);
+            window.removeEventListener('canvas-duplicate-node', onDuplicateNode);
             window.removeEventListener('canvas-auto-layout', onAutoLayout);
+            window.removeEventListener('canvas-focus-node', onFocusNode);
             window.removeEventListener('canvas-trace-start', onRunStart);
             window.removeEventListener('canvas-run-start', onRunStart);
             window.removeEventListener('canvas-execution-event', onExecutionEvent);
@@ -441,75 +606,172 @@ function WorkflowCanvasInner({
     }, [
         autoLayout,
         clearExecutionStatus,
+        duplicateNode,
+        getNodes,
         loadGraph,
         readOnly,
         removeSelectedNode,
+        setCenter,
         setExecutionStatus,
         setLoopIteration,
         setNodes,
+        syncSelection,
         updateNodeData,
     ]);
 
+    useEffect(() => {
+        const onKeyDown = (event) => {
+            if (readOnly || isTestRunning) {
+                return;
+            }
+
+            const target = event.target;
+            const tag = target?.tagName?.toLowerCase();
+            const editing =
+                tag === 'input' ||
+                tag === 'textarea' ||
+                tag === 'select' ||
+                target?.isContentEditable;
+
+            if (event.key === 'Escape') {
+                setNodes((current) => current.map((node) => ({ ...node, selected: false })));
+                syncSelection(null);
+                return;
+            }
+
+            if (editing) {
+                return;
+            }
+
+            const meta = event.metaKey || event.ctrlKey;
+
+            if (meta && event.key.toLowerCase() === 'd') {
+                event.preventDefault();
+                duplicateNode(selectedNodeIdRef.current);
+            }
+        };
+
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [duplicateNode, isTestRunning, readOnly, setNodes, syncSelection]);
+
     return (
-        <CanvasUiProvider readOnly={readOnly} agents={agents}>
-        <ReactFlow
-            nodes={nodes}
-            edges={edges}
-            nodeTypes={nodeTypes}
-            edgeTypes={edgeTypes}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onConnect={readOnly || isTestRunning ? undefined : onConnect}
-            onReconnect={readOnly || isTestRunning ? undefined : onReconnect}
-            edgesReconnectable={!readOnly && !isTestRunning}
-            onSelectionChange={onSelectionChange}
-            onPaneClick={isTestRunning ? undefined : () => syncSelection(null)}
-            onDragOver={readOnly || isTestRunning ? undefined : onDragOver}
-            onDrop={readOnly || isTestRunning ? undefined : onDrop}
-            nodesDraggable={!readOnly && !isTestRunning}
-            nodesConnectable={!readOnly && !isTestRunning}
-            elementsSelectable={!isTestRunning}
-            minZoom={0.25}
-            maxZoom={2}
-            snapToGrid
-            snapGrid={[16, 16]}
-            deleteKeyCode={readOnly || isTestRunning ? null : ['Backspace', 'Delete']}
-            className={`ab-react-flow${readOnly ? ' ab-react-flow--readonly' : ''}${isTestRunning ? ' ab-react-flow--test-running' : ''}`}
+        <CanvasUiProvider
+            readOnly={readOnly}
+            agents={agents}
+            tools={tools}
+            mcpServers={mcpServers}
+            knowledgeBases={knowledgeBases}
+            ragSearchUrlTemplate={ragSearchUrlTemplate}
+            outputClasses={outputClasses}
+            providers={providers}
+            providerModels={providerModels}
+            defaultProvider={defaultProvider}
+            defaultModel={defaultModel}
         >
-            <Background gap={16} size={1} color="#334155" />
-            <Controls className="ab-flow-controls" showInteractive={false} />
-            <MiniMap
-                className="ab-flow-minimap"
-                nodeColor={(node) => {
-                    const colors = { flow: '#6366f1', ai: '#8b5cf6', logic: '#f59e0b' };
-                    return colors[node.data?.category] || '#6366f1';
-                }}
-                maskColor="rgba(15, 23, 42, 0.75)"
-            />
-            <Panel position="top-center" className="ab-flow-toolbar">
-                {!readOnly && (
-                    <>
-                        <button type="button" className="ab-flow-toolbar-btn" onClick={undo} disabled={!canUndo || isTestRunning} title="Undo (Ctrl+Z)">
-                            Undo
+            <div className="relative h-full w-full">
+                <CanvasEmptyState visible={showEmptyState && !isTestRunning} />
+                <ReactFlow
+                    nodes={nodes}
+                    edges={edges}
+                    nodeTypes={nodeTypes}
+                    edgeTypes={edgeTypes}
+                    onNodesChange={onNodesChange}
+                    onEdgesChange={onEdgesChange}
+                    onConnect={readOnly || isTestRunning ? undefined : onConnect}
+                    onReconnect={readOnly || isTestRunning ? undefined : onReconnect}
+                    isValidConnection={isValidConnection}
+                    edgesReconnectable={!readOnly && !isTestRunning}
+                    onSelectionChange={onSelectionChange}
+                    onPaneClick={isTestRunning ? undefined : () => syncSelection(null)}
+                    onDragOver={readOnly || isTestRunning ? undefined : onDragOver}
+                    onDrop={readOnly || isTestRunning ? undefined : onDrop}
+                    nodesDraggable={!readOnly && !isTestRunning}
+                    nodesConnectable={!readOnly && !isTestRunning}
+                    elementsSelectable={!isTestRunning}
+                    minZoom={0.25}
+                    maxZoom={2}
+                    snapToGrid
+                    snapGrid={[16, 16]}
+                    deleteKeyCode={readOnly || isTestRunning ? null : ['Backspace', 'Delete']}
+                    className={`ab-react-flow${readOnly ? ' ab-react-flow--readonly' : ''}${isTestRunning ? ' ab-react-flow--test-running' : ''}`}
+                >
+                    <Background gap={20} size={1} color="rgba(148, 163, 184, 0.22)" variant="dots" />
+                    <Controls
+                        className="ab-flow-controls"
+                        showInteractive
+                        position="bottom-right"
+                    />
+                    <Panel position="bottom-right" className="ab-zoom-cluster">
+                        <ZoomPercent />
+                        <button
+                            type="button"
+                            className="ab-flow-toolbar-btn"
+                            onClick={() => setMinimapOpen((value) => !value)}
+                            title="Toggle minimap"
+                        >
+                            {minimapOpen ? 'Hide map' : 'Show map'}
                         </button>
-                        <button type="button" className="ab-flow-toolbar-btn" onClick={redo} disabled={!canRedo || isTestRunning} title="Redo (Ctrl+Shift+Z)">
-                            Redo
-                        </button>
-                        <button type="button" className="ab-flow-toolbar-btn" onClick={autoLayout} disabled={isTestRunning} title="Auto layout">
-                            Layout
-                        </button>
-                    </>
-                )}
-                {readOnly && <span className="ab-flow-toolbar-readonly">Read-only</span>}
-                {runStatus && (
-                    <span className={`ab-flow-run-status ab-flow-run-status--${runStatus}`}>
-                        {runStatus === 'running' && 'Running…'}
-                        {runStatus === 'completed' && 'Completed'}
-                        {runStatus === 'failed' && 'Failed'}
-                    </span>
-                )}
-            </Panel>
-        </ReactFlow>
+                    </Panel>
+                    {minimapOpen && (
+                        <MiniMap
+                            className="ab-flow-minimap"
+                            position="bottom-right"
+                            nodeColor={(node) => {
+                                const colors = {
+                                    flow: '#6366f1',
+                                    ai: '#8b5cf6',
+                                    logic: '#f59e0b',
+                                    utilities: '#eab308',
+                                };
+                                return colors[node.data?.category] || '#6366f1';
+                            }}
+                            maskColor="rgba(15, 23, 42, 0.75)"
+                        />
+                    )}
+                    <Panel position="top-center" className="ab-flow-toolbar">
+                        {!readOnly && (
+                            <>
+                                <button
+                                    type="button"
+                                    className="ab-flow-toolbar-btn"
+                                    onClick={undo}
+                                    disabled={!canUndo || isTestRunning}
+                                    title="Undo (Ctrl+Z)"
+                                >
+                                    Undo
+                                </button>
+                                <button
+                                    type="button"
+                                    className="ab-flow-toolbar-btn"
+                                    onClick={redo}
+                                    disabled={!canRedo || isTestRunning}
+                                    title="Redo (Ctrl+Shift+Z)"
+                                >
+                                    Redo
+                                </button>
+                                <button
+                                    type="button"
+                                    className="ab-flow-toolbar-btn"
+                                    onClick={autoLayout}
+                                    disabled={isTestRunning}
+                                    title="Auto layout"
+                                >
+                                    Layout
+                                </button>
+                            </>
+                        )}
+                        {readOnly && <span className="ab-flow-toolbar-readonly">Read-only</span>}
+                        {runStatus && (
+                            <span className={`ab-flow-run-status ab-flow-run-status--${runStatus}`}>
+                                {runStatus === 'running' && 'Running…'}
+                                {runStatus === 'completed' && 'Completed'}
+                                {runStatus === 'failed' && 'Failed'}
+                            </span>
+                        )}
+                    </Panel>
+                </ReactFlow>
+            </div>
         </CanvasUiProvider>
     );
 }

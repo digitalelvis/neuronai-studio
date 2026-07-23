@@ -7,34 +7,29 @@ This guide walks through installing NeuronAI Studio in a Laravel application, fr
 - PHP 8.2 or higher
 - Laravel 11, 12, or 13
 - A database configured in your `.env`
-- API credentials for at least one LLM provider (configured via Neuron Laravel)
+- API credentials for at least one LLM provider (configured via Neuron AI)
 
 ## Step 1 — Install packages
 
 ```bash
-composer require digitalelvis/neuronai-studio neuron-core/neuron-laravel
+composer require digitalelvis/neuronai-studio neuron-core/neuron-ai
 ```
 
-NeuronAI Studio depends on [neuron-core/neuron-laravel](https://github.com/neuron-core/neuron-laravel) for LLM provider integration. Credentials live in `config/neuron.php` — the studio does not duplicate API key configuration.
+NeuronAI Studio depends on [neuron-core/neuron-ai](https://docs.neuron-ai.dev/overview/getting-started). Provider credentials live in `config/neuron.php` (published by the installer) — the studio does not duplicate API key configuration.
 
-## Step 2 — Install Neuron Laravel
-
-```bash
-php artisan neuron:install
-```
-
-Follow the Neuron Laravel prompts to publish config and set provider credentials in `.env` (for example `OPENAI_KEY`).
-
-## Step 3 — Install NeuronAI Studio
+## Step 2 — Install NeuronAI Studio
 
 ```bash
 php artisan neuronai-studio:install
 ```
 
-This command performs the following:
+This publishes `config/neuron.php` and `config/neuronai-studio.php`, migrations, and assets. Set provider credentials in `.env` (for example `OPENAI_KEY`).
+
+The install command also performs the following:
 
 | Step | Publish tag | Description |
 |------|-------------|-------------|
+| Provider config | `neuron-config` | Publishes `config/neuron.php` (API keys / providers) |
 | Config | `neuronai-studio-config` | Publishes `config/neuronai-studio.php` |
 | Migrations | `neuronai-studio-migrations` | Copies migration files (also auto-loaded from package) |
 | Assets | `neuronai-studio-assets` | Publishes pre-built JS/CSS to `public/vendor/neuronai-studio/` |
@@ -52,7 +47,7 @@ php artisan neuronai-studio:install --force
 php artisan neuronai-studio:install --with-views
 ```
 
-## Step 4 — Publish assets (if needed)
+## Step 3 — Publish assets (if needed)
 
 The install command publishes assets automatically. Re-run manually after package updates or when rebuilding frontend bundles:
 
@@ -60,7 +55,7 @@ The install command publishes assets automatically. Re-run manually after packag
 php artisan vendor:publish --tag=neuronai-studio-assets --force
 ```
 
-## Step 5 — Open the dashboard
+## Step 4 — Open the dashboard
 
 Visit `/{route_prefix}` — default:
 
@@ -128,6 +123,7 @@ Poll trace status at `GET /neuronai-studio/traces/{id}/json`. Details: [Runtime 
 
 | Tag | Destination |
 |-----|-------------|
+| `neuron-config` | `config/neuron.php` |
 | `neuronai-studio-config` | `config/neuronai-studio.php` |
 | `neuronai-studio-migrations` | `database/migrations/` |
 | `neuronai-studio-views` | `resources/views/vendor/neuronai-studio/` |

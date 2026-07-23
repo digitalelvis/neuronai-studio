@@ -2,7 +2,10 @@
 
 use DigitalElvis\NeuronAIStudio\Http\Controllers\AgentChatStreamController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\AgentChatThreadController;
+use DigitalElvis\NeuronAIStudio\Http\Controllers\AgentChatThreadIndexController;
+use DigitalElvis\NeuronAIStudio\Http\Controllers\AgentChatThreadRunsController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\AttachmentController;
+use DigitalElvis\NeuronAIStudio\Http\Controllers\WorkflowChatThreadIndexController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\KnowledgeBaseSearchController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\WorkflowRunController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\WorkflowStreamController;
@@ -47,6 +50,8 @@ Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
             Route::get('/{agent}/evals/{suite}/edit', \DigitalElvis\NeuronAIStudio\Http\Livewire\Agents\Evals\Edit::class)->name('evals.edit');
             Route::get('/{agent}/evals/{suite}/runs', \DigitalElvis\NeuronAIStudio\Http\Livewire\Agents\Evals\Runs::class)->name('evals.runs');
             Route::get('/eval-runs/{run}', \DigitalElvis\NeuronAIStudio\Http\Livewire\Agents\Evals\RunDetail::class)->name('eval-runs.show');
+            Route::get('/{agent}/chat/threads', AgentChatThreadIndexController::class)->name('chat.threads.index');
+            Route::get('/{agent}/chat/threads/{thread}/runs', AgentChatThreadRunsController::class)->name('chat.threads.runs');
             Route::get('/{agent}/chat/threads/{thread}', AgentChatThreadController::class)->name('chat.threads.show');
             Route::match(['GET', 'POST'], '/{agent}/chat/stream', AgentChatStreamController::class)->name('chat.stream');
         });
@@ -77,6 +82,7 @@ Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
             Route::get('/create', Editor::class)->name('create');
             Route::get('/preview', Editor::class)->name('preview');
             Route::get('/{workflow}/edit', Editor::class)->name('edit');
+            Route::get('/{workflow}/chat/threads', WorkflowChatThreadIndexController::class)->name('chat.threads.index');
             Route::match(['GET', 'POST'], '/{workflow}/trace/stream', WorkflowStreamController::class)->name('trace.stream');
             Route::post('/threads/{thread}/runs/{run}/resume/stream', WorkflowTraceResumeController::class)->name('runs.resume.stream');
             Route::post('/threads/{thread}/runs/{run}/resume', WorkflowTraceResumeJsonController::class)->name('runs.resume');

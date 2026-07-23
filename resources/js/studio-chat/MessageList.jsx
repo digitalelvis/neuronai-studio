@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ChevronDown, Sparkles } from 'lucide-react';
+import { Bot, ChevronDown, MessageSquare, Sparkles, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
@@ -93,10 +93,34 @@ function WorkflowAssistantContent({ message, viewMode }) {
     }
 
     return (
-        <div className="whitespace-pre-wrap text-sm">
+        <div className="whitespace-pre-wrap text-sm leading-relaxed">
             {message.content}
             {message.streaming && <span className="animate-pulse text-primary">▍</span>}
         </div>
+    );
+}
+
+function RoleAvatar({ role }) {
+    if (role === 'user') {
+        return (
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary/15 text-primary">
+                <User className="h-3.5 w-3.5" />
+            </span>
+        );
+    }
+
+    if (role === 'assistant') {
+        return (
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-muted text-foreground">
+                <Bot className="h-3.5 w-3.5" />
+            </span>
+        );
+    }
+
+    return (
+        <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-amber-500/15 text-amber-600">
+            <MessageSquare className="h-3.5 w-3.5" />
+        </span>
     );
 }
 
@@ -109,104 +133,114 @@ export default function MessageList({
 }) {
     if (!messages.length) {
         return (
-            <div className="flex flex-col items-center justify-center py-16 text-center">
-                <Sparkles className="mb-3 h-8 w-8 text-muted-foreground/50" />
-                <p className="text-sm font-medium text-muted-foreground">No traces present</p>
-                <p className="mt-1 text-xs text-muted-foreground/70">Submit your input to run the assistant.</p>
+            <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
+                <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10">
+                    <Sparkles className="h-7 w-7 text-primary" />
+                </div>
+                <p className="text-base font-medium">New chat</p>
+                <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+                    Test your flow with a chat prompt.
+                </p>
             </div>
         );
     }
 
     return (
-        <div className="space-y-4 py-4">
+        <div className="mx-auto w-full max-w-3xl space-y-5 py-6">
             {messages.map((message) => (
-                <div
-                    key={message.id}
-                    className={cn(
-                        'rounded-lg border px-4 py-3',
-                        message.role === 'user' && 'border-primary/30 bg-primary/5',
-                        message.role === 'assistant' && 'border-border bg-card',
-                        message.role === 'system' && 'border-amber-500/30 bg-amber-500/5',
-                    )}
-                >
-                    <div className="mb-1 flex items-center gap-2">
-                        <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{message.role}</span>
-                        {message.meta?.status === 'awaiting_input' && (
-                            <Badge variant="outline" className="text-[10px]">
-                                Awaiting input
-                            </Badge>
+                <div key={message.id} className="flex gap-3">
+                    <RoleAvatar role={message.role} />
+                    <div className="min-w-0 flex-1 space-y-1.5">
+                        <div className="flex flex-wrap items-center gap-2">
+                            <span className="text-xs font-semibold capitalize text-foreground">
+                                {message.role === 'assistant' ? 'AI' : message.role}
+                            </span>
+                            {message.meta?.status === 'awaiting_input' && (
+                                <Badge variant="outline" className="text-[10px]">
+                                    Awaiting input
+                                </Badge>
+                            )}
+                            {message.meta?.status === 'awaiting_tool_approval' && (
+                                <Badge variant="outline" className="text-[10px]">
+                                    Tool approval
+                                </Badge>
+                            )}
+                            {message.meta?.status === 'completed' && (
+                                <Badge variant="secondary" className="text-[10px]">
+                                    Completed
+                                </Badge>
+                            )}
+                            {message.meta?.usage && (
+                                <>
+                                    <span className="text-[10px] text-muted-foreground">
+                                        {formatTokens(message.meta.usage.totalTokens)}
+                                    </span>
+                                    <span className="text-[10px] text-muted-foreground">
+                                        {formatCost(message.meta.usage.estimatedCost, message.meta.usage.currency)}
+                                    </span>
+                                </>
+                            )}
+                            {message.meta?.status === 'running' && message.streaming && (
+                                <Badge variant="outline" className="text-[10px]">
+                                    Running
+                                </Badge>
+                            )}
+                            {message.meta?.status === 'failed' && (
+                                <Badge variant="destructive" className="text-[10px]">
+                                    Failed
+                                </Badge>
+                            )}
+                            {message.meta?.traceId && message.meta?.status === 'failed' && mode === 'workflow' && (
+                                <button
+                                    type="button"
+                                    className="text-[10px] text-primary underline-offset-2 hover:underline"
+                                    onClick={() =>
+                                        window.dispatchEvent(
+                                            new CustomEvent('workflow-view-trace', {
+                                                detail: { traceId: message.meta.traceId },
+                                            }),
+                                        )
+                                    }
+                                >
+                                    View trace #{message.meta.traceId}
+                                </button>
+                            )}
+                        </div>
+
+                        <div
+                            className={cn(
+                                'rounded-xl px-0 py-0',
+                                message.role === 'system' && 'rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2',
+                            )}
+                        >
+                            {message.role === 'assistant' && mode === 'workflow' ? (
+                                <WorkflowAssistantContent message={message} viewMode={viewMode} />
+                            ) : (
+                                <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                                    {message.content}
+                                    {message.streaming && <span className="animate-pulse text-primary">▍</span>}
+                                </div>
+                            )}
+                        </div>
+
+                        {message.attachments?.length > 0 && (
+                            <div>
+                                {message.attachments.map((attachment) => (
+                                    <AttachmentPreview key={attachment.id} attachment={attachment} />
+                                ))}
+                            </div>
                         )}
                         {message.meta?.status === 'awaiting_tool_approval' && (
-                            <Badge variant="outline" className="text-[10px]">
-                                Tool approval
-                            </Badge>
+                            <ToolApprovalCard
+                                message={message}
+                                disabled={approvalDisabled}
+                                onDecision={onToolApproval}
+                            />
                         )}
-                        {message.meta?.status === 'completed' && (
-                            <Badge variant="secondary" className="text-[10px]">
-                                Completed
-                            </Badge>
-                        )}
-                        {message.meta?.usage && (
-                            <>
-                                <span className="text-[10px] text-muted-foreground">
-                                    {formatTokens(message.meta.usage.totalTokens)}
-                                </span>
-                                <span className="text-[10px] text-muted-foreground">
-                                    {formatCost(message.meta.usage.estimatedCost, message.meta.usage.currency)}
-                                </span>
-                            </>
-                        )}
-                        {message.meta?.status === 'running' && message.streaming && (
-                            <Badge variant="outline" className="text-[10px]">
-                                Running
-                            </Badge>
-                        )}
-                        {message.meta?.status === 'failed' && (
-                            <Badge variant="destructive" className="text-[10px]">
-                                Failed
-                            </Badge>
-                        )}
-                        {message.meta?.traceId && message.meta?.status === 'failed' && mode === 'workflow' && (
-                            <button
-                                type="button"
-                                className="text-[10px] text-primary underline-offset-2 hover:underline"
-                                onClick={() =>
-                                    window.dispatchEvent(
-                                        new CustomEvent('workflow-view-trace', {
-                                            detail: { traceId: message.meta.traceId },
-                                        }),
-                                    )
-                                }
-                            >
-                                View trace #{message.meta.traceId}
-                            </button>
-                        )}
+                        {message.meta?.toolEvents?.map((tool, index) => (
+                            <ToolEventBlock key={`${message.id}-tool-${index}`} tool={tool} />
+                        ))}
                     </div>
-                    {message.role === 'assistant' && mode === 'workflow' ? (
-                        <WorkflowAssistantContent message={message} viewMode={viewMode} />
-                    ) : (
-                        <div className="whitespace-pre-wrap text-sm">
-                            {message.content}
-                            {message.streaming && <span className="animate-pulse text-primary">▍</span>}
-                        </div>
-                    )}
-                    {message.attachments?.length > 0 && (
-                        <div>
-                            {message.attachments.map((attachment) => (
-                                <AttachmentPreview key={attachment.id} attachment={attachment} />
-                            ))}
-                        </div>
-                    )}
-                    {message.meta?.status === 'awaiting_tool_approval' && (
-                        <ToolApprovalCard
-                            message={message}
-                            disabled={approvalDisabled}
-                            onDecision={onToolApproval}
-                        />
-                    )}
-                    {message.meta?.toolEvents?.map((tool, index) => (
-                        <ToolEventBlock key={`${message.id}-tool-${index}`} tool={tool} />
-                    ))}
                 </div>
             ))}
         </div>

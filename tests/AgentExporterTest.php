@@ -28,7 +28,11 @@ class AgentExporterTest extends TestCase
 
         $this->assertCount(1, $files);
         $this->assertFileExists($files[0]);
-        $this->assertStringContainsString('class SupportBotAgent extends Agent', file_get_contents($files[0]));
+        $content = file_get_contents($files[0]);
+        $this->assertStringContainsString('class SupportBotAgent extends Agent', $content);
+        $this->assertStringContainsString('use NeuronAI\\Providers\\OpenAI\\OpenAI;', $content);
+        $this->assertStringContainsString("new OpenAI((string) config('neuron.provider.openai.key'), 'gpt-4o-mini')", $content);
+        $this->assertStringNotContainsString('NeuronAI\\Laravel', $content);
 
         File::deleteDirectory($exportPath);
     }

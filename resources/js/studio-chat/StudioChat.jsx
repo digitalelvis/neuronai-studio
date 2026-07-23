@@ -51,12 +51,28 @@ export default forwardRef(function StudioChat({
     embedded = false,
     threadHistoryUrl = null,
     hideComposer = false,
+    hideHeader = false,
     instructions = '',
     parameters = {},
     onSendingChange,
+    threadId: controlledThreadId,
+    onThreadIdChange,
+    onActivity,
 }, ref) {
     const [messages, setMessages] = useState([]);
-    const [threadId, setThreadId] = useState(() => getThreadFromUrl() ?? createThreadId());
+    const [uncontrolledThreadId, setUncontrolledThreadId] = useState(() => getThreadFromUrl() ?? createThreadId());
+    const isThreadControlled = controlledThreadId !== undefined && controlledThreadId !== null;
+    const threadId = isThreadControlled ? controlledThreadId : uncontrolledThreadId;
+    const setThreadId = useCallback(
+        (next) => {
+            const value = typeof next === 'function' ? next(threadId) : next;
+            if (!isThreadControlled) {
+                setUncontrolledThreadId(value);
+            }
+            onThreadIdChange?.(value);
+        },
+        [isThreadControlled, onThreadIdChange, threadId],
+    );
     const historyLoadedRef = useRef(null);
     const [context, setContext] = useState(initialContext);
     const [inputJson, setInputJson] = useState(() => JSON.stringify(initialContext ?? {}, null, 2));
@@ -294,7 +310,25 @@ export default forwardRef(function StudioChat({
     }, [supportsThreads, threadId]);
 
     useEffect(() => {
-        if (mode !== 'agent' || !threadHistoryUrl || !threadId) {
+        if (!isThreadControlled) {
+            return;
+        }
+
+        if (historyLoadedRef.current === threadId) {
+            return;
+        }
+
+        setMessages([]);
+        setError('');
+        historyLoadedRef.current = null;
+    }, [isThreadControlled, threadId]);
+
+    useEffect(() => {
+        if ((mode !== 'agent' && mode !== 'workflow') || !threadHistoryUrl || !threadId) {
+            return;
+        }
+
+        if (mode === 'workflow' && !threadHistoryUrl.includes('__THREAD__')) {
             return;
         }
 
@@ -413,6 +447,7 @@ export default forwardRef(function StudioChat({
             }
         } finally {
             setSending(false);
+            onActivity?.();
 
             if (!traceFinished && assistantId) {
                 setMessages((current) =>
@@ -469,6 +504,7 @@ export default forwardRef(function StudioChat({
             updateMessage(assistantId, { content: message, streaming: false, meta: { status: 'failed' } });
         } finally {
             setSending(false);
+            onActivity?.();
 
             if (!traceFinished) {
                 setMessages((current) =>
@@ -505,44 +541,7 @@ export default forwardRef(function StudioChat({
 
     return (
         <div className="flex h-full flex-col">
-            <div className="flex items-center justify-between gap-3 border-b border-border px-4 py-2">
-                {supportsThreads ? (
-                    <ThreadBar threadId={threadId} onNewThread={handleNewThread} disabled={sending} />
-                ) : (
-                    <span className="text-sm font-medium text-muted-foreground">Output</span>
-                )}
-                <div className="flex shrink-0 items-center gap-2">
-                    {mode === 'workflow' && (
-                        <div className="flex gap-1">
-                            <Button
-                                type="button"
-                                variant={viewMode === 'pretty' ? 'secondary' : 'ghost'}
-                                size="sm"
-                                className="h-7 text-xs"
-                                onClick={() => setViewMode('pretty')}
-                            >
-                                Pretty
-                            </Button>
-                            <Button
-                                type="button"
-                                variant={viewMode === 'data' ? 'secondary' : 'ghost'}
-                                size="sm"
-                                className="h-7 text-xs"
-                                onClick={() => setViewMode('data')}
-                            >
-                                Data
-                            </Button>
-                        </div>
-                    )}
-                    {error && <span className="text-xs text-destructive">{error}</span>}
-                    {!supportsThreads && (
-                        <Button variant="ghost" size="sm" onClick={handleClear} disabled={sending}>
-                            <Trash2 className="h-4 w-4" />
-                            Clear
-                        </Button>
-                    )}
-                </div>
-            </div>
+           
 
             <ScrollArea className="flex-1 px-4">
                 <MessageList

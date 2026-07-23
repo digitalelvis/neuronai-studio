@@ -2,11 +2,11 @@
 
 **North star:** Agentes multimodais autônomos com grafos de workflow cíclicos.
 
-**Development line (features):** `v0.9.x` (post-M8)  
-**Patch line:** `v0.8.x`  
-**Latest published:** `v0.9.0` on Packagist / `main`  
-**Última atualização:** 2026-07-21  
-**Etapa atual:** M8 ✅ (`v0.9.0`). `canvas-invoke-node` ✅ on `v0.9.x`. TraceDetail bridge permanece deferred.
+**Development line (features):** `v0.10.x` (M9)  
+**Patch line:** `v0.9.x`  
+**Latest published:** `v0.10.0` on Packagist / `main`  
+**Última atualização:** 2026-07-23  
+**Etapa atual:** M9 in progress on `feat/knowledge-base-rag` → `v0.10.x`. M8 ✅ (`v0.9.0`). `canvas-invoke-node` ✅ (`v0.10.0`). TraceDetail bridge permanece deferred.
 
 ---
 
@@ -114,6 +114,25 @@ Foco total em **desempenho de agentes e workflows**: memória durável e control
 
 **Critério de conclusão M8:** Thread long-running fica sob o budget de contexto com summary persistido substituindo o prefixo trimado — nenhuma perda silenciosa de history; Studio expõe memory window/driver/summarization por agente e por nó (override M6-style); injeção de RAG/tool results/state respeita budgets configuráveis e registra truncamento em span metadata; (P2) tool approval dentro de um branch paralelo pausa e retoma (approve/reject) em vez de falhar o run, com paridade sequential/concurrent.
 
+### M9 — Studio UX, RAG harden & Neuron AI direct (P1) `in progress`
+
+Authoring UX perto de Langflow, knowledge bases production-ready, codegen fail-closed fora de local, e dependência direta em `neuron-core/neuron-ai` (sem `neuron-laravel`).
+
+**Escopo (AD-023):** single PR `feat/knowledge-base-rag` → `v0.10.x`. Sem specs formais por fatia — commits + docs (`guides/knowledge-bases/`, canvas/playground).
+
+| Ordem | Slice | Status | Notas |
+|-------|-------|--------|-------|
+| 22 | RAG vector stores + ingest/reindex + KB docs | **done** (branch) | `feat(rag): expand Neuron vector stores…` |
+| 23 | Codegen export/preview local-only gates | **done** (branch) | `CodegenGuard` + config flags |
+| 24 | Canvas Langflow-level UX | **done** (branch) | palette, sticky notes, Playground/Share/Logs |
+| 25 | Playground shell (sessions + traces) | **done** (branch) | thread sidebar + Chat/Traces APIs |
+| 26 | Canvas tool bindings via edges | **done** (branch) | tools pin + `GraphContext` bindings |
+| 27 | `neuron-core/neuron-ai` direct (breaking) | **done** (branch) | drop `neuron-laravel`; publish `config/neuron.php` |
+
+**Critério de conclusão M9:** Host instala com `composer require … neuron-core/neuron-ai` + `neuronai-studio:install`; KB com stores Neuron + ingest async; canvas/playground usáveis no fluxo Langflow-like; export/preview bloqueados fora de local salvo flag explícita.
+
+**Publicação prevista:** próximo minor após merge estável em `v0.10.x` (ex. `v0.11.0`).
+
 ---
 
 ## Próximas tarefas (ordem de execução)
@@ -132,6 +151,9 @@ Foco total em **desempenho de agentes e workflows**: memória durável e control
 12. ~~Execute M8: `parallel-tool-approval` em `v0.9.x`~~ ✅
 13. ~~Release `v0.9.0` (M8)~~ ✅
 14. ~~Execute `canvas-invoke-node` on `v0.9.x`~~ ✅ — [spec](../features/canvas-invoke-node/spec.md) · [tasks](../features/canvas-invoke-node/tasks.md)
+15. ~~Release `v0.10.0` (`canvas-invoke-node`) + abrir `v0.10.x` (AD-023)~~ ✅
+16. Merge M9 `feat/knowledge-base-rag` → `v0.10.x` (PR único)
+17. Release próximo minor quando M9 estiver estável na linha
 
 ---
 
@@ -165,7 +187,7 @@ Foco total em **desempenho de agentes e workflows**: memória durável e control
 | `agent-memory-controls` | ✅ done | 0.9.x |
 | `context-engineering` | ✅ done | 0.9.x |
 | `parallel-tool-approval` | ✅ done | 0.9.x |
-| `canvas-invoke-node` | ✅ done | 0.9.x |
+| `canvas-invoke-node` | ✅ done | 0.9.x → 0.10.0 |
 
 ---
 
@@ -254,6 +276,15 @@ Mapeamento feature → arquivos `docs/` a criar/atualizar na implementação.
 | `context-engineering` | `guides/workflows/node-types/ai-nodes.md`, `guides/agents/creating-agents.md`, `guides/workflows/state-and-conditions.md`, `guides/workflows/runtime-and-traces.md`, `reference/configuration.md` |
 | `parallel-tool-approval` | `guides/workflows/node-types/logic-nodes.md`, `guides/workflows/human-in-the-loop.md`, `guides/workflows/runtime-and-traces.md`, `reference/configuration.md` |
 
+### M9
+
+| Slice | Documentos |
+|-------|------------|
+| Knowledge bases / RAG harden | `guides/knowledge-bases/*`, `guides/workflows/node-types/ai-nodes.md`, `reference/configuration.md` |
+| Studio UX / playground | `guides/workflows/canvas-editor.md`, `guides/agents/playground-and-threads.md` |
+| Codegen gates | `guides/export-and-production.md`, `guides/security-and-access.md`, `reference/configuration.md` |
+| neuron-ai direct | `getting-started/installation.md`, `getting-started/demo-app.md`, `README.md` |
+
 ---
 
 ## Decisões em aberto (ver [STATE.md](STATE.md))
@@ -265,5 +296,6 @@ Mapeamento feature → arquivos `docs/` a criar/atualizar na implementação.
 - ~~M8 feature split (memory vs context vs runtime)~~ → **resolvido (AD-022):** `agent-memory-controls` + `context-engineering` (P1) + `parallel-tool-approval` (P2)
 - ~~Tool approval dentro de parallel branches~~ → **resolvido (AD-022):** feature P2 do M8 ([parallel-tool-approval](../features/parallel-tool-approval/spec.md))
 - Transporte `ShouldBroadcast` / Echo para progresso async (P3)
-- ~~Nó `invoke` / hook allowlisted~~ → **done:** [`canvas-invoke-node`](../features/canvas-invoke-node/spec.md) on `v0.9.x`
+- ~~Nó `invoke` / hook allowlisted~~ → **done:** [`canvas-invoke-node`](../features/canvas-invoke-node/spec.md) shipped `v0.10.0`
+- ~~Pós-`v0.10.0` next wave~~ → **resolvido (AD-023):** M9 single PR on `v0.10.x`
 - TraceDetail ↔ Inspector/Langfuse URL bridge (P2 deferred)

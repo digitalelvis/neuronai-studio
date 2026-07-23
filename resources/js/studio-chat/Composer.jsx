@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Braces, Paperclip, Send } from 'lucide-react';
+import { Braces, ImagePlus, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
@@ -42,10 +42,11 @@ export default function Composer({
 
     const hasCustomInput = enableInputJson && inputJson.trim() !== '{}' && inputJson.trim() !== '';
     const sendDisabled = disabled || (enableInputJson && Boolean(inputJsonError));
+    const canSubmit = !sendDisabled && (Boolean(text.trim()) || attachments.length > 0);
 
     const handleSubmit = (event) => {
         event.preventDefault();
-        if (sendDisabled || (!text.trim() && attachments.length === 0)) {
+        if (!canSubmit) {
             return;
         }
 
@@ -82,7 +83,7 @@ export default function Composer({
     };
 
     return (
-        <form className="space-y-2" onSubmit={handleSubmit}>
+        <form className="mx-auto w-full max-w-3xl space-y-2" onSubmit={handleSubmit}>
             {enableInputJson && inputOpen && (
                 <div className="space-y-1">
                     <Textarea
@@ -97,7 +98,7 @@ export default function Composer({
                 </div>
             )}
             {attachments.length > 0 && (
-                <div className="flex flex-wrap gap-2">
+                <div className="flex flex-wrap gap-2 px-1">
                     {attachments.map((attachment) => (
                         <span
                             key={attachment.id}
@@ -123,57 +124,71 @@ export default function Composer({
                     ))}
                 </div>
             )}
-            <Textarea
-                rows={3}
-                placeholder="Type a message…"
-                value={text}
-                disabled={disabled}
-                onChange={(event) => setText(event.target.value)}
-                onKeyDown={handleKeyDown}
-                className="resize-none"
-            />
-            <div className="flex items-center justify-end gap-2">
-                {enableInputJson && (
-                    <Button
-                        type="button"
-                        variant={inputOpen ? 'secondary' : 'outline'}
-                        size="sm"
-                        disabled={disabled}
-                        onClick={() => setInputOpen((open) => !open)}
-                        className={cn(hasCustomInput && !inputOpen && 'border-primary/50')}
-                    >
-                        <Braces className="h-4 w-4" />
-                        Input
-                        {hasCustomInput && (
-                            <span className="ml-1 h-1.5 w-1.5 rounded-full bg-primary" />
+            <div className="rounded-xl border border-border bg-card shadow-sm focus-within:ring-1 focus-within:ring-ring">
+                <Textarea
+                    rows={3}
+                    placeholder="Send a message..."
+                    value={text}
+                    disabled={disabled}
+                    onChange={(event) => setText(event.target.value)}
+                    onKeyDown={handleKeyDown}
+                    className="min-h-[72px] resize-none border-0 bg-transparent px-4 pt-3 shadow-none focus-visible:ring-0"
+                />
+                <div className="flex items-center justify-between gap-2 px-3 pb-3">
+                    <div className="flex items-center gap-1">
+                        {enableInputJson && (
+                            <Button
+                                type="button"
+                                variant={inputOpen ? 'secondary' : 'ghost'}
+                                size="icon"
+                                disabled={disabled}
+                                onClick={() => setInputOpen((open) => !open)}
+                                className={cn('h-8 w-8', hasCustomInput && !inputOpen && 'text-primary')}
+                                title="Initial state JSON"
+                            >
+                                <Braces className="h-4 w-4" />
+                            </Button>
+                        )}
+                        {enableAttachments && (
+                            <>
+                                <input
+                                    ref={fileRef}
+                                    type="file"
+                                    multiple
+                                    hidden
+                                    accept={Object.values(ACCEPT_MAP).join(',')}
+                                    onChange={(event) => {
+                                        if (event.target.files?.length) {
+                                            handleFiles(event.target.files);
+                                        }
+                                        event.target.value = '';
+                                    }}
+                                />
+                                <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="icon"
+                                    disabled={disabled}
+                                    onClick={() => fileRef.current?.click()}
+                                    className="h-8 w-8"
+                                    title="Attach file"
+                                >
+                                    <ImagePlus className="h-4 w-4" />
+                                </Button>
+                            </>
+                        )}
+                    </div>
+                    <Button type="submit" size="sm" disabled={!canSubmit} className="min-w-[72px]">
+                        {disabled ? (
+                            'Sending…'
+                        ) : (
+                            <>
+                                <Send className="h-3.5 w-3.5" />
+                                Send
+                            </>
                         )}
                     </Button>
-                )}
-                {enableAttachments && (
-                    <>
-                        <input
-                            ref={fileRef}
-                            type="file"
-                            multiple
-                            hidden
-                            accept={Object.values(ACCEPT_MAP).join(',')}
-                            onChange={(event) => {
-                                if (event.target.files?.length) {
-                                    handleFiles(event.target.files);
-                                }
-                                event.target.value = '';
-                            }}
-                        />
-                        <Button type="button" variant="outline" size="sm" disabled={disabled} onClick={() => fileRef.current?.click()}>
-                            <Paperclip className="h-4 w-4" />
-                            Attach
-                        </Button>
-                    </>
-                )}
-                <Button type="submit" size="sm" disabled={sendDisabled}>
-                    <Send className="h-4 w-4" />
-                    {disabled ? 'Sending…' : 'Send'}
-                </Button>
+                </div>
             </div>
         </form>
     );

@@ -38,7 +38,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
             $rawMessage = (string) $state->get('input', '');
         }
 
-        $definition = isset($data['agent_id']) ? AgentDefinition::findOrFail($data['agent_id']) : null;
+        $definition = $this->resolveDefinition($data);
         $memory = $this->agentRunner->resolveMemoryConfig($definition, $this->memoryOverrideConfig($data, $definition));
         $truncationEvents = [];
         $message = StateTemplateInterpolator::interpolate($rawMessage, $state, $memory, $truncationEvents);
@@ -65,16 +65,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
 
         if ($data['structured'] ?? false) {
             $outputClass = $this->outputResolver->resolve((string) ($data['output_class'] ?? ''));
-            $config = $definition !== null
-                ? [
-                    'provider' => $definition->provider,
-                    'model' => $definition->model,
-                    'instructions' => $definition->instructions,
-                    'tools' => $definition->tools ?? [],
-                    ...$this->toolControlConfig($data, $definition),
-                    ...$this->memoryOverrideConfig($data, $definition),
-                ]
-                : array_merge($data, $this->toolControlConfig($data, null), $this->memoryOverrideConfig($data, null));
+            $config = $this->buildAgentConfig($data, $definition, $context, $nodeId);
 
             $response = $this->agentRunner->structuredInline(
                 $config,
@@ -92,33 +83,20 @@ class AgentNodeExecutor implements NodeExecutorInterface
         }
 
         if ($this->shouldStream($data, $requireApproval, $state)) {
-            return $this->streamResponse($nodeId, (string) $outputKey, $data, $definition, $userMessage, $threadKey, $state, $parentRun);
+            return $this->streamResponse($nodeId, (string) $outputKey, $data, $definition, $userMessage, $threadKey, $state, $context, $parentRun);
         }
 
         try {
-            if ($definition !== null) {
-                $response = $this->agentRunner->runInline([
-                    'provider' => $definition->provider,
-                    'model' => $definition->model,
-                    'instructions' => $definition->instructions,
-                    'tools' => $definition->tools ?? [],
-                    'require_tool_approval' => $requireApproval,
-                    ...$this->toolControlConfig($data, $definition),
-                    ...$this->memoryOverrideConfig($data, $definition),
-                ], $userMessage, $definition, $threadKey, parentRun: $parentRun);
-            } else {
-                $response = $this->agentRunner->runInline(
-                    array_merge($data, [
-                        'require_tool_approval' => $requireApproval,
-                        ...$this->toolControlConfig($data, null),
-                        ...$this->memoryOverrideConfig($data, null),
-                    ]),
-                    $userMessage,
-                    null,
-                    $threadKey,
-                    parentRun: $parentRun,
-                );
-            }
+            $config = $this->buildAgentConfig($data, $definition, $context, $nodeId, [
+                'require_tool_approval' => $requireApproval,
+            ]);
+            $response = $this->agentRunner->runInline(
+                $config,
+                $userMessage,
+                $definition,
+                $threadKey,
+                parentRun: $parentRun,
+            );
         } catch (ToolApprovalRequiredException $exception) {
             throw new ToolApprovalRequiredException($nodeId, $exception->pendingTools, $exception->approvalMessage, $exception->serializedInterrupt);
         }
@@ -152,21 +130,9 @@ class AgentNodeExecutor implements NodeExecutorInterface
         $serialized = (string) ($resume['interrupt'] ?? '');
         $feedback = is_string($resume['feedback'] ?? null) && $resume['feedback'] !== '' ? $resume['feedback'] : null;
 
-        $config = $definition !== null
-            ? [
-                'provider' => $definition->provider,
-                'model' => $definition->model,
-                'instructions' => $definition->instructions,
-                'tools' => $definition->tools ?? [],
-                'require_tool_approval' => true,
-                ...$this->toolControlConfig($data, $definition),
-                ...$this->memoryOverrideConfig($data, $definition),
-            ]
-            : array_merge($data, [
-                'require_tool_approval' => true,
-                ...$this->toolControlConfig($data, null),
-                ...$this->memoryOverrideConfig($data, null),
-            ]);
+        $config = $this->buildAgentConfig($data, $definition, $context, $nodeId, [
+            'require_tool_approval' => true,
+        ]);
 
         try {
             $response = $this->agentRunner->resumeInlineApproval(
@@ -222,18 +188,10 @@ class AgentNodeExecutor implements NodeExecutorInterface
         UserMessage $userMessage,
         ?string $threadKey,
         BuilderWorkflowState $state,
+        GraphContext $context,
         ?StudioRun $parentRun = null,
     ): string {
-        $config = $definition !== null
-            ? [
-                'provider' => $definition->provider,
-                'model' => $definition->model,
-                'instructions' => $definition->instructions,
-                'tools' => $definition->tools ?? [],
-                ...$this->toolControlConfig($data, $definition),
-                ...$this->memoryOverrideConfig($data, $definition),
-            ]
-            : array_merge($data, $this->toolControlConfig($data, null), $this->memoryOverrideConfig($data, null));
+        $config = $this->buildAgentConfig($data, $definition, $context, $nodeId);
 
         $generator = $this->agentRunner->streamInline(
             $config,
@@ -320,6 +278,74 @@ class AgentNodeExecutor implements NodeExecutorInterface
             'total_tokens' => $run->total_tokens ?? 0,
             'estimated_cost' => $run->estimated_cost ?? '0.000000',
             'currency' => config('neuronai-studio.usage.currency', 'USD'),
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function resolveConfigMode(array $data): string
+    {
+        $mode = (string) ($data['config_mode'] ?? '');
+
+        if ($mode === 'inline' || $mode === 'existing') {
+            return $mode;
+        }
+
+        return isset($data['agent_id']) && $data['agent_id'] !== '' && $data['agent_id'] !== null
+            ? 'existing'
+            : 'inline';
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function resolveDefinition(array $data): ?AgentDefinition
+    {
+        if ($this->resolveConfigMode($data) !== 'existing') {
+            return null;
+        }
+
+        if (! isset($data['agent_id']) || $data['agent_id'] === '' || $data['agent_id'] === null) {
+            return null;
+        }
+
+        return AgentDefinition::findOrFail($data['agent_id']);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>  $extra
+     * @return array<string, mixed>
+     */
+    protected function buildAgentConfig(
+        array $data,
+        ?AgentDefinition $definition,
+        GraphContext $context,
+        string $nodeId,
+        array $extra = [],
+    ): array {
+        $tools = $definition !== null
+            ? ($definition->tools ?? [])
+            : $context->toolBindingsFor($nodeId);
+
+        if ($definition !== null) {
+            return [
+                'provider' => $definition->provider,
+                'model' => $definition->model,
+                'instructions' => $definition->instructions,
+                'tools' => $tools,
+                ...$this->toolControlConfig($data, $definition),
+                ...$this->memoryOverrideConfig($data, $definition),
+                ...$extra,
+            ];
+        }
+
+        return array_merge($data, [
+            'tools' => $tools,
+            ...$this->toolControlConfig($data, null),
+            ...$this->memoryOverrideConfig($data, null),
+            ...$extra,
         ]);
     }
 

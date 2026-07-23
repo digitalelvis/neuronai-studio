@@ -4,7 +4,6 @@ namespace DigitalElvis\NeuronAIStudio\Tests;
 
 use DigitalElvis\NeuronAIStudio\NeuronAIStudioServiceProvider;
 use Livewire\LivewireServiceProvider;
-use NeuronAI\Laravel\NeuronAIServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 abstract class TestCase extends Orchestra
@@ -20,7 +19,6 @@ abstract class TestCase extends Orchestra
     {
         return [
             LivewireServiceProvider::class,
-            NeuronAIServiceProvider::class,
             NeuronAIStudioServiceProvider::class,
         ];
     }
@@ -41,6 +39,14 @@ abstract class TestCase extends Orchestra
             'model' => 'gpt-4o-mini',
             'parameters' => [],
         ]);
+        // CodeGen defaults to local-only; force on so package tests pass under phpunit APP_ENV=testing.
+        $app['config']->set('neuronai-studio.codegen', [
+            'enabled' => true,
+            'export' => true,
+            'preview' => true,
+        ]);
+        // Sync ingest in tests so Livewire assertions see completed documents immediately.
+        $app['config']->set('neuronai-studio.rag.async_ingest', false);
     }
 
     protected function defineDatabaseMigrations(): void

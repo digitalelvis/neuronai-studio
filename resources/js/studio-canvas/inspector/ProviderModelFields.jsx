@@ -1,11 +1,5 @@
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
+import { Combobox } from '@/components/ui/combobox';
 
 export default function ProviderModelFields({
     provider,
@@ -21,6 +15,16 @@ export default function ProviderModelFields({
     const models = providerModels[currentProvider] ?? [];
     const currentModel = model || defaultModel || models[0] || '';
 
+    const providerOptions = Object.entries(providers).map(([key, label]) => ({
+        value: key,
+        label: typeof label === 'string' ? label : key,
+    }));
+
+    const modelOptions = models.map((item) => ({
+        value: item,
+        label: item,
+    }));
+
     const handleProviderChange = (value) => {
         const nextModels = providerModels[value] ?? [];
         const nextModel = nextModels.includes(currentModel) ? currentModel : (nextModels[0] ?? '');
@@ -29,40 +33,28 @@ export default function ProviderModelFields({
     };
 
     return (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className="space-y-3">
             <div className="space-y-2">
-                <Label>Provider</Label>
-                <Select value={currentProvider} onValueChange={handleProviderChange} disabled={readOnly}>
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select provider" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {Object.entries(providers).map(([key, label]) => (
-                            <SelectItem key={key} value={key}>
-                                {label}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                <Label>Model Provider</Label>
+                <Combobox
+                    options={providerOptions}
+                    value={currentProvider}
+                    onValueChange={handleProviderChange}
+                    placeholder="Select provider"
+                    searchPlaceholder="Search providers…"
+                    disabled={readOnly}
+                />
             </div>
             <div className="space-y-2">
                 <Label>Model</Label>
-                <Select
+                <Combobox
+                    options={modelOptions}
                     value={currentModel}
                     onValueChange={(value) => onChange?.({ model: value })}
+                    placeholder="Select model"
+                    searchPlaceholder="Search models…"
                     disabled={readOnly || models.length === 0}
-                >
-                    <SelectTrigger>
-                        <SelectValue placeholder="Select model" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {models.map((item) => (
-                            <SelectItem key={item} value={item}>
-                                {item}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+                />
             </div>
         </div>
     );

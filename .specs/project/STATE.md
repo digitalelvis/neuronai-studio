@@ -1,14 +1,21 @@
 # State
 
-**Last Updated:** 2026-07-21
-**Development line (features):** `v0.9.x` (post-M8)
-**Patch line:** `v0.8.x`
-**Latest published:** `v0.9.0` on Packagist / `main`
-**Current Work:** `canvas-invoke-node` ✅ on `feat/canvas-invoke`. M8 complete (`v0.9.0`). TraceDetail bridge + OBS-06/OTel stay deferred.
+**Last Updated:** 2026-07-23
+**Development line (features):** `v0.10.x` (M9)
+**Patch line:** `v0.9.x`
+**Latest published:** `v0.10.0` on Packagist / `main`
+**Current Work:** M9 on `feat/knowledge-base-rag` → `v0.10.x` (single PR): RAG hardening, Langflow-level Studio UX, codegen local gates, canvas tool bindings, and breaking migrate to `neuron-core/neuron-ai`. TraceDetail bridge + OBS-06/OTel stay deferred.
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-023: M9 = Studio UX + RAG harden + neuron-ai direct on `v0.10.x` (2026-07-23)
+
+**Decision:** After publishing `v0.10.0` (`canvas-invoke-node`), open **M9** on line `v0.10.x` as one PR (`feat/knowledge-base-rag`): (1) expand Neuron vector stores + async ingest/reindex + KB docs; (2) Langflow-level canvas + playground shell (sessions/traces); (3) gate codegen export/preview local-only; (4) bind tools to agents via canvas edges; (5) drop `neuron-core/neuron-laravel` and require `neuron-core/neuron-ai` with Studio publishing `config/neuron.php`. No formal per-slice feature specs for this wave — design follows shipped commits + docs under `guides/knowledge-bases/` and canvas/playground guides.
+**Reason:** Product gap after M8 is authoring UX parity and production-safe RAG/codegen, not another runtime milestone. Direct `neuron-ai` removes the Laravel bridge from the install path.
+**Trade-off:** Single large PR (no split). Breaking for hosts still on `neuron-laravel`. Hybrid/MMR retrieval remains P3 polish.
+**Impact:** ROADMAP M9 in progress; STATE/RELEASE point at `v0.10.x`; patch line = `v0.9.x`.
 
 ### AD-022: M8 feature split + compaction memory + `v0.9.x` Execute line (2026-07-20)
 
@@ -322,7 +329,7 @@
 | external-observability | 2026-07-17 | 0.8.x | ✅ Done |
 | agent-memory-controls | 2026-07-20 | 0.9.x | ✅ Done |
 | context-engineering | 2026-07-21 | 0.9.x | ✅ Done |
-| canvas-invoke-node | 2026-07-21 | 0.9.x | ✅ Done |
+| canvas-invoke-node | 2026-07-21 | 0.9.x → 0.10.0 | ✅ Done |
 
 ---
 
@@ -330,16 +337,16 @@
 
 ### P1 — M8 north star (performance / memory / context) — AD-021 / AD-022
 
-Themes turned into specified features (AD-022 — Execute next on `v0.9.x`):
+Themes turned into specified features (AD-022 — shipped on `v0.9.x` / `v0.10.0`):
 
 - [x] **Agent memory** → specified as [`agent-memory-controls`](../features/agent-memory-controls/spec.md) (AMC-01…05: `memory_config` envelope, compaction, summarizer, UI + node override)
 - [x] **Context engineering** → specified as [`context-engineering`](../features/context-engineering/spec.md) (CTX-01…06: prompt assembly budgets for RAG/tool/state + truncation spans)
 - [x] **Workflow/agent runtime quality** → absorbed by the two features above (token waste = unbudgeted context + silent history loss) + PTA below for concurrency correctness
 - [x] **Tool approval inside parallel branches** → specified as [`parallel-tool-approval`](../features/parallel-tool-approval/spec.md) (P2 of M8; PTA-01…04)
 
-### P2 — Valuable later (not M8 core)
+### P2 — Valuable later (not M9 core)
 
-- [x] **Canvas `invoke` / allowlisted hook node** — done: [`canvas-invoke-node`](../features/canvas-invoke-node/spec.md) on `v0.9.x`
+- [x] **Canvas `invoke` / allowlisted hook node** — done: [`canvas-invoke-node`](../features/canvas-invoke-node/spec.md) shipped `v0.10.0`
 - [ ] Dedicated Usage page / advanced charts / filters (beyond M5 minimal Dashboard)
 - [ ] Multi-tenant / user attribution in usage
 - [ ] Embeddings / RAG cost as a separate line item
@@ -409,3 +416,7 @@ Themes turned into specified features (AD-022 — Execute next on `v0.9.x`):
 - [x] Execute M8 `context-engineering` (CTX-T1…T9) on `v0.9.x`
 - [x] Execute M8: `parallel-tool-approval` on `v0.9.x`
 - [x] Execute `canvas-invoke-node` (INV-T1…T6) on `v0.9.x`
+- [x] Release `v0.9.0` (M8) + `v0.10.0` (`canvas-invoke-node`)
+- [x] AD-023: open M9 on `v0.10.x` (Studio UX + RAG harden + neuron-ai)
+- [ ] Merge M9 `feat/knowledge-base-rag` → `v0.10.x` (single PR)
+- [ ] Release `v0.11.0` (or next minor) when M9 is stable on the line

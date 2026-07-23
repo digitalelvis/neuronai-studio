@@ -49,6 +49,11 @@ export function mountStudioChat(rootEl, config = {}) {
             agentMeta={config.agentMeta ?? null}
             embedded={embedded}
             threadHistoryUrl={config.threadHistoryUrl ?? null}
+            threadsIndexUrl={config.threadsIndexUrl ?? null}
+            tracesIndexUrl={config.tracesIndexUrl ?? null}
+            threadRunsUrlTemplate={config.threadRunsUrlTemplate ?? null}
+            traceShowJsonUrlTemplate={config.traceShowJsonUrlTemplate ?? null}
+            traceShowUrlTemplate={config.traceShowUrlTemplate ?? null}
         />,
     );
 

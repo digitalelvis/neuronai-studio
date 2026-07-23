@@ -40,6 +40,7 @@ Repeating the same workflow template creates a new workflow. Agents referenced b
 | ID | Complexity | Description |
 |----|------------|-------------|
 | `basic-agent-chat` | Basic | Single agent chat flow |
+| `rag-knowledge-qna` | Basic | RAG node → knowledge agent with `{{ rag_context.context }}` |
 | `lead-qualification` | Intermediate | LLM extraction + condition branching |
 | `lead-qualification-loop` | Intermediate | LLM extraction in a cyclic loop until email found |
 | `autonomous-lead-qualification` | Intermediate | Agent + tools + attachments in a loop |
@@ -48,6 +49,15 @@ Repeating the same workflow template creates a new workflow. Agents referenced b
 | `parallel-triage-hitl` | Advanced | Parallel analysis + human review branch + checkpoint resume |
 | `parallel-refund-approval` | Advanced | Parallel eligibility + approval-gated refund tool |
 | `dev-support-memory-loop` | Advanced | Tech-support loop with memory, RAG, HITL, tools, attachments |
+
+## RAG Knowledge Q&A
+
+Template `rag-knowledge-qna` wires a **RAG** node into the `knowledge-agent`. After install:
+
+1. Open the RAG node and select a knowledge base (create/ingest under [Knowledge Bases](knowledge-bases/overview.md) first).
+2. Run the workflow — the agent prompt uses `{{ rag_context.context }}`.
+
+For on-demand search in the Playground instead, create a [RAG tool](knowledge-bases/agent-binding.md) and bind it to an agent.
 
 ## Lead Qualification (loop)
 

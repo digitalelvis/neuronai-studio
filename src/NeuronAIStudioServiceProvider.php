@@ -48,6 +48,7 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->mergeConfigFrom(__DIR__.'/../config/neuron.php', 'neuron');
         $this->mergeConfigFrom(__DIR__.'/../config/neuronai-studio.php', 'neuronai-studio');
 
         $this->app->singleton(NodeTypeRegistry::class, function () {
@@ -135,6 +136,10 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
     protected function registerPublishing(): void
     {
         if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__.'/../config/neuron.php' => config_path('neuron.php'),
+            ], 'neuron-config');
+
             $this->publishes([
                 __DIR__.'/../config/neuronai-studio.php' => config_path('neuronai-studio.php'),
             ], 'neuronai-studio-config');

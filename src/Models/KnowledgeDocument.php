@@ -40,4 +40,12 @@ class KnowledgeDocument extends Model
     {
         return $this->belongsTo(KnowledgeBase::class);
     }
+
+    /**
+     * Stable vector-store sourceName used for ingest and {@see deleteBy()}.
+     */
+    public function vectorSourceName(): string
+    {
+        return 'doc:'.$this->getKey();
+    }
 }
