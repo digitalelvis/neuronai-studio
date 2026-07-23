@@ -14,10 +14,10 @@ Operational guide for versioning and publishing `digitalelvis/neuronai-studio` o
 
 ## Day-to-day development
 
-1. Branch from the active feature line (currently `v0.9.x` for M8):
+1. Branch from the active feature line (currently `v0.10.x` for M9):
 
    ```bash
-   git checkout v0.9.x
+   git checkout v0.10.x
    git pull
    git checkout -b feat/my-feature
    ```
@@ -26,7 +26,7 @@ Operational guide for versioning and publishing `digitalelvis/neuronai-studio` o
 
 3. Open a PR targeting the line you branched from. CI must pass before merge.
 
-Patches for the published `0.8` series go to `v0.8.x`. Older patch lines: `v0.7.x` / `v0.6.x`.
+Patches for the published `0.9` series go to `v0.9.x`. Older patch lines: `v0.8.x` / `v0.7.x`.
 
 ## Standard release
 
