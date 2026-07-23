@@ -2,6 +2,8 @@
 
 namespace DigitalElvis\NeuronAIStudio\Commands;
 
+use DigitalElvis\NeuronAIStudio\Codegen\CodegenDisabledException;
+use DigitalElvis\NeuronAIStudio\Codegen\CodegenGuard;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -14,6 +16,14 @@ class MakeToolCommand extends Command
 
     public function handle(): int
     {
+        try {
+            CodegenGuard::ensureExport();
+        } catch (CodegenDisabledException $e) {
+            $this->error($e->getMessage());
+
+            return self::FAILURE;
+        }
+
         $name = Str::studly($this->argument('name'));
 
         if (! str_ends_with($name, 'Tool')) {

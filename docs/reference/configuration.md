@@ -22,6 +22,27 @@ php artisan vendor:publish --tag=neuronai-studio-config
 | `export_namespace` | `NEURONAI_STUDIO_EXPORT_NAMESPACE` | `App\Neuron` | PHP namespace for exported classes |
 | `export_path` | `NEURONAI_STUDIO_EXPORT_PATH` | `app/Neuron` | Export directory |
 
+## CodeGen feature flags
+
+Master + children. Defaults are `true` only when `APP_ENV=local`. Effective capabilities:
+
+- `canExport` = `codegen.enabled && codegen.export`
+- `canPreview` = `codegen.enabled && codegen.preview`
+
+Master off turns both children off even if their env vars are `true`. Runtime resolution of already-exported classes is **not** gated.
+
+| Key | Env | Default | Description |
+|-----|-----|---------|-------------|
+| `codegen.enabled` | `NEURONAI_STUDIO_CODEGEN_ENABLED` | `APP_ENV === local` | Master gate (make-tool, import to Studio, prerequisite for children) |
+| `codegen.export` | `NEURONAI_STUDIO_CODEGEN_EXPORT` | `APP_ENV === local` | Disk writes + CLI export + Export UI |
+| `codegen.preview` | `NEURONAI_STUDIO_CODEGEN_PREVIEW` | `APP_ENV === local` | Code panel / generated preview (no disk write) |
+
+```env
+NEURONAI_STUDIO_CODEGEN_ENABLED=true
+NEURONAI_STUDIO_CODEGEN_EXPORT=false
+NEURONAI_STUDIO_CODEGEN_PREVIEW=true
+```
+
 ## AI providers
 
 | Key | Env | Default | Description |

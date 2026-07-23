@@ -2,6 +2,8 @@
 
 namespace DigitalElvis\NeuronAIStudio\Http\Livewire\Tools;
 
+use DigitalElvis\NeuronAIStudio\Codegen\CodegenDisabledException;
+use DigitalElvis\NeuronAIStudio\Codegen\CodegenGuard;
 use DigitalElvis\NeuronAIStudio\Codegen\ToolClassGenerator;
 use DigitalElvis\NeuronAIStudio\Codegen\ToolClassImporter;
 use DigitalElvis\NeuronAIStudio\Codegen\ToolExporter;
@@ -190,6 +192,8 @@ class Edit extends Component
     /** @param  array<string, mixed>  $payload */
     public function previewFromReact(array $payload): string
     {
+        CodegenGuard::ensurePreview();
+
         $toolKind = (string) ($payload['toolKind'] ?? 'builder');
 
         if ($toolKind !== 'builder') {
@@ -220,17 +224,23 @@ class Edit extends Component
 
         $className = Str::studly($validated['toolName']).'Tool';
 
+        $config = [
+            'tool_name' => $validated['toolName'],
+            'class_name' => $className,
+            'invoke_body' => $this->invokeBody,
+        ];
+
+        if ($this->tool?->exists && isset($this->tool->config['class_path'])) {
+            $config['class_path'] = $this->tool->config['class_path'];
+        }
+
         $payload = [
             'name' => $validated['name'],
             'slug' => Str::slug($validated['name']),
             'type' => 'builder',
             'description' => $validated['description'],
             'input_schema' => $this->inputSchema,
-            'config' => [
-                'tool_name' => $validated['toolName'],
-                'class_name' => $className,
-                'invoke_body' => $this->invokeBody,
-            ],
+            'config' => $config,
         ];
 
         if ($this->tool?->exists) {
@@ -239,9 +249,12 @@ class Edit extends Component
             $this->tool = ToolDefinition::create($payload);
         }
 
-        $files = $exporter->export($this->tool->fresh());
-
-        session()->flash('success', 'Tool saved and exported to '.implode(', ', $files));
+        if (CodegenGuard::canExport()) {
+            $files = $exporter->export($this->tool->fresh());
+            session()->flash('success', 'Tool saved and exported to '.implode(', ', $files));
+        } else {
+            session()->flash('success', 'Tool saved. CodeGen export is disabled — PHP class was not written to disk.');
+        }
 
         $this->redirect(route('neuronai-studio.tools.show', $this->tool));
     }
@@ -345,6 +358,14 @@ class Edit extends Component
 
     public function exportPhp(ToolExporter $exporter): void
     {
+        try {
+            CodegenGuard::ensureExport();
+        } catch (CodegenDisabledException $e) {
+            session()->flash('error', $e->getMessage());
+
+            return;
+        }
+
         if (! $this->tool?->exists) {
             $this->addError('name', 'Save the tool before exporting.');
 
@@ -357,6 +378,8 @@ class Edit extends Component
 
     public function getGeneratedPreviewProperty(): string
     {
+        CodegenGuard::ensurePreview();
+
         return app(ToolClassGenerator::class)->generate([
             'class_name' => Str::studly($this->toolName ?: 'example').'Tool',
             'tool_name' => $this->toolName ?: 'example_tool',

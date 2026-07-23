@@ -11,6 +11,8 @@ class AgentExporter
 {
     public function export(AgentDefinition $agent): array
     {
+        CodegenGuard::ensureExport();
+
         $namespace = config('neuronai-studio.export_namespace', 'App\\Neuron');
         $path = config('neuronai-studio.export_path', app_path('Neuron'));
         $className = Str::studly($agent->slug).'Agent';

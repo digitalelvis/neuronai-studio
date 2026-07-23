@@ -2,6 +2,8 @@
 
 namespace DigitalElvis\NeuronAIStudio\Http\Livewire\Workflows;
 
+use DigitalElvis\NeuronAIStudio\Codegen\CodegenDisabledException;
+use DigitalElvis\NeuronAIStudio\Codegen\CodegenGuard;
 use DigitalElvis\NeuronAIStudio\Codegen\WorkflowClassImporter;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
 use DigitalElvis\NeuronAIStudio\Registry\WorkflowRegistry;
@@ -24,6 +26,14 @@ class Index extends Component
 
     public function importToStudio(string $ref): void
     {
+        try {
+            CodegenGuard::ensureEnabled();
+        } catch (CodegenDisabledException $e) {
+            session()->flash('error', $e->getMessage());
+
+            return;
+        }
+
         $importer = app(WorkflowClassImporter::class);
 
         $imported = match (true) {

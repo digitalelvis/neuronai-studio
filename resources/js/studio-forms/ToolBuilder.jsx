@@ -14,6 +14,8 @@ import { collectLivewireErrors, fieldError, formatLivewireErrorSummary } from '@
 export default function ToolBuilder({ config }) {
     const initial = config.initial ?? {};
     const knowledgeBases = config.knowledgeBases ?? [];
+    const canExport = config.canExport !== false;
+    const canPreview = config.canPreview !== false;
     const [toolKind, setToolKind] = useState(initial.toolKind ?? 'builder');
     const [name, setName] = useState(initial.name ?? '');
     const [toolName, setToolName] = useState(initial.toolName ?? '');
@@ -34,7 +36,7 @@ export default function ToolBuilder({ config }) {
     const [fieldErrors, setFieldErrors] = useState({});
 
     const refreshPreview = async () => {
-        if (toolKind !== 'builder') {
+        if (!canPreview || toolKind !== 'builder') {
             setPreview('');
             return;
         }
@@ -55,9 +57,14 @@ export default function ToolBuilder({ config }) {
     };
 
     useEffect(() => {
+        if (!canPreview) {
+            setPreview('');
+            return undefined;
+        }
+
         const timer = setTimeout(refreshPreview, 300);
         return () => clearTimeout(timer);
-    }, [toolKind, name, toolName, description, invokeBody, inputSchema]);
+    }, [canPreview, toolKind, name, toolName, description, invokeBody, inputSchema]);
 
     const addProperty = () => {
         setInputSchema((current) => [
@@ -119,13 +126,15 @@ export default function ToolBuilder({ config }) {
 
     const saveLabel =
         toolKind === 'builder'
-            ? 'Save & Export Class'
+            ? canExport
+                ? 'Save & Export Class'
+                : 'Save'
             : toolKind === 'rag'
               ? 'Save RAG Tool'
               : 'Save Webhook';
 
     const showProperties = toolKind !== 'rag';
-    const showPreviewPanel = toolKind === 'builder';
+    const showPreviewPanel = toolKind === 'builder' && canPreview;
     const panelWidth = showPreviewPanel ? 55 : 100;
 
     return (

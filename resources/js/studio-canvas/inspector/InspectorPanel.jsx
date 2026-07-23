@@ -74,14 +74,17 @@ export default function InspectorPanel({
         window.dispatchEvent(new CustomEvent('workflow-trace-finished'));
     }, []);
 
+    const canPreview = workflowConfig.canPreview !== false;
+    const canExport = workflowConfig.canExport !== false;
+
     return (
         <div className="flex h-full min-h-0 flex-col overflow-hidden bg-card">
             <Tabs value={tab} onValueChange={setTab} className="flex h-full flex-col">
-                <TabsList className="mx-2 mt-2 grid w-auto grid-cols-5">
+                <TabsList className={`mx-2 mt-2 grid w-auto ${canPreview ? 'grid-cols-5' : 'grid-cols-4'}`}>
                     <TabsTrigger value="test">Test</TabsTrigger>
                     <TabsTrigger value="traces">Trace</TabsTrigger>
                     <TabsTrigger value="json">JSON</TabsTrigger>
-                    <TabsTrigger value="code">Code</TabsTrigger>
+                    {canPreview && <TabsTrigger value="code">Code</TabsTrigger>}
                     <TabsTrigger value="connect">Connect</TabsTrigger>
                 </TabsList>
 
@@ -118,9 +121,15 @@ export default function InspectorPanel({
                     <GraphJsonPanel readOnly={workflowConfig.readOnly ?? false} />
                 </TabsContent>
 
-                <TabsContent value="code" className="mt-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
-                    <WorkflowCodePanel readOnly={workflowConfig.readOnly ?? false} />
-                </TabsContent>
+                {canPreview && (
+                    <TabsContent value="code" className="mt-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
+                        <WorkflowCodePanel
+                            readOnly={workflowConfig.readOnly ?? false}
+                            canExport={canExport}
+                            canPreview={canPreview}
+                        />
+                    </TabsContent>
+                )}
 
                 <TabsContent value="connect" className="mt-0 flex-1 overflow-hidden data-[state=inactive]:hidden">
                     <ConnectPanel

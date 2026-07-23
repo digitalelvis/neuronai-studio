@@ -2,6 +2,8 @@
 
 namespace DigitalElvis\NeuronAIStudio\Http\Livewire\Workflows;
 
+use DigitalElvis\NeuronAIStudio\Codegen\CodegenDisabledException;
+use DigitalElvis\NeuronAIStudio\Codegen\CodegenGuard;
 use DigitalElvis\NeuronAIStudio\Codegen\WorkflowClassImporter;
 use DigitalElvis\NeuronAIStudio\Codegen\WorkflowExporter;
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
@@ -170,6 +172,14 @@ class Editor extends Component
 
     public function exportWorkflow(WorkflowExporter $exporter): void
     {
+        try {
+            CodegenGuard::ensureExport();
+        } catch (CodegenDisabledException $e) {
+            session()->flash('error', $e->getMessage());
+
+            return;
+        }
+
         if (! $this->workflow?->exists) {
             $this->save();
         }
@@ -188,6 +198,8 @@ class Editor extends Component
         string $status,
         WorkflowExporter $exporter,
     ): array {
+        CodegenGuard::ensurePreview();
+
         $workflow = WorkflowDefinition::make([
             'name' => $name !== '' ? $name : 'Workflow',
             'slug' => Str::slug($name !== '' ? $name : 'workflow'),

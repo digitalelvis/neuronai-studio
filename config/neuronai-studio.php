@@ -53,6 +53,23 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | CodeGen Feature Flags
+    |--------------------------------------------------------------------------
+    |
+    | Master (enabled) gates CodeGen surfaces. Export writes PHP to disk;
+    | preview generates code without writing. Children are only effective when
+    | the master flag is on. Defaults are true only when APP_ENV is local.
+    |
+    */
+
+    'codegen' => [
+        'enabled' => env('NEURONAI_STUDIO_CODEGEN_ENABLED', env('APP_ENV') === 'local'),
+        'export' => env('NEURONAI_STUDIO_CODEGEN_EXPORT', env('APP_ENV') === 'local'),
+        'preview' => env('NEURONAI_STUDIO_CODEGEN_PREVIEW', env('APP_ENV') === 'local'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | AI Providers
     |--------------------------------------------------------------------------
     |

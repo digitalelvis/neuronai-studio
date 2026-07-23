@@ -32,6 +32,8 @@ class WorkflowExporter
      */
     public function previewMeta(WorkflowDefinition $workflow): array
     {
+        CodegenGuard::ensurePreview();
+
         $build = $this->nativeExporter->build($workflow);
 
         return [

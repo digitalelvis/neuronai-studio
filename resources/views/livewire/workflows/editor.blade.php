@@ -60,6 +60,8 @@
             integrateResumeUrls: @json($integrateResumeUrls),
             defaultProvider: @json(config('neuronai-studio.default_provider')),
             defaultModel: @json(config('neuronai-studio.default_model')),
+            canExport: @json(\DigitalElvis\NeuronAIStudio\Codegen\CodegenGuard::canExport()),
+            canPreview: @json(\DigitalElvis\NeuronAIStudio\Codegen\CodegenGuard::canPreview()),
         };
     </script>
 

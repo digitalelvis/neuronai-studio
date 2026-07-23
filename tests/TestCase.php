@@ -41,6 +41,12 @@ abstract class TestCase extends Orchestra
             'model' => 'gpt-4o-mini',
             'parameters' => [],
         ]);
+        // CodeGen defaults to local-only; force on so package tests pass under phpunit APP_ENV=testing.
+        $app['config']->set('neuronai-studio.codegen', [
+            'enabled' => true,
+            'export' => true,
+            'preview' => true,
+        ]);
         // Sync ingest in tests so Livewire assertions see completed documents immediately.
         $app['config']->set('neuronai-studio.rag.async_ingest', false);
     }
