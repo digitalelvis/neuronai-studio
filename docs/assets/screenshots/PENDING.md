@@ -27,7 +27,7 @@ All documentation pages reference screenshots with `<!-- SCREENSHOT: tag -->` co
 | [ ] | `tools-registry` | Registry | Unified tool catalog (builtin + DB + MCP) |
 | [ ] | `mcp-servers-list` | MCP overview | MCP server index page |
 | [ ] | `mcp-servers-edit` | Stdio/HTTP | Server editor with test discovery button |
-| [ ] | `workflows-canvas` | Canvas editor | Full graph with node palette + inspector |
+| [ ] | `workflows-canvas` | Canvas editor | Full graph with searchable palette, floating Playground/Share, Logs, expanded node forms |
 | [ ] | `workflows-inspector-agent` | AI nodes | Agent node inspector fields |
 | [ ] | `workflows-inspector-condition` | Logic nodes | Condition node with true/false handles |
 | [ ] | `workflows-test-harness` | Runtime | Test harness running a workflow |

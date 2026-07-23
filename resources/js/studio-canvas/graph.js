@@ -2,6 +2,7 @@ const CATEGORY_COLORS = {
     flow: '#6366f1',
     ai: '#8b5cf6',
     logic: '#f59e0b',
+    utilities: '#eab308',
 };
 
 function normalizeNodeData(data) {
@@ -76,8 +77,8 @@ export function buildFlowEdge(connectionOrEdge) {
     };
 }
 
-export function toFlowNodes(packageNodes, nodeTypesMeta) {
-    return (packageNodes || []).map((node) => {
+export function toFlowNodes(packageNodes, nodeTypesMeta, annotations = []) {
+    const workflowNodes = (packageNodes || []).map((node) => {
         const meta = nodeTypesMeta[node.type] || {};
 
         return {
@@ -98,6 +99,26 @@ export function toFlowNodes(packageNodes, nodeTypesMeta) {
             selected: false,
         };
     });
+
+    const noteNodes = (annotations || []).map((note) => ({
+        id: note.id,
+        type: 'stickyNote',
+        position: {
+            x: note.position?.x ?? 0,
+            y: note.position?.y ?? 0,
+        },
+        data: {
+            nodeType: 'note',
+            label: 'Note',
+            category: 'utilities',
+            icon: 'sticky',
+            config: normalizeNodeData(note.data ?? { text: note.text ?? '' }),
+            executionStatus: null,
+        },
+        selected: false,
+    }));
+
+    return [...workflowNodes, ...noteNodes];
 }
 
 export function toFlowEdges(packageEdges) {
@@ -105,27 +126,56 @@ export function toFlowEdges(packageEdges) {
 }
 
 export function toPackageGraph(nodes, edges, viewport) {
-    return {
-        version: 1,
-        nodes: nodes.map((node) => ({
+    const workflowNodes = [];
+    const annotations = [];
+
+    for (const node of nodes) {
+        if (node.type === 'stickyNote' || node.data?.nodeType === 'note') {
+            annotations.push({
+                id: node.id,
+                type: 'note',
+                position: { x: node.position.x, y: node.position.y },
+                data: node.data.config || {},
+            });
+            continue;
+        }
+
+        workflowNodes.push({
             id: node.id,
             type: node.data.nodeType,
             position: { x: node.position.x, y: node.position.y },
             data: node.data.config || {},
-        })),
-        edges: edges.map((edge) => ({
-            id: edge.id,
-            source: edge.source,
-            target: edge.target,
-            sourceHandle: edge.sourceHandle || 'default',
-            targetHandle: edge.targetHandle || 'default',
-        })),
+        });
+    }
+
+    return {
+        version: 1,
+        nodes: workflowNodes,
+        edges: edges
+            .filter((edge) => {
+                const source = nodes.find((node) => node.id === edge.source);
+                const target = nodes.find((node) => node.id === edge.target);
+                return (
+                    source?.data?.nodeType !== 'note' &&
+                    target?.data?.nodeType !== 'note' &&
+                    source?.type !== 'stickyNote' &&
+                    target?.type !== 'stickyNote'
+                );
+            })
+            .map((edge) => ({
+                id: edge.id,
+                source: edge.source,
+                target: edge.target,
+                sourceHandle: edge.sourceHandle || 'default',
+                targetHandle: edge.targetHandle || 'default',
+            })),
+        annotations,
         viewport: viewport || { x: 0, y: 0, zoom: 1 },
     };
 }
 
-export const FLOW_NODE_WIDTH = 180;
-export const FLOW_NODE_HEIGHT = 80;
+export const FLOW_NODE_WIDTH = 280;
+export const FLOW_NODE_HEIGHT = 96;
 
 export function dropFlowPosition(screenToFlowPosition, clientX, clientY) {
     const position = screenToFlowPosition({ x: clientX, y: clientY });
@@ -142,6 +192,22 @@ export function createNodeId(type) {
 
 export function buildFlowNode(type, position, nodeTypesMeta, config = {}) {
     const meta = nodeTypesMeta[type] || {};
+
+    if (type === 'note') {
+        return {
+            id: createNodeId('note'),
+            type: 'stickyNote',
+            position,
+            data: {
+                nodeType: 'note',
+                label: meta.label || 'Note',
+                category: 'utilities',
+                icon: 'sticky',
+                config: { text: '', ...config },
+                executionStatus: null,
+            },
+        };
+    }
 
     return {
         id: createNodeId(type),
@@ -254,5 +320,5 @@ export function spliceNodeIntoEdge(newNodeId, edge, edges) {
 }
 
 export function canSpliceNodeType(type) {
-    return type !== 'start' && type !== 'stop';
+    return type !== 'start' && type !== 'stop' && type !== 'note';
 }

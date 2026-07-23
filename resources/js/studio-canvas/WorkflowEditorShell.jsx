@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Download, Save, Upload } from 'lucide-react';
+import { Save, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -12,12 +12,13 @@ import {
 } from '@/components/ui/select';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { TooltipProvider } from '@/components/ui/tooltip';
-import { Badge } from '@/components/ui/badge';
 import WorkflowCanvas from './WorkflowCanvas';
-import InspectorPanel from './inspector/InspectorPanel';
+import NodePalette from './NodePalette';
 import NodeEditSheet from './inspector/NodeEditSheet';
 import ImportJsonDialog from './ImportJsonDialog';
-import { downloadWorkflowJson } from './graphJson';
+import PlaygroundOverlay from './chrome/PlaygroundOverlay';
+import ShareMenu from './chrome/ShareMenu';
+import LogsDrawer from './chrome/LogsDrawer';
 
 export default function WorkflowEditorShell({ config }) {
     const [name, setName] = useState(config.workflowName ?? '');
@@ -26,6 +27,20 @@ export default function WorkflowEditorShell({ config }) {
     const [validationMessage, setValidationMessage] = useState('');
     const [importOpen, setImportOpen] = useState(false);
     const readOnly = config.readOnly ?? false;
+
+    const workflowPanelConfig = {
+        readOnly,
+        workflowId: config.workflowId,
+        streamUrl: config.streamUrl,
+        resumeUrlTemplate: config.resumeUrlTemplate,
+        uploadUrl: config.uploadUrl,
+        tracesIndexUrl: config.tracesIndexUrl,
+        traceShowUrlTemplate: config.traceShowUrlTemplate,
+        traceShowJsonUrlTemplate: config.traceShowJsonUrlTemplate,
+        enabledProtocols: config.enabledProtocols,
+        integrateStreamUrls: config.integrateStreamUrls,
+        integrateResumeUrls: config.integrateResumeUrls,
+    };
 
     useEffect(() => {
         const syncMeta = () => {
@@ -39,11 +54,6 @@ export default function WorkflowEditorShell({ config }) {
         syncMeta();
     }, [name, description, status]);
 
-    const callLivewire = (method, ...args) => {
-        const component = window.Livewire?.find(config.wireId);
-        return component?.call(method, ...args);
-    };
-
     const handleValidate = async () => {
         const component = window.Livewire?.find(config.wireId);
         if (component) {
@@ -52,13 +62,6 @@ export default function WorkflowEditorShell({ config }) {
         }
     };
     const handleSave = () => window.dispatchEvent(new CustomEvent('workflow-canvas-save'));
-    const handleOpenTest = () => window.dispatchEvent(new CustomEvent('workflow-open-test'));
-    const handleOpenTraces = () => window.dispatchEvent(new CustomEvent('workflow-open-traces'));
-    const handleOpenCode = () => window.dispatchEvent(new CustomEvent('workflow-open-code'));
-
-    const paletteTypes = Object.entries(config.nodeTypes || {}).filter(
-        ([type]) => !['start', 'stop'].includes(type),
-    );
 
     return (
         <TooltipProvider>
@@ -69,7 +72,7 @@ export default function WorkflowEditorShell({ config }) {
                     </div>
                 )}
 
-                <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-4 py-3">
+                <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-4 py-2.5">
                     <Input
                         className="h-8 w-48"
                         value={name}
@@ -99,19 +102,6 @@ export default function WorkflowEditorShell({ config }) {
                         <Button variant="outline" size="sm" onClick={handleValidate}>
                             Validate
                         </Button>
-                        <Button variant="outline" size="sm" onClick={handleOpenTest} disabled={!config.workflowId}>
-                            Test
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={handleOpenTraces} disabled={!config.workflowId}>
-                            Traces
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={handleOpenCode}>
-                            Code
-                        </Button>
-                        <Button variant="outline" size="sm" onClick={() => downloadWorkflowJson(false)}>
-                            <Download className="h-3.5 w-3.5" />
-                            JSON
-                        </Button>
                         {!readOnly && (
                             <>
                                 <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
@@ -127,36 +117,13 @@ export default function WorkflowEditorShell({ config }) {
                     </div>
                 </div>
 
-                {validationMessage && (
-                    <div className="border-b border-border px-4 py-1.5 text-xs text-muted-foreground">{validationMessage}</div>
-                )}
-
                 <ResizablePanelGroup direction="horizontal" className="min-h-0 flex-1">
-                    <ResizablePanel defaultSize={18} minSize={14} maxSize={28}>
-                        <aside className={`flex h-full min-h-0 flex-col overflow-hidden p-3 ${readOnly ? 'opacity-60' : ''}`}>
-                            <h3 className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">Nodes</h3>
-                            <p className="mb-3 text-[11px] text-muted-foreground">
-                                {readOnly ? 'Read-only preview' : 'Drag to canvas'}
-                            </p>
-                            <div className="space-y-1.5 overflow-auto">
-                                {paletteTypes.map(([type, meta]) => (
-                                    <div
-                                        key={type}
-                                        className="cursor-grab rounded-md border border-border bg-muted/30 px-3 py-2 text-sm transition-colors hover:bg-muted/60 active:cursor-grabbing"
-                                        draggable={!readOnly}
-                                        data-canvas-node-type={type}
-                                        role="button"
-                                        tabIndex={0}
-                                    >
-                                        {meta.label ?? type}
-                                    </div>
-                                ))}
-                            </div>
-                        </aside>
+                    <ResizablePanel defaultSize={20} minSize={14} maxSize={28}>
+                        <NodePalette nodeTypes={config.nodeTypes || {}} readOnly={readOnly} />
                     </ResizablePanel>
                     <ResizableHandle withHandle />
-                    <ResizablePanel defaultSize={57} minSize={35}>
-                        <div className="h-full min-h-0 overflow-hidden">
+                    <ResizablePanel defaultSize={80} minSize={50}>
+                        <div className="relative h-full min-h-0 overflow-hidden">
                             <WorkflowCanvas
                                 graph={config.graph}
                                 nodeTypesMeta={config.nodeTypes || {}}
@@ -164,47 +131,44 @@ export default function WorkflowEditorShell({ config }) {
                                 defaultProvider={config.defaultProvider ?? ''}
                                 defaultModel={config.defaultModel ?? ''}
                                 agents={config.agents || []}
+                                tools={config.tools || []}
+                                mcpServers={config.mcpServers || []}
+                                knowledgeBases={config.knowledgeBases || []}
+                                ragSearchUrlTemplate={config.ragSearchUrlTemplate ?? ''}
+                                outputClasses={config.outputClasses || []}
+                                providers={config.providers || {}}
+                                providerModels={config.providerModels || {}}
                                 onGraphChange={(graph) => {
                                     window.__workflowGraph = graph;
                                     const saved = window.__NEURONAI_CANVAS_CONFIG?.savedGraph;
-                                    window.__workflowGraphDirty = saved ? JSON.stringify(saved) !== JSON.stringify(graph) : false;
+                                    window.__workflowGraphDirty = saved
+                                        ? JSON.stringify(saved) !== JSON.stringify(graph)
+                                        : false;
                                     window.dispatchEvent(new CustomEvent('workflow-graph-changed'));
                                 }}
                             />
+
+                            <div className="ab-canvas-fabs-top pointer-events-none absolute right-4 top-4 z-20 flex items-center gap-2">
+                                <div className="pointer-events-auto flex items-center gap-2">
+                                    <PlaygroundOverlay
+                                        workflowConfig={workflowPanelConfig}
+                                        onBeforeRun={window.saveGraphBeforeRun}
+                                    />
+                                    <ShareMenu workflowConfig={workflowPanelConfig} />
+                                </div>
+                            </div>
+
+                            <div className="ab-canvas-fabs-bottom pointer-events-none absolute bottom-4 left-4 z-20">
+                                <div className="pointer-events-auto">
+                                    <LogsDrawer
+                                        workflowConfig={workflowPanelConfig}
+                                        validationMessage={validationMessage}
+                                    />
+                                </div>
+                            </div>
                         </div>
                     </ResizablePanel>
-                    <ResizableHandle withHandle />
-                    <ResizablePanel defaultSize={25} minSize={20} maxSize={42}>
-                        <InspectorPanel
-                            workflowConfig={{
-                                readOnly,
-                                workflowId: config.workflowId,
-                                streamUrl: config.streamUrl,
-                                resumeUrlTemplate: config.resumeUrlTemplate,
-                                uploadUrl: config.uploadUrl,
-                                tracesIndexUrl: config.tracesIndexUrl,
-                                traceShowUrlTemplate: config.traceShowUrlTemplate,
-                                traceShowJsonUrlTemplate: config.traceShowJsonUrlTemplate,
-                                enabledProtocols: config.enabledProtocols,
-                                integrateStreamUrls: config.integrateStreamUrls,
-                                integrateResumeUrls: config.integrateResumeUrls,
-                            }}
-                            onBeforeRun={window.saveGraphBeforeRun}
-                        />
-                    </ResizablePanel>
                 </ResizablePanelGroup>
-
-                <div className="flex shrink-0 items-center justify-between border-t border-border px-4 py-1.5 text-[11px] text-muted-foreground">
-                    <span className="flex items-center gap-2">
-                        <span className="inline-block h-2 w-2 rounded-full bg-green-500" />
-                        Online
-                    </span>
-                    {config.workflowId && (
-                        <Badge variant="outline" className="text-[10px]">
-                            Workflow #{config.workflowId}
-                        </Badge>
-                    )}
-                </div>
 
                 <ImportJsonDialog open={importOpen} onOpenChange={setImportOpen} />
 

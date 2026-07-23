@@ -1,4 +1,4 @@
-import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath } from '@xyflow/react';
+import { BaseEdge, EdgeLabelRenderer, getBezierPath } from '@xyflow/react';
 
 export default function WorkflowEdge({
     id,
@@ -12,21 +12,30 @@ export default function WorkflowEdge({
     label,
     style,
     markerEnd,
+    selected,
 }) {
-    const [edgePath, labelX, labelY] = getSmoothStepPath({
+    const [edgePath, labelX, labelY] = getBezierPath({
         sourceX,
         sourceY,
         targetX,
         targetY,
         sourcePosition,
         targetPosition,
+        curvature: 0.25,
     });
 
     const edgeLabel = label || data?.label;
 
     return (
         <>
-            <BaseEdge id={id} path={edgePath} style={style} markerEnd={markerEnd} interactionWidth={20} />
+            <BaseEdge
+                id={id}
+                path={edgePath}
+                style={style}
+                markerEnd={markerEnd}
+                interactionWidth={24}
+                className={selected ? 'ab-edge-path ab-edge-path--selected' : 'ab-edge-path'}
+            />
             {edgeLabel && (
                 <EdgeLabelRenderer>
                     <div

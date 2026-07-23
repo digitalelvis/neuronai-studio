@@ -30,12 +30,18 @@ export default function NodeConfigForm({
     readOnly,
     onUpdate,
     onRemove,
+    section = 'all',
+    compact = false,
+    showRemove = true,
+    showType = true,
 }) {
     if (!node) {
         return <p className="text-sm text-muted-foreground">Select a node to configure it.</p>;
     }
 
     const data = node.data || {};
+    const showControls = section === 'all' || section === 'controls';
+    const showAdvanced = section === 'all' || section === 'advanced';
     const updateField = (key, value) => {
         onUpdate?.({ ...data, [key]: value });
     };
@@ -49,227 +55,246 @@ export default function NodeConfigForm({
         }
     };
 
-    const canRemove = !readOnly && !['start', 'stop'].includes(node.type);
+    const canRemove = showRemove && !readOnly && !['start', 'stop'].includes(node.type);
 
     return (
-        <div className="space-y-4">
-            <div>
-                <Label className="text-xs text-muted-foreground">Type</Label>
-                <p className="text-sm font-medium capitalize">{node.type}</p>
-            </div>
+        <div className={compact ? 'space-y-3' : 'space-y-4'}>
+            {showType && (
+                <div>
+                    <Label className="text-xs text-muted-foreground">Type</Label>
+                    <p className="text-sm font-medium capitalize">{node.type}</p>
+                </div>
+            )}
 
             {node.type === 'agent' && (
                 <>
-                    <div className="space-y-2">
-                        <Label>Agent</Label>
-                        <Select
-                            value={data.agent_id ? String(data.agent_id) : ''}
-                            onValueChange={(value) => updateField('agent_id', value)}
-                            disabled={readOnly}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select agent" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {agents.map((agent) => (
-                                    <SelectItem key={agent.id} value={String(agent.id)}>
-                                        {agent.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Message override</Label>
-                        <Input
-                            value={data.message ?? ''}
-                            onChange={(e) => updateField('message', e.target.value)}
-                            placeholder="$input"
-                            disabled={readOnly}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Output Key</Label>
-                        <Input
-                            value={data.output_key ?? 'agent_response'}
-                            onChange={(e) => updateField('output_key', e.target.value)}
-                            disabled={readOnly}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                            State key where the agent response is stored.
-                        </p>
-                    </div>
-                    <StructuredOutputFields
-                        structured={Boolean(data.structured)}
-                        outputClass={data.output_class ?? ''}
-                        outputClasses={outputClasses}
-                        readOnly={readOnly}
-                        onChange={(patch) => onUpdate?.({ ...data, ...patch })}
-                    />
-                    <StreamToggleField
-                        stream={Boolean(data.stream)}
-                        structured={Boolean(data.structured)}
-                        readOnly={readOnly}
-                        onChange={(patch) => onUpdate?.({ ...data, ...patch })}
-                    />
-                    <div className="space-y-2">
-                        <Label>Tool max runs (override)</Label>
-                        <Input
-                            type="number"
-                            min={1}
-                            value={data.tool_max_runs ?? ''}
-                            onChange={(e) =>
-                                updateField(
-                                    'tool_max_runs',
-                                    e.target.value === '' ? undefined : Number(e.target.value),
-                                )
-                            }
-                            placeholder="Inherit from agent"
-                            disabled={readOnly}
-                        />
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Checkbox
-                            checked={Boolean(data.parallel_tool_calls)}
-                            onCheckedChange={(checked) => updateField('parallel_tool_calls', Boolean(checked))}
-                            disabled={readOnly}
-                            id={`parallel-tools-${node.id}`}
-                        />
-                        <Label htmlFor={`parallel-tools-${node.id}`}>Parallel tool calls (override)</Label>
-                    </div>
-                    <div className="space-y-2 border-t border-border pt-3">
-                        <Label className="text-xs font-medium uppercase text-muted-foreground">Memory override</Label>
-                        <Input
-                            type="number"
-                            min={1}
-                            value={data.context_window ?? ''}
-                            onChange={(e) =>
-                                updateField(
-                                    'context_window',
-                                    e.target.value === '' ? undefined : Number(e.target.value),
-                                )
-                            }
-                            placeholder="Context window (inherit)"
-                            disabled={readOnly}
-                        />
-                        <Select
-                            value={data.driver || '__inherit'}
-                            onValueChange={(value) =>
-                                updateField('driver', value === '__inherit' ? undefined : value)
-                            }
-                            disabled={readOnly}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Driver (inherit)" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="__inherit">Driver: inherit</SelectItem>
-                                <SelectItem value="eloquent">Eloquent</SelectItem>
-                                <SelectItem value="in_memory">In-memory</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <label className="flex items-center gap-2 text-sm">
-                            <Checkbox
-                                checked={data.summarization_enabled === true}
-                                onCheckedChange={(checked) =>
-                                    updateField('summarization_enabled', checked ? true : undefined)
-                                }
-                                disabled={readOnly}
+                    {showControls && (
+                        <>
+                            <div className="space-y-2">
+                                <Label>Agent</Label>
+                                <Select
+                                    value={data.agent_id ? String(data.agent_id) : ''}
+                                    onValueChange={(value) => updateField('agent_id', value)}
+                                    disabled={readOnly}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select agent" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {agents.map((agent) => (
+                                            <SelectItem key={agent.id} value={String(agent.id)}>
+                                                {agent.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Message override</Label>
+                                <Input
+                                    value={data.message ?? ''}
+                                    onChange={(e) => updateField('message', e.target.value)}
+                                    placeholder="$input"
+                                    disabled={readOnly}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Output Key</Label>
+                                <Input
+                                    value={data.output_key ?? 'agent_response'}
+                                    onChange={(e) => updateField('output_key', e.target.value)}
+                                    disabled={readOnly}
+                                />
+                                {!compact && (
+                                    <p className="text-xs text-muted-foreground">
+                                        State key where the agent response is stored.
+                                    </p>
+                                )}
+                            </div>
+                            <StreamToggleField
+                                stream={Boolean(data.stream)}
+                                structured={Boolean(data.structured)}
+                                readOnly={readOnly}
+                                onChange={(patch) => onUpdate?.({ ...data, ...patch })}
                             />
-                            Summarization override
-                        </label>
-                        <Input
-                            type="number"
-                            min={1}
-                            value={data.budget_rag ?? ''}
-                            onChange={(e) =>
-                                updateField(
-                                    'budget_rag',
-                                    e.target.value === '' ? undefined : Number(e.target.value),
-                                )
-                            }
-                            placeholder="RAG budget (inherit)"
-                            disabled={readOnly}
-                        />
-                        <Input
-                            type="number"
-                            min={1}
-                            value={data.budget_tool_results ?? ''}
-                            onChange={(e) =>
-                                updateField(
-                                    'budget_tool_results',
-                                    e.target.value === '' ? undefined : Number(e.target.value),
-                                )
-                            }
-                            placeholder="Tool results budget (inherit)"
-                            disabled={readOnly}
-                        />
-                        <Input
-                            type="number"
-                            min={1}
-                            value={data.budget_state ?? ''}
-                            onChange={(e) =>
-                                updateField(
-                                    'budget_state',
-                                    e.target.value === '' ? undefined : Number(e.target.value),
-                                )
-                            }
-                            placeholder="State fields budget (inherit)"
-                            disabled={readOnly}
-                        />
-                    </div>
+                        </>
+                    )}
+                    {showAdvanced && (
+                        <>
+                            <StructuredOutputFields
+                                structured={Boolean(data.structured)}
+                                outputClass={data.output_class ?? ''}
+                                outputClasses={outputClasses}
+                                readOnly={readOnly}
+                                onChange={(patch) => onUpdate?.({ ...data, ...patch })}
+                            />
+                            <div className="space-y-2">
+                                <Label>Tool max runs (override)</Label>
+                                <Input
+                                    type="number"
+                                    min={1}
+                                    value={data.tool_max_runs ?? ''}
+                                    onChange={(e) =>
+                                        updateField(
+                                            'tool_max_runs',
+                                            e.target.value === '' ? undefined : Number(e.target.value),
+                                        )
+                                    }
+                                    placeholder="Inherit from agent"
+                                    disabled={readOnly}
+                                />
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <Checkbox
+                                    checked={Boolean(data.parallel_tool_calls)}
+                                    onCheckedChange={(checked) =>
+                                        updateField('parallel_tool_calls', Boolean(checked))
+                                    }
+                                    disabled={readOnly}
+                                    id={`parallel-tools-${node.id}`}
+                                />
+                                <Label htmlFor={`parallel-tools-${node.id}`}>Parallel tool calls (override)</Label>
+                            </div>
+                            <div className="space-y-2 border-t border-border pt-3">
+                                <Label className="text-xs font-medium uppercase text-muted-foreground">
+                                    Memory override
+                                </Label>
+                                <Input
+                                    type="number"
+                                    min={1}
+                                    value={data.context_window ?? ''}
+                                    onChange={(e) =>
+                                        updateField(
+                                            'context_window',
+                                            e.target.value === '' ? undefined : Number(e.target.value),
+                                        )
+                                    }
+                                    placeholder="Context window (inherit)"
+                                    disabled={readOnly}
+                                />
+                                <Select
+                                    value={data.driver || '__inherit'}
+                                    onValueChange={(value) =>
+                                        updateField('driver', value === '__inherit' ? undefined : value)
+                                    }
+                                    disabled={readOnly}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Driver (inherit)" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        <SelectItem value="__inherit">Driver: inherit</SelectItem>
+                                        <SelectItem value="eloquent">Eloquent</SelectItem>
+                                        <SelectItem value="in_memory">In-memory</SelectItem>
+                                    </SelectContent>
+                                </Select>
+                                <label className="flex items-center gap-2 text-sm">
+                                    <Checkbox
+                                        checked={data.summarization_enabled === true}
+                                        onCheckedChange={(checked) =>
+                                            updateField('summarization_enabled', checked ? true : undefined)
+                                        }
+                                        disabled={readOnly}
+                                    />
+                                    Summarization override
+                                </label>
+                                <Input
+                                    type="number"
+                                    min={1}
+                                    value={data.budget_rag ?? ''}
+                                    onChange={(e) =>
+                                        updateField(
+                                            'budget_rag',
+                                            e.target.value === '' ? undefined : Number(e.target.value),
+                                        )
+                                    }
+                                    placeholder="RAG budget (inherit)"
+                                    disabled={readOnly}
+                                />
+                                <Input
+                                    type="number"
+                                    min={1}
+                                    value={data.budget_tool_results ?? ''}
+                                    onChange={(e) =>
+                                        updateField(
+                                            'budget_tool_results',
+                                            e.target.value === '' ? undefined : Number(e.target.value),
+                                        )
+                                    }
+                                    placeholder="Tool results budget (inherit)"
+                                    disabled={readOnly}
+                                />
+                                <Input
+                                    type="number"
+                                    min={1}
+                                    value={data.budget_state ?? ''}
+                                    onChange={(e) =>
+                                        updateField(
+                                            'budget_state',
+                                            e.target.value === '' ? undefined : Number(e.target.value),
+                                        )
+                                    }
+                                    placeholder="State fields budget (inherit)"
+                                    disabled={readOnly}
+                                />
+                            </div>
+                        </>
+                    )}
                 </>
             )}
 
             {node.type === 'llm' && (
                 <>
-                    <ProviderModelFields
-                        provider={data.provider}
-                        model={data.model}
-                        providers={providers}
-                        providerModels={providerModels}
-                        defaultProvider={defaultProvider}
-                        defaultModel={defaultModel}
-                        readOnly={readOnly}
-                        onChange={(patch) => onUpdate?.({ ...data, ...patch })}
-                    />
-                    <div className="space-y-2">
-                        <Label>Prompt</Label>
-                        <Textarea
-                            rows={4}
-                            value={data.prompt ?? ''}
-                            onChange={(e) => updateField('prompt', e.target.value)}
-                            disabled={readOnly}
+                    {showControls && (
+                        <>
+                            <ProviderModelFields
+                                provider={data.provider}
+                                model={data.model}
+                                providers={providers}
+                                providerModels={providerModels}
+                                defaultProvider={defaultProvider}
+                                defaultModel={defaultModel}
+                                readOnly={readOnly}
+                                onChange={(patch) => onUpdate?.({ ...data, ...patch })}
+                            />
+                            <div className="space-y-2">
+                                <Label>Prompt</Label>
+                                <Textarea
+                                    rows={compact ? 3 : 4}
+                                    value={data.prompt ?? ''}
+                                    onChange={(e) => updateField('prompt', e.target.value)}
+                                    disabled={readOnly}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Output Key</Label>
+                                <Input
+                                    value={data.output_key ?? 'llm_response'}
+                                    onChange={(e) => updateField('output_key', e.target.value)}
+                                    disabled={readOnly}
+                                />
+                            </div>
+                            <StreamToggleField
+                                stream={Boolean(data.stream)}
+                                structured={Boolean(data.structured)}
+                                readOnly={readOnly}
+                                onChange={(patch) => onUpdate?.({ ...data, ...patch })}
+                            />
+                        </>
+                    )}
+                    {showAdvanced && (
+                        <StructuredOutputFields
+                            structured={Boolean(data.structured)}
+                            outputClass={data.output_class ?? ''}
+                            outputClasses={outputClasses}
+                            readOnly={readOnly}
+                            onChange={(patch) => onUpdate?.({ ...data, ...patch })}
                         />
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Output Key</Label>
-                        <Input
-                            value={data.output_key ?? 'llm_response'}
-                            onChange={(e) => updateField('output_key', e.target.value)}
-                            disabled={readOnly}
-                        />
-                        <p className="text-xs text-muted-foreground">
-                            State key where the LLM response is stored.
-                        </p>
-                    </div>
-                    <StructuredOutputFields
-                        structured={Boolean(data.structured)}
-                        outputClass={data.output_class ?? ''}
-                        outputClasses={outputClasses}
-                        readOnly={readOnly}
-                        onChange={(patch) => onUpdate?.({ ...data, ...patch })}
-                    />
-                    <StreamToggleField
-                        stream={Boolean(data.stream)}
-                        structured={Boolean(data.structured)}
-                        readOnly={readOnly}
-                        onChange={(patch) => onUpdate?.({ ...data, ...patch })}
-                    />
+                    )}
                 </>
             )}
 
-            {node.type === 'human' && (
+            {showControls && node.type === 'human' && (
                 <>
                     <div className="space-y-2">
                         <Label>Prompt</Label>
@@ -292,7 +317,7 @@ export default function NodeConfigForm({
                 </>
             )}
 
-            {node.type === 'set_state' && (
+            {showControls && node.type === 'set_state' && (
                 <>
                     <div className="space-y-2">
                         <Label>Key</Label>
@@ -305,7 +330,7 @@ export default function NodeConfigForm({
                 </>
             )}
 
-            {node.type === 'invoke' && (
+            {showControls && node.type === 'invoke' && (
                 <>
                     <div className="space-y-2">
                         <Label>Hook class (FQCN)</Label>
@@ -315,10 +340,12 @@ export default function NodeConfigForm({
                             placeholder="App\Neuron\Hooks\EnrichLead"
                             disabled={readOnly}
                         />
-                        <p className="text-xs text-muted-foreground">
-                            Must be listed in <code>neuronai-studio.invoke_hooks</code> and implement{' '}
-                            <code>__invoke(WorkflowState)</code>.
-                        </p>
+                        {!compact && (
+                            <p className="text-xs text-muted-foreground">
+                                Must be listed in <code>neuronai-studio.invoke_hooks</code> and implement{' '}
+                                <code>__invoke(WorkflowState)</code>.
+                            </p>
+                        )}
                     </div>
                     <div className="space-y-2">
                         <Label>Output Key</Label>
@@ -331,7 +358,7 @@ export default function NodeConfigForm({
                 </>
             )}
 
-            {node.type === 'condition' && (
+            {showControls && node.type === 'condition' && (
                 <>
                     <div className="space-y-2">
                         <Label>State Key</Label>
@@ -340,9 +367,11 @@ export default function NodeConfigForm({
                             onChange={(e) => updateField('state_key', e.target.value)}
                             disabled={readOnly}
                         />
-                        <p className="text-xs text-muted-foreground">
-                            Key in workflow state. Use dot notation for nested values (e.g. lead.tier).
-                        </p>
+                        {!compact && (
+                            <p className="text-xs text-muted-foreground">
+                                Key in workflow state. Use dot notation for nested values (e.g. lead.tier).
+                            </p>
+                        )}
                     </div>
                     <div className="space-y-2">
                         <Label>Operator</Label>
@@ -368,7 +397,7 @@ export default function NodeConfigForm({
                 </>
             )}
 
-            {node.type === 'loop' && (
+            {showControls && node.type === 'loop' && (
                 <>
                     <div className="space-y-2">
                         <Label>Max Steps</Label>
@@ -379,9 +408,11 @@ export default function NodeConfigForm({
                             onChange={(e) => updateField('max_steps', Number(e.target.value))}
                             disabled={readOnly}
                         />
-                        <p className="text-xs text-muted-foreground">
-                            Maximum iterations before the loop exits with an error.
-                        </p>
+                        {!compact && (
+                            <p className="text-xs text-muted-foreground">
+                                Maximum iterations before the loop exits with an error.
+                            </p>
+                        )}
                     </div>
                     <div className="space-y-2">
                         <Label>Exit Condition — State Key</Label>
@@ -415,11 +446,11 @@ export default function NodeConfigForm({
                 </>
             )}
 
-            {node.type === 'fork' && (
+            {showControls && node.type === 'fork' && (
                 <ForkBranchEditor data={data} readOnly={readOnly} onUpdate={onUpdate} />
             )}
 
-            {node.type === 'join' && (
+            {showControls && node.type === 'join' && (
                 <>
                     <div className="space-y-2">
                         <Label>Output Key</Label>
@@ -428,97 +459,124 @@ export default function NodeConfigForm({
                             onChange={(e) => updateField('output_key', e.target.value)}
                             disabled={readOnly}
                         />
-                        <p className="text-xs text-muted-foreground">
-                            State key that receives the merged branch results, keyed by branch id
-                            (e.g. {'{ branch_a: …, branch_b: … }'}).
-                        </p>
+                        {!compact && (
+                            <p className="text-xs text-muted-foreground">
+                                State key that receives the merged branch results, keyed by branch id
+                                (e.g. {'{ branch_a: …, branch_b: … }'}).
+                            </p>
+                        )}
                     </div>
                 </>
             )}
 
+            {showControls && node.type === 'delay' && (
+                <div className="space-y-2">
+                    <Label>Seconds</Label>
+                    <Input
+                        type="number"
+                        min={0}
+                        value={data.seconds ?? data.delay ?? 1}
+                        onChange={(e) => updateField('seconds', Number(e.target.value))}
+                        disabled={readOnly}
+                    />
+                </div>
+            )}
+
             {node.type === 'tool' && (
                 <>
-                    <div className="space-y-2">
-                        <Label>Tool</Label>
-                        <Select value={data.tool_ref ?? ''} onValueChange={(value) => updateField('tool_ref', value)} disabled={readOnly}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select tool" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {tools.map((tool) => (
-                                    <SelectItem key={tool.ref} value={tool.ref}>
-                                        {tool.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Output Key</Label>
-                        <Input
-                            value={data.output_key ?? 'tool_result'}
-                            onChange={(e) => updateField('output_key', e.target.value)}
-                            disabled={readOnly}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Parameters JSON</Label>
-                        <Textarea
-                            rows={3}
-                            value={data.parameters_json ?? (data.parameters ? JSON.stringify(data.parameters, null, 2) : '')}
-                            onChange={(e) => updateParametersJson(e.target.value)}
-                            placeholder='{"query": "$input"}'
-                            disabled={readOnly}
-                            className="font-mono text-xs"
-                        />
-                    </div>
+                    {showControls && (
+                        <>
+                            <div className="space-y-2">
+                                <Label>Tool</Label>
+                                <Select value={data.tool_ref ?? ''} onValueChange={(value) => updateField('tool_ref', value)} disabled={readOnly}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select tool" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {tools.map((tool) => (
+                                            <SelectItem key={tool.ref} value={tool.ref}>
+                                                {tool.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Output Key</Label>
+                                <Input
+                                    value={data.output_key ?? 'tool_result'}
+                                    onChange={(e) => updateField('output_key', e.target.value)}
+                                    disabled={readOnly}
+                                />
+                            </div>
+                        </>
+                    )}
+                    {showAdvanced && (
+                        <div className="space-y-2">
+                            <Label>Parameters JSON</Label>
+                            <Textarea
+                                rows={3}
+                                value={data.parameters_json ?? (data.parameters ? JSON.stringify(data.parameters, null, 2) : '')}
+                                onChange={(e) => updateParametersJson(e.target.value)}
+                                placeholder='{"query": "$input"}'
+                                disabled={readOnly}
+                                className="font-mono text-xs"
+                            />
+                        </div>
+                    )}
                 </>
             )}
 
             {node.type === 'mcp' && (
                 <>
-                    <div className="space-y-2">
-                        <Label>MCP Server</Label>
-                        <Select value={data.mcp_server ?? ''} onValueChange={(value) => updateField('mcp_server', value)} disabled={readOnly}>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select server" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {mcpServers.map((server) => (
-                                    <SelectItem key={server.slug} value={server.slug}>
-                                        {server.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Tool Name</Label>
-                        <Input value={data.tool_name ?? ''} onChange={(e) => updateField('tool_name', e.target.value)} disabled={readOnly} />
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Output Key</Label>
-                        <Input
-                            value={data.output_key ?? 'mcp_result'}
-                            onChange={(e) => updateField('output_key', e.target.value)}
-                            disabled={readOnly}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label>Parameters JSON</Label>
-                        <Textarea
-                            rows={3}
-                            value={data.parameters_json ?? (data.parameters ? JSON.stringify(data.parameters, null, 2) : '')}
-                            onChange={(e) => updateParametersJson(e.target.value)}
-                            placeholder='{"query": "$input"}'
-                            disabled={readOnly}
-                            className="font-mono text-xs"
-                        />
-                    </div>
+                    {showControls && (
+                        <>
+                            <div className="space-y-2">
+                                <Label>MCP Server</Label>
+                                <Select value={data.mcp_server ?? ''} onValueChange={(value) => updateField('mcp_server', value)} disabled={readOnly}>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Select server" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {mcpServers.map((server) => (
+                                            <SelectItem key={server.slug} value={server.slug}>
+                                                {server.label}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Tool Name</Label>
+                                <Input value={data.tool_name ?? ''} onChange={(e) => updateField('tool_name', e.target.value)} disabled={readOnly} />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Output Key</Label>
+                                <Input
+                                    value={data.output_key ?? 'mcp_result'}
+                                    onChange={(e) => updateField('output_key', e.target.value)}
+                                    disabled={readOnly}
+                                />
+                            </div>
+                        </>
+                    )}
+                    {showAdvanced && (
+                        <div className="space-y-2">
+                            <Label>Parameters JSON</Label>
+                            <Textarea
+                                rows={3}
+                                value={data.parameters_json ?? (data.parameters ? JSON.stringify(data.parameters, null, 2) : '')}
+                                onChange={(e) => updateParametersJson(e.target.value)}
+                                placeholder='{"query": "$input"}'
+                                disabled={readOnly}
+                                className="font-mono text-xs"
+                            />
+                        </div>
+                    )}
                 </>
             )}
 
-            {node.type === 'rag' && (
+            {node.type === 'rag' && showControls && (
                 <RagFields
                     data={data}
                     knowledgeBases={knowledgeBases}

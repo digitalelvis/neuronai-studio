@@ -17,7 +17,10 @@ class GraphValidator
     public function validate(array $graph): array
     {
         $errors = [];
-        $nodes = $graph['nodes'] ?? [];
+        $nodes = array_values(array_filter(
+            $graph['nodes'] ?? [],
+            fn ($n) => ($n['type'] ?? '') !== 'note',
+        ));
         $edges = $graph['edges'] ?? [];
 
         if (empty($nodes)) {

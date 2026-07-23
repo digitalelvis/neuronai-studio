@@ -280,7 +280,19 @@ class Editor extends Component
             : ($this->workflow?->exists ? 'Edit Workflow' : 'Create Workflow');
 
         return view('neuronai-studio::livewire.workflows.editor', [
-            'nodeTypes' => app(NodeTypeRegistry::class)->forCanvas(),
+            'nodeTypes' => array_merge(
+                app(NodeTypeRegistry::class)->forCanvas(),
+                [
+                    'note' => array_merge(
+                        ['type' => 'note'],
+                        config('neuronai-studio.node_types.note', [
+                            'label' => 'Sticky Note',
+                            'icon' => 'sticky',
+                            'category' => 'utilities',
+                        ]),
+                    ),
+                ],
+            ),
             'providers' => app(ProviderRegistry::class)->labels(),
             'agents' => AgentDefinition::orderBy('name')->get(),
             'agentsForCanvas' => AgentDefinition::orderBy('name')->get(['id', 'name'])->values()->all(),

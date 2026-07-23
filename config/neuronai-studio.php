@@ -507,6 +507,11 @@ return [
             'icon' => 'git-merge',
             'category' => 'logic',
         ],
+        'note' => [
+            'label' => 'Sticky Note',
+            'icon' => 'sticky',
+            'category' => 'utilities',
+        ],
     ],
 
     /*
