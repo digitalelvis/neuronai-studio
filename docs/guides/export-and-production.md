@@ -109,24 +109,25 @@ Place JSON workflow files in `workflow_json_paths`:
 | 4 | Restrict webhook hosts and MCP allowlists |
 | 5 | Configure production gate for studio access |
 | 6 | Disable CodeGen flags (or leave local-only defaults) and/or protect `/neuronai-studio` routes |
-| 7 | Enable async runs and run a queue worker when using background workflow execution |
+| 7 | Keep `allow_builder_tools` off outside local; prefer class / webhook tools in production |
+| 8 | Enable async runs and run a queue worker for long workflow graphs (avoid FPM/proxy 504s on sync SSE) |
 
 ### Workers
 
-For long-running or production workflow execution outside the test harness SSE path:
+For long-running or production workflow execution outside the test harness SSE path. Sync harness/playground streams stay open for the full run and can fail under PHP-FPM or reverse-proxy idle timeouts — see [Long-running runs under PHP-FPM](workflows/runtime-and-traces.md#long-running-runs-under-php-fpm).
 
 ```env
 NEURONAI_STUDIO_ASYNC_RUNS_ENABLED=true
 NEURONAI_STUDIO_QUEUE=workflows
 ```
 
-Start a worker (adjust queue name and connection to match your config):
+Start a worker (adjust queue name and connection to match your config; Horizon is optional if you already run it):
 
 ```bash
 php artisan queue:work --queue=workflows
 ```
 
-Clients dispatch runs via `POST /workflows/{id}/run`, poll `GET /workflows/traces/{id}/json`, and resume HITL via `POST /workflows/traces/{id}/resume`. See [Runtime & Traces](workflows/runtime-and-traces.md#queue-runner).
+Clients dispatch runs via `POST /workflows/{id}/run`, poll `GET /workflows/traces/{id}/json` (or SSE-tail `GET /workflows/runs/{run}/events/stream`), and resume HITL via `POST /workflows/traces/{id}/resume`. See [Runtime & Traces](workflows/runtime-and-traces.md#queue-runner).
 
 ## CLI example
 

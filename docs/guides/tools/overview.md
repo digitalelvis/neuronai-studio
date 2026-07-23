@@ -18,7 +18,7 @@ flowchart TD
 | Source | Type | Created in |
 |--------|------|------------|
 | Built-in toolkits | Neuron `Toolkit` classes | `config/neuronai-studio.php` |
-| Builder tools | PHP invoke body + JSON schema | Studio UI |
+| Builder tools | PHP invoke body → export to class | Studio UI (local prototyping) |
 | Webhook tools | HTTP endpoint + JSON schema | Studio UI |
 | RAG tools | Knowledge base search (`KnowledgeBaseTool`) | Studio UI (`?kind=rag`) |
 | PHP classes | Neuron `Tool` subclasses | `app/Neuron/Tools/` or codegen |
@@ -28,7 +28,7 @@ flowchart TD
 
 | Need | Tool type |
 |------|-----------|
-| Quick custom logic in PHP | [Builder Tool](builder-tools.md) |
+| Quick custom logic in PHP (local) | [Builder Tool](builder-tools.md) → export class |
 | Call an external API | [Webhook Tool](webhook-tools.md) |
 | Search a knowledge base on demand | [RAG tool](#rag-knowledge-base-tool) |
 | Reusable production class | [Make Tool CLI](make-tool-cli.md) + export |

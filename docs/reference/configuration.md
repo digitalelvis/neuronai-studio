@@ -165,10 +165,13 @@ php artisan neuronai-studio:install-observability langfuse
 
 ## Tools
 
-| Key | Default | Description |
-|-----|---------|-------------|
-| `tools` | calculator, calendar | Built-in toolkit registry |
-| `tool_scan_paths` | `app/Neuron/Tools` | Paths to scan for PHP Tool classes |
+| Key | Env | Default | Description |
+|-----|-----|---------|-------------|
+| `allow_builder_tools` | `NEURONAI_STUDIO_ALLOW_BUILDER_TOOLS` | `APP_ENV === local` | Allow create/edit of PHP Class Builder tools in Studio UI |
+| `tools` | — | calculator, calendar | Built-in toolkit registry |
+| `tool_scan_paths` | — | `app/Neuron/Tools` | Paths to scan for PHP Tool classes |
+
+When `allow_builder_tools` is `false`, the builder tab is hidden and Livewire rejects builder saves. Runtime still resolves already-exported tools that have `config.class_path`. See [Builder Tools](../guides/tools/builder-tools.md) and [Security & Access](../guides/security-and-access.md#builder-tools).
 
 ## Structured output
 

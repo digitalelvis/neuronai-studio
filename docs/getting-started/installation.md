@@ -99,12 +99,15 @@ See [Native tracing](../guides/observability/native-tracing.md), [Inspector](../
 | `NEURONAI_STUDIO_QUEUE_CONNECTION` | — | Optional queue connection override |
 | `NEURONAI_STUDIO_QUEUE_TRIES` | `1` | Max job attempts |
 | `NEURONAI_STUDIO_QUEUE_BACKOFF` | `30` | Retry delay in seconds |
+| `NEURONAI_STUDIO_ALLOW_BUILDER_TOOLS` | `APP_ENV === local` | Allow PHP Class Builder create/edit in Studio |
 | `NEURONAI_STUDIO_USAGE_EXPORT_ENABLED` | `true` | Host metering API (`GET …/usage`) |
 | `NEURONAI_STUDIO_USAGE_EVENTS_ENABLED` | `false` | Dispatch `RunUsageRecorded` on terminal runs |
 
 See [Configuration](../reference/configuration.md) for the full list. Auth for the usage export API is host-owned — set `usage.export.middleware` (e.g. `auth:sanctum`). See [Usage Export API](../guides/analytics/export-api.md).
 
 ### Async workflow runs (optional)
+
+The Studio test harness and agent playground stream over a long-lived HTTP+SSE connection. Under PHP-FPM / Nginx that can hit `max_execution_time` or proxy idle timeouts (**504**) on loops, MCP stdio, or multi-LLM graphs. For production workflow execution, prefer the queue path instead of relying on sync streams.
 
 To execute workflows outside the synchronous test harness SSE path, enable async runs and start a queue worker:
 
@@ -117,7 +120,7 @@ NEURONAI_STUDIO_QUEUE=default
 php artisan queue:work --queue=default
 ```
 
-Poll trace status at `GET /neuronai-studio/traces/{id}/json`. Details: [Runtime & Traces](../guides/workflows/runtime-and-traces.md#queue-runner).
+Poll trace status at `GET /neuronai-studio/traces/{id}/json`, or stream live progress at `GET /neuronai-studio/workflows/runs/{run}/events/stream`. Details: [Runtime & Traces](../guides/workflows/runtime-and-traces.md#queue-runner) and [Long-running runs under PHP-FPM](../guides/workflows/runtime-and-traces.md#long-running-runs-under-php-fpm).
 
 ## Publish tags reference
 
