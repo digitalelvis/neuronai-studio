@@ -61,6 +61,7 @@ class Edit extends Component
         }
 
         $kind = request('kind', 'builder');
+        $allowBuilderTools = (bool) config('neuronai-studio.allow_builder_tools', false);
 
         if ($kind === 'webhook') {
             $this->toolKind = 'webhook';
@@ -68,8 +69,10 @@ class Edit extends Component
             $this->toolKind = 'rag';
             $this->toolName = 'search_knowledge_base';
             $this->description = 'Search the linked knowledge base for relevant documents.';
-        } else {
+        } elseif ($allowBuilderTools) {
             $this->toolKind = 'builder';
+        } else {
+            $this->toolKind = 'webhook';
         }
 
         if ($this->toolKind === 'builder') {
@@ -211,6 +214,15 @@ class Edit extends Component
 
     protected function saveBuilder(ToolExporter $exporter): void
     {
+        if (! config('neuronai-studio.allow_builder_tools', false)) {
+            $this->addError(
+                'toolKind',
+                'Builder tools are disabled. Set NEURONAI_STUDIO_ALLOW_BUILDER_TOOLS=true or use webhook / PHP class tools.',
+            );
+
+            return;
+        }
+
         $validated = $this->validate([
             'name' => 'required|string|max:255',
             'toolName' => 'required|string|max:255|regex:/^[a-z0-9_]+$/',

@@ -131,15 +131,29 @@ class ToolResolver
     {
         $definition = ToolDefinition::findOrFail($id);
 
-        if (in_array($definition->type, ['builder', 'codegen'], true) && ! empty($definition->config['class_path'])) {
-            return $this->resolveClass($definition->config['class_path'], $definition->config);
+        if (in_array($definition->type, ['builder', 'codegen'], true)) {
+            $classPath = $definition->config['class_path'] ?? null;
+
+            if (! is_string($classPath) || $classPath === '') {
+                throw new \InvalidArgumentException(
+                    "Builder tool [{$definition->name}] has no exported class_path. Export the tool to a PHP class before binding it."
+                );
+            }
+
+            return $this->resolveClass($classPath, $definition->config);
         }
 
         if ($definition->type === 'rag') {
             return KnowledgeBaseTool::fromDefinition($definition);
         }
 
-        return WebhookTool::fromDefinition($definition);
+        if ($definition->type === 'webhook') {
+            return WebhookTool::fromDefinition($definition);
+        }
+
+        throw new \InvalidArgumentException(
+            "Unsupported tool type [{$definition->type}] for database tool [{$definition->id}]."
+        );
     }
 
     /**

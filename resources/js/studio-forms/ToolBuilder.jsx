@@ -16,7 +16,10 @@ export default function ToolBuilder({ config }) {
     const knowledgeBases = config.knowledgeBases ?? [];
     const canExport = config.canExport !== false;
     const canPreview = config.canPreview !== false;
-    const [toolKind, setToolKind] = useState(initial.toolKind ?? 'builder');
+    const allowBuilderTools = config.allowBuilderTools !== false;
+    const [toolKind, setToolKind] = useState(
+        initial.toolKind ?? (allowBuilderTools ? 'builder' : 'webhook'),
+    );
     const [name, setName] = useState(initial.name ?? '');
     const [toolName, setToolName] = useState(initial.toolName ?? '');
     const [description, setDescription] = useState(initial.description ?? '');
@@ -34,6 +37,8 @@ export default function ToolBuilder({ config }) {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [fieldErrors, setFieldErrors] = useState({});
+
+    const showBuilderTab = allowBuilderTools || toolKind === 'builder';
 
     const refreshPreview = async () => {
         if (!canPreview || toolKind !== 'builder') {
@@ -142,7 +147,7 @@ export default function ToolBuilder({ config }) {
             <div className="shrink-0 border-b border-border px-4 py-3">
                 <Tabs value={toolKind} onValueChange={setToolKind}>
                     <TabsList>
-                        <TabsTrigger value="builder">PHP Class Builder</TabsTrigger>
+                        {showBuilderTab && <TabsTrigger value="builder">PHP Class Builder</TabsTrigger>}
                         <TabsTrigger value="webhook">Webhook</TabsTrigger>
                         <TabsTrigger value="rag">RAG - Knowledge Base</TabsTrigger>
                     </TabsList>
@@ -153,6 +158,26 @@ export default function ToolBuilder({ config }) {
                 <ResizablePanel defaultSize={panelWidth} minSize={40}>
                     <ScrollArea className="h-full p-4">
                         <div className="mx-auto max-w-2xl space-y-4">
+                            {toolKind === 'builder' && (
+                                <div
+                                    role="status"
+                                    className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-950 dark:text-amber-100"
+                                >
+                                    <p className="font-medium">Prototyping only — exports write executable PHP</p>
+                                    <p className="mt-1 text-xs opacity-90">
+                                        The invoke body is stored in the database for editing; runtime executes the
+                                        exported class under <code className="rounded bg-muted px-1">export_path</code>
+                                        , not <code className="rounded bg-muted px-1">eval()</code>. Keep{' '}
+                                        <code className="rounded bg-muted px-1">allow_builder_tools</code> and CodeGen
+                                        export off in production. Prefer webhook or PHP class tools there.
+                                    </p>
+                                    {!allowBuilderTools && (
+                                        <p className="mt-1 text-xs font-medium text-destructive">
+                                            Builder tools are disabled in this environment. Saving is blocked.
+                                        </p>
+                                    )}
+                                </div>
+                            )}
                             <div className="space-y-2">
                                 <Label>Display Name</Label>
                                 <Input value={name} onChange={(e) => setName(e.target.value)} required />

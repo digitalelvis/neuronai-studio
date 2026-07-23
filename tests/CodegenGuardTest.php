@@ -140,6 +140,7 @@ class CodegenGuardTest extends TestCase
         config([
             'neuronai-studio.export_path' => $exportPath,
             'neuronai-studio.export_namespace' => 'App\\Neuron',
+            'neuronai-studio.allow_builder_tools' => true,
         ]);
         $this->setCodegen(enabled: true, export: false, preview: true);
 
@@ -203,5 +204,25 @@ class CodegenGuardTest extends TestCase
 
         $this->expectException(CodegenDisabledException::class);
         app(ToolExporter::class)->export($tool);
+    }
+
+    public function test_save_builder_rejected_when_allow_builder_tools_false(): void
+    {
+        config(['neuronai-studio.allow_builder_tools' => false]);
+        $this->setCodegen(enabled: true, export: false, preview: true);
+
+        Livewire::test(Edit::class)
+            ->set('toolKind', 'builder')
+            ->set('name', 'Blocked Builder')
+            ->set('toolName', 'blocked_builder')
+            ->set('description', 'Should not save')
+            ->set('invokeBody', "return 'nope';")
+            ->set('inputSchema', [
+                ['name' => 'example', 'type' => 'string', 'description' => 'Example', 'required' => true],
+            ])
+            ->call('save')
+            ->assertHasErrors(['toolKind']);
+
+        $this->assertNull(ToolDefinition::firstWhere('slug', 'blocked-builder'));
     }
 }

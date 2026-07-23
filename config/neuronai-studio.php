@@ -304,8 +304,12 @@ return [
     |--------------------------------------------------------------------------
     |
     | Built-in toolkits available in the studio UI. Credentials use env:KEY syntax.
+    | allow_builder_tools gates create/edit of PHP Class Builder tools (defaults
+    | true only in local). Runtime still resolves exported tools with class_path.
     |
     */
+
+    'allow_builder_tools' => env('NEURONAI_STUDIO_ALLOW_BUILDER_TOOLS', env('APP_ENV') === 'local'),
 
     'tools' => [
         'calculator' => [
