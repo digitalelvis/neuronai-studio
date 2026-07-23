@@ -4,7 +4,6 @@ namespace DigitalElvis\NeuronAIStudio\Tests;
 
 use DigitalElvis\NeuronAIStudio\NeuronAIStudioServiceProvider;
 use Livewire\LivewireServiceProvider;
-use NeuronAI\Laravel\NeuronAIServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 abstract class TestCase extends Orchestra
@@ -20,7 +19,6 @@ abstract class TestCase extends Orchestra
     {
         return [
             LivewireServiceProvider::class,
-            NeuronAIServiceProvider::class,
             NeuronAIStudioServiceProvider::class,
         ];
     }

@@ -29,7 +29,24 @@ class CodegenContext
             'mistral' => "(new \\NeuronAI\\Providers\\Mistral\\Mistral((string) config({$keyConfig}), ".var_export($model, true)."))",
             'deepseek' => "(new \\NeuronAI\\Providers\\Deepseek\\Deepseek((string) config({$keyConfig}), ".var_export($model, true)."))",
             'huggingface' => "(new \\NeuronAI\\Providers\\HuggingFace\\HuggingFace((string) config({$keyConfig}), ".var_export($model, true)."))",
-            default => "\\NeuronAI\\Laravel\\Facades\\AIProvider::driver(".var_export($provider, true).")",
+            'cohere' => "(new \\NeuronAI\\Providers\\Cohere\\Cohere((string) config({$keyConfig}), ".var_export($model, true)."))",
+            default => throw new \InvalidArgumentException("Unsupported AI provider [{$provider}] for codegen."),
+        };
+    }
+
+    public function providerUseStatement(string $provider): string
+    {
+        return match ($provider) {
+            'anthropic' => "use NeuronAI\\Providers\\Anthropic\\Anthropic;\n",
+            'openai' => "use NeuronAI\\Providers\\OpenAI\\OpenAI;\n",
+            'openai-responses' => "use NeuronAI\\Providers\\OpenAI\\Responses\\OpenAIResponses;\n",
+            'gemini' => "use NeuronAI\\Providers\\Gemini\\Gemini;\n",
+            'ollama' => "use NeuronAI\\Providers\\Ollama\\Ollama;\n",
+            'mistral' => "use NeuronAI\\Providers\\Mistral\\Mistral;\n",
+            'deepseek' => "use NeuronAI\\Providers\\Deepseek\\Deepseek;\n",
+            'huggingface' => "use NeuronAI\\Providers\\HuggingFace\\HuggingFace;\n",
+            'cohere' => "use NeuronAI\\Providers\\Cohere\\Cohere;\n",
+            default => throw new \InvalidArgumentException("Unsupported AI provider [{$provider}] for codegen."),
         };
     }
 

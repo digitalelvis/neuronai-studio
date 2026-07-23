@@ -1,6 +1,6 @@
 {
     "name": "digitalelvis/neuronai-studio",
-    "description": "NeuronAI Studio — visual AI agent builder for Laravel powered by Neuron AI",
+    "description": "NeuronAI Studio — visual workflow-based AI agent builder for Laravel",
     "keywords": [
         "ai",
         "ai-agent",
@@ -32,7 +32,7 @@
         "illuminate/support": "^11.0|^12.0|^13.0",
         "illuminate/view": "^11.0|^12.0|^13.0",
         "livewire/livewire": "^3.5|^4.0",
-        "neuron-core/neuron-laravel": "^1.0"
+        "neuron-core/neuron-ai": "^3.15"
     },
     "require-dev": {
         "orchestra/testbench": "^9.0|^10.0|^11.0",

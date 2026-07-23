@@ -15,6 +15,11 @@ class InstallCommand extends Command
         $this->components->info('Installing NeuronAI Studio...');
 
         $this->call('vendor:publish', [
+            '--tag' => 'neuron-config',
+            '--force' => $this->option('force'),
+        ]);
+
+        $this->call('vendor:publish', [
             '--tag' => 'neuronai-studio-config',
             '--force' => $this->option('force'),
         ]);
@@ -42,6 +47,7 @@ class InstallCommand extends Command
 
         $this->newLine();
         $this->components->info('NeuronAI Studio installed successfully!');
+        $this->line('Set provider credentials in .env (for example OPENAI_KEY) — see config/neuron.php.');
         $this->line('Visit /'.config('neuronai-studio.route_prefix', 'neuronai-studio').' to open the dashboard.');
         $this->line('JS assets are pre-built. To rebuild after editing resources/js/, run: npm install && npm run build && php artisan vendor:publish --tag=neuronai-studio-assets --force');
         $this->line('Views load from the package by default. Use --with-views on install (or vendor:publish --tag=neuronai-studio-views) only when customizing Blade templates.');
