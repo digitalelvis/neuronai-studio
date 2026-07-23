@@ -88,7 +88,7 @@ function WorkflowCanvasInner({
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
     const [runStatus, setRunStatus] = useState(null);
-    const [minimapOpen, setMinimapOpen] = useState(true);
+    const [minimapOpen, setMinimapOpen] = useState(false);
     const isTestRunning = runStatus === 'running';
     const { getViewport, setViewport, deleteElements, screenToFlowPosition, fitView, getNodes, getEdges, setCenter } =
         useReactFlow();
@@ -246,9 +246,50 @@ function WorkflowCanvasInner({
         window.__workflowCanvasLoadGraph = loadGraph;
     }, [loadGraph]);
 
+    const isValidConnection = useCallback(
+        (connection) => {
+            const source = getNodes().find((node) => node.id === connection.source);
+            const target = getNodes().find((node) => node.id === connection.target);
+
+            if (!source || !target) {
+                return false;
+            }
+
+            if (source.data?.nodeType === 'note' || target.data?.nodeType === 'note') {
+                return false;
+            }
+
+            const targetHandle = connection.targetHandle || 'default';
+
+            if (targetHandle === 'tools') {
+                if (target.data?.nodeType !== 'agent') {
+                    return false;
+                }
+
+                const mode = target.data?.config?.config_mode;
+                const isInline =
+                    mode === 'inline' ||
+                    (mode !== 'existing' && !(target.data?.config?.agent_id != null && target.data?.config?.agent_id !== ''));
+
+                if (!isInline) {
+                    return false;
+                }
+
+                return source.data?.nodeType === 'tool' || source.data?.nodeType === 'mcp';
+            }
+
+            return true;
+        },
+        [getNodes],
+    );
+
     const onReconnect = useCallback(
         (oldEdge, newConnection) => {
             if (readOnly) {
+                return;
+            }
+
+            if (!isValidConnection(newConnection)) {
                 return;
             }
 
@@ -258,7 +299,7 @@ function WorkflowCanvasInner({
                 ),
             );
         },
-        [readOnly, setEdges],
+        [isValidConnection, readOnly, setEdges],
     );
 
     const onConnect = useCallback(
@@ -267,15 +308,13 @@ function WorkflowCanvasInner({
                 return;
             }
 
-            const source = getNodes().find((node) => node.id === connection.source);
-            const target = getNodes().find((node) => node.id === connection.target);
-            if (source?.data?.nodeType === 'note' || target?.data?.nodeType === 'note') {
+            if (!isValidConnection(connection)) {
                 return;
             }
 
             setEdges((current) => addEdge(buildFlowEdge(connection), current));
         },
-        [getNodes, readOnly, setEdges],
+        [isValidConnection, readOnly, setEdges],
     );
 
     const onSelectionChange = useCallback(
@@ -324,7 +363,13 @@ function WorkflowCanvasInner({
                           stream: true,
                       }
                     : type === 'agent'
-                      ? { stream: true }
+                      ? {
+                            config_mode: 'inline',
+                            stream: true,
+                            provider: defaultProvider,
+                            model: defaultModel,
+                            output_key: 'agent_response',
+                        }
                       : type === 'invoke'
                         ? { output_key: 'invoke_result' }
                         : type === 'note'
@@ -348,6 +393,18 @@ function WorkflowCanvasInner({
     const updateNodeData = useCallback(
         (nodeId, data) => {
             setNodes((current) => {
+                const previous = current.find((node) => node.id === nodeId);
+                const previousMode = previous?.data?.config?.config_mode;
+                const nextMode = data?.config_mode;
+
+                if (nextMode === 'existing' && previousMode !== 'existing') {
+                    setEdges((edges) =>
+                        edges.filter(
+                            (edge) => !(edge.target === nodeId && (edge.targetHandle || 'default') === 'tools'),
+                        ),
+                    );
+                }
+
                 const next = current.map((node) =>
                     node.id === nodeId
                         ? { ...node, data: { ...node.data, config: { ...node.data.config, ...data } } }
@@ -364,7 +421,7 @@ function WorkflowCanvasInner({
                 return next;
             });
         },
-        [setNodes, syncSelection],
+        [setEdges, setNodes, syncSelection],
     );
 
     const removeSelectedNode = useCallback(
@@ -623,6 +680,7 @@ function WorkflowCanvasInner({
                     onEdgesChange={onEdgesChange}
                     onConnect={readOnly || isTestRunning ? undefined : onConnect}
                     onReconnect={readOnly || isTestRunning ? undefined : onReconnect}
+                    isValidConnection={isValidConnection}
                     edgesReconnectable={!readOnly && !isTestRunning}
                     onSelectionChange={onSelectionChange}
                     onPaneClick={isTestRunning ? undefined : () => syncSelection(null)}

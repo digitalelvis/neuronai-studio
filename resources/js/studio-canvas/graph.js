@@ -17,7 +17,11 @@ export function categoryColor(category) {
     return CATEGORY_COLORS[category] || '#6366f1';
 }
 
-export function edgeLabelForHandle(handle) {
+export function edgeLabelForHandle(handle, targetHandle = 'default') {
+    if (targetHandle === 'tools') {
+        return 'tools';
+    }
+
     if (handle === 'true') {
         return 'true';
     }
@@ -37,7 +41,11 @@ export function edgeLabelForHandle(handle) {
     return undefined;
 }
 
-export function edgeStyleForHandle(handle) {
+export function edgeStyleForHandle(handle, targetHandle = 'default') {
+    if (targetHandle === 'tools') {
+        return { stroke: '#22d3ee', strokeWidth: 2 };
+    }
+
     if (handle === 'true') {
         return { stroke: '#22c55e', strokeWidth: 2 };
     }
@@ -57,23 +65,28 @@ export function edgeStyleForHandle(handle) {
     return { stroke: '#6366f1', strokeWidth: 2 };
 }
 
+export function isToolBindingEdge(edge) {
+    return (edge?.targetHandle || 'default') === 'tools';
+}
+
 export function buildFlowEdge(connectionOrEdge) {
     const handle = connectionOrEdge.sourceHandle || 'default';
-    const label = edgeLabelForHandle(handle);
+    const targetHandle = connectionOrEdge.targetHandle || 'default';
+    const label = edgeLabelForHandle(handle, targetHandle);
 
     return {
         id:
             connectionOrEdge.id ||
-            `${connectionOrEdge.source}-${connectionOrEdge.target}-${handle}-${Date.now()}`,
+            `${connectionOrEdge.source}-${connectionOrEdge.target}-${handle}-${targetHandle}-${Date.now()}`,
         source: connectionOrEdge.source,
         target: connectionOrEdge.target,
         sourceHandle: handle,
-        targetHandle: connectionOrEdge.targetHandle || 'default',
+        targetHandle,
         type: 'workflowEdge',
         animated: false,
         label,
         data: { label },
-        style: edgeStyleForHandle(handle),
+        style: edgeStyleForHandle(handle, targetHandle),
     };
 }
 

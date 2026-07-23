@@ -87,8 +87,8 @@
 
 .ab-flow-node-form {
     margin-top: 0.65rem;
-    max-height: 360px;
-    overflow: auto;
+    max-height: none;
+    overflow: visible;
     padding-right: 0.15rem;
     border-top: 1px solid var(--ab-border, #2a3448);
     padding-top: 0.65rem;
@@ -139,6 +139,26 @@
 .ab-flow-handle-false { background: #ef4444 !important; }
 .ab-flow-handle-continue { background: #3b82f6 !important; }
 .ab-flow-handle-exit { background: #a855f7 !important; }
+.ab-flow-handle-tools { background: #22d3ee !important; }
+
+.ab-flow-handle-label-tools { color: #22d3ee; }
+
+.ab-flow-agent-response-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 0.35rem;
+    margin-top: 0.35rem;
+    padding-top: 0.5rem;
+    border-top: 1px solid var(--ab-border, #2a3448);
+    font-size: 0.7rem;
+    color: var(--ab-muted, #94a3b8);
+}
+
+.ab-flow-agent-tools-hint {
+    font-size: 0.7rem;
+    color: var(--ab-muted, #94a3b8);
+}
 
 .ab-flow-controls {
     border: 1px solid var(--ab-border, #2a3448) !important;

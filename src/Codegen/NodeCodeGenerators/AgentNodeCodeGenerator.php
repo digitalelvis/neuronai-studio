@@ -85,7 +85,8 @@ PHP;
         $provider = (string) ($data['provider'] ?? config('neuronai-studio.default_provider', 'openai'));
         $model = (string) ($data['model'] ?? config('neuronai-studio.default_model', 'gpt-4o-mini'));
         $instructions = var_export((string) ($data['instructions'] ?? ''), true);
-        $providerExpr = $context->providerExpression($provider, $model);
+        $toolsExport = var_export($data['tools'] ?? [], true);
+        $threadKey = 'is_string($state->get(\'__studio_thread_id\')) ? $state->get(\'__studio_thread_id\') : null';
 
         if ($structured) {
             $body = <<<PHP
@@ -95,7 +96,8 @@ PHP;
             'provider' => {$this->exportConfigValue($provider)},
             'model' => {$this->exportConfigValue($model)},
             'instructions' => {$instructions},
-        ], \$userMessage, {$shortClass}::class);
+            'tools' => {$toolsExport},
+        ], \$userMessage, {$shortClass}::class, null, {$threadKey});
 
         \$state->set({$outputKey}, \$response->structured);
 
@@ -112,31 +114,30 @@ PHP;
             ];
         }
 
-        $requireApproval = (bool) ($data['require_tool_approval'] ?? false);
-        $approvalSetup = $requireApproval
-            ? "\n        \$agent->addGlobalMiddleware(new ToolApproval());\n"
-            : '';
-
+        $approvalLine = $this->approvalConfigLine($data, hasDefinition: false);
+        $toolControlLine = $this->toolControlConfigLine($data, hasDefinition: false);
+        $memoryLine = $this->memoryConfigLine($data, hasDefinition: false);
         $body = <<<PHP
         {$messageSetup}
 
-        \$agent = Agent::make()
-            ->setProvider({$providerExpr})
-            ->addSystemTip({$instructions});
-{$approvalSetup}
-        \$response = \$agent->chat(\$userMessage);
-        \$state->set({$outputKey}, \$response->getContent());
+        \$response = app(AgentRunner::class)->runInline([
+            'provider' => {$this->exportConfigValue($provider)},
+            'model' => {$this->exportConfigValue($model)},
+            'instructions' => {$instructions},
+            'tools' => {$toolsExport},{$approvalLine}{$toolControlLine}{$memoryLine}
+        ], \$userMessage, null, {$threadKey});
+
+        \$state->set({$outputKey}, \$response->content);
 
         {$return}
 PHP;
 
         return [
             'body' => $body,
-            'imports' => array_values(array_filter([
-                'NeuronAI\\Agent',
+            'imports' => [
+                'DigitalElvis\\NeuronAIStudio\\Runtime\\AgentRunner',
                 'DigitalElvis\\NeuronAIStudio\\Runtime\\MessageFactory',
-                $requireApproval ? 'NeuronAI\\Agent\\Middleware\\ToolApproval' : null,
-            ])),
+            ],
         ];
     }
 

@@ -1,4 +1,5 @@
 import { Button } from '@/components/ui/button';
+import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,6 +15,7 @@ import StructuredOutputFields from './shared/StructuredOutputFields';
 import StreamToggleField from './shared/StreamToggleField';
 import RagFields from './shared/RagFields';
 import { Checkbox } from '@/components/ui/checkbox';
+import { resolveAgentConfigMode } from './nodeUtils';
 
 export default function NodeConfigForm({
     node,
@@ -70,34 +72,111 @@ export default function NodeConfigForm({
                 <>
                     {showControls && (
                         <>
-                            <div className="space-y-2">
-                                <Label>Agent</Label>
-                                <Select
-                                    value={data.agent_id ? String(data.agent_id) : ''}
-                                    onValueChange={(value) => updateField('agent_id', value)}
+                            <div className="grid grid-cols-2 gap-0.5 rounded-md border border-border p-0.5">
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant={resolveAgentConfigMode(data) === 'existing' ? 'default' : 'ghost'}
+                                    className="h-7 px-2 text-[11px]"
                                     disabled={readOnly}
+                                    onClick={() =>
+                                        onUpdate?.({
+                                            ...data,
+                                            config_mode: 'existing',
+                                            provider: undefined,
+                                            model: undefined,
+                                            instructions: undefined,
+                                        })
+                                    }
                                 >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Select agent" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {agents.map((agent) => (
-                                            <SelectItem key={agent.id} value={String(agent.id)}>
-                                                {agent.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </div>
-                            <div className="space-y-2">
-                                <Label>Message override</Label>
-                                <Input
-                                    value={data.message ?? ''}
-                                    onChange={(e) => updateField('message', e.target.value)}
-                                    placeholder="$input"
+                                    Use existing
+                                </Button>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant={resolveAgentConfigMode(data) === 'inline' ? 'default' : 'ghost'}
+                                    className="h-7 px-2 text-[11px]"
                                     disabled={readOnly}
-                                />
+                                    onClick={() =>
+                                        onUpdate?.({
+                                            ...data,
+                                            config_mode: 'inline',
+                                            agent_id: undefined,
+                                            provider: data.provider || defaultProvider,
+                                            model: data.model || defaultModel,
+                                        })
+                                    }
+                                >
+                                    Configure on canvas
+                                </Button>
                             </div>
+
+                            {resolveAgentConfigMode(data) === 'existing' ? (
+                                <>
+                                    <div className="space-y-2">
+                                        <Label>Agent</Label>
+                                        <Combobox
+                                            options={agents.map((agent) => ({
+                                                value: String(agent.id),
+                                                label: agent.name,
+                                            }))}
+                                            value={data.agent_id ? String(data.agent_id) : ''}
+                                            onValueChange={(value) => updateField('agent_id', value)}
+                                            placeholder="Select agent"
+                                            searchPlaceholder="Search agents…"
+                                            disabled={readOnly}
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Message override</Label>
+                                        <Input
+                                            value={data.message ?? ''}
+                                            onChange={(e) => updateField('message', e.target.value)}
+                                            placeholder="{{input}}"
+                                            disabled={readOnly}
+                                        />
+                                    </div>
+                                </>
+                            ) : (
+                                <>
+                                    <ProviderModelFields
+                                        provider={data.provider}
+                                        model={data.model}
+                                        providers={providers}
+                                        providerModels={providerModels}
+                                        defaultProvider={defaultProvider}
+                                        defaultModel={defaultModel}
+                                        readOnly={readOnly}
+                                        onChange={(patch) => onUpdate?.({ ...data, ...patch })}
+                                    />
+                                    <div className="space-y-2">
+                                        <Label>Agent Instructions</Label>
+                                        <Textarea
+                                            rows={compact ? 3 : 5}
+                                            value={data.instructions ?? ''}
+                                            onChange={(e) => updateField('instructions', e.target.value)}
+                                            placeholder="You are a helpful assistant…"
+                                            disabled={readOnly}
+                                        />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label>Tools</Label>
+                                        <p className="ab-flow-agent-tools-hint">
+                                            Connect Tool or MCP nodes to the cyan tools handle.
+                                        </p>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>Input</Label>
+                                        <Input
+                                            value={data.message ?? ''}
+                                            onChange={(e) => updateField('message', e.target.value)}
+                                            placeholder="{{input}}"
+                                            disabled={readOnly}
+                                        />
+                                    </div>
+                                </>
+                            )}
+
                             <div className="space-y-2">
                                 <Label>Output Key</Label>
                                 <Input
@@ -110,6 +189,9 @@ export default function NodeConfigForm({
                                         State key where the agent response is stored.
                                     </p>
                                 )}
+                            </div>
+                            <div className="ab-flow-agent-response-row">
+                                <span>Response</span>
                             </div>
                             <StreamToggleField
                                 stream={Boolean(data.stream)}

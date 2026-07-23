@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useCanvasUi } from '../CanvasUiContext';
 import { categoryColor } from '../graph';
-import { normalizeNodeForEdit } from '../inspector/nodeUtils';
+import { normalizeNodeForEdit, resolveAgentConfigMode } from '../inspector/nodeUtils';
 import NodeConfigForm from '../inspector/NodeConfigForm';
 import { NodeTypeIcon } from './nodeIcons';
 
@@ -26,7 +26,7 @@ function forkBranches(config) {
         .filter((id) => typeof id === 'string' && id !== '');
 }
 
-function NodeHandles({ nodeType, config }) {
+function NodeHandles({ nodeType, config, expanded = false }) {
     if (nodeType === 'start') {
         return <Handle type="source" position={Position.Right} id="default" className="ab-flow-handle" />;
     }
@@ -107,6 +107,59 @@ function NodeHandles({ nodeType, config }) {
         );
     }
 
+    if (nodeType === 'agent') {
+        const mode = resolveAgentConfigMode(config || {});
+        const showTools = mode === 'inline';
+
+        if (!expanded) {
+            return (
+                <>
+                    <Handle type="target" position={Position.Left} id="default" className="ab-flow-handle" />
+                    {showTools && (
+                        <Handle
+                            type="target"
+                            position={Position.Left}
+                            id="tools"
+                            className="ab-flow-handle ab-flow-handle-tools"
+                            style={{ top: '62%' }}
+                        />
+                    )}
+                    <Handle type="source" position={Position.Right} id="default" className="ab-flow-handle" />
+                </>
+            );
+        }
+
+        // Align pins to field labels from the bottom (Output Key / Response / Stream / footer
+        // sit below Input; Tools sits just above Input in inline mode).
+        return (
+            <>
+                {showTools && (
+                    <Handle
+                        type="target"
+                        position={Position.Left}
+                        id="tools"
+                        className="ab-flow-handle ab-flow-handle-tools"
+                        style={{ top: 'calc(100% - 15.25rem)' }}
+                    />
+                )}
+                <Handle
+                    type="target"
+                    position={Position.Left}
+                    id="default"
+                    className="ab-flow-handle"
+                    style={{ top: 'calc(100% - 12rem)' }}
+                />
+                <Handle
+                    type="source"
+                    position={Position.Right}
+                    id="default"
+                    className="ab-flow-handle"
+                    style={{ top: 'calc(100% - 5.25rem)' }}
+                />
+            </>
+        );
+    }
+
     return (
         <>
             <Handle type="target" position={Position.Left} id="default" className="ab-flow-handle" />
@@ -139,9 +192,14 @@ export default function WorkflowNode({ id, data, selected }) {
     // Forms stay open by default; user can collapse via toolbar.
     const expanded = !collapsed && data.nodeType !== 'start' && data.nodeType !== 'stop';
 
+    const agentMode = data.nodeType === 'agent' ? resolveAgentConfigMode(data.config || {}) : null;
     const agentName =
-        data.nodeType === 'agent' && data.config?.agent_id
+        data.nodeType === 'agent' && agentMode === 'existing' && data.config?.agent_id
             ? agents.find((agent) => String(agent.id) === String(data.config.agent_id))?.name
+            : null;
+    const agentInlineMeta =
+        data.nodeType === 'agent' && agentMode === 'inline'
+            ? [data.config?.provider, data.config?.model].filter(Boolean).join(' / ') || null
             : null;
 
     const editNode = useMemo(
@@ -260,7 +318,7 @@ export default function WorkflowNode({ id, data, selected }) {
                 </NodeToolbar>
             )}
 
-            <NodeHandles nodeType={data.nodeType} config={data.config} />
+            <NodeHandles nodeType={data.nodeType} config={data.config} expanded={expanded} />
 
             <div className="ab-flow-node-accent" />
             <div className="ab-flow-node-header">
@@ -279,6 +337,12 @@ export default function WorkflowNode({ id, data, selected }) {
                         <div className="ab-flow-node-meta">{data.config.model}</div>
                     )}
                     {agentName && <div className="ab-flow-node-meta">{agentName}</div>}
+                    {agentInlineMeta && <div className="ab-flow-node-meta">{agentInlineMeta}</div>}
+                    {data.nodeType === 'agent' && agentMode === 'inline' && (
+                        <div className="ab-flow-node-handles-labels">
+                            <span className="ab-flow-handle-label ab-flow-handle-label-tools">tools</span>
+                        </div>
+                    )}
                     {data.nodeType === 'condition' && (
                         <div className="ab-flow-node-handles-labels">
                             <span className="ab-flow-handle-label ab-flow-handle-label-true">true</span>

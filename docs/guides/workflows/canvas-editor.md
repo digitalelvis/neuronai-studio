@@ -56,12 +56,18 @@ Before saving, `GraphValidator` checks:
 
 - Exactly one **Start** node
 - At least one **Stop** node
-- All nodes reachable from Start
+- A control-flow path from Start to Stop (edges with `targetHandle: tools` are ignored for reachability and cycles)
 - Valid edge connections (handle compatibility)
+- Agent nodes: `agent_id` in existing mode, or `provider` + `model` in inline mode
+- Tools binding edges: target must be an inline Agent; source must be Tool or MCP
 
 Sticky notes (`type: note`) are ignored by validation and runtime; they persist under `annotations`.
 
 Fix validation errors in the Logs drawer (Validation tab) before saving.
+
+## Agent tools on the canvas
+
+Inline Agent nodes expose a cyan **tools** handle. Connecting a Tool or MCP node to that handle attaches the tool as an agent binding (the model may call it during the Agent step). It does **not** run the Tool/MCP node as a separate sequential step unless that node is also on the Start→Stop control-flow path via `default` handles.
 
 ## JSON graph format
 

@@ -4,12 +4,25 @@ AI nodes invoke language models, agents, tools, and MCP connectors within a work
 
 ## Agent
 
-**Purpose:** Run a configured studio agent with a templated message.
+**Purpose:** Run an LLM agent step — either a saved studio agent or an inline agent configured on the canvas.
+
+### Configuration modes
+
+| Mode | `config_mode` | Behavior |
+|------|---------------|----------|
+| **Use existing** | `existing` | Load provider, model, instructions, and tools from `agent_id` (AgentDefinition) |
+| **Configure on canvas** | `inline` | Configure `provider`, `model`, and `instructions` on the node; attach tools via canvas edges |
+
+Legacy graphs without `config_mode` resolve to **existing** when `agent_id` is set, otherwise **inline**.
 
 | Config | Description |
 |--------|-------------|
-| `agent_id` | Database ID of the agent |
-| `message` | Prompt template with `{{state_key}}` placeholders |
+| `config_mode` | `existing` or `inline` |
+| `agent_id` | Database ID of the agent (required in existing mode) |
+| `provider` | LLM provider key (required in inline mode) |
+| `model` | Model ID (required in inline mode) |
+| `instructions` | System prompt (inline mode) |
+| `message` | User prompt / input template with `{{state_key}}` placeholders |
 | `output_key` | State key for the response (default: `agent_response`) |
 | `structured` | When `true`, validate and store typed output instead of plain text |
 | `output_class` | FQCN or short name of a PHP output class (required when `structured` is on) |
@@ -22,13 +35,32 @@ AI nodes invoke language models, agents, tools, and MCP connectors within a work
 | `budget_tool_results` | Optional token cap for Neuron tool-loop results on this visit |
 | `budget_state` | Optional per-field token cap for other interpolated state keys |
 
+### Handles
+
+| Handle | Side | Role |
+|--------|------|------|
+| `default` (target) | Left — Input | Control-flow input |
+| `tools` (target) | Left — Tools (inline only) | Binding pin: connect **Tool** or **MCP** nodes. These edges are **not** workflow steps — they become tool bindings at runtime |
+| `default` (source) | Right — Response | Control-flow output |
+
+```mermaid
+flowchart LR
+  Start -->|default| Agent
+  ToolNode -->|tools| Agent
+  McpNode -->|tools| Agent
+  Agent -->|default| Stop
+```
+
+In **existing** mode, tools come from the AgentDefinition bindings (and MCP pivot). The `tools` handle is hidden.
+
+In **inline** mode, connect Tool/MCP nodes to the cyan `tools` handle. The runtime resolves each source into a `{ ref }` binding (`tool_ref` or `mcp:{slug}`). Binding edges are excluded from cycle detection and next-step routing.
+
 Example message:
 
 ```
 Customer inquiry: {{input}}
 Previous context: {{rag_context}}
 ```
-
 ### Prompt assembly budgets
 
 When `budget_*` values are set on the agent or node, Studio truncates oversized prompt inputs before the model call:
