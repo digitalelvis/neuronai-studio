@@ -149,8 +149,7 @@ That installs **Protect main** and **Protect development lines** from `.github/r
 Validate install in a fresh Laravel app:
 
 ```bash
-composer require digitalelvis/neuronai-studio neuron-core/neuron-laravel
-php artisan neuron:install
+composer require digitalelvis/neuronai-studio neuron-core/neuron-ai
 php artisan neuronai-studio:install
 ```
 

@@ -1,6 +1,6 @@
 # NeuronAI Studio
 
-**NeuronAI Studio** is a visual AI agent builder for Laravel. Design agents, compose workflow graphs, test them in a browser-based studio, and export production-ready PHP classes powered by [Neuron AI](https://neuron-ai.dev).
+**NeuronAI Studio** is a visual AI agent builder for Laravel. Design agents, compose workflow graphs, test them in a browser-based studio, and export production-ready PHP classes powered by [Neuron AI](https://docs.neuron-ai.dev).
 
 Think of it as three layers working together:
 
@@ -14,7 +14,7 @@ Think of it as three layers working together:
 
 - PHP 8.2+
 - Laravel 11, 12, or 13
-- [neuron-core/neuron-laravel](https://github.com/neuron-core/neuron-laravel) ^1.0
+- [neuron-core/neuron-ai](https://docs.neuron-ai.dev/overview/getting-started)
 
 ## Architecture
 
@@ -77,8 +77,7 @@ The studio stores definitions in your database. At runtime, `AgentRunner` and `W
 ## Quick install
 
 ```bash
-composer require digitalelvis/neuronai-studio neuron-core/neuron-laravel
-php artisan neuron:install
+composer require digitalelvis/neuronai-studio neuron-core/neuron-ai
 php artisan neuronai-studio:install
 ```
 

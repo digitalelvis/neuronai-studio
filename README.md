@@ -2,7 +2,7 @@
 
 [![Documentation](https://img.shields.io/badge/docs-GitBook-blue)](https://YOUR_ORG.gitbook.io/neuronai-studio)
 
-Visual AI Agent Builder for Laravel powered by [Neuron AI](https://neuron-ai.dev).
+Visual AI Agent Builder for Laravel powered by [Neuron AI](https://docs.neuron-ai.dev).
 
 Create agents, design workflow graphs, run them at runtime for prototyping, and export production-ready PHP classes.
 
@@ -23,13 +23,12 @@ Quick links:
 
 - PHP 8.2+
 - Laravel 11, 12, or 13
-- [neuron-core/neuron-laravel](https://github.com/neuron-core/neuron-laravel) ^1.0
+- [neuron-core/neuron-ai](https://docs.neuron-ai.dev/overview/getting-started)
 
 ## Quick install
 
 ```bash
-composer require digitalelvis/neuronai-studio neuron-core/neuron-laravel
-php artisan neuron:install
+composer require digitalelvis/neuronai-studio neuron-core/neuron-ai
 php artisan neuronai-studio:install
 ```
 

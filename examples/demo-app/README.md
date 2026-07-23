@@ -41,7 +41,7 @@ Add to your Laravel app's `composer.json`:
     ],
     "require": {
         "digitalelvis/neuronai-studio": "@dev",
-        "neuron-core/neuron-laravel": "^1.0"
+        "neuron-core/neuron-ai": "^3.15"
     }
 }
 ```
@@ -49,7 +49,7 @@ Add to your Laravel app's `composer.json`:
 Then run:
 
 ```bash
-composer require digitalelvis/neuronai-studio:@dev neuron-core/neuron-laravel
+composer require digitalelvis/neuronai-studio:@dev neuron-core/neuron-ai
 php artisan neuronai-studio:install
 php artisan vendor:publish --tag=neuronai-studio-assets
 ```
