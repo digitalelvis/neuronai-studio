@@ -1,5 +1,33 @@
 # Changelog
 
+# [1.0.0](https://github.com/digitalelvis/neuronai-studio/compare/v0.10.0...v1.0.0) (2026-07-25)
+
+
+* refactor(deps)!: require neuron-core/neuron-ai instead of neuron-laravel ([80d4880](https://github.com/digitalelvis/neuronai-studio/commit/80d4880804152791dff658fa7e3f3ae06fb60b62))
+
+
+### Bug Fixes
+
+* **canvas:** widen Share panels and register stream-adapters ([9bee8a1](https://github.com/digitalelvis/neuronai-studio/commit/9bee8a12dced8389980e77355cf0034701d8ea47))
+* **codegen:** align exporter tests with agent validation and approval ([efe3ef2](https://github.com/digitalelvis/neuronai-studio/commit/efe3ef2618b5140566bb1915ddd5d2dde1518f56))
+
+
+### Features
+
+* **canvas:** bind tools to agents via edges and inline agent config ([e5940e9](https://github.com/digitalelvis/neuronai-studio/commit/e5940e9981ed4c5cece0a4f362a75fad7b74dad3))
+* **canvas:** redesign workflow studio with Langflow-level UX ([6e1187c](https://github.com/digitalelvis/neuronai-studio/commit/6e1187c6920c64acf233e5d74944a2e9350994a1))
+* **codegen:** gate export and preview behind local-only flags ([df34f2b](https://github.com/digitalelvis/neuronai-studio/commit/df34f2b5f93c61eca133d5e4b2bafa10543725d1))
+* **playground:** add Langflow-like shell with sessions and traces ([0b1dd71](https://github.com/digitalelvis/neuronai-studio/commit/0b1dd7185ab55b836c6972b1e53d134556adefc9))
+* **rag:** expand Neuron vector stores and harden knowledge bases ([cb3a829](https://github.com/digitalelvis/neuronai-studio/commit/cb3a82975cd8f5ef460a46e80225284b41b8f38c))
+* **tools:** gate builder tools and fail closed without class_path ([eb9566d](https://github.com/digitalelvis/neuronai-studio/commit/eb9566d5c8d7cec35a5a829200686b46912122b3))
+
+
+### BREAKING CHANGES
+
+* neuron-core/neuron-laravel is no longer a package
+dependency. Host apps should use neuron-core/neuron-ai and config/neuron.php
+published by neuronai-studio:install.
+
 # [0.10.0](https://github.com/digitalelvis/neuronai-studio/compare/v0.9.0...v0.10.0) (2026-07-22)
 
 
