@@ -91,6 +91,11 @@ class GraphContext
                 $bindings[] = [
                     'ref' => "node:{$sourceId}",
                     'exposure' => $exposure,
+                    'node' => [
+                        'id' => $sourceId,
+                        'type' => $type,
+                        'data' => $data,
+                    ],
                 ];
 
                 continue;

@@ -71,11 +71,11 @@ CTM-T8, CTM-T9 → CTM-T10
 **Where**: `WorkflowNode.jsx`, `WorkflowCanvas.jsx`, `graph.js`, `nodeUtils.js`, inspector as needed  
 **Done when**:
 
-- [ ] Toggle changes UI/handles
-- [ ] Illegal connections blocked in `isValidConnection`
+- [x] Toggle changes UI/handles
+- [x] Illegal connections blocked in `isValidConnection`
 
 **Tests**: none required (JS); manual checklist in SUMMARY  
-**Status**: Pending
+**Status**: Done
 
 ---
 
@@ -85,11 +85,11 @@ CTM-T8, CTM-T9 → CTM-T10
 **Where**: new `ToolExposureModal.jsx` (or equivalent), wire from Actions  
 **Done when**:
 
-- [ ] Values round-trip in graph JSON
-- [ ] Empty slug gets default on blur/save
+- [x] Values round-trip in graph JSON
+- [x] Empty slug gets default on blur/save
 
 **Tests**: none required  
-**Status**: Pending
+**Status**: Done
 
 ---
 
@@ -99,11 +99,11 @@ CTM-T8, CTM-T9 → CTM-T10
 **Where**: `src/Runtime/Tools/NodeAsTool.php` (or `AgentAsTool.php`), `ToolResolver.php`  
 **Done when**:
 
-- [ ] `__invoke` returns specialist content string
-- [ ] Fake provider test covers happy path + error string
+- [x] `__invoke` returns specialist content string
+- [x] Fake provider test covers happy path + error string
 
 **Tests**: unit `NodeAsToolTest` / resolver test  
-**Status**: Pending
+**Status**: Done
 
 ---
 

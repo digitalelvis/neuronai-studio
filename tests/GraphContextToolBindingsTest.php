@@ -120,6 +120,23 @@ class GraphContextToolBindingsTest extends TestCase
                             ],
                         ],
                     ],
+                    'node' => [
+                        'id' => 'specialist_1',
+                        'type' => 'agent',
+                        'data' => [
+                            'tool_mode' => true,
+                            'tool_exposure' => [
+                                'slug' => 'research_agent',
+                                'description' => 'Research specialist',
+                                'parameters' => [
+                                    'input' => [
+                                        'controlled_by' => 'caller',
+                                        'description' => 'Task for the specialist',
+                                    ],
+                                ],
+                            ],
+                        ],
+                    ],
                 ],
                 ['ref' => 'toolkit:calculator'],
             ],

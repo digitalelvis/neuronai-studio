@@ -199,7 +199,12 @@ class AgentRunner
             'message' => $message instanceof UserMessage ? $message->getContent() : $message
         ], $parentRun);
 
-        $agent = $this->makeAgent($definition, $config, $threadKey ?? $run->thread_id, $fake);
+        $agent = $this->makeAgent(
+            $definition,
+            $this->withToolParentRun($config, $run),
+            $threadKey ?? $run->thread_id,
+            $fake,
+        );
         $agent->setPersistence(new InMemoryPersistence, $run->id);
 
         $this->attachObservability($agent, $run, $trace, $config, $parentRun);
@@ -253,7 +258,7 @@ class AgentRunner
             'message' => $message instanceof UserMessage ? $message->getContent() : $message
         ], $parentRun);
 
-        $agent = $this->makeAgent($definition, $config, $threadKey, $fake);
+        $agent = $this->makeAgent($definition, $this->withToolParentRun($config, $run), $threadKey, $fake);
         $agent->setPersistence(new InMemoryPersistence, $run->id);
 
         $this->attachObservability($agent, $run, $trace, $config, $parentRun);
@@ -474,7 +479,7 @@ class AgentRunner
             'message' => $message instanceof UserMessage ? $message->getContent() : $message
         ], $parentRun);
 
-        $agent = $this->makeAgent($definition, $config, $threadKey, $fake);
+        $agent = $this->makeAgent($definition, $this->withToolParentRun($config, $run), $threadKey, $fake);
         $agent->setPersistence(new InMemoryPersistence, $run->id);
 
         $this->attachObservability($agent, $run, $trace, $config, $parentRun);
@@ -763,6 +768,34 @@ class AgentRunner
         $this->applyToolControls($agent, $config, $definition);
 
         return $agent;
+    }
+
+    /**
+     * Stamp supervisor run id onto node: tool bindings so nested specialists nest metering.
+     *
+     * @param  array<string, mixed>  $config
+     * @return array<string, mixed>
+     */
+    protected function withToolParentRun(array $config, StudioRun $run): array
+    {
+        if (! isset($config['tools']) || ! is_array($config['tools'])) {
+            return $config;
+        }
+
+        $config['tools'] = array_map(static function ($binding) use ($run) {
+            if (! is_array($binding)) {
+                return $binding;
+            }
+
+            $ref = (string) ($binding['ref'] ?? '');
+            if (str_starts_with($ref, 'node:')) {
+                $binding['parent_run_id'] = $run->id;
+            }
+
+            return $binding;
+        }, $config['tools']);
+
+        return $config;
     }
 
     /**
