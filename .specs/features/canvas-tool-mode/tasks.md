@@ -43,11 +43,11 @@ CTM-T8, CTM-T9 → CTM-T10
 **Where**: `src/Runtime/GraphValidator.php`  
 **Done when**:
 
-- [ ] Invalid graphs produce clear errors
-- [ ] Valid supervisor+specialist graph passes
+- [x] Invalid graphs produce clear errors
+- [x] Valid supervisor+specialist graph passes
 
 **Tests**: `GraphValidatorTest` cases  
-**Status**: Pending
+**Status**: Done
 
 ---
 

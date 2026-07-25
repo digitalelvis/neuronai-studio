@@ -141,7 +141,7 @@ Langflow-like **Tool Mode**: nodes `toolable` flip between Step and Tool; v1 = A
 
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
-| 28 | `canvas-tool-mode` | **in progress** (CTM-T1 ✅ · T2–T10) | [spec](../features/canvas-tool-mode/spec.md) |
+| 28 | `canvas-tool-mode` | **in progress** (CTM-T1–T2 ✅ · T3–T10) | [spec](../features/canvas-tool-mode/spec.md) |
 
 **Critério de conclusão M10:** Demo start→supervisor←toolset←specialist(Tool Mode)→stop; runtime tool-call; codegen snapshot; docs + template.
 
@@ -169,7 +169,7 @@ Langflow-like **Tool Mode**: nodes `toolable` flip between Step and Tool; v1 = A
 16. ~~Merge M9 `feat/knowledge-base-rag` → `v0.10.x` → `main`~~ ✅ (PR #47 / #48)
 17. ~~Release `v1.0.0` (M9 + breaking neuron-ai; conventional major)~~ ✅
 18. ~~Abrir `v1.0.x` (patch) + `v1.1.x` (M10) + back-merge `main` → `v0.10.x` (AD-025)~~ ✅
-19. Execute `canvas-tool-mode` (CTM-T1 ✅ · T2–T10) on `feat/canvas-tool-mode` → `v1.1.x` — [spec](../features/canvas-tool-mode/spec.md) · [tasks](../features/canvas-tool-mode/tasks.md)
+19. Execute `canvas-tool-mode` (CTM-T1–T2 ✅ · T3–T10) on `feat/canvas-tool-mode` → `v1.1.x` — [spec](../features/canvas-tool-mode/spec.md) · [tasks](../features/canvas-tool-mode/tasks.md)
 
 ---
 
