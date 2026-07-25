@@ -36,14 +36,19 @@ class AgentNodeExecutorTest extends TestCase
         ]);
     }
 
-    protected function makeExecutor(FakeAIProvider $fakeProvider): AgentNodeExecutor
+    protected function makeExecutor(FakeAIProvider $fakeProvider, ?ToolResolver $toolResolver = null): AgentNodeExecutor
     {
         $registry = $this->createMock(ProviderRegistry::class);
         $registry->method('resolve')->willReturn($fakeProvider);
 
+        $resolver = $toolResolver ?? $this->createMock(ToolResolver::class);
+        if ($toolResolver === null) {
+            $resolver->method('resolveMany')->willReturn([]);
+        }
+
         $runner = new AgentRunner(
             $registry,
-            $this->createMock(ToolResolver::class),
+            $resolver,
             $this->createMock(McpToolResolver::class),
             new ToolEventExtractor,
             new MessageFactory,
@@ -228,5 +233,171 @@ class AgentNodeExecutorTest extends TestCase
         $this->assertGreaterThan(0, $parent->total_tokens);
         $this->assertSame(1500, $parent->total_tokens);
         $this->assertSame('0.000450', $parent->estimated_cost);
+    }
+
+    public function test_existing_supervisor_merges_definition_tools_with_canvas_bindings(): void
+    {
+        $agent = AgentDefinition::create([
+            'name' => 'Supervisor',
+            'slug' => 'supervisor-existing-tools',
+            'provider' => 'openai',
+            'model' => 'gpt-4o-mini',
+            'instructions' => 'You coordinate specialists.',
+            'tools' => [
+                ['ref' => 'toolkit:calculator'],
+            ],
+        ]);
+
+        $captured = null;
+        $toolResolver = $this->createMock(ToolResolver::class);
+        $toolResolver->method('resolveMany')->willReturnCallback(function (array $bindings) use (&$captured) {
+            $captured = $bindings;
+
+            return [];
+        });
+
+        $fakeProvider = new FakeAIProvider(new AssistantMessage('ok'));
+        $executor = $this->makeExecutor($fakeProvider, $toolResolver);
+
+        $context = new GraphContext(
+            [
+                [
+                    'id' => 'supervisor_1',
+                    'type' => 'agent',
+                    'data' => [
+                        'config_mode' => 'existing',
+                        'agent_id' => $agent->id,
+                    ],
+                ],
+                [
+                    'id' => 'specialist_1',
+                    'type' => 'agent',
+                    'data' => [
+                        'config_mode' => 'inline',
+                        'provider' => 'openai',
+                        'model' => 'gpt-4o-mini',
+                        'tool_mode' => true,
+                        'tool_exposure' => [
+                            'slug' => 'research_agent',
+                            'description' => 'Research specialist',
+                        ],
+                    ],
+                ],
+                [
+                    'id' => 'tool_1',
+                    'type' => 'tool',
+                    'data' => ['tool_ref' => 'toolkit:calendar'],
+                ],
+            ],
+            [
+                [
+                    'source' => 'specialist_1',
+                    'target' => 'supervisor_1',
+                    'sourceHandle' => 'toolset',
+                    'targetHandle' => 'tools',
+                ],
+                [
+                    'source' => 'tool_1',
+                    'target' => 'supervisor_1',
+                    'sourceHandle' => 'default',
+                    'targetHandle' => 'tools',
+                ],
+            ],
+        );
+
+        $state = new BuilderWorkflowState($context, null, ['input' => 'Coordinate']);
+
+        $executor->execute([
+            'id' => 'supervisor_1',
+            'data' => [
+                'config_mode' => 'existing',
+                'agent_id' => $agent->id,
+                'output_key' => 'agent_response',
+            ],
+        ], $state, $context);
+
+        $this->assertIsArray($captured);
+        $this->assertSame('toolkit:calculator', $captured[0]['ref'] ?? null);
+        $this->assertSame('node:specialist_1', $captured[1]['ref'] ?? null);
+        $this->assertSame('toolkit:calendar', $captured[2]['ref'] ?? null);
+    }
+
+    public function test_inline_supervisor_receives_canvas_tool_and_toolset_bindings(): void
+    {
+        $captured = null;
+        $toolResolver = $this->createMock(ToolResolver::class);
+        $toolResolver->method('resolveMany')->willReturnCallback(function (array $bindings) use (&$captured) {
+            $captured = $bindings;
+
+            return [];
+        });
+
+        $fakeProvider = new FakeAIProvider(new AssistantMessage('ok'));
+        $executor = $this->makeExecutor($fakeProvider, $toolResolver);
+
+        $context = new GraphContext(
+            [
+                [
+                    'id' => 'supervisor_1',
+                    'type' => 'agent',
+                    'data' => [
+                        'config_mode' => 'inline',
+                        'provider' => 'openai',
+                        'model' => 'gpt-4o-mini',
+                        'instructions' => 'You coordinate.',
+                    ],
+                ],
+                [
+                    'id' => 'specialist_1',
+                    'type' => 'agent',
+                    'data' => [
+                        'config_mode' => 'inline',
+                        'provider' => 'openai',
+                        'model' => 'gpt-4o-mini',
+                        'tool_mode' => true,
+                        'tool_exposure' => [
+                            'slug' => 'research_agent',
+                            'description' => 'Research specialist',
+                        ],
+                    ],
+                ],
+                [
+                    'id' => 'tool_1',
+                    'type' => 'tool',
+                    'data' => ['tool_ref' => 'toolkit:calculator'],
+                ],
+            ],
+            [
+                [
+                    'source' => 'specialist_1',
+                    'target' => 'supervisor_1',
+                    'sourceHandle' => 'toolset',
+                    'targetHandle' => 'tools',
+                ],
+                [
+                    'source' => 'tool_1',
+                    'target' => 'supervisor_1',
+                    'sourceHandle' => 'default',
+                    'targetHandle' => 'tools',
+                ],
+            ],
+        );
+
+        $state = new BuilderWorkflowState($context, null, ['input' => 'Coordinate']);
+
+        $executor->execute([
+            'id' => 'supervisor_1',
+            'data' => [
+                'config_mode' => 'inline',
+                'provider' => 'openai',
+                'model' => 'gpt-4o-mini',
+                'instructions' => 'You coordinate.',
+                'output_key' => 'agent_response',
+            ],
+        ], $state, $context);
+
+        $this->assertIsArray($captured);
+        $refs = array_column($captured, 'ref');
+        $this->assertSame(['node:specialist_1', 'toolkit:calculator'], $refs);
     }
 }

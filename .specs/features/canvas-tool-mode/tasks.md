@@ -113,11 +113,11 @@ CTM-T8, CTM-T9 → CTM-T10
 **Where**: `AgentNodeExecutor.php`  
 **Done when**:
 
-- [ ] Existing supervisor with toolset edge runs NodeAsTool
-- [ ] Inline supervisor still gets tool/mcp + toolset
+- [x] Existing supervisor with toolset edge runs NodeAsTool
+- [x] Inline supervisor still gets tool/mcp + toolset
 
 **Tests**: feature `AgentNodeExecutor` / workflow interpreted test  
-**Status**: Pending
+**Status**: Done
 
 ---
 

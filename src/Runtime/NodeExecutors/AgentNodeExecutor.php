@@ -325,9 +325,9 @@ class AgentNodeExecutor implements NodeExecutorInterface
         string $nodeId,
         array $extra = [],
     ): array {
-        $tools = $definition !== null
-            ? ($definition->tools ?? [])
-            : $context->toolBindingsFor($nodeId);
+        $canvasBindings = $context->toolBindingsFor($nodeId);
+        $definitionTools = $definition !== null && is_array($definition->tools) ? $definition->tools : [];
+        $tools = array_values(array_merge($definitionTools, $canvasBindings));
 
         if ($definition !== null) {
             return [
