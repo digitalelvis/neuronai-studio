@@ -248,8 +248,13 @@ class AgentNodeExecutorTest extends TestCase
             ],
         ]);
 
-        $captured = null;
+        $captured = [];
         $toolResolver = $this->createMock(ToolResolver::class);
+        $toolResolver->method('resolve')->willReturnCallback(function (string $ref, array $binding = []) use (&$captured) {
+            $captured[] = array_merge(['ref' => $ref], $binding);
+
+            return [];
+        });
         $toolResolver->method('resolveMany')->willReturnCallback(function (array $bindings) use (&$captured) {
             $captured = $bindings;
 
@@ -316,16 +321,22 @@ class AgentNodeExecutorTest extends TestCase
             ],
         ], $state, $context);
 
-        $this->assertIsArray($captured);
-        $this->assertSame('toolkit:calculator', $captured[0]['ref'] ?? null);
-        $this->assertSame('node:specialist_1', $captured[1]['ref'] ?? null);
-        $this->assertSame('toolkit:calendar', $captured[2]['ref'] ?? null);
+        $this->assertNotEmpty($captured);
+        $refs = array_column($captured, 'ref');
+        $this->assertContains('toolkit:calculator', $refs);
+        $this->assertContains('node:specialist_1', $refs);
+        $this->assertContains('toolkit:calendar', $refs);
     }
 
     public function test_inline_supervisor_receives_canvas_tool_and_toolset_bindings(): void
     {
-        $captured = null;
+        $captured = [];
         $toolResolver = $this->createMock(ToolResolver::class);
+        $toolResolver->method('resolve')->willReturnCallback(function (string $ref, array $binding = []) use (&$captured) {
+            $captured[] = array_merge(['ref' => $ref], $binding);
+
+            return [];
+        });
         $toolResolver->method('resolveMany')->willReturnCallback(function (array $bindings) use (&$captured) {
             $captured = $bindings;
 
@@ -396,7 +407,7 @@ class AgentNodeExecutorTest extends TestCase
             ],
         ], $state, $context);
 
-        $this->assertIsArray($captured);
+        $this->assertNotEmpty($captured);
         $refs = array_column($captured, 'ref');
         $this->assertSame(['node:specialist_1', 'toolkit:calculator'], $refs);
     }

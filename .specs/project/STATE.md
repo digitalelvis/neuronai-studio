@@ -4,7 +4,7 @@
 **Development line (features):** `v1.1.x` (M10)
 **Patch line:** `v1.0.x`
 **Latest published:** `v1.0.0` on Packagist / `main`
-**Current Work:** M10 `canvas-tool-mode` Execute on `feat/canvas-tool-mode` → `v1.1.x` (AD-025). CTM-T1–T7 done. Next: CTM-T8 (+ T9 [P]). TraceDetail bridge + OBS-06/OTel stay deferred.
+**Current Work:** M10 `canvas-tool-mode` Execute on `feat/canvas-tool-mode` → `v1.1.x` (AD-025). CTM-T1–T8 done. Next: CTM-T9 [P] docs + CTM-T10 template. TraceDetail bridge + OBS-06/OTel stay deferred.
 
 ---
 

@@ -127,11 +127,11 @@ CTM-T8, CTM-T9 → CTM-T10
 **Where**: `GraphTranspiler.php`, `AgentNodeCodeGenerator.php`, exporter  
 **Done when**:
 
-- [ ] Export has no specialist linear node
-- [ ] Generated PHP constructs equivalent Tool
+- [x] Export has no specialist linear node
+- [x] Generated PHP constructs equivalent Tool
 
 **Tests**: codegen unit/feature if pattern exists  
-**Status**: Pending
+**Status**: Done
 
 ---
 

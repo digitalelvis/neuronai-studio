@@ -28,6 +28,9 @@ use NeuronAI\Chat\Messages\UserMessage;
 use NeuronAI\Exceptions\AgentException;
 use NeuronAI\Exceptions\ProviderException;
 use NeuronAI\Testing\FakeAIProvider;
+use NeuronAI\Tools\ProviderToolInterface;
+use NeuronAI\Tools\ToolInterface;
+use NeuronAI\Tools\Toolkits\ToolkitInterface;
 use NeuronAI\Workflow\Interrupt\ApprovalRequest;
 use NeuronAI\Workflow\Interrupt\WorkflowInterrupt;
 use NeuronAI\Workflow\Persistence\InMemoryPersistence;
@@ -747,7 +750,22 @@ class AgentRunner
             );
         }
 
-        $tools = $this->toolResolver->resolveMany($config['tools'] ?? []);
+        $tools = [];
+        foreach ($config['tools'] ?? [] as $item) {
+            if ($item instanceof ToolInterface || $item instanceof ToolkitInterface || $item instanceof ProviderToolInterface) {
+                $tools[] = $item;
+
+                continue;
+            }
+
+            if (! is_array($item) || empty($item['ref'])) {
+                continue;
+            }
+
+            foreach ($this->toolResolver->resolve((string) $item['ref'], $item) as $resolved) {
+                $tools[] = $resolved;
+            }
+        }
         $memory = $this->resolveMemoryConfig($definition, $config);
 
         $agent = new DynamicAgent(
