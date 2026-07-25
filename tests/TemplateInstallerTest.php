@@ -53,6 +53,27 @@ class TemplateInstallerTest extends TestCase
         $this->assertArrayNotHasKey('agent_ref', $agentNode['data'] ?? []);
     }
 
+    public function test_install_supervisor_specialist_tool_mode_is_valid(): void
+    {
+        $workflow = app(TemplateInstaller::class)->installWorkflow('supervisor-specialist-tool-mode');
+
+        $result = app(GraphValidator::class)->validate($workflow->graph);
+        $this->assertTrue($result['valid'], implode(' ', $result['errors']));
+
+        $nodes = collect($workflow->graph['nodes'] ?? []);
+        $specialist = $nodes->first(
+            fn (array $node) => ($node['type'] ?? '') === 'agent' && ($node['data']['tool_mode'] ?? false) === true,
+        );
+        $this->assertNotNull($specialist);
+        $this->assertSame('research_agent', $specialist['data']['tool_exposure']['slug'] ?? null);
+
+        $edges = collect($workflow->graph['edges'] ?? []);
+        $toolset = $edges->first(
+            fn (array $edge) => ($edge['sourceHandle'] ?? '') === 'toolset' && ($edge['targetHandle'] ?? '') === 'tools',
+        );
+        $this->assertNotNull($toolset);
+    }
+
     public function test_installed_workflow_graph_is_valid(): void
     {
         $workflow = app(TemplateInstaller::class)->installWorkflow('support-rag-hitl');

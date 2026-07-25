@@ -67,7 +67,17 @@ Fix validation errors in the Logs drawer (Validation tab) before saving.
 
 ## Agent tools on the canvas
 
-Inline Agent nodes expose a cyan **tools** handle. Connecting a Tool or MCP node to that handle attaches the tool as an agent binding (the model may call it during the Agent step). It does **not** run the Tool/MCP node as a separate sequential step unless that node is also on the Start→Stop control-flow path via `default` handles.
+Agent nodes expose a cyan **tools** handle in both inline and existing modes. Connecting a Tool or MCP node to that handle attaches the tool as an agent binding (the model may call it during the Agent step). It does **not** run the Tool/MCP node as a sequential step unless that node is also on the Start→Stop path via `default` handles.
+
+### Tool Mode / Toolset
+
+Enable **Tool Mode** on a toolable Agent to turn it into a specialist. The node shows an amber **toolset** source handle instead of control-flow Response. Wire:
+
+```text
+specialist (toolset) → supervisor (tools)
+```
+
+Control-flow stays `Start → supervisor → Stop`. The specialist is invoked only when the supervisor’s model calls the Actions slug. See [AI nodes → Tool Mode](node-types/ai-nodes.md#tool-mode-agent-as-tool).
 
 ## JSON graph format
 

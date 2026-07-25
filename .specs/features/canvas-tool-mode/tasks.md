@@ -3,7 +3,7 @@
 **Spec**: [spec.md](./spec.md)  
 **Design**: [design.md](./design.md)  
 **Context**: [context.md](./context.md)  
-**Status**: Execute in progress  
+**Status**: Execute complete — ready for UAT / PR  
 **Linha**: `v1.1.x` · **AD-025** · branch `feat/canvas-tool-mode`
 
 ---
@@ -141,10 +141,10 @@ CTM-T8, CTM-T9 → CTM-T10
 **Where**: `docs/guides/workflows/node-types/ai-nodes.md`, `canvas-editor.md`, `docs/extending/custom-node-types.md`  
 **Done when**:
 
-- [ ] Sections live with mermaid for toolset→tools
+- [x] Sections live with mermaid for toolset→tools
 
 **Tests**: none  
-**Status**: Pending
+**Status**: Done
 
 ---
 
@@ -154,10 +154,10 @@ CTM-T8, CTM-T9 → CTM-T10
 **Where**: templates registry / JSON under package templates  
 **Done when**:
 
-- [ ] Template installs; harness run shows tool delegation (Fake or documented manual)
+- [x] Template installs; harness run shows tool delegation (Fake or documented manual)
 
 **Tests**: template install smoke if existing  
-**Status**: Pending
+**Status**: Done
 
 ---
 
