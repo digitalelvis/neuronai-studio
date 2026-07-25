@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import CodeViewer from '@/components/code/CodeViewer';
 import { exportWorkflowWithLivewire, previewWorkflowCodeWithLivewire } from './workflowCode';
 
-export default function WorkflowCodePanel({ readOnly = false }) {
+export default function WorkflowCodePanel({ readOnly = false, canExport = true, canPreview = true }) {
     const [code, setCode] = useState('');
     const [classLabel, setClassLabel] = useState('');
     const [fileCount, setFileCount] = useState(0);
@@ -14,6 +14,10 @@ export default function WorkflowCodePanel({ readOnly = false }) {
     const requestIdRef = useRef(0);
 
     const refreshFromCanvas = useCallback(async () => {
+        if (!canPreview) {
+            return;
+        }
+
         const requestId = ++requestIdRef.current;
         setLoading(true);
         setError('');
@@ -34,9 +38,13 @@ export default function WorkflowCodePanel({ readOnly = false }) {
         setCode(result.code ?? '');
         setClassLabel(`${result.namespace}\\${result.className}`);
         setFileCount(result.fileCount ?? 0);
-    }, []);
+    }, [canPreview]);
 
     useEffect(() => {
+        if (!canPreview) {
+            return undefined;
+        }
+
         refreshFromCanvas();
 
         const onRefresh = () => refreshFromCanvas();
@@ -50,7 +58,11 @@ export default function WorkflowCodePanel({ readOnly = false }) {
             window.removeEventListener('workflow-canvas-loaded', onRefresh);
             window.removeEventListener('workflow-meta-changed', onRefresh);
         };
-    }, [refreshFromCanvas]);
+    }, [canPreview, refreshFromCanvas]);
+
+    if (!canPreview) {
+        return null;
+    }
 
     const handleCopy = async () => {
         if (!code) {
@@ -94,7 +106,7 @@ export default function WorkflowCodePanel({ readOnly = false }) {
                 <Button type="button" variant="outline" size="sm" onClick={handleCopy} disabled={!code}>
                     {copied ? 'Copied' : 'Copy'}
                 </Button>
-                {!readOnly && (
+                {!readOnly && canExport && (
                     <Button type="button" size="sm" onClick={handleExport} disabled={exporting}>
                         {exporting ? 'Exporting…' : 'Export PHP'}
                     </Button>

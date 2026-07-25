@@ -69,20 +69,11 @@ Knowledge bases store embedded document chunks for retrieval in workflows and RA
 | `/neuronai-studio/knowledge-bases/create` | Create knowledge base |
 | `/neuronai-studio/knowledge-bases/{id}/edit` | Edit metadata, ingest documents, preview search |
 
-Each knowledge base configures:
+Full guide: [Knowledge Bases](../knowledge-bases/overview.md).
 
-- **Embeddings provider/model** — e.g. OpenAI `text-embedding-3-small`
-- **Vector store driver** — `file` (local disk) or `memory` (tests)
-- **Retrieval defaults** — `top_k`, similarity `threshold`
+Each knowledge base configures embeddings, a [vector store driver](../knowledge-bases/vector-stores.md), and retrieval defaults (`top_k`, `threshold`).
 
-Ingest PDFs or pasted text on the edit screen. Documents are chunked, embedded, and indexed for the **RAG** workflow node and the **RAG tool** type (`KnowledgeBaseTool`).
-
-Workflow integration:
-
-1. RAG node retrieves chunks → writes `rag_context` (or custom `output_key`)
-2. Agent node message template references `{{ rag_context.context }}`
-
-See [AI Nodes — RAG](../workflows/node-types/ai-nodes.md#rag) and [Configuration](../../reference/configuration.md#rag).
+Connect to agents via a **RAG tool** or a workflow **RAG node** — see [Agent binding](../knowledge-bases/agent-binding.md).
 
 ## Next steps
 

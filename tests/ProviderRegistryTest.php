@@ -27,7 +27,7 @@ class ProviderRegistryTest extends TestCase
         $this->assertSame('gemini-3.5-flash', $model);
     }
 
-    public function test_resolve_without_model_uses_manager_driver(): void
+    public function test_resolve_without_model_uses_config_default(): void
     {
         $provider = app(ProviderRegistry::class)->resolve('openai');
 

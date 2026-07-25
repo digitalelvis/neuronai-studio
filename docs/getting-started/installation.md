@@ -7,34 +7,29 @@ This guide walks through installing NeuronAI Studio in a Laravel application, fr
 - PHP 8.2 or higher
 - Laravel 11, 12, or 13
 - A database configured in your `.env`
-- API credentials for at least one LLM provider (configured via Neuron Laravel)
+- API credentials for at least one LLM provider (configured via Neuron AI)
 
 ## Step 1 — Install packages
 
 ```bash
-composer require digitalelvis/neuronai-studio neuron-core/neuron-laravel
+composer require digitalelvis/neuronai-studio neuron-core/neuron-ai
 ```
 
-NeuronAI Studio depends on [neuron-core/neuron-laravel](https://github.com/neuron-core/neuron-laravel) for LLM provider integration. Credentials live in `config/neuron.php` — the studio does not duplicate API key configuration.
+NeuronAI Studio depends on [neuron-core/neuron-ai](https://docs.neuron-ai.dev/overview/getting-started). Provider credentials live in `config/neuron.php` (published by the installer) — the studio does not duplicate API key configuration.
 
-## Step 2 — Install Neuron Laravel
-
-```bash
-php artisan neuron:install
-```
-
-Follow the Neuron Laravel prompts to publish config and set provider credentials in `.env` (for example `OPENAI_KEY`).
-
-## Step 3 — Install NeuronAI Studio
+## Step 2 — Install NeuronAI Studio
 
 ```bash
 php artisan neuronai-studio:install
 ```
 
-This command performs the following:
+This publishes `config/neuron.php` and `config/neuronai-studio.php`, migrations, and assets. Set provider credentials in `.env` (for example `OPENAI_KEY`).
+
+The install command also performs the following:
 
 | Step | Publish tag | Description |
 |------|-------------|-------------|
+| Provider config | `neuron-config` | Publishes `config/neuron.php` (API keys / providers) |
 | Config | `neuronai-studio-config` | Publishes `config/neuronai-studio.php` |
 | Migrations | `neuronai-studio-migrations` | Copies migration files (also auto-loaded from package) |
 | Assets | `neuronai-studio-assets` | Publishes pre-built JS/CSS to `public/vendor/neuronai-studio/` |
@@ -52,7 +47,7 @@ php artisan neuronai-studio:install --force
 php artisan neuronai-studio:install --with-views
 ```
 
-## Step 4 — Publish assets (if needed)
+## Step 3 — Publish assets (if needed)
 
 The install command publishes assets automatically. Re-run manually after package updates or when rebuilding frontend bundles:
 
@@ -60,7 +55,7 @@ The install command publishes assets automatically. Re-run manually after packag
 php artisan vendor:publish --tag=neuronai-studio-assets --force
 ```
 
-## Step 5 — Open the dashboard
+## Step 4 — Open the dashboard
 
 Visit `/{route_prefix}` — default:
 
@@ -104,12 +99,15 @@ See [Native tracing](../guides/observability/native-tracing.md), [Inspector](../
 | `NEURONAI_STUDIO_QUEUE_CONNECTION` | — | Optional queue connection override |
 | `NEURONAI_STUDIO_QUEUE_TRIES` | `1` | Max job attempts |
 | `NEURONAI_STUDIO_QUEUE_BACKOFF` | `30` | Retry delay in seconds |
+| `NEURONAI_STUDIO_ALLOW_BUILDER_TOOLS` | `APP_ENV === local` | Allow PHP Class Builder create/edit in Studio |
 | `NEURONAI_STUDIO_USAGE_EXPORT_ENABLED` | `true` | Host metering API (`GET …/usage`) |
 | `NEURONAI_STUDIO_USAGE_EVENTS_ENABLED` | `false` | Dispatch `RunUsageRecorded` on terminal runs |
 
 See [Configuration](../reference/configuration.md) for the full list. Auth for the usage export API is host-owned — set `usage.export.middleware` (e.g. `auth:sanctum`). See [Usage Export API](../guides/analytics/export-api.md).
 
 ### Async workflow runs (optional)
+
+The Studio test harness and agent playground stream over a long-lived HTTP+SSE connection. Under PHP-FPM / Nginx that can hit `max_execution_time` or proxy idle timeouts (**504**) on loops, MCP stdio, or multi-LLM graphs. For production workflow execution, prefer the queue path instead of relying on sync streams.
 
 To execute workflows outside the synchronous test harness SSE path, enable async runs and start a queue worker:
 
@@ -122,12 +120,13 @@ NEURONAI_STUDIO_QUEUE=default
 php artisan queue:work --queue=default
 ```
 
-Poll trace status at `GET /neuronai-studio/traces/{id}/json`. Details: [Runtime & Traces](../guides/workflows/runtime-and-traces.md#queue-runner).
+Poll trace status at `GET /neuronai-studio/traces/{id}/json`, or stream live progress at `GET /neuronai-studio/workflows/runs/{run}/events/stream`. Details: [Runtime & Traces](../guides/workflows/runtime-and-traces.md#queue-runner) and [Long-running runs under PHP-FPM](../guides/workflows/runtime-and-traces.md#long-running-runs-under-php-fpm).
 
 ## Publish tags reference
 
 | Tag | Destination |
 |-----|-------------|
+| `neuron-config` | `config/neuron.php` |
 | `neuronai-studio-config` | `config/neuronai-studio.php` |
 | `neuronai-studio-migrations` | `database/migrations/` |
 | `neuronai-studio-views` | `resources/views/vendor/neuronai-studio/` |

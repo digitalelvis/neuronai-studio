@@ -145,7 +145,7 @@ class GraphTranspiler
             $executableNodes[$id] = [
                 'id' => $id,
                 'type' => $type,
-                'data' => is_array($node['data'] ?? null) ? $node['data'] : [],
+                'data' => $this->nodeDataForPlan($id, $type, is_array($node['data'] ?? null) ? $node['data'] : [], $context),
                 'className' => $this->nodeClassName($id),
                 'inputEvent' => $inputEvent,
                 'returnType' => $returnType,
@@ -161,6 +161,32 @@ class GraphTranspiler
             'events' => array_values($events),
             'executionOrder' => $executionOrder,
         ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function nodeDataForPlan(string $id, string $type, array $data, GraphContext $context): array
+    {
+        if ($type !== 'agent') {
+            return $data;
+        }
+
+        $mode = (string) ($data['config_mode'] ?? '');
+        $isInline = $mode === 'inline'
+            || ($mode !== 'existing' && (! isset($data['agent_id']) || $data['agent_id'] === '' || $data['agent_id'] === null));
+
+        if (! $isInline) {
+            return $data;
+        }
+
+        $bindings = $context->toolBindingsFor($id);
+        if ($bindings !== []) {
+            $data['tools'] = $bindings;
+        }
+
+        return $data;
     }
 
     /**

@@ -125,7 +125,7 @@ Rotas registradas automaticamente no `NeuronAIStudioServiceProvider` quando `ena
 |---------|---------|
 | `workflow-token-streaming` | SA-14 — tokens em nós agent/llm durante workflow externo; endpoints funcionam sem ela (step boundaries only) |
 | `studio-test-harness` | Nenhuma alteração; harness continua no SSE interno |
-| neuron-ai `StreamAdapterInterface` | Dependência transitiva via `neuron-core/neuron-laravel` |
+| neuron-ai `StreamAdapterInterface` | Dependência `neuron-core/neuron-ai` |
 
 ## Acceptance Criteria
 

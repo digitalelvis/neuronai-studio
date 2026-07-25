@@ -6,6 +6,7 @@ Laravel publish tags for vendor assets, config, and migrations.
 
 | Tag | Destination | When to use |
 |-----|-------------|-------------|
+| `neuron-config` | `config/neuron.php` | Provider credentials (API keys, embeddings, stores) |
 | `neuronai-studio-config` | `config/neuronai-studio.php` | Customize studio configuration |
 | `neuronai-studio-migrations` | `database/migrations/` | Modify migrations (optional — auto-loaded from package) |
 | `neuronai-studio-views` | `resources/views/vendor/neuronai-studio/` | Override Blade templates |
@@ -16,6 +17,9 @@ Laravel publish tags for vendor assets, config, and migrations.
 ## Commands
 
 ```bash
+# Provider credentials
+php artisan vendor:publish --tag=neuron-config
+
 # Config
 php artisan vendor:publish --tag=neuronai-studio-config
 

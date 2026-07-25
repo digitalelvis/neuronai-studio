@@ -27,6 +27,9 @@ class Edit extends Component
 
     public string $vectorStoreDriver = '';
 
+    /** @var array<string, mixed> */
+    public array $vectorStoreConfig = [];
+
     public ?int $topK = null;
 
     public ?float $threshold = null;
@@ -58,6 +61,7 @@ class Edit extends Component
             $this->embeddingsProvider = $knowledgeBase->embeddingsProvider();
             $this->embeddingsModel = (string) $knowledgeBase->embeddings_model;
             $this->vectorStoreDriver = $knowledgeBase->vectorStoreDriver();
+            $this->vectorStoreConfig = (array) ($knowledgeBase->vector_store_config ?? []);
             $this->topK = isset($knowledgeBase->retrieval_defaults['top_k'])
                 ? (int) $knowledgeBase->retrieval_defaults['top_k']
                 : null;
@@ -67,11 +71,19 @@ class Edit extends Component
         } else {
             $this->embeddingsModel = $this->defaultModelForProvider($this->embeddingsProvider);
         }
+
+        $this->applyDriverFieldDefaults($this->vectorStoreDriver);
     }
 
     public function updatedEmbeddingsProvider(string $value): void
     {
         $this->embeddingsModel = $this->defaultModelForProvider($value);
+    }
+
+    public function updatedVectorStoreDriver(string $value): void
+    {
+        $this->vectorStoreConfig = [];
+        $this->applyDriverFieldDefaults($value);
     }
 
     protected function defaultModelForProvider(string $provider): string
@@ -82,6 +94,23 @@ class Edit extends Component
         );
     }
 
+    protected function applyDriverFieldDefaults(string $driver): void
+    {
+        $fields = (array) config("neuronai-studio.rag.vector_stores.{$driver}.fields", []);
+
+        foreach ($fields as $field) {
+            $key = (string) ($field['key'] ?? '');
+
+            if ($key === '' || array_key_exists($key, $this->vectorStoreConfig)) {
+                continue;
+            }
+
+            if (array_key_exists('default', $field)) {
+                $this->vectorStoreConfig[$key] = $field['default'];
+            }
+        }
+    }
+
     public function save(): void
     {
         $validated = $this->validate([
@@ -90,6 +119,7 @@ class Edit extends Component
             'embeddingsProvider' => 'required|string|max:255',
             'embeddingsModel' => 'nullable|string|max:255',
             'vectorStoreDriver' => 'required|string|max:255',
+            'vectorStoreConfig' => 'nullable|array',
             'topK' => 'nullable|integer|min:1|max:100',
             'threshold' => 'nullable|numeric|min:0|max:1',
         ]);
@@ -101,6 +131,7 @@ class Edit extends Component
             'embeddings_provider' => $validated['embeddingsProvider'],
             'embeddings_model' => $validated['embeddingsModel'] ?: null,
             'vector_store_driver' => $validated['vectorStoreDriver'],
+            'vector_store_config' => $this->normalizedVectorStoreConfig(),
             'retrieval_defaults' => $this->retrievalDefaults(),
             'source' => 'studio',
         ];
@@ -116,6 +147,28 @@ class Edit extends Component
         session()->flash('success', 'Knowledge base created.');
 
         $this->redirect(route('neuronai-studio.knowledge-bases.edit', $this->knowledgeBase));
+    }
+
+    /** @return array<string, mixed> */
+    protected function normalizedVectorStoreConfig(): array
+    {
+        $config = [];
+
+        foreach ($this->vectorStoreConfig as $key => $value) {
+            if ($value === null || $value === '') {
+                continue;
+            }
+
+            $config[(string) $key] = is_numeric($value) && ! is_string($value)
+                ? $value
+                : (is_string($value) && is_numeric($value) && ! str_contains($value, '.')
+                    ? (str_contains((string) $key, 'dimension') || $key === 'port' || $key === 'vector_dimension'
+                        ? (int) $value
+                        : $value)
+                    : $value);
+        }
+
+        return $config;
     }
 
     /** @return array<string, mixed> */
@@ -142,14 +195,19 @@ class Edit extends Component
             'upload' => 'required|file|max:20480',
         ]);
 
-        $ingest->ingestFile(
-            $this->knowledgeBase,
-            $this->upload->getRealPath(),
-            $this->upload->getClientOriginalName(),
-        );
+        if ($this->asyncIngest()) {
+            $ingest->queueUpload($this->knowledgeBase, $this->upload);
+            session()->flash('success', 'Document queued for ingest.');
+        } else {
+            $ingest->ingestFile(
+                $this->knowledgeBase,
+                $this->upload->getRealPath(),
+                $this->upload->getClientOriginalName(),
+            );
+            session()->flash('success', 'Document ingested.');
+        }
 
         $this->reset('upload');
-        session()->flash('success', 'Document ingested.');
     }
 
     public function ingestManualText(DocumentIngestService $ingest): void
@@ -161,25 +219,49 @@ class Edit extends Component
             'ingestTextName' => 'nullable|string|max:255',
         ]);
 
-        $ingest->ingestText(
-            $this->knowledgeBase,
-            $this->ingestText,
-            $this->ingestTextName !== '' ? $this->ingestTextName : 'text',
-        );
+        $name = $this->ingestTextName !== '' ? $this->ingestTextName : 'text';
+
+        if ($this->asyncIngest()) {
+            $ingest->queueText($this->knowledgeBase, $this->ingestText, $name);
+            session()->flash('success', 'Text queued for ingest.');
+        } else {
+            $ingest->ingestText($this->knowledgeBase, $this->ingestText, $name);
+            session()->flash('success', 'Text ingested.');
+        }
 
         $this->reset('ingestText', 'ingestTextName');
-        session()->flash('success', 'Text ingested.');
     }
 
-    public function deleteDocument(int $documentId): void
+    public function deleteDocument(int $documentId, DocumentIngestService $ingest): void
     {
         $this->requirePersisted();
 
-        $this->knowledgeBase->documents()
-            ->whereKey($documentId)
-            ->first()?->delete();
+        $document = $this->knowledgeBase->documents()->whereKey($documentId)->first();
+
+        if ($document !== null) {
+            $ingest->removeDocument($document);
+        }
 
         session()->flash('success', 'Document removed.');
+    }
+
+    public function reindexDocument(int $documentId, DocumentIngestService $ingest): void
+    {
+        $this->requirePersisted();
+
+        $document = $this->knowledgeBase->documents()->whereKey($documentId)->first();
+
+        if ($document === null) {
+            return;
+        }
+
+        if ($this->asyncIngest()) {
+            $ingest->queueReindex($document);
+            session()->flash('success', 'Document queued for reindex.');
+        } else {
+            $ingest->reindex($document);
+            session()->flash('success', 'Document reindexed.');
+        }
     }
 
     public function runSearch(RagRetrievalService $retrieval): void
@@ -208,6 +290,11 @@ class Edit extends Component
         }
     }
 
+    protected function asyncIngest(): bool
+    {
+        return (bool) config('neuronai-studio.rag.async_ingest', true);
+    }
+
     protected function requirePersisted(): void
     {
         if (! $this->knowledgeBase?->exists) {
@@ -221,11 +308,16 @@ class Edit extends Component
             ? $this->knowledgeBase->documents()->latest()->get()
             : collect();
 
+        $driverMeta = (array) config("neuronai-studio.rag.vector_stores.{$this->vectorStoreDriver}", []);
+
         return view('neuronai-studio::livewire.knowledge-bases.edit', [
             'documents' => $documents,
             'providers' => (array) config('neuronai-studio.rag.embeddings', []),
             'models' => (array) config("neuronai-studio.rag.embeddings.{$this->embeddingsProvider}.models", []),
             'vectorStores' => (array) config('neuronai-studio.rag.vector_stores', []),
+            'vectorStoreFields' => (array) ($driverMeta['fields'] ?? []),
+            'vectorStoreDescription' => (string) ($driverMeta['description'] ?? ''),
+            'toolsCreateUrl' => route('neuronai-studio.tools.create'),
             'statuses' => [
                 KnowledgeDocument::STATUS_PENDING,
                 KnowledgeDocument::STATUS_PROCESSING,

@@ -103,15 +103,14 @@ php artisan neuronai-studio:install-observability langfuse
 
 Does not write `.env` or secrets. See [Inspector](../guides/observability/inspector.md) and [Langfuse](../guides/observability/langfuse.md).
 
-## Related Neuron Laravel commands
+## Related Neuron AI commands
 
-NeuronAI Studio depends on Neuron Laravel:
+NeuronAI Studio depends on [neuron-core/neuron-ai](https://docs.neuron-ai.dev/overview/getting-started). Provider credentials are configured in `config/neuron.php` (published by `neuronai-studio:install`).
 
 ```bash
-php artisan neuron:install
+# Optional — re-publish provider config
+php artisan vendor:publish --tag=neuron-config
 ```
-
-Configure LLM provider credentials through Neuron Laravel's config.
 
 ## Queue worker (async workflow runs)
 

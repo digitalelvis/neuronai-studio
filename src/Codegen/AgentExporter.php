@@ -2,6 +2,7 @@
 
 namespace DigitalElvis\NeuronAIStudio\Codegen;
 
+use DigitalElvis\NeuronAIStudio\Codegen\NodeCodeGenerators\CodegenContext;
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
 use Illuminate\Support\Facades\File;
@@ -11,9 +12,25 @@ class AgentExporter
 {
     public function export(AgentDefinition $agent): array
     {
+        CodegenGuard::ensureExport();
+
         $namespace = config('neuronai-studio.export_namespace', 'App\\Neuron');
         $path = config('neuronai-studio.export_path', app_path('Neuron'));
         $className = Str::studly($agent->slug).'Agent';
+        $provider = (string) $agent->provider;
+        $model = (string) ($agent->model ?: config("neuron.provider.{$provider}.model", 'gpt-4o-mini'));
+        $context = new CodegenContext(new PhpArrayExporter);
+        $providerClass = $this->providerShortClass($provider);
+        $providerExpression = $this->simplifyProviderExpression(
+            $context->providerExpression($provider, $model)
+        );
+        // Prefer imported short class name in exported agent files.
+        $providerExpression = preg_replace(
+            '/\\\\NeuronAI\\\\Providers\\\\(?:[^\\\\]+\\\\)*'.preg_quote($providerClass, '/').'\b/',
+            $providerClass,
+            $providerExpression,
+            1
+        ) ?? $providerExpression;
 
         File::ensureDirectoryExists($path);
 
@@ -21,11 +38,20 @@ class AgentExporter
         $toolsMethod = $this->buildToolsMethod($agent);
 
         $content = str_replace(
-            ['{{ namespace }}', '{{ className }}', '{{ provider }}', '{{ instructions }}', '{{ toolsMethod }}', '{{ mcpUse }}'],
+            [
+                '{{ namespace }}',
+                '{{ className }}',
+                '{{ providerUse }}',
+                '{{ providerExpression }}',
+                '{{ instructions }}',
+                '{{ toolsMethod }}',
+                '{{ mcpUse }}',
+            ],
             [
                 $namespace,
                 $className,
-                $agent->provider,
+                $context->providerUseStatement($provider),
+                $providerExpression,
                 addslashes((string) $agent->instructions),
                 $toolsMethod,
                 $this->needsMcpConnector($agent) ? "use NeuronAI\\MCP\\McpConnector;\n" : '',
@@ -37,6 +63,34 @@ class AgentExporter
         File::put($file, $content);
 
         return [$file];
+    }
+
+    /**
+     * CodegenContext wraps providers in parentheses for inline use; unwrap for a return statement.
+     */
+    protected function simplifyProviderExpression(string $expression): string
+    {
+        if (str_starts_with($expression, '(') && str_ends_with($expression, ')')) {
+            return substr($expression, 1, -1);
+        }
+
+        return $expression;
+    }
+
+    protected function providerShortClass(string $provider): string
+    {
+        return match ($provider) {
+            'anthropic' => 'Anthropic',
+            'openai' => 'OpenAI',
+            'openai-responses' => 'OpenAIResponses',
+            'gemini' => 'Gemini',
+            'ollama' => 'Ollama',
+            'mistral' => 'Mistral',
+            'deepseek' => 'Deepseek',
+            'huggingface' => 'HuggingFace',
+            'cohere' => 'Cohere',
+            default => throw new \InvalidArgumentException("Unsupported AI provider [{$provider}] for export."),
+        };
     }
 
     protected function needsMcpConnector(AgentDefinition $agent): bool

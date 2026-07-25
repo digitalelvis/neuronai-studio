@@ -34,7 +34,17 @@ Supported `{protocol}` values: `vercel`, `agui`.
 
 The external integration routes are completely separate from the internal Studio UI and playground. They run under their own prefix and middleware, allowing you to secure external client access (e.g. with `auth:sanctum` or API tokens) without affecting the Studio administration dashboard.
 
+### Studio playground vs end-user chat
+
+| Surface | Protocol | UI |
+|---------|----------|----|
+| Studio Playground | Internal Studio SSE (`token`, `tool_*`, workflow step events) | Custom React shell (`studio-chat`) |
+| Host app / public chat (planned) | `vercel` or `agui` adapters | Prefer a market harness such as **assistant-ui** on Vercel AI SDK `useChat`, or a native AG-UI client |
+
+The **same runners** back both paths. The playground validates agent/workflow behavior for Studio users; a future shareable/embed chat should speak the integrate adapters so web, mobile, and desktop clients stay portable without forking Studio SSE.
+
 ## Next Steps
 
 - [Vercel AI SDK Integration Guide](vercel-ai-sdk.md)
 - [AG-UI Protocol Guide](ag-ui.md)
+- [Playground & Threads](../agents/playground-and-threads.md)

@@ -83,6 +83,25 @@ The canvas **Invoke** node may only call FQCNs listed in `invoke_hooks` (empty =
 
 Each class must be resolvable from the container and implement `__invoke(\NeuronAI\Workflow\WorkflowState $state): mixed`. See [Logic Nodes — Invoke](workflows/node-types/logic-nodes.md#invoke).
 
+## Builder tools
+
+Builder tools store a PHP **invoke body** in the database for prototyping. Studio does **not** `eval()` that body at runtime. Execution requires CodeGen **export**, which writes a PHP class under `export_path` and sets `config.class_path`; `ToolResolver` then instantiates that class.
+
+| Control | Recommendation |
+|---------|----------------|
+| `allow_builder_tools` | Default `true` only when `APP_ENV=local`. Keep **off** in production so the UI cannot create/edit builder tools |
+| CodeGen export | Keep off outside local — export is what writes executable PHP to disk |
+| Studio gate | Restrict who can open `/neuronai-studio` (anyone with access + CodeGen on can plant PHP under `export_path`) |
+| Production tools | Prefer scanned PHP classes / [Make Tool CLI](tools/make-tool-cli.md) or [Webhook Tools](tools/webhook-tools.md) |
+
+```env
+NEURONAI_STUDIO_ALLOW_BUILDER_TOOLS=false
+```
+
+Already-exported classes with `class_path` continue to resolve when the flag is off — they are normal application PHP, not dynamic DB evaluation.
+
+See [Builder Tools](tools/builder-tools.md).
+
 ## Approving sensitive tools
 
 Agents can call tools that perform destructive or high-impact actions (deleting files, transferring money, sending emails). **Tool approval** adds a human gate: when enabled on an agent (or overridden on a workflow Agent node), execution pauses before any tool runs and requires an explicit approve/reject decision in the workflow test harness.
@@ -104,12 +123,21 @@ See [Human-in-the-Loop → Tool approval](workflows/human-in-the-loop.md#tool-ap
 |---------|----------------|
 | Studio access | Restrict gate to admin/developer roles |
 | Environment | Disable open access outside `local` |
+| CodeGen | Keep `codegen.*` off outside local (or enable selectively); see [Export & Production](export-and-production.md#codegen-feature-flags) |
+| Builder tools | Keep `allow_builder_tools` off outside local; use classes or webhooks in prod |
+| Long workflow runs | Enable async queue runs — sync SSE can 504 under FPM/proxy timeouts; see [Runtime & Traces](workflows/runtime-and-traces.md#long-running-runs-under-php-fpm) |
 | Webhooks | Set explicit host allowlist |
 | MCP stdio | Keep command allowlist minimal |
 | Invoke hooks | Keep `invoke_hooks` minimal (fail-closed) |
 | Attachments | Use dedicated disk with size limits |
 | API keys | Keep in `config/neuron.php` / `.env` only |
 | Sensitive tools | Require tool approval for destructive agent actions |
+
+## CodeGen
+
+Code generation (export to disk, class preview, `make-tool`, import-to-studio) is controlled by `neuronai-studio.codegen` flags. Defaults are on only in `local`. In staging/production leave them off unless you intentionally allow developers to write PHP under `export_path`.
+
+Already-exported classes continue to resolve at runtime regardless of these flags.
 
 ## File uploads
 

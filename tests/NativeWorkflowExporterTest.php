@@ -9,7 +9,7 @@ use DigitalElvis\NeuronAIStudio\Codegen\WorkflowExporter;
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use DigitalElvis\NeuronAIStudio\Models\KnowledgeBase;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
-use DigitalElvis\NeuronAIStudio\Registry\TemplateRegistry;
+use DigitalElvis\NeuronAIStudio\Services\TemplateInstaller;
 use DigitalElvis\NeuronAIStudio\Tests\Fixtures\Output\SampleLeadProfile;
 use Illuminate\Support\Facades\File;
 
@@ -350,8 +350,8 @@ class NativeWorkflowExporterTest extends TestCase
 
         $preview = app(NativeWorkflowExporter::class)->preview($workflow);
 
-        $this->assertStringContainsString('use NeuronAI\\Agent\\Middleware\\ToolApproval;', $preview);
-        $this->assertStringContainsString('$agent->addGlobalMiddleware(new ToolApproval());', $preview);
+        // AgentRunner applies ToolApproval middleware when this flag is true.
+        $this->assertStringContainsString("'require_tool_approval' => true,", $preview);
 
         $this->cleanupExport($exportPath);
     }
@@ -386,15 +386,8 @@ class NativeWorkflowExporterTest extends TestCase
             'neuronai-studio.export_namespace' => 'App\\Neuron',
         ]);
 
-        $template = app(TemplateRegistry::class)->load('workflow', 'lead-qualification-loop');
-        $this->assertNotNull($template);
-
-        $workflow = WorkflowDefinition::make([
-            'name' => (string) ($template['meta']['name'] ?? 'Lead Qualification (Loop)'),
-            'slug' => 'lead-qualification-loop',
-            'graph' => $template['graph'],
-            'status' => 'draft',
-        ]);
+        // Install remaps agent_ref → agent_id so the graph passes validation.
+        $workflow = app(TemplateInstaller::class)->installWorkflow('lead-qualification-loop');
 
         $preview = app(NativeWorkflowExporter::class)->preview($workflow);
 

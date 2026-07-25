@@ -147,4 +147,92 @@ class GraphValidatorTest extends TestCase
 
         $this->assertTrue($result['valid'], implode(' ', $result['errors']));
     }
+
+    public function test_accepts_inline_agent_with_tool_binding_edge(): void
+    {
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate([
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                [
+                    'id' => 'agent_1',
+                    'type' => 'agent',
+                    'position' => ['x' => 100, 'y' => 0],
+                    'data' => [
+                        'config_mode' => 'inline',
+                        'provider' => 'openai',
+                        'model' => 'gpt-4o-mini',
+                    ],
+                ],
+                [
+                    'id' => 'tool_1',
+                    'type' => 'tool',
+                    'position' => ['x' => 100, 'y' => 120],
+                    'data' => ['tool_ref' => 'toolkit:calculator'],
+                ],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'agent_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'agent_1', 'target' => 'stop_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ['id' => 'e3', 'source' => 'tool_1', 'target' => 'agent_1', 'sourceHandle' => 'default', 'targetHandle' => 'tools'],
+            ],
+        ]);
+
+        $this->assertTrue($result['valid'], implode(' ', $result['errors']));
+    }
+
+    public function test_rejects_tools_edge_from_non_tool_source(): void
+    {
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate([
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                [
+                    'id' => 'agent_1',
+                    'type' => 'agent',
+                    'position' => ['x' => 100, 'y' => 0],
+                    'data' => [
+                        'config_mode' => 'inline',
+                        'provider' => 'openai',
+                        'model' => 'gpt-4o-mini',
+                    ],
+                ],
+                ['id' => 'llm_1', 'type' => 'llm', 'position' => ['x' => 100, 'y' => 120], 'data' => []],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'agent_1', 'sourceHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'agent_1', 'target' => 'stop_1', 'sourceHandle' => 'default'],
+                ['id' => 'e3', 'source' => 'llm_1', 'target' => 'agent_1', 'sourceHandle' => 'default', 'targetHandle' => 'tools'],
+            ],
+        ]);
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('tool or mcp', strtolower(implode(' ', $result['errors'])));
+    }
+
+    public function test_rejects_inline_agent_without_provider_model(): void
+    {
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate([
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                [
+                    'id' => 'agent_1',
+                    'type' => 'agent',
+                    'position' => ['x' => 100, 'y' => 0],
+                    'data' => ['config_mode' => 'inline'],
+                ],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'agent_1', 'sourceHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'agent_1', 'target' => 'stop_1', 'sourceHandle' => 'default'],
+            ],
+        ]);
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('provider', strtolower(implode(' ', $result['errors'])));
+    }
 }

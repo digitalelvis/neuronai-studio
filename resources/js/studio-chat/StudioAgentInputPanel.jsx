@@ -14,6 +14,7 @@ export default function StudioAgentInputPanel({
     onSend,
     sending = false,
     enableAttachments = false,
+    hideComposer = false,
 }) {
     const [inputJson, setInputJson] = useState(() => JSON.stringify(context ?? {}, null, 2));
     const [inputJsonError, setInputJsonError] = useState('');
@@ -110,17 +111,33 @@ export default function StudioAgentInputPanel({
                 </p>
             </div>
 
-            <div className="mt-auto border-t border-border pt-4">
-                <Composer
-                    disabled={sending}
-                    onSend={onSend}
-                    enableAttachments={enableAttachments}
-                    enableInputJson
-                    inputJson={inputJson}
-                    onInputJsonChange={handleInputJsonChange}
-                    inputJsonError={inputJsonError}
-                />
-            </div>
+            {!hideComposer && (
+                <div className="mt-auto border-t border-border pt-4">
+                    <Composer
+                        disabled={sending}
+                        onSend={onSend}
+                        enableAttachments={enableAttachments}
+                        enableInputJson
+                        inputJson={inputJson}
+                        onInputJsonChange={handleInputJsonChange}
+                        inputJsonError={inputJsonError}
+                    />
+                </div>
+            )}
+
+            {hideComposer && (
+                <div className="space-y-2 border-t border-border pt-4">
+                    <Label>Context JSON</Label>
+                    <Textarea
+                        rows={4}
+                        placeholder='{"key": "value"}'
+                        value={inputJson}
+                        onChange={(event) => handleInputJsonChange(event.target.value)}
+                        className="resize-none font-mono text-xs"
+                    />
+                    {inputJsonError && <p className="text-xs text-destructive">{inputJsonError}</p>}
+                </div>
+            )}
         </div>
     );
 }

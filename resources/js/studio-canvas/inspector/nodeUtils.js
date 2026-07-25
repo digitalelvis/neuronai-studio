@@ -1,3 +1,12 @@
+/** @param {Record<string, unknown>} data */
+export function resolveAgentConfigMode(data = {}) {
+    if (data.config_mode === 'inline' || data.config_mode === 'existing') {
+        return data.config_mode;
+    }
+
+    return data.agent_id != null && data.agent_id !== '' ? 'existing' : 'inline';
+}
+
 export function normalizeNodeForEdit(node) {
     if (!node) {
         return null;
@@ -5,8 +14,18 @@ export function normalizeNodeForEdit(node) {
 
     const data = { ...(node.data || {}) };
 
-    if (node.type === 'agent' && data.agent_id != null && data.agent_id !== '') {
-        data.agent_id = String(data.agent_id);
+    if (node.type === 'agent') {
+        if (data.agent_id != null && data.agent_id !== '') {
+            data.agent_id = String(data.agent_id);
+        }
+
+        if (!data.config_mode) {
+            data.config_mode = resolveAgentConfigMode(data);
+        }
+
+        if (!data.output_key) {
+            data.output_key = 'agent_response';
+        }
     }
 
     if (node.type === 'tool' || node.type === 'mcp') {

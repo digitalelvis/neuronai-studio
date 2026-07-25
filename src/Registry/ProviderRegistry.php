@@ -2,10 +2,11 @@
 
 namespace DigitalElvis\NeuronAIStudio\Registry;
 
+use DigitalElvis\NeuronAIStudio\Support\ProviderParameters;
 use InvalidArgumentException;
-use NeuronAI\Laravel\Facades\AIProvider;
 use NeuronAI\Providers\AIProviderInterface;
 use NeuronAI\Providers\Anthropic\Anthropic;
+use NeuronAI\Providers\Cohere\Cohere;
 use NeuronAI\Providers\Deepseek\Deepseek;
 use NeuronAI\Providers\Gemini\Gemini;
 use NeuronAI\Providers\HuggingFace\HuggingFace;
@@ -37,14 +38,12 @@ class ProviderRegistry
     /** @param  array<string, mixed>  $parameters */
     public function resolve(string $provider, ?string $model = null, array $parameters = []): AIProviderInterface
     {
-        if ($model === null && $parameters === []) {
-            return AIProvider::driver($provider);
-        }
-
         $config = config("neuron.provider.{$provider}");
 
         if (! is_array($config) || ! array_key_exists('model', $config)) {
-            return AIProvider::driver($provider);
+            throw new InvalidArgumentException(
+                "AI provider [{$provider}] is not configured. Publish config/neuron.php and set credentials in .env."
+            );
         }
 
         if ($model !== null) {
@@ -53,7 +52,7 @@ class ProviderRegistry
 
         if ($parameters !== []) {
             $base = is_array($config['parameters'] ?? null) ? $config['parameters'] : [];
-            $config['parameters'] = \DigitalElvis\NeuronAIStudio\Support\ProviderParameters::merge($provider, $base, $parameters);
+            $config['parameters'] = ProviderParameters::merge($provider, $base, $parameters);
         }
 
         $this->assertProviderConfigured($provider, $config);
@@ -81,6 +80,7 @@ class ProviderRegistry
             'mistral' => 'MISTRAL_KEY',
             'deepseek' => 'DEEPSEEK_KEY',
             'huggingface' => 'HUGGINGFACE_KEY',
+            'cohere' => 'COHERE_KEY',
             default => 'the provider key in config/neuron.php',
         };
 
@@ -102,7 +102,10 @@ class ProviderRegistry
             'mistral' => new Mistral(...$config),
             'deepseek' => new Deepseek(...$config),
             'huggingface' => new HuggingFace(...$config),
-            default => AIProvider::driver($provider),
+            'cohere' => new Cohere(...$config),
+            default => throw new InvalidArgumentException(
+                "Unsupported AI provider [{$provider}]. Add support in ProviderRegistry or choose a configured provider."
+            ),
         };
     }
 }

@@ -3,6 +3,8 @@
 namespace DigitalElvis\NeuronAIStudio\Commands;
 
 use DigitalElvis\NeuronAIStudio\Codegen\AgentExporter;
+use DigitalElvis\NeuronAIStudio\Codegen\CodegenDisabledException;
+use DigitalElvis\NeuronAIStudio\Codegen\CodegenGuard;
 use DigitalElvis\NeuronAIStudio\Codegen\WorkflowExporter;
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
@@ -16,6 +18,14 @@ class ExportCommand extends Command
 
     public function handle(AgentExporter $agentExporter, WorkflowExporter $workflowExporter): int
     {
+        try {
+            CodegenGuard::ensureExport();
+        } catch (CodegenDisabledException $e) {
+            $this->error($e->getMessage());
+
+            return self::FAILURE;
+        }
+
         $type = $this->argument('type');
         $id = (int) $this->argument('id');
 

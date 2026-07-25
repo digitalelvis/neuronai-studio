@@ -18,8 +18,9 @@ flowchart TD
 | Source | Type | Created in |
 |--------|------|------------|
 | Built-in toolkits | Neuron `Toolkit` classes | `config/neuronai-studio.php` |
-| Builder tools | PHP invoke body + JSON schema | Studio UI |
+| Builder tools | PHP invoke body → export to class | Studio UI (local prototyping) |
 | Webhook tools | HTTP endpoint + JSON schema | Studio UI |
+| RAG tools | Knowledge base search (`KnowledgeBaseTool`) | Studio UI (`?kind=rag`) |
 | PHP classes | Neuron `Tool` subclasses | `app/Neuron/Tools/` or codegen |
 | MCP tools | Remote MCP server | MCP server config |
 
@@ -27,11 +28,24 @@ flowchart TD
 
 | Need | Tool type |
 |------|-----------|
-| Quick custom logic in PHP | [Builder Tool](builder-tools.md) |
+| Quick custom logic in PHP (local) | [Builder Tool](builder-tools.md) → export class |
 | Call an external API | [Webhook Tool](webhook-tools.md) |
+| Search a knowledge base on demand | [RAG tool](#rag-knowledge-base-tool) |
 | Reusable production class | [Make Tool CLI](make-tool-cli.md) + export |
 | Math, calendar, etc. | Built-in toolkit (`calculator`, `calendar`) |
 | Filesystem, Telescope, etc. | [MCP Server](../mcp-servers/overview.md) |
+
+## RAG knowledge base tool
+
+Create a tool with type `rag` to let an agent call `RagRetrievalService` during chat:
+
+1. **Tools** → Create → kind **RAG** (or `/tools/create?kind=rag`)
+2. Select `knowledge_base_id` and optional `top_k` / `threshold`
+3. Bind the tool on the agent
+
+The LLM passes a `query` string; the tool returns source-prefixed chunks. For fixed graph retrieval (not on-demand), use a [RAG workflow node](../knowledge-bases/retrieval.md) instead.
+
+Full guide: [Knowledge Bases — Agent binding](../knowledge-bases/agent-binding.md).
 
 ## Studio routes
 

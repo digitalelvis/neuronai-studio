@@ -5,7 +5,7 @@
     "require": {
         "php": "^8.2",
         "laravel/framework": "^12.0",
-        "neuron-core/neuron-laravel": "^1.0",
+        "neuron-core/neuron-ai": "^3.15",
         "digitalelvis/neuronai-studio": "@dev"
     },
     "repositories": [
@@ -27,7 +27,6 @@
     "scripts": {
         "post-create-project-cmd": [
             "@php artisan key:generate",
-            "@php artisan neuron:install --no-interaction",
             "@php artisan neuronai-studio:install --no-interaction"
         ]
     },
