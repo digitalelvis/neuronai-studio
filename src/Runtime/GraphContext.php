@@ -48,6 +48,10 @@ class GraphContext
                 continue;
             }
 
+            if (($edge['sourceHandle'] ?? 'default') === 'toolset') {
+                continue;
+            }
+
             $sourceHandle = $edge['sourceHandle'] ?? 'default';
 
             if ($sourceHandle === $handle) {
@@ -59,9 +63,9 @@ class GraphContext
     }
 
     /**
-     * Resolve tool/MCP bindings attached to an agent via targetHandle=tools edges.
+     * Resolve tool/MCP/node bindings attached to an agent via targetHandle=tools edges.
      *
-     * @return array<int, array{ref: string, only?: array<int, string>, config?: array<string, mixed>}>
+     * @return array<int, array{ref: string, only?: array<int, string>, config?: array<string, mixed>, exposure?: array<string, mixed>}>
      */
     public function toolBindingsFor(string $agentNodeId): array
     {
@@ -80,6 +84,17 @@ class GraphContext
             $source = $this->nodeConfig($sourceId);
             $type = (string) ($source['type'] ?? '');
             $data = is_array($source['data'] ?? null) ? $source['data'] : [];
+            $sourceHandle = (string) ($edge['sourceHandle'] ?? 'default');
+
+            if ($type === 'agent' && $sourceHandle === 'toolset') {
+                $exposure = is_array($data['tool_exposure'] ?? null) ? $data['tool_exposure'] : [];
+                $bindings[] = [
+                    'ref' => "node:{$sourceId}",
+                    'exposure' => $exposure,
+                ];
+
+                continue;
+            }
 
             if ($type === 'tool') {
                 $ref = (string) ($data['tool_ref'] ?? '');

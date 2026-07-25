@@ -66,7 +66,10 @@ export function edgeStyleForHandle(handle, targetHandle = 'default') {
 }
 
 export function isToolBindingEdge(edge) {
-    return (edge?.targetHandle || 'default') === 'tools';
+    return (
+        (edge?.targetHandle || 'default') === 'tools' ||
+        (edge?.sourceHandle || 'default') === 'toolset'
+    );
 }
 
 export function buildFlowEdge(connectionOrEdge) {

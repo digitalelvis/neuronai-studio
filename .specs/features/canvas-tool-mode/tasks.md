@@ -57,11 +57,11 @@ CTM-T8, CTM-T9 → CTM-T10
 **Where**: `GraphContext.php`, `graph.js` `isToolBindingEdge` if mirrored  
 **Done when**:
 
-- [ ] toolset edge appears in bindings array
-- [ ] tool/mcp bindings still work
+- [x] toolset edge appears in bindings array
+- [x] tool/mcp bindings still work
 
 **Tests**: `GraphContextToolBindingsTest` (or new)  
-**Status**: Pending
+**Status**: Done
 
 ---
 
