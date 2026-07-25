@@ -450,6 +450,11 @@ return [
             'label' => 'Agent',
             'icon' => 'bot',
             'category' => 'ai',
+            'toolable' => true,
+            'tool_exposure' => [
+                'slug_prefix' => 'call_agent',
+                'default_description' => 'Delegate a task to this specialized agent.',
+            ],
         ],
         'llm' => [
             'label' => 'LLM',

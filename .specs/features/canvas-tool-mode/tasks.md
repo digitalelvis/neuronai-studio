@@ -3,8 +3,8 @@
 **Spec**: [spec.md](./spec.md)  
 **Design**: [design.md](./design.md)  
 **Context**: [context.md](./context.md)  
-**Status**: Specified — ready for Execute  
-**Linha**: `v1.1.x` · **AD-025**
+**Status**: Execute in progress  
+**Linha**: `v1.1.x` · **AD-025** · branch `feat/canvas-tool-mode`
 
 ---
 
@@ -29,11 +29,11 @@ CTM-T8, CTM-T9 → CTM-T10
 **Where**: `config/neuronai-studio.php`, `NodeTypeRegistry.php`, Livewire Editor nodeTypes payload if needed  
 **Done when**:
 
-- [ ] Canvas receives `toolable: true` for agent
-- [ ] Other built-in types omit or `toolable: false`
+- [x] Canvas receives `toolable: true` for agent
+- [x] Other built-in types omit or `toolable: false`
 
 **Tests**: unit registry/meta if existing pattern; else config assert in feature test  
-**Status**: Pending
+**Status**: Done
 
 ---
 
