@@ -2,11 +2,11 @@
 
 **North star:** Agentes multimodais autônomos com grafos de workflow cíclicos.
 
-**Development line (features):** `v0.10.x` (M9)  
-**Patch line:** `v0.9.x`  
-**Latest published:** `v0.10.0` on Packagist / `main`  
-**Última atualização:** 2026-07-23  
-**Etapa atual:** M9 in progress on `feat/knowledge-base-rag` → `v0.10.x`. M8 ✅ (`v0.9.0`). `canvas-invoke-node` ✅ (`v0.10.0`). TraceDetail bridge permanece deferred.
+**Development line (features):** `v1.1.x` (M10)  
+**Patch line:** `v1.0.x`  
+**Latest published:** `v1.0.0` on Packagist / `main`  
+**Última atualização:** 2026-07-25  
+**Etapa atual:** M9 ✅ shipped in `v1.0.0` (breaking: neuron-ai direct). M10 `canvas-tool-mode` specified — Execute on `v1.1.x` (AD-025). TraceDetail bridge permanece deferred.
 
 ---
 
@@ -114,24 +114,38 @@ Foco total em **desempenho de agentes e workflows**: memória durável e control
 
 **Critério de conclusão M8:** Thread long-running fica sob o budget de contexto com summary persistido substituindo o prefixo trimado — nenhuma perda silenciosa de history; Studio expõe memory window/driver/summarization por agente e por nó (override M6-style); injeção de RAG/tool results/state respeita budgets configuráveis e registra truncamento em span metadata; (P2) tool approval dentro de um branch paralelo pausa e retoma (approve/reject) em vez de falhar o run, com paridade sequential/concurrent.
 
-### M9 — Studio UX, RAG harden & Neuron AI direct (P1) `in progress`
+### M9 — Studio UX, RAG harden & Neuron AI direct (P1) `done`
 
 Authoring UX perto de Langflow, knowledge bases production-ready, codegen fail-closed fora de local, e dependência direta em `neuron-core/neuron-ai` (sem `neuron-laravel`).
 
-**Escopo (AD-023):** single PR `feat/knowledge-base-rag` → `v0.10.x`. Sem specs formais por fatia — commits + docs (`guides/knowledge-bases/`, canvas/playground).
+**Escopo (AD-023):** single PR `feat/knowledge-base-rag` → `v0.10.x` → `main`. Sem specs formais por fatia — commits + docs (`guides/knowledge-bases/`, canvas/playground).
 
 | Ordem | Slice | Status | Notas |
 |-------|-------|--------|-------|
-| 22 | RAG vector stores + ingest/reindex + KB docs | **done** (branch) | `feat(rag): expand Neuron vector stores…` |
-| 23 | Codegen export/preview local-only gates | **done** (branch) | `CodegenGuard` + config flags |
-| 24 | Canvas Langflow-level UX | **done** (branch) | palette, sticky notes, Playground/Share/Logs |
-| 25 | Playground shell (sessions + traces) | **done** (branch) | thread sidebar + Chat/Traces APIs |
-| 26 | Canvas tool bindings via edges | **done** (branch) | tools pin + `GraphContext` bindings |
-| 27 | `neuron-core/neuron-ai` direct (breaking) | **done** (branch) | drop `neuron-laravel`; publish `config/neuron.php` |
+| 22 | RAG vector stores + ingest/reindex + KB docs | **done** | `feat(rag): expand Neuron vector stores…` |
+| 23 | Codegen export/preview local-only gates | **done** | `CodegenGuard` + config flags |
+| 24 | Canvas Langflow-level UX | **done** | palette, sticky notes, Playground/Share/Logs |
+| 25 | Playground shell (sessions + traces) | **done** | thread sidebar + Chat/Traces APIs |
+| 26 | Canvas tool bindings via edges | **done** | tools pin + `GraphContext` bindings |
+| 27 | `neuron-core/neuron-ai` direct (breaking) | **done** | drop `neuron-laravel`; publish `config/neuron.php` |
 
 **Critério de conclusão M9:** Host instala com `composer require … neuron-core/neuron-ai` + `neuronai-studio:install`; KB com stores Neuron + ingest async; canvas/playground usáveis no fluxo Langflow-like; export/preview bloqueados fora de local salvo flag explícita.
 
-**Publicação prevista:** próximo minor após merge estável em `v0.10.x` (ex. `v0.11.0`).
+**Publicação:** `v1.0.0` (major — `BREAKING CHANGE` neuron-laravel → neuron-ai). Ver AD-025.
+
+### M10 — Canvas Tool Mode / agent-as-tool (P1) `specified`
+
+Langflow-like **Tool Mode**: nodes `toolable` flip between Step and Tool; v1 = Agent as specialist toolset for a supervisor. Neuron composition via Studio `NodeAsTool` (no SubAgent API).
+
+**Escopo (AD-024 / AD-025):** [canvas-tool-mode](../features/canvas-tool-mode/spec.md) · [design](../features/canvas-tool-mode/design.md) · [tasks](../features/canvas-tool-mode/tasks.md) · [context](../features/canvas-tool-mode/context.md)
+
+| Ordem | Feature | Status | Spec |
+|-------|---------|--------|------|
+| 28 | `canvas-tool-mode` | **specified** (CTM-01…05 / T1–T10) | [spec](../features/canvas-tool-mode/spec.md) |
+
+**Critério de conclusão M10:** Demo start→supervisor←toolset←specialist(Tool Mode)→stop; runtime tool-call; codegen snapshot; docs + template.
+
+**Linha Execute:** `v1.1.x` (AD-025). Patch line = `v1.0.x`.
 
 ---
 
@@ -152,8 +166,10 @@ Authoring UX perto de Langflow, knowledge bases production-ready, codegen fail-c
 13. ~~Release `v0.9.0` (M8)~~ ✅
 14. ~~Execute `canvas-invoke-node` on `v0.9.x`~~ ✅ — [spec](../features/canvas-invoke-node/spec.md) · [tasks](../features/canvas-invoke-node/tasks.md)
 15. ~~Release `v0.10.0` (`canvas-invoke-node`) + abrir `v0.10.x` (AD-023)~~ ✅
-16. Merge M9 `feat/knowledge-base-rag` → `v0.10.x` (PR único)
-17. Release próximo minor quando M9 estiver estável na linha
+16. ~~Merge M9 `feat/knowledge-base-rag` → `v0.10.x` → `main`~~ ✅ (PR #47 / #48)
+17. ~~Release `v1.0.0` (M9 + breaking neuron-ai; conventional major)~~ ✅
+18. ~~Abrir `v1.0.x` (patch) + `v1.1.x` (M10) + back-merge `main` → `v0.10.x` (AD-025)~~ ✅
+19. Execute `canvas-tool-mode` (CTM-T1…T10) on `v1.1.x` — [spec](../features/canvas-tool-mode/spec.md) · [tasks](../features/canvas-tool-mode/tasks.md)
 
 ---
 
@@ -188,6 +204,7 @@ Authoring UX perto de Langflow, knowledge bases production-ready, codegen fail-c
 | `context-engineering` | ✅ done | 0.9.x |
 | `parallel-tool-approval` | ✅ done | 0.9.x |
 | `canvas-invoke-node` | ✅ done | 0.9.x → 0.10.0 |
+| M9 (RAG / Studio UX / neuron-ai) | ✅ done | 1.0.0 |
 
 ---
 
@@ -285,6 +302,12 @@ Mapeamento feature → arquivos `docs/` a criar/atualizar na implementação.
 | Codegen gates | `guides/export-and-production.md`, `guides/security-and-access.md`, `reference/configuration.md` |
 | neuron-ai direct | `getting-started/installation.md`, `getting-started/demo-app.md`, `README.md` |
 
+### M10
+
+| Feature | Documentos (expected) |
+|---------|------------------------|
+| `canvas-tool-mode` | `guides/workflows/node-types/ai-nodes.md`, `guides/workflows/canvas-editor.md`, `docs/extending/custom-node-types.md`, `guides/templates.md` |
+
 ---
 
 ## Decisões em aberto (ver [STATE.md](STATE.md))
@@ -298,4 +321,6 @@ Mapeamento feature → arquivos `docs/` a criar/atualizar na implementação.
 - Transporte `ShouldBroadcast` / Echo para progresso async (P3)
 - ~~Nó `invoke` / hook allowlisted~~ → **done:** [`canvas-invoke-node`](../features/canvas-invoke-node/spec.md) shipped `v0.10.0`
 - ~~Pós-`v0.10.0` next wave~~ → **resolvido (AD-023):** M9 single PR on `v0.10.x`
+- ~~M9 publish / next minor~~ → **resolvido (AD-025):** `v1.0.0` (breaking major); feature line `v1.1.x`; patch `v1.0.x`
+- ~~Delegação subagente / agent-as-tool no canvas~~ → **resolvido (AD-024):** feature `canvas-tool-mode` (Tool Mode Langflow-like; v1 Agent)
 - TraceDetail ↔ Inspector/Langfuse URL bridge (P2 deferred)

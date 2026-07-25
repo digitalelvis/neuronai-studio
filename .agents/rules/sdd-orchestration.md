@@ -13,7 +13,7 @@ Plan and implement projects with precision. Granular tasks. Clear dependencies. 
 
 ```
 
-Aways use [spec-driven](../skills/spec-drive) SKILL
+Aways use [spec-driven](../skills/spec-driven) SKILL
 
 # 2 - Caveman Outbound Response SKILL
 ACTIVE EVERY RESPONSE 
