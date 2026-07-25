@@ -20,6 +20,7 @@ export default function NodeEditSheet({
     providerModels = {},
     defaultProvider = '',
     defaultModel = '',
+    nodeTypesMeta = {},
     readOnly = false,
 }) {
     const { editingNode, sheetOpen, setSheetOpen, syncNode, removeNode, section } = useNodeEditor();
@@ -55,6 +56,7 @@ export default function NodeEditSheet({
                         providerModels={providerModels}
                         defaultProvider={defaultProvider}
                         defaultModel={defaultModel}
+                        nodeTypesMeta={nodeTypesMeta}
                         readOnly={readOnly}
                         onUpdate={readOnly ? undefined : syncNode}
                         onRemove={readOnly ? undefined : removeNode}

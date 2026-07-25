@@ -191,6 +191,11 @@ class GraphValidator
             if (! ($meta['toolable'] ?? false)) {
                 $errors[] = "Node type '{$type}' is not toolable (node {$id}).";
             }
+
+            $slug = $this->resolveToolExposureSlug($data);
+            if (! preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $slug)) {
+                $errors[] = "Tool Mode node {$id} has invalid tool_exposure.slug '{$slug}'.";
+            }
         }
 
         return $errors;

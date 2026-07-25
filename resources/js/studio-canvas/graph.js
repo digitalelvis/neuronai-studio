@@ -22,6 +22,10 @@ export function edgeLabelForHandle(handle, targetHandle = 'default') {
         return 'tools';
     }
 
+    if (handle === 'toolset') {
+        return 'toolset';
+    }
+
     if (handle === 'true') {
         return 'true';
     }
@@ -44,6 +48,10 @@ export function edgeLabelForHandle(handle, targetHandle = 'default') {
 export function edgeStyleForHandle(handle, targetHandle = 'default') {
     if (targetHandle === 'tools') {
         return { stroke: '#22d3ee', strokeWidth: 2 };
+    }
+
+    if (handle === 'toolset') {
+        return { stroke: '#f59e0b', strokeWidth: 2 };
     }
 
     if (handle === 'true') {

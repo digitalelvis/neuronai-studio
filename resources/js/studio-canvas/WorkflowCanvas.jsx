@@ -30,12 +30,14 @@ import {
     findEdgeNearPoint,
     FLOW_NODE_HEIGHT,
     FLOW_NODE_WIDTH,
+    isToolBindingEdge,
     spliceNodeIntoEdge,
     toFlowEdges,
     toFlowNodes,
     toPackageGraph,
 } from './graph';
 import './canvas.css';
+import { isToolModeEnabled } from './inspector/nodeUtils';
 
 const nodeTypes = { workflowNode: WorkflowNode, stickyNote: StickyNote };
 const edgeTypes = { workflowEdge: WorkflowEdge };
@@ -259,23 +261,26 @@ function WorkflowCanvasInner({
                 return false;
             }
 
+            const sourceHandle = connection.sourceHandle || 'default';
             const targetHandle = connection.targetHandle || 'default';
+            const sourceToolMode = isToolModeEnabled(source.data?.config || {});
+            const targetToolMode = isToolModeEnabled(target.data?.config || {});
 
-            if (targetHandle === 'tools') {
-                if (target.data?.nodeType !== 'agent') {
+            if (targetHandle === 'tools' || sourceHandle === 'toolset') {
+                if (target.data?.nodeType !== 'agent' || targetHandle !== 'tools') {
                     return false;
                 }
 
-                const mode = target.data?.config?.config_mode;
-                const isInline =
-                    mode === 'inline' ||
-                    (mode !== 'existing' && !(target.data?.config?.agent_id != null && target.data?.config?.agent_id !== ''));
-
-                if (!isInline) {
-                    return false;
+                if (sourceHandle === 'toolset') {
+                    return source.data?.nodeType === 'agent' && sourceToolMode;
                 }
 
                 return source.data?.nodeType === 'tool' || source.data?.nodeType === 'mcp';
+            }
+
+            // Control-flow edges cannot touch Tool Mode nodes.
+            if (sourceToolMode || targetToolMode) {
+                return false;
             }
 
             return true;
@@ -365,6 +370,7 @@ function WorkflowCanvasInner({
                     : type === 'agent'
                       ? {
                             config_mode: 'inline',
+                            tool_mode: false,
                             stream: true,
                             provider: defaultProvider,
                             model: defaultModel,
@@ -394,13 +400,26 @@ function WorkflowCanvasInner({
         (nodeId, data) => {
             setNodes((current) => {
                 const previous = current.find((node) => node.id === nodeId);
-                const previousMode = previous?.data?.config?.config_mode;
-                const nextMode = data?.config_mode;
+                const previousToolMode = isToolModeEnabled(previous?.data?.config || {});
+                const nextToolMode = isToolModeEnabled(data || {});
 
-                if (nextMode === 'existing' && previousMode !== 'existing') {
+                if (nextToolMode && !previousToolMode) {
+                    setEdges((edges) =>
+                        edges.filter((edge) => {
+                            if (edge.source !== nodeId && edge.target !== nodeId) {
+                                return true;
+                            }
+
+                            return isToolBindingEdge(edge);
+                        }),
+                    );
+                }
+
+                if (!nextToolMode && previousToolMode) {
                     setEdges((edges) =>
                         edges.filter(
-                            (edge) => !(edge.target === nodeId && (edge.targetHandle || 'default') === 'tools'),
+                            (edge) =>
+                                !(edge.source === nodeId && (edge.sourceHandle || 'default') === 'toolset'),
                         ),
                     );
                 }
@@ -668,6 +687,7 @@ function WorkflowCanvasInner({
             providerModels={providerModels}
             defaultProvider={defaultProvider}
             defaultModel={defaultModel}
+            nodeTypesMeta={nodeTypesMeta}
         >
             <div className="relative h-full w-full">
                 <CanvasEmptyState visible={showEmptyState && !isTestRunning} />

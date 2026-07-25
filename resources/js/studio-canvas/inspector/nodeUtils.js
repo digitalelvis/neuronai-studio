@@ -7,6 +7,76 @@ export function resolveAgentConfigMode(data = {}) {
     return data.agent_id != null && data.agent_id !== '' ? 'existing' : 'inline';
 }
 
+/** @param {Record<string, unknown>} data */
+export function isToolModeEnabled(data = {}) {
+    return data.tool_mode === true || data.tool_mode === 1 || data.tool_mode === '1';
+}
+
+/** @param {Record<string, unknown>|undefined} meta */
+export function isNodeTypeToolable(meta) {
+    return meta?.toolable === true;
+}
+
+/**
+ * @param {Record<string, unknown>} data
+ * @param {Record<string, unknown>} meta
+ */
+export function defaultToolExposure(data = {}, meta = {}) {
+    const exposure = data.tool_exposure && typeof data.tool_exposure === 'object' ? data.tool_exposure : {};
+    const slugPrefix = meta?.tool_exposure?.slug_prefix || 'call_agent';
+    const metaDescription =
+        meta?.tool_exposure?.default_description || 'Delegate a task to this specialized agent.';
+    const instructions =
+        typeof data.instructions === 'string' && data.instructions.trim() !== ''
+            ? data.instructions.trim()
+            : '';
+
+    const rawParameters =
+        exposure.parameters && typeof exposure.parameters === 'object' ? exposure.parameters : {};
+    const rawInput =
+        rawParameters.input && typeof rawParameters.input === 'object' ? rawParameters.input : {};
+
+    const parameters = {
+        ...rawParameters,
+        input: {
+            description: 'Task for the specialist',
+            ...rawInput,
+            controlled_by: 'caller',
+        },
+    };
+
+    return {
+        slug: typeof exposure.slug === 'string' && exposure.slug.trim() !== '' ? exposure.slug.trim() : slugPrefix,
+        description:
+            typeof exposure.description === 'string' && exposure.description.trim() !== ''
+                ? exposure.description.trim()
+                : instructions || metaDescription,
+        parameters,
+    };
+}
+
+/** @param {string} slug */
+export function isValidToolExposureSlug(slug) {
+    return typeof slug === 'string' && /^[A-Za-z_][A-Za-z0-9_]*$/.test(slug.trim());
+}
+
+/**
+ * @param {Record<string, unknown>} data
+ * @param {Record<string, unknown>} meta
+ */
+export function resolveToolExposureForSave(data = {}, meta = {}) {
+    const defaults = defaultToolExposure(data, meta);
+    const exposure = data.tool_exposure && typeof data.tool_exposure === 'object' ? data.tool_exposure : {};
+    const slugRaw = typeof exposure.slug === 'string' ? exposure.slug.trim() : '';
+    const descriptionRaw = typeof exposure.description === 'string' ? exposure.description.trim() : '';
+
+    return {
+        slug: slugRaw !== '' ? slugRaw : defaults.slug,
+        description: descriptionRaw !== '' ? descriptionRaw : defaults.description,
+        parameters: defaults.parameters,
+    };
+}
+
 export function normalizeNodeForEdit(node) {
     if (!node) {
         return null;

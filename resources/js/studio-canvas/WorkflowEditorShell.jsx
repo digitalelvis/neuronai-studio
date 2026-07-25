@@ -16,6 +16,7 @@ import WorkflowCanvas from './WorkflowCanvas';
 import NodePalette from './NodePalette';
 import NodeEditSheet from './inspector/NodeEditSheet';
 import ImportJsonDialog from './ImportJsonDialog';
+import ToolExposureModal from './ToolExposureModal';
 import PlaygroundOverlay from './chrome/PlaygroundOverlay';
 import ShareMenu from './chrome/ShareMenu';
 import LogsDrawer from './chrome/LogsDrawer';
@@ -26,7 +27,9 @@ export default function WorkflowEditorShell({ config }) {
     const [status, setStatus] = useState(config.workflowStatus ?? 'draft');
     const [validationMessage, setValidationMessage] = useState('');
     const [importOpen, setImportOpen] = useState(false);
+    const [toolExposureEdit, setToolExposureEdit] = useState(null);
     const readOnly = config.readOnly ?? false;
+    const nodeTypesMeta = config.nodeTypes || {};
 
     const workflowPanelConfig = {
         readOnly,
@@ -42,6 +45,22 @@ export default function WorkflowEditorShell({ config }) {
         integrateStreamUrls: config.integrateStreamUrls,
         integrateResumeUrls: config.integrateResumeUrls,
     };
+
+    useEffect(() => {
+        const onToolExposureEdit = (event) => {
+            if (!event.detail?.id) {
+                return;
+            }
+
+            setToolExposureEdit({
+                id: event.detail.id,
+                data: event.detail.data || {},
+            });
+        };
+
+        window.addEventListener('canvas-tool-exposure-edit', onToolExposureEdit);
+        return () => window.removeEventListener('canvas-tool-exposure-edit', onToolExposureEdit);
+    }, []);
 
     useEffect(() => {
         const syncMeta = () => {
@@ -173,6 +192,31 @@ export default function WorkflowEditorShell({ config }) {
 
                 <ImportJsonDialog open={importOpen} onOpenChange={setImportOpen} />
 
+                <ToolExposureModal
+                    open={Boolean(toolExposureEdit)}
+                    onOpenChange={(open) => {
+                        if (!open) {
+                            setToolExposureEdit(null);
+                        }
+                    }}
+                    nodeId={toolExposureEdit?.id}
+                    nodeData={toolExposureEdit?.data || {}}
+                    typeMeta={nodeTypesMeta.agent || {}}
+                    readOnly={readOnly}
+                    onSave={(nextData) => {
+                        if (!toolExposureEdit?.id) {
+                            return;
+                        }
+
+                        window.dispatchEvent(
+                            new CustomEvent('canvas-node-updated', {
+                                detail: { id: toolExposureEdit.id, data: nextData },
+                            }),
+                        );
+                        setToolExposureEdit(null);
+                    }}
+                />
+
                 <NodeEditSheet
                     agents={config.agents || []}
                     tools={config.tools || []}
@@ -184,6 +228,7 @@ export default function WorkflowEditorShell({ config }) {
                     providerModels={config.providerModels || {}}
                     defaultProvider={config.defaultProvider ?? ''}
                     defaultModel={config.defaultModel ?? ''}
+                    nodeTypesMeta={nodeTypesMeta}
                     readOnly={readOnly}
                 />
             </div>

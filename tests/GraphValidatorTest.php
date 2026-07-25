@@ -367,6 +367,18 @@ class GraphValidatorTest extends TestCase
         $this->assertStringContainsString('tool_mode', strtolower(implode(' ', $result['errors'])));
     }
 
+    public function test_rejects_invalid_tool_exposure_slug(): void
+    {
+        $graph = $this->supervisorSpecialistGraph();
+        $graph['nodes'][2]['data']['tool_exposure']['slug'] = 'bad-slug!';
+
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate($graph);
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('invalid tool_exposure.slug', strtolower(implode(' ', $result['errors'])));
+    }
+
     /**
      * @return array{nodes: array<int, array<string, mixed>>, edges: array<int, array<string, mixed>>}
      */
