@@ -3,14 +3,13 @@
 namespace {{ namespace }};
 
 use NeuronAI\Agent\Agent;
-use NeuronAI\Laravel\Facades\AIProvider;
 use NeuronAI\Providers\AIProviderInterface;
-{{ mcpUse }}
+{{ providerUse }}{{ mcpUse }}
 class {{ className }} extends Agent
 {
     protected function provider(): AIProviderInterface
     {
-        return AIProvider::driver('{{ provider }}');
+        return {{ providerExpression }};
     }
 
     protected function instructions(): string

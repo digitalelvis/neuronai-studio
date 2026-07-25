@@ -22,10 +22,11 @@ export default function NodeEditSheet({
     defaultModel = '',
     readOnly = false,
 }) {
-    const { editingNode, sheetOpen, setSheetOpen, syncNode, removeNode } = useNodeEditor();
+    const { editingNode, sheetOpen, setSheetOpen, syncNode, removeNode, section } = useNodeEditor();
 
     const nodeType = editingNode?.type ?? 'node';
-    const title = `Edit ${nodeType} node`;
+    const title =
+        section === 'advanced' ? `Advanced · ${nodeType}` : `Edit ${nodeType} node`;
 
     return (
         <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
@@ -33,7 +34,11 @@ export default function NodeEditSheet({
                 <SheetHeader>
                     <SheetTitle className="capitalize">{title}</SheetTitle>
                     <SheetDescription>
-                        {readOnly ? 'Read-only preview of node configuration.' : 'Configure node properties.'}
+                        {readOnly
+                            ? 'Read-only preview of node configuration.'
+                            : section === 'advanced'
+                              ? 'Advanced settings for this node.'
+                              : 'Configure node properties.'}
                     </SheetDescription>
                 </SheetHeader>
 
@@ -53,6 +58,8 @@ export default function NodeEditSheet({
                         readOnly={readOnly}
                         onUpdate={readOnly ? undefined : syncNode}
                         onRemove={readOnly ? undefined : removeNode}
+                        section={section}
+                        showRemove={section !== 'advanced'}
                     />
                 </ScrollArea>
             </SheetContent>

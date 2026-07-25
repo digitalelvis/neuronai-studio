@@ -244,6 +244,25 @@ When prompt-assembly budgets truncate RAG, tool results, or state fields, Studio
 
 Spans are skipped when `NEURONAI_STUDIO_NATIVE_TRACING=false`, but truncation still applies. History compaction uses a separate `memory` / `history_compaction` span.
 
+## Long-running runs under PHP-FPM
+
+The Studio **test harness** and **agent playground** keep an HTTP connection open while streaming SSE (`POST …/run/stream`, `POST …/chat/stream`). Under traditional PHP-FPM / Nginx (or any reverse proxy), that request is subject to:
+
+| Limit | Typical symptom |
+|-------|-----------------|
+| PHP `max_execution_time` | Script killed mid-run |
+| Nginx `proxy_read_timeout` / Apache `ProxyTimeout` | **504 Gateway Timeout** |
+| Cloudflare / load-balancer idle timeouts | Connection reset on long LLM loops, MCP stdio, or multi-node graphs |
+
+**Mitigation for production workflows:** enable async runs so execution happens in a queue worker (not the web request), then follow progress via the SSE event tail or JSON poll. See [Queue runner](#queue-runner) below.
+
+Notes:
+
+- Async mode is **API-first**. The canvas Test harness continues to use synchronous SSE by design — use it for short interactive tests; use `POST …/run` + a worker for heavy production graphs.
+- **Agent playground chat has no queue job path** — only workflow runs support `RunWorkflowJob` / `ResumeWorkflowJob`. Keep agent playground sessions short, or call agents from a workflow / your own host jobs.
+- Laravel Echo / Reverb / Pusher is **not** required; Studio progress uses SSE (sync stream or async buffer tail).
+- Octane / Swoole is **not** a Studio requirement. If the host app already runs Octane, that can help long sync streams, but the recommended production path for long workflows remains queues + workers (Horizon optional).
+
 ## Queue runner
 
 When async runs are enabled, workflows can execute in a Laravel queue worker instead of blocking the HTTP request. The test harness still uses synchronous SSE by default; async mode is API-first for production integrations and long-running graphs.
@@ -290,13 +309,15 @@ NEURONAI_STUDIO_QUEUE_BACKOFF=30
 NEURONAI_STUDIO_ASYNC_PROGRESS_ENABLED=true
 ```
 
-Run a queue worker in production:
+Run a queue worker in production (Horizon is fine if the host app already uses it):
 
 ```bash
 php artisan queue:work --queue=default
 ```
 
-See [Configuration](../../reference/configuration.md) and [Installation](../../getting-started/installation.md).
+On multi-server deployments, use a shared cache (e.g. Redis) for `async_progress` so the SSE tail can read events written by workers.
+
+See [Configuration](../../reference/configuration.md), [Installation](../../getting-started/installation.md), and [Long-running runs under PHP-FPM](#long-running-runs-under-php-fpm).
 
 ## Initial state JSON
 

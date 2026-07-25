@@ -1,6 +1,6 @@
 {
     "name": "digitalelvis/neuronai-studio",
-    "description": "NeuronAI Studio — visual AI agent builder for Laravel powered by Neuron AI",
+    "description": "NeuronAI Studio — visual workflow-based AI agent builder for Laravel",
     "keywords": [
         "ai",
         "ai-agent",
@@ -32,7 +32,7 @@
         "illuminate/support": "^11.0|^12.0|^13.0",
         "illuminate/view": "^11.0|^12.0|^13.0",
         "livewire/livewire": "^3.5|^4.0",
-        "neuron-core/neuron-laravel": "^1.0"
+        "neuron-core/neuron-ai": "^3.15"
     },
     "require-dev": {
         "orchestra/testbench": "^9.0|^10.0|^11.0",
@@ -57,6 +57,12 @@
                 "NeuronAIStudio": "DigitalElvis\\NeuronAIStudio\\Facades\\NeuronAIStudio"
             }
         }
+    },
+    "suggest": {
+        "elasticsearch/elasticsearch": "Required for the Elasticsearch knowledge-base vector store driver.",
+        "opensearch-project/opensearch-php": "Required for the OpenSearch knowledge-base vector store driver.",
+        "typesense/typesense-php": "Required for the Typesense knowledge-base vector store driver.",
+        "neuron-core/php-vector": "Required for the PHPVector (HNSW) knowledge-base vector store driver."
     },
     "minimum-stability": "stable",
     "prefer-stable": true,

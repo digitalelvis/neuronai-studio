@@ -4,6 +4,9 @@
             wireId: @json($this->getId()),
             cancelUrl: @json(route('neuronai-studio.tools.index')),
             knowledgeBases: @json($knowledgeBases),
+            canExport: @json(\DigitalElvis\NeuronAIStudio\Codegen\CodegenGuard::canExport()),
+            canPreview: @json(\DigitalElvis\NeuronAIStudio\Codegen\CodegenGuard::canPreview()),
+            allowBuilderTools: @json((bool) config('neuronai-studio.allow_builder_tools', false)),
             initial: {
                 toolKind: @json($toolKind),
                 name: @json($name),

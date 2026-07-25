@@ -14,6 +14,8 @@ class ToolExporter
 
     public function export(ToolDefinition $tool): array
     {
+        CodegenGuard::ensureExport();
+
         $namespace = config('neuronai-studio.export_namespace', 'App\\Neuron').'\\Tools';
         $path = config('neuronai-studio.export_path', app_path('Neuron')).'/Tools';
         $className = $tool->config['class_name'] ?? Str::studly($tool->slug).'Tool';

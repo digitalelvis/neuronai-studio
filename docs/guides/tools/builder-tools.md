@@ -1,13 +1,18 @@
 # Builder Tools
 
-Builder tools let you define custom tool logic with a PHP invoke body and JSON input schema — no separate class file required for prototyping.
+Builder tools let you prototype custom tool logic with a PHP invoke body and JSON input schema in the Studio UI — then export to a typed Neuron `Tool` class for execution.
+
+> **Security:** Builder tools are for **local prototyping**. On export, Studio writes executable PHP under `export_path`. Keep `allow_builder_tools` and CodeGen export **off** outside `local`, and prefer [Make Tool CLI](make-tool-cli.md) / scanned classes or [Webhook Tools](webhook-tools.md) in production. See [Security & Access](../security-and-access.md#builder-tools).
 
 ## Create a builder tool
+
+Requires `allow_builder_tools` (defaults to `true` only when `APP_ENV=local`).
 
 1. Navigate to **Tools** → **Create Tool**
 2. Define name, description, and input schema (JSON Schema)
 3. Write the PHP invoke body
-4. Save and test by binding to an agent
+4. Save — with CodeGen export enabled, Studio also writes the class and sets `class_path`
+5. Test by binding to an agent
 
 <!-- SCREENSHOT: tools-builder -->
 > **Screenshot pending:** Tool builder with PHP invoke preview.
@@ -21,12 +26,16 @@ Builder tools let you define custom tool logic with a PHP invoke body and JSON i
 
 ```mermaid
 flowchart LR
-    Agent[Agent calls tool] --> Runtime[ToolDefinition runtime]
-    Runtime --> Eval[Evaluate PHP invoke body]
-    Eval --> Result[Return structured result]
+    Agent[Agent calls tool] --> Runtime[ToolResolver]
+    Runtime --> Class[Instantiate exported class_path]
+    Class --> Result[Return structured result]
 ```
 
-At runtime, the studio wraps your invoke body in a dynamic Neuron `Tool` instance. The agent receives the tool name, description, and schema for LLM tool selection.
+1. The invoke body is stored in `tool_definitions.config.invoke_body` (database) for editing and preview.
+2. **Export** (CodeGen) generates a PHP class under `export_path/Tools/` and stores `config.class_path`.
+3. At runtime, `ToolResolver` instantiates that class — it does **not** `eval()` the database body.
+
+Without a `class_path` (export never ran or CodeGen export is off), the tool **cannot** execute. Export before binding the tool in production-like environments.
 
 ## Input schema
 
@@ -56,13 +65,17 @@ $city = $input['city'] ?? 'unknown';
 return "Weather in {$city}: sunny, 22°C";
 ```
 
-A live PHP preview in the editor helps validate syntax before saving.
+A live PHP preview in the editor helps validate syntax before saving (requires CodeGen preview).
 
 ## Production path
 
-For production deployments, export the tool to a typed PHP class using **Export PHP** in the tool editor.
+For production deployments:
 
-See [Registry & Codegen](registry-and-codegen.md) and [Make Tool CLI](make-tool-cli.md).
+1. Keep `NEURONAI_STUDIO_ALLOW_BUILDER_TOOLS=false` (default outside `local`)
+2. Export the tool to a typed PHP class (**Export PHP** / Save & Export), or create classes with [Make Tool CLI](make-tool-cli.md)
+3. Prefer webhook tools when the logic lives in an external HTTP API
+
+See [Registry & Codegen](registry-and-codegen.md), [Export & Production](../export-and-production.md), and [Security & Access](../security-and-access.md#builder-tools).
 
 ## Next steps
 

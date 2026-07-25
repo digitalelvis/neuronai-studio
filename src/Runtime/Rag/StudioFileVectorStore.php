@@ -3,6 +3,7 @@
 namespace DigitalElvis\NeuronAIStudio\Runtime\Rag;
 
 use NeuronAI\RAG\VectorStore\FileVectorStore;
+use NeuronAI\RAG\VectorStore\VectorStoreInterface;
 
 /**
  * File-backed vector store that tolerates a missing store file (empty KB or
@@ -17,5 +18,14 @@ class StudioFileVectorStore extends FileVectorStore
         }
 
         return parent::similaritySearch($embedding);
+    }
+
+    public function deleteBy(string $sourceType, ?string $sourceName = null): VectorStoreInterface
+    {
+        if (! is_readable($this->getFilePath())) {
+            return $this;
+        }
+
+        return parent::deleteBy($sourceType, $sourceName);
     }
 }

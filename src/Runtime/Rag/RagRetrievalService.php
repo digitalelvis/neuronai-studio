@@ -56,7 +56,7 @@ class RagRetrievalService
                 'content' => $document->getContent(),
                 'score' => $score,
                 'source_type' => $document->getSourceType(),
-                'source_name' => $document->getSourceName(),
+                'source_name' => (string) ($document->metadata['document_name'] ?? $document->getSourceName()),
                 'metadata' => $document->metadata,
             ];
 

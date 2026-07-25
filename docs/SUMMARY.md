@@ -36,6 +36,14 @@
 * [Stdio & HTTP](guides/mcp-servers/stdio-and-http.md)
 * [Agent Binding](guides/mcp-servers/agent-binding.md)
 
+### Knowledge Bases
+
+* [Overview](guides/knowledge-bases/overview.md)
+* [Creating & Ingest](guides/knowledge-bases/creating-and-ingest.md)
+* [Vector Stores](guides/knowledge-bases/vector-stores.md)
+* [Retrieval & RAG Node](guides/knowledge-bases/retrieval.md)
+* [Agent Binding](guides/knowledge-bases/agent-binding.md)
+
 ### Workflows
 
 * [Overview](guides/workflows/overview.md)

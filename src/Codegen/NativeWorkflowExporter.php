@@ -37,6 +37,8 @@ class NativeWorkflowExporter
 
     public function preview(WorkflowDefinition $workflow): string
     {
+        CodegenGuard::ensurePreview();
+
         return $this->build($workflow)['preview'];
     }
 
@@ -151,6 +153,8 @@ class NativeWorkflowExporter
      */
     protected function write(array $result): array
     {
+        CodegenGuard::ensureExport();
+
         $files = [];
 
         File::ensureDirectoryExists(dirname($result['workflowPath']));

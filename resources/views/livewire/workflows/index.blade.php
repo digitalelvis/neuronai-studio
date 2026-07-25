@@ -76,7 +76,9 @@
                                         @elseif ($entry['json_path'])
                                             <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.workflows.preview', ['json' => $entry['json_path']])">Preview</x-neuronai-studio::ui.button>
                                         @endif
-                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" wire:click="importToStudio('{{ $entry['ref'] }}')">Import to Studio</x-neuronai-studio::ui.button>
+                                        @if (\DigitalElvis\NeuronAIStudio\Codegen\CodegenGuard::enabled())
+                                            <x-neuronai-studio::ui.button variant="ghost" size="sm" wire:click="importToStudio('{{ $entry['ref'] }}')">Import to Studio</x-neuronai-studio::ui.button>
+                                        @endif
                                     </div>
                                 </x-neuronai-studio::ui.table-cell>
                             </x-neuronai-studio::ui.table-row>

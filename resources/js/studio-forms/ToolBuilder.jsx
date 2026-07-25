@@ -14,7 +14,12 @@ import { collectLivewireErrors, fieldError, formatLivewireErrorSummary } from '@
 export default function ToolBuilder({ config }) {
     const initial = config.initial ?? {};
     const knowledgeBases = config.knowledgeBases ?? [];
-    const [toolKind, setToolKind] = useState(initial.toolKind ?? 'builder');
+    const canExport = config.canExport !== false;
+    const canPreview = config.canPreview !== false;
+    const allowBuilderTools = config.allowBuilderTools !== false;
+    const [toolKind, setToolKind] = useState(
+        initial.toolKind ?? (allowBuilderTools ? 'builder' : 'webhook'),
+    );
     const [name, setName] = useState(initial.name ?? '');
     const [toolName, setToolName] = useState(initial.toolName ?? '');
     const [description, setDescription] = useState(initial.description ?? '');
@@ -33,8 +38,10 @@ export default function ToolBuilder({ config }) {
     const [error, setError] = useState('');
     const [fieldErrors, setFieldErrors] = useState({});
 
+    const showBuilderTab = allowBuilderTools || toolKind === 'builder';
+
     const refreshPreview = async () => {
-        if (toolKind !== 'builder') {
+        if (!canPreview || toolKind !== 'builder') {
             setPreview('');
             return;
         }
@@ -55,9 +62,14 @@ export default function ToolBuilder({ config }) {
     };
 
     useEffect(() => {
+        if (!canPreview) {
+            setPreview('');
+            return undefined;
+        }
+
         const timer = setTimeout(refreshPreview, 300);
         return () => clearTimeout(timer);
-    }, [toolKind, name, toolName, description, invokeBody, inputSchema]);
+    }, [canPreview, toolKind, name, toolName, description, invokeBody, inputSchema]);
 
     const addProperty = () => {
         setInputSchema((current) => [
@@ -119,13 +131,15 @@ export default function ToolBuilder({ config }) {
 
     const saveLabel =
         toolKind === 'builder'
-            ? 'Save & Export Class'
+            ? canExport
+                ? 'Save & Export Class'
+                : 'Save'
             : toolKind === 'rag'
               ? 'Save RAG Tool'
               : 'Save Webhook';
 
     const showProperties = toolKind !== 'rag';
-    const showPreviewPanel = toolKind === 'builder';
+    const showPreviewPanel = toolKind === 'builder' && canPreview;
     const panelWidth = showPreviewPanel ? 55 : 100;
 
     return (
@@ -133,7 +147,7 @@ export default function ToolBuilder({ config }) {
             <div className="shrink-0 border-b border-border px-4 py-3">
                 <Tabs value={toolKind} onValueChange={setToolKind}>
                     <TabsList>
-                        <TabsTrigger value="builder">PHP Class Builder</TabsTrigger>
+                        {showBuilderTab && <TabsTrigger value="builder">PHP Class Builder</TabsTrigger>}
                         <TabsTrigger value="webhook">Webhook</TabsTrigger>
                         <TabsTrigger value="rag">RAG - Knowledge Base</TabsTrigger>
                     </TabsList>
@@ -144,6 +158,26 @@ export default function ToolBuilder({ config }) {
                 <ResizablePanel defaultSize={panelWidth} minSize={40}>
                     <ScrollArea className="h-full p-4">
                         <div className="mx-auto max-w-2xl space-y-4">
+                            {toolKind === 'builder' && (
+                                <div
+                                    role="status"
+                                    className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-950 dark:text-amber-100"
+                                >
+                                    <p className="font-medium">Prototyping only — exports write executable PHP</p>
+                                    <p className="mt-1 text-xs opacity-90">
+                                        The invoke body is stored in the database for editing; runtime executes the
+                                        exported class under <code className="rounded bg-muted px-1">export_path</code>
+                                        , not <code className="rounded bg-muted px-1">eval()</code>. Keep{' '}
+                                        <code className="rounded bg-muted px-1">allow_builder_tools</code> and CodeGen
+                                        export off in production. Prefer webhook or PHP class tools there.
+                                    </p>
+                                    {!allowBuilderTools && (
+                                        <p className="mt-1 text-xs font-medium text-destructive">
+                                            Builder tools are disabled in this environment. Saving is blocked.
+                                        </p>
+                                    )}
+                                </div>
+                            )}
                             <div className="space-y-2">
                                 <Label>Display Name</Label>
                                 <Input value={name} onChange={(e) => setName(e.target.value)} required />
@@ -230,6 +264,11 @@ export default function ToolBuilder({ config }) {
                                         {knowledgeBases.length === 0 && (
                                             <p className="text-xs text-muted-foreground">
                                                 No knowledge bases yet. Create one under Knowledge Bases first.
+                                            </p>
+                                        )}
+                                        {knowledgeBases.length > 0 && (
+                                            <p className="text-xs text-muted-foreground">
+                                                After saving, bind this tool on an agent so the model can search on demand.
                                             </p>
                                         )}
                                         {fieldError(fieldErrors, 'knowledgeBaseId') && (

@@ -19,12 +19,12 @@ Add a path repository to your Laravel app's `composer.json`:
     "repositories": [
         {
             "type": "path",
-            "url": "../laravel-agent-builder"
+            "url": "../neuronai-studio"
         }
     ],
     "require": {
         "digitalelvis/neuronai-studio": "@dev",
-        "neuron-core/neuron-laravel": "^1.0"
+        "neuron-core/neuron-ai": "^3.15"
     }
 }
 ```
@@ -32,8 +32,7 @@ Add a path repository to your Laravel app's `composer.json`:
 Then install:
 
 ```bash
-composer require digitalelvis/neuronai-studio:@dev neuron-core/neuron-laravel
-php artisan neuron:install
+composer require digitalelvis/neuronai-studio:@dev neuron-core/neuron-ai
 php artisan neuronai-studio:install
 php artisan vendor:publish --tag=neuronai-studio-assets --force
 php artisan serve

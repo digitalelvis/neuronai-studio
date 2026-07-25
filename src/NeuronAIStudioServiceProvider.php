@@ -48,6 +48,7 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
 {
     public function register(): void
     {
+        $this->mergeConfigFrom(__DIR__.'/../config/neuron.php', 'neuron');
         $this->mergeConfigFrom(__DIR__.'/../config/neuronai-studio.php', 'neuronai-studio');
 
         $this->app->singleton(NodeTypeRegistry::class, function () {
@@ -135,6 +136,10 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
     protected function registerPublishing(): void
     {
         if ($this->app->runningInConsole()) {
+            $this->publishes([
+                __DIR__.'/../config/neuron.php' => config_path('neuron.php'),
+            ], 'neuron-config');
+
             $this->publishes([
                 __DIR__.'/../config/neuronai-studio.php' => config_path('neuronai-studio.php'),
             ], 'neuronai-studio-config');
@@ -263,6 +268,7 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
         Livewire::component('neuronai-studio.agents.evals.runs', Http\Livewire\Agents\Evals\Runs::class);
         Livewire::component('neuronai-studio.agents.evals.run-detail', Http\Livewire\Agents\Evals\RunDetail::class);
         Livewire::component('neuronai-studio.templates.index', Http\Livewire\Templates\Index::class);
+        Livewire::component('neuronai-studio.stream-adapters.index', Http\Livewire\StreamAdapters\Index::class);
     }
 
     protected function registerCommands(): void

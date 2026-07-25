@@ -43,6 +43,7 @@
             readOnlyBanner: @json($readOnlyBanner ?? null),
             streamUrl: @json($workflow?->exists ? route('neuronai-studio.workflows.trace.stream', $workflow) : null),
             resumeUrlTemplate: @json(route('neuronai-studio.workflows.traces.resume.stream', ['trace' => '__TRACE__'])),
+            threadsIndexUrl: @json($workflow?->exists ? route('neuronai-studio.workflows.chat.threads.index', $workflow) : null),
             tracesIndexUrl: @json($workflow?->exists ? route('neuronai-studio.workflows.traces.index', $workflow) : null),
             traceShowUrlTemplate: @json(route('neuronai-studio.workflows.traces.show', ['run' => '__TRACE__'])),
             traceShowJsonUrlTemplate: @json(route('neuronai-studio.workflows.traces.show.json', ['run' => '__TRACE__'])),
@@ -60,6 +61,8 @@
             integrateResumeUrls: @json($integrateResumeUrls),
             defaultProvider: @json(config('neuronai-studio.default_provider')),
             defaultModel: @json(config('neuronai-studio.default_model')),
+            canExport: @json(\DigitalElvis\NeuronAIStudio\Codegen\CodegenGuard::canExport()),
+            canPreview: @json(\DigitalElvis\NeuronAIStudio\Codegen\CodegenGuard::canPreview()),
         };
     </script>
 

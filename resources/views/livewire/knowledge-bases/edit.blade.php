@@ -46,11 +46,14 @@
                 <x-neuronai-studio::ui.form-row>
                     <x-neuronai-studio::ui.form-group>
                         <x-neuronai-studio::ui.label>Vector Store</x-neuronai-studio::ui.label>
-                        <x-neuronai-studio::ui.select wire:model="vectorStoreDriver">
+                        <x-neuronai-studio::ui.select wire:model.live="vectorStoreDriver">
                             @foreach ($vectorStores as $key => $store)
                                 <option value="{{ $key }}">{{ $store['label'] ?? $key }}</option>
                             @endforeach
                         </x-neuronai-studio::ui.select>
+                        @if ($vectorStoreDescription !== '')
+                            <p class="mt-1 text-xs text-muted-foreground">{{ $vectorStoreDescription }}</p>
+                        @endif
                         @error('vectorStoreDriver') <x-neuronai-studio::ui.form-error>{{ $message }}</x-neuronai-studio::ui.form-error> @enderror
                     </x-neuronai-studio::ui.form-group>
                     <x-neuronai-studio::ui.form-group>
@@ -65,6 +68,32 @@
                     </x-neuronai-studio::ui.form-group>
                 </x-neuronai-studio::ui.form-row>
 
+                @if ($vectorStoreFields !== [])
+                    <div class="space-y-3 rounded-md border border-border p-3">
+                        <p class="text-sm font-medium">Vector store settings</p>
+                        <div class="grid gap-3 md:grid-cols-2">
+                            @foreach ($vectorStoreFields as $field)
+                                @php $fieldKey = $field['key'] ?? ''; @endphp
+                                @if ($fieldKey !== '')
+                                    <x-neuronai-studio::ui.form-group>
+                                        <x-neuronai-studio::ui.label>
+                                            {{ $field['label'] ?? $fieldKey }}
+                                            @if (! empty($field['required']))
+                                                <span class="text-destructive">*</span>
+                                            @endif
+                                        </x-neuronai-studio::ui.label>
+                                        <x-neuronai-studio::ui.input
+                                            type="{{ ($field['type'] ?? 'text') === 'number' ? 'number' : 'text' }}"
+                                            wire:model="vectorStoreConfig.{{ $fieldKey }}"
+                                            placeholder="{{ $field['placeholder'] ?? '' }}"
+                                        />
+                                    </x-neuronai-studio::ui.form-group>
+                                @endif
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+
                 <div class="flex flex-wrap gap-2 pt-2">
                     <x-neuronai-studio::ui.button variant="outline" :href="route('neuronai-studio.knowledge-bases.index')">Cancel</x-neuronai-studio::ui.button>
                     <x-neuronai-studio::ui.button type="submit">Save Knowledge Base</x-neuronai-studio::ui.button>
@@ -74,6 +103,12 @@
     </form>
 
     @if ($knowledgeBase?->exists)
+        <x-neuronai-studio::ui.alert class="mt-4">
+            Connect this knowledge base to an agent with a
+            <a href="{{ $toolsCreateUrl }}" class="underline">RAG tool</a>
+            (type <code class="text-xs">rag</code>), or add a <strong>RAG</strong> node upstream in a workflow.
+        </x-neuronai-studio::ui.alert>
+
         <div class="mt-4 grid gap-4 lg:grid-cols-2">
             <x-neuronai-studio::ui.card>
                 <x-neuronai-studio::ui.card-header>
@@ -174,7 +209,10 @@
                                 <x-neuronai-studio::ui.table-cell>
                                     <x-neuronai-studio::ui.badge :variant="$statusVariants[$document->status] ?? 'draft'">{{ $document->status }}</x-neuronai-studio::ui.badge>
                                 </x-neuronai-studio::ui.table-cell>
-                                <x-neuronai-studio::ui.table-cell>
+                                <x-neuronai-studio::ui.table-cell class="space-x-1 whitespace-nowrap">
+                                    @if ($document->storage_key)
+                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" wire:click="reindexDocument({{ $document->id }})" wire:confirm="Re-embed this document?">Reindex</x-neuronai-studio::ui.button>
+                                    @endif
                                     <x-neuronai-studio::ui.button variant="ghost" size="sm" wire:click="deleteDocument({{ $document->id }})" wire:confirm="Remove this document?" class="text-destructive hover:text-destructive">Delete</x-neuronai-studio::ui.button>
                                 </x-neuronai-studio::ui.table-cell>
                             </x-neuronai-studio::ui.table-row>
