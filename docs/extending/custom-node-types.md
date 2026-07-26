@@ -32,6 +32,25 @@ NeuronAIStudio::registerNode('send_email', SendEmailExecutor::class, [
 ]);
 ```
 
+### Toolable meta (Tool Mode)
+
+To allow authors to flip a custom node between Step and Tool Mode (same contract as Agent), set `toolable` and optional `tool_exposure` defaults in meta or `config/neuronai-studio.php` → `node_types`:
+
+```php
+NeuronAIStudio::registerNode('my_specialist', MySpecialistExecutor::class, [
+    'label' => 'My Specialist',
+    'icon' => 'bot',
+    'category' => 'ai',
+    'toolable' => true,
+    'tool_exposure' => [
+        'slug_prefix' => 'call_specialist',
+        'default_description' => 'Delegate a task to this specialist.',
+    ],
+]);
+```
+
+`NodeTypeRegistry::forCanvas()` surfaces these fields to the editor. v1 runtime Tool Mode execution is implemented for **Agent** nodes; other toolable types can opt in later.
+
 Also register the executor in `NodeExecutorRegistry` if not auto-wired:
 
 ```php

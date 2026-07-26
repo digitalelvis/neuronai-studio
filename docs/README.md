@@ -59,6 +59,7 @@ The studio stores definitions in your database. At runtime, `AgentRunner` and `W
 | Feature | Guide |
 |---------|-------|
 | Install & configure | [Installation](getting-started/installation.md) |
+| AI coding assistants | [AI-Assisted Development](guides/ai-assisted-development.md) |
 | Create your first agent | [Quickstart: First Agent](getting-started/quickstart-first-agent.md) |
 | Build a workflow graph | [Quickstart: First Workflow](getting-started/quickstart-first-workflow.md) |
 | Dashboard overview | [Dashboard](guides/dashboard.md) |

@@ -22,6 +22,10 @@ export function edgeLabelForHandle(handle, targetHandle = 'default') {
         return 'tools';
     }
 
+    if (handle === 'toolset') {
+        return 'toolset';
+    }
+
     if (handle === 'true') {
         return 'true';
     }
@@ -46,6 +50,10 @@ export function edgeStyleForHandle(handle, targetHandle = 'default') {
         return { stroke: '#22d3ee', strokeWidth: 2 };
     }
 
+    if (handle === 'toolset') {
+        return { stroke: '#f59e0b', strokeWidth: 2 };
+    }
+
     if (handle === 'true') {
         return { stroke: '#22c55e', strokeWidth: 2 };
     }
@@ -66,7 +74,10 @@ export function edgeStyleForHandle(handle, targetHandle = 'default') {
 }
 
 export function isToolBindingEdge(edge) {
-    return (edge?.targetHandle || 'default') === 'tools';
+    return (
+        (edge?.targetHandle || 'default') === 'tools' ||
+        (edge?.sourceHandle || 'default') === 'toolset'
+    );
 }
 
 export function buildFlowEdge(connectionOrEdge) {

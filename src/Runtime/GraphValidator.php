@@ -81,12 +81,15 @@ class GraphValidator
             }
         }
 
-        $controlEdges = $this->controlFlowEdges($edges);
+        $controlEdges = $this->controlFlowEdges($edges, $nodes);
         $errors = array_merge($errors, $this->validateCycles($nodes, $controlEdges));
         $errors = array_merge($errors, $this->validateParallel($nodes, $controlEdges));
         $errors = array_merge($errors, $this->validateInvokeNodes($nodes));
         $errors = array_merge($errors, $this->validateAgentNodes($nodes));
+        $errors = array_merge($errors, $this->validateToolModeNodes($nodes));
+        $errors = array_merge($errors, $this->validateToolModeControlFlow($nodes, $edges));
         $errors = array_merge($errors, $this->validateToolBindingEdges($nodes, $edges));
+        $errors = array_merge($errors, $this->validateToolsetSlugs($nodes, $edges));
 
         if (empty($errors) && ! empty($startNodes)) {
             $startId = array_values($startNodes)[0]['id'];
@@ -102,17 +105,209 @@ class GraphValidator
     }
 
     /**
-     * Edges that participate in workflow control flow (excludes tool-binding pins).
+     * Edges that participate in workflow control flow (excludes tool-binding pins
+     * and Tool Mode nodes, which are binding-only).
      *
      * @param  array<int, array<string, mixed>>  $edges
+     * @param  array<int, array<string, mixed>>  $nodes
      * @return array<int, array<string, mixed>>
      */
-    protected function controlFlowEdges(array $edges): array
+    protected function controlFlowEdges(array $edges, array $nodes = []): array
     {
+        $toolModeIds = $this->toolModeNodeIds($nodes);
+
         return array_values(array_filter(
             $edges,
-            static fn (array $edge) => ($edge['targetHandle'] ?? 'default') !== 'tools',
+            function (array $edge) use ($toolModeIds): bool {
+                if (($edge['targetHandle'] ?? 'default') === 'tools') {
+                    return false;
+                }
+
+                if (($edge['sourceHandle'] ?? 'default') === 'toolset') {
+                    return false;
+                }
+
+                $source = (string) ($edge['source'] ?? '');
+                $target = (string) ($edge['target'] ?? '');
+
+                if (isset($toolModeIds[$source]) || isset($toolModeIds[$target])) {
+                    return false;
+                }
+
+                return true;
+            },
         ));
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $nodes
+     * @return array<string, true>
+     */
+    protected function toolModeNodeIds(array $nodes): array
+    {
+        $ids = [];
+
+        foreach ($nodes as $node) {
+            $id = (string) ($node['id'] ?? '');
+            if ($id === '') {
+                continue;
+            }
+
+            $data = is_array($node['data'] ?? null) ? $node['data'] : [];
+            if ($this->isToolModeEnabled($data)) {
+                $ids[$id] = true;
+            }
+        }
+
+        return $ids;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function isToolModeEnabled(array $data): bool
+    {
+        return filter_var($data['tool_mode'] ?? false, FILTER_VALIDATE_BOOLEAN);
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $nodes
+     * @return array<int, string>
+     */
+    protected function validateToolModeNodes(array $nodes): array
+    {
+        $errors = [];
+
+        foreach ($nodes as $node) {
+            $id = (string) ($node['id'] ?? 'unknown');
+            $type = (string) ($node['type'] ?? '');
+            $data = is_array($node['data'] ?? null) ? $node['data'] : [];
+
+            if (! $this->isToolModeEnabled($data)) {
+                continue;
+            }
+
+            $meta = $this->nodeTypes->has($type) ? $this->nodeTypes->meta($type) : [];
+            if (! ($meta['toolable'] ?? false)) {
+                $errors[] = "Node type '{$type}' is not toolable (node {$id}).";
+            }
+
+            $slug = $this->resolveToolExposureSlug($data);
+            if (! preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $slug)) {
+                $errors[] = "Tool Mode node {$id} has invalid tool_exposure.slug '{$slug}'.";
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $nodes
+     * @param  array<int, array<string, mixed>>  $edges
+     * @return array<int, string>
+     */
+    protected function validateToolModeControlFlow(array $nodes, array $edges): array
+    {
+        $errors = [];
+        $toolModeIds = $this->toolModeNodeIds($nodes);
+
+        if ($toolModeIds === []) {
+            return [];
+        }
+
+        foreach ($edges as $edge) {
+            if ($this->isToolBindingEdge($edge)) {
+                continue;
+            }
+
+            $source = (string) ($edge['source'] ?? '');
+            $target = (string) ($edge['target'] ?? '');
+
+            if (isset($toolModeIds[$source]) || isset($toolModeIds[$target])) {
+                $errors[] = "Tool Mode node cannot participate in control-flow edges ({$source} → {$target}).";
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * @param  array<string, mixed>  $edge
+     */
+    protected function isToolBindingEdge(array $edge): bool
+    {
+        return ($edge['targetHandle'] ?? 'default') === 'tools'
+            || ($edge['sourceHandle'] ?? 'default') === 'toolset';
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $nodes
+     * @param  array<int, array<string, mixed>>  $edges
+     * @return array<int, string>
+     */
+    protected function validateToolsetSlugs(array $nodes, array $edges): array
+    {
+        $errors = [];
+        $dataById = [];
+
+        foreach ($nodes as $node) {
+            $id = (string) ($node['id'] ?? '');
+            if ($id === '') {
+                continue;
+            }
+
+            $dataById[$id] = is_array($node['data'] ?? null) ? $node['data'] : [];
+        }
+
+        /** @var array<string, array<string, string>> $slugsBySupervisor */
+        $slugsBySupervisor = [];
+
+        foreach ($edges as $edge) {
+            if (($edge['targetHandle'] ?? 'default') !== 'tools') {
+                continue;
+            }
+
+            if (($edge['sourceHandle'] ?? 'default') !== 'toolset') {
+                continue;
+            }
+
+            $source = (string) ($edge['source'] ?? '');
+            $target = (string) ($edge['target'] ?? '');
+            if ($source === '' || $target === '') {
+                continue;
+            }
+
+            $slug = $this->resolveToolExposureSlug($dataById[$source] ?? []);
+            $existing = $slugsBySupervisor[$target][$slug] ?? null;
+
+            if ($existing !== null && $existing !== $source) {
+                $errors[] = "Duplicate toolset slug '{$slug}' on supervisor {$target} (nodes {$existing} and {$source}).";
+
+                continue;
+            }
+
+            $slugsBySupervisor[$target][$slug] = $source;
+        }
+
+        return $errors;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function resolveToolExposureSlug(array $data): string
+    {
+        $exposure = is_array($data['tool_exposure'] ?? null) ? $data['tool_exposure'] : [];
+        $slug = trim((string) ($exposure['slug'] ?? ''));
+
+        if ($slug !== '') {
+            return $slug;
+        }
+
+        return (string) (
+            config('neuronai-studio.node_types.agent.tool_exposure.slug_prefix')
+            ?: 'call_agent'
+        );
     }
 
     /**
@@ -160,7 +355,7 @@ class GraphValidator
     {
         $errors = [];
         $typeById = [];
-        $modeById = [];
+        $dataById = [];
 
         foreach ($nodes as $node) {
             $id = (string) ($node['id'] ?? '');
@@ -169,8 +364,7 @@ class GraphValidator
             }
 
             $typeById[$id] = (string) ($node['type'] ?? '');
-            $data = is_array($node['data'] ?? null) ? $node['data'] : [];
-            $modeById[$id] = $this->resolveAgentConfigMode($data);
+            $dataById[$id] = is_array($node['data'] ?? null) ? $node['data'] : [];
         }
 
         foreach ($edges as $edge) {
@@ -180,6 +374,7 @@ class GraphValidator
 
             $source = (string) ($edge['source'] ?? '');
             $target = (string) ($edge['target'] ?? '');
+            $sourceHandle = (string) ($edge['sourceHandle'] ?? 'default');
             $sourceType = $typeById[$source] ?? '';
             $targetType = $typeById[$target] ?? '';
 
@@ -189,8 +384,12 @@ class GraphValidator
                 continue;
             }
 
-            if (($modeById[$target] ?? 'inline') !== 'inline') {
-                $errors[] = "Tools edges are only allowed on inline agent nodes ({$target}).";
+            if ($sourceType === 'agent' && $sourceHandle === 'toolset') {
+                if (! $this->isToolModeEnabled($dataById[$source] ?? [])) {
+                    $errors[] = "Toolset edge source must have tool_mode enabled ({$source}).";
+                }
+
+                continue;
             }
 
             if (! in_array($sourceType, ['tool', 'mcp'], true)) {

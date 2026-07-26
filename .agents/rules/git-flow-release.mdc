@@ -5,6 +5,8 @@ description: Git branch and commit conventions and governance
 
 # Repository Governance & Git Flow Regulation
 
+## 0. Only act if the user requests it. If you are not sure, ask the user for confirmation.
+
 ## 1. Branching Model (Release Branches Strategy)
 
 **Strict Prohibition:** Never develop features or request Merges (PRs) directly into the `main` branch!

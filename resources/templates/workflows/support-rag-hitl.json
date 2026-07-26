@@ -5,8 +5,16 @@
     "description": "Classifies intent, routes questions through RAG, and pauses for human review on complaints and escalations. RAG returns placeholder context until configured for production.",
     "complexity": "advanced",
     "category": "support",
-    "tags": ["rag", "human", "condition", "intent"],
-    "agents": ["support-assistant", "knowledge-agent"]
+    "tags": [
+      "rag",
+      "human",
+      "condition",
+      "intent"
+    ],
+    "agents": [
+      "support-assistant",
+      "knowledge-agent"
+    ]
   },
   "graph": {
     "version": 1,
@@ -14,13 +22,19 @@
       {
         "id": "start_1",
         "type": "start",
-        "position": { "x": 60, "y": 280 },
+        "position": {
+          "x": 40,
+          "y": 216
+        },
         "data": {}
       },
       {
         "id": "set_user_message",
         "type": "set_state",
-        "position": { "x": 220, "y": 280 },
+        "position": {
+          "x": 440,
+          "y": 216
+        },
         "data": {
           "key": "user_message",
           "from_key": "input"
@@ -29,7 +43,10 @@
       {
         "id": "llm_intent",
         "type": "llm",
-        "position": { "x": 400, "y": 280 },
+        "position": {
+          "x": 840,
+          "y": 216
+        },
         "data": {
           "prompt": "Classify the following user message into exactly one label: question, complaint, or escalation. Reply with only the label, no other text.\n\nMessage: {{user_message}}",
           "output_key": "intent"
@@ -38,7 +55,10 @@
       {
         "id": "cond_question",
         "type": "condition",
-        "position": { "x": 600, "y": 280 },
+        "position": {
+          "x": 1240,
+          "y": 216
+        },
         "data": {
           "state_key": "intent",
           "operator": "equals",
@@ -48,7 +68,10 @@
       {
         "id": "rag_1",
         "type": "rag",
-        "position": { "x": 820, "y": 120 },
+        "position": {
+          "x": 1640,
+          "y": 40
+        },
         "data": {
           "query": "{{user_message}}",
           "output_key": "rag_context"
@@ -57,7 +80,10 @@
       {
         "id": "agent_knowledge",
         "type": "agent",
-        "position": { "x": 1020, "y": 120 },
+        "position": {
+          "x": 2040,
+          "y": 40
+        },
         "data": {
           "agent_ref": "knowledge-agent",
           "message": "User question: {{user_message}}\n\nContext from knowledge base:\n{{rag_context}}",
@@ -67,13 +93,19 @@
       {
         "id": "stop_question",
         "type": "stop",
-        "position": { "x": 1220, "y": 120 },
+        "position": {
+          "x": 2440,
+          "y": 40
+        },
         "data": {}
       },
       {
         "id": "cond_complaint",
         "type": "condition",
-        "position": { "x": 820, "y": 280 },
+        "position": {
+          "x": 1640,
+          "y": 304
+        },
         "data": {
           "state_key": "intent",
           "operator": "equals",
@@ -83,7 +115,10 @@
       {
         "id": "human_complaint",
         "type": "human",
-        "position": { "x": 1020, "y": 220 },
+        "position": {
+          "x": 2040,
+          "y": 216
+        },
         "data": {
           "prompt": "Please review this complaint and add resolution notes.",
           "output_key": "human_response"
@@ -92,7 +127,10 @@
       {
         "id": "agent_complaint",
         "type": "agent",
-        "position": { "x": 1220, "y": 220 },
+        "position": {
+          "x": 2440,
+          "y": 216
+        },
         "data": {
           "agent_ref": "support-assistant",
           "message": "{{human_response}}\n\nOriginal message: {{user_message}}",
@@ -102,13 +140,19 @@
       {
         "id": "stop_complaint",
         "type": "stop",
-        "position": { "x": 1420, "y": 220 },
+        "position": {
+          "x": 2840,
+          "y": 216
+        },
         "data": {}
       },
       {
         "id": "human_escalation",
         "type": "human",
-        "position": { "x": 1020, "y": 400 },
+        "position": {
+          "x": 2040,
+          "y": 392
+        },
         "data": {
           "prompt": "Manager approval required before proceeding.",
           "output_key": "human_response"
@@ -117,7 +161,10 @@
       {
         "id": "set_approved",
         "type": "set_state",
-        "position": { "x": 1220, "y": 400 },
+        "position": {
+          "x": 2440,
+          "y": 392
+        },
         "data": {
           "key": "approved",
           "value": true
@@ -126,7 +173,10 @@
       {
         "id": "agent_escalation",
         "type": "agent",
-        "position": { "x": 1420, "y": 400 },
+        "position": {
+          "x": 2840,
+          "y": 392
+        },
         "data": {
           "agent_ref": "support-assistant",
           "message": "Escalation approved. Original message: {{user_message}}\n\nManager notes: {{human_response}}",
@@ -136,7 +186,10 @@
       {
         "id": "stop_escalation",
         "type": "stop",
-        "position": { "x": 1620, "y": 400 },
+        "position": {
+          "x": 3240,
+          "y": 392
+        },
         "data": {}
       }
     ],
@@ -240,6 +293,10 @@
         "targetHandle": "default"
       }
     ],
-    "viewport": { "x": 0, "y": 0, "zoom": 1 }
+    "viewport": {
+      "x": 0,
+      "y": 0,
+      "zoom": 1
+    }
   }
 }

@@ -1,8 +1,7 @@
 # NeuronAI Studio
 
-[![Documentation](https://img.shields.io/badge/docs-GitBook-blue)](https://YOUR_ORG.gitbook.io/neuronai-studio)
+[![Documentation](https://img.shields.io/badge/docs-GitBook-blue)](https://vibemx.gitbook.io/neuronai-studio)
 
-Visual AI Agent Builder for Laravel powered by [Neuron AI](https://docs.neuron-ai.dev).
 
 Create agents, design workflow graphs, run them at runtime for prototyping, and export production-ready PHP classes.
 
@@ -10,7 +9,7 @@ Create agents, design workflow graphs, run them at runtime for prototyping, and 
 
 Full documentation is available on GitBook:
 
-**[docs/README.md](docs/README.md)** — local docs source (syncs to GitBook on push to `main`)
+**[https://vibemx.gitbook.io/neuronai-studio](https://vibemx.gitbook.io/neuronai-studio)**
 
 Quick links:
 

@@ -16,6 +16,8 @@ import WorkflowCanvas from './WorkflowCanvas';
 import NodePalette from './NodePalette';
 import NodeEditSheet from './inspector/NodeEditSheet';
 import ImportJsonDialog from './ImportJsonDialog';
+import ToolExposureModal from './ToolExposureModal';
+import ToolActionsModal from './ToolActionsModal';
 import PlaygroundOverlay from './chrome/PlaygroundOverlay';
 import ShareMenu from './chrome/ShareMenu';
 import LogsDrawer from './chrome/LogsDrawer';
@@ -26,7 +28,15 @@ export default function WorkflowEditorShell({ config }) {
     const [status, setStatus] = useState(config.workflowStatus ?? 'draft');
     const [validationMessage, setValidationMessage] = useState('');
     const [importOpen, setImportOpen] = useState(false);
+    const [toolExposureEdit, setToolExposureEdit] = useState(null);
+    const [toolActionsEdit, setToolActionsEdit] = useState(null);
+    const [toolsCatalog, setToolsCatalog] = useState(config.tools || []);
     const readOnly = config.readOnly ?? false;
+    const nodeTypesMeta = config.nodeTypes || {};
+
+    useEffect(() => {
+        setToolsCatalog(config.tools || []);
+    }, [config.tools]);
 
     const workflowPanelConfig = {
         readOnly,
@@ -42,6 +52,38 @@ export default function WorkflowEditorShell({ config }) {
         integrateStreamUrls: config.integrateStreamUrls,
         integrateResumeUrls: config.integrateResumeUrls,
     };
+
+    useEffect(() => {
+        const onToolExposureEdit = (event) => {
+            if (!event.detail?.id) {
+                return;
+            }
+
+            setToolExposureEdit({
+                id: event.detail.id,
+                data: event.detail.data || {},
+            });
+        };
+
+        const onToolActionsEdit = (event) => {
+            if (!event.detail?.id) {
+                return;
+            }
+
+            setToolActionsEdit({
+                id: event.detail.id,
+                data: event.detail.data || {},
+                toolRef: event.detail.toolRef || event.detail.data?.tool_ref || '',
+            });
+        };
+
+        window.addEventListener('canvas-tool-exposure-edit', onToolExposureEdit);
+        window.addEventListener('canvas-tool-actions-edit', onToolActionsEdit);
+        return () => {
+            window.removeEventListener('canvas-tool-exposure-edit', onToolExposureEdit);
+            window.removeEventListener('canvas-tool-actions-edit', onToolActionsEdit);
+        };
+    }, []);
 
     useEffect(() => {
         const syncMeta = () => {
@@ -120,7 +162,12 @@ export default function WorkflowEditorShell({ config }) {
 
                 <ResizablePanelGroup direction="horizontal" className="min-h-0 flex-1">
                     <ResizablePanel defaultSize={20} minSize={14} maxSize={28}>
-                        <NodePalette nodeTypes={config.nodeTypes || {}} readOnly={readOnly} />
+                        <NodePalette
+                            nodeTypes={config.nodeTypes || {}}
+                            tools={toolsCatalog}
+                            mcpServers={config.mcpServers || []}
+                            readOnly={readOnly}
+                        />
                     </ResizablePanel>
                     <ResizableHandle withHandle />
                     <ResizablePanel defaultSize={80} minSize={50}>
@@ -132,7 +179,7 @@ export default function WorkflowEditorShell({ config }) {
                                 defaultProvider={config.defaultProvider ?? ''}
                                 defaultModel={config.defaultModel ?? ''}
                                 agents={config.agents || []}
-                                tools={config.tools || []}
+                                tools={toolsCatalog}
                                 mcpServers={config.mcpServers || []}
                                 knowledgeBases={config.knowledgeBases || []}
                                 ragSearchUrlTemplate={config.ragSearchUrlTemplate ?? ''}
@@ -173,9 +220,65 @@ export default function WorkflowEditorShell({ config }) {
 
                 <ImportJsonDialog open={importOpen} onOpenChange={setImportOpen} />
 
+                <ToolExposureModal
+                    open={Boolean(toolExposureEdit)}
+                    onOpenChange={(open) => {
+                        if (!open) {
+                            setToolExposureEdit(null);
+                        }
+                    }}
+                    nodeId={toolExposureEdit?.id}
+                    nodeData={toolExposureEdit?.data || {}}
+                    typeMeta={nodeTypesMeta.agent || {}}
+                    readOnly={readOnly}
+                    onSave={(nextData) => {
+                        if (!toolExposureEdit?.id) {
+                            return;
+                        }
+
+                        window.dispatchEvent(
+                            new CustomEvent('canvas-node-updated', {
+                                detail: { id: toolExposureEdit.id, data: nextData },
+                            }),
+                        );
+                        setToolExposureEdit(null);
+                    }}
+                />
+
+                <ToolActionsModal
+                    open={Boolean(toolActionsEdit)}
+                    onOpenChange={(open) => {
+                        if (!open) {
+                            setToolActionsEdit(null);
+                        }
+                    }}
+                    nodeId={toolActionsEdit?.id}
+                    toolRef={toolActionsEdit?.toolRef || ''}
+                    toolMeta={
+                        toolsCatalog.find((tool) => tool.ref === toolActionsEdit?.toolRef) || null
+                    }
+                    readOnly={readOnly}
+                    wireId={config.wireId}
+                    onSaved={(updatedTool) => {
+                        if (!updatedTool?.ref) {
+                            return;
+                        }
+
+                        setToolsCatalog((current) =>
+                            current.map((tool) => (tool.ref === updatedTool.ref ? updatedTool : tool)),
+                        );
+
+                        if (window.__NEURONAI_CANVAS_CONFIG) {
+                            window.__NEURONAI_CANVAS_CONFIG.tools = (
+                                window.__NEURONAI_CANVAS_CONFIG.tools || []
+                            ).map((tool) => (tool.ref === updatedTool.ref ? updatedTool : tool));
+                        }
+                    }}
+                />
+
                 <NodeEditSheet
                     agents={config.agents || []}
-                    tools={config.tools || []}
+                    tools={toolsCatalog}
                     mcpServers={config.mcpServers || []}
                     knowledgeBases={config.knowledgeBases || []}
                     ragSearchUrlTemplate={config.ragSearchUrlTemplate ?? ''}
@@ -184,6 +287,7 @@ export default function WorkflowEditorShell({ config }) {
                     providerModels={config.providerModels || {}}
                     defaultProvider={config.defaultProvider ?? ''}
                     defaultModel={config.defaultModel ?? ''}
+                    nodeTypesMeta={nodeTypesMeta}
                     readOnly={readOnly}
                 />
             </div>

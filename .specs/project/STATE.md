@@ -1,14 +1,35 @@
 # State
 
-**Last Updated:** 2026-07-23
-**Development line (features):** `v0.10.x` (M9)
-**Patch line:** `v0.9.x`
-**Latest published:** `v0.10.0` on Packagist / `main`
-**Current Work:** M9 on `feat/knowledge-base-rag` → `v0.10.x` (single PR): RAG hardening, Langflow-level Studio UX, codegen local gates, canvas tool bindings, and breaking migrate to `neuron-core/neuron-ai`. TraceDetail bridge + OBS-06/OTel stay deferred.
+**Last Updated:** 2026-07-25
+**Development line (features):** `v1.1.x` (M10)
+**Patch line:** `v1.0.x`
+**Latest published:** `v1.0.0` on Packagist / `main`
+**Current Work:** `canvas-tools-catalog` in progress (Tool Mode Switch, Tool Actions modal, Tools/MCP palette catalogs). M10 `canvas-tool-mode` Execute complete on `feat/canvas-tool-mode` (CTM-T1–T10). TraceDetail bridge + OBS-06/OTel stay deferred.
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-026: Canvas Tools Catalog + Tool Actions (2026-07-25)
+
+**Decision:** Add palette catalogs **Tools** and **MCP** (drag pre-fills refs); keep generic Tool/MCP node types until a later deprecation. Tool node gains an Actions modal aligned with Neuron `ToolInterface` (name, description, properties). Builtins/toolkits are read-only; `tool:db:*` is editable via Livewire `updateToolDefinition`. Tool Mode checkbox becomes a Switch. Param `controlled_by` / variables / tokens remain deferred (UI badge only).
+**Reason:** Authors need faster discovery of Calculator/Filesystem-style components and a schema surface matching Neuron tools.
+**Trade-off:** Dual path (generic node + catalog) until deprecation; toolkit children stay in the modal, not the palette.
+**Impact:** Specs in [.specs/features/canvas-tools-catalog/](../features/canvas-tools-catalog/).
+
+### AD-025: Publish `v1.0.0` + open `v1.0.x` / `v1.1.x` for M10 (2026-07-25)
+
+**Decision:** After M9 merge to `main`, release-it conventional bump produced **`v1.0.0`** (major) because of `refactor(deps)!` / `BREAKING CHANGE` dropping `neuron-laravel`. Open **`v1.0.x`** as patch line and **`v1.1.x`** as feature line for M10 (`canvas-tool-mode`). Back-merge `main` → `v0.10.x` to sync release metadata. Do **not** use `v0.11.0` / `v0.12.x`.
+**Reason:** Angular conventional commits treat `!` / BREAKING CHANGE as major; first 1.x line after long 0.x series. M10 needs a clean feature branch after the published tag.
+**Trade-off:** Hosts on 0.x see a major jump; migration is the neuron-ai install path already documented in M9.
+**Impact:** ROADMAP/STATE/RELEASE point at `v1.1.x` / `v1.0.x` / `v1.0.0`. Specs for M10 land on `v1.1.x`.
+
+### AD-024: M10 Canvas Tool Mode — Langflow-like toolable components (2026-07-25)
+
+**Decision:** Open feature **`canvas-tool-mode`** as milestone **M10**. Nodes with meta `toolable` support Step vs Tool Mode. v1 enables Tool Mode only for **Agent**. Tool Mode hides Input, shows Actions (slug/description/params modal), exposes source handle **`toolset`** → supervisor `tools`. Runtime = Studio `NodeAsTool` (Neuron `Tool` wrapper + `AgentRunner`); codegen **snapshots** specialist config into exported PHP. Supervisor merges AgentDefinition tools + canvas bindings; `tools` handle visible for **existing** and inline. No Neuron SubAgent API.
+**Reason:** Authors need LLM-driven supervisor→specialist delegation; Neuron idiom is agent-as-tool; Langflow Tool Mode is the right canvas UX; generic `toolable` avoids Agent-only dead end.
+**Trade-off:** LLM/RAG/invoke toolable deferred; interpreted uses live `node:{id}`, export snapshots (two paths).
+**Impact:** Specs in [.specs/features/canvas-tool-mode/](../features/canvas-tool-mode/). ROADMAP M10. Execute on `v1.1.x` (AD-025).
 
 ### AD-023: M9 = Studio UX + RAG harden + neuron-ai direct on `v0.10.x` (2026-07-23)
 
@@ -330,6 +351,8 @@
 | agent-memory-controls | 2026-07-20 | 0.9.x | ✅ Done |
 | context-engineering | 2026-07-21 | 0.9.x | ✅ Done |
 | canvas-invoke-node | 2026-07-21 | 0.9.x → 0.10.0 | ✅ Done |
+| M9 (RAG / Studio UX / neuron-ai) | 2026-07-25 | 1.0.0 | ✅ Done |
+| canvas-tool-mode | 2026-07-25 | M10 / `v1.1.x` | 📋 Specified |
 
 ---
 
@@ -344,9 +367,10 @@ Themes turned into specified features (AD-022 — shipped on `v0.9.x` / `v0.10.0
 - [x] **Workflow/agent runtime quality** → absorbed by the two features above (token waste = unbudgeted context + silent history loss) + PTA below for concurrency correctness
 - [x] **Tool approval inside parallel branches** → specified as [`parallel-tool-approval`](../features/parallel-tool-approval/spec.md) (P2 of M8; PTA-01…04)
 
-### P2 — Valuable later (not M9 core)
+### P2 — Valuable later (not M10 core)
 
 - [x] **Canvas `invoke` / allowlisted hook node** — done: [`canvas-invoke-node`](../features/canvas-invoke-node/spec.md) shipped `v0.10.0`
+- [x] **Agent-as-tool / Tool Mode** — specified as [`canvas-tool-mode`](../features/canvas-tool-mode/spec.md) (M10 / AD-024); Execute on `v1.1.x`
 - [ ] Dedicated Usage page / advanced charts / filters (beyond M5 minimal Dashboard)
 - [ ] Multi-tenant / user attribution in usage
 - [ ] Embeddings / RAG cost as a separate line item
@@ -418,5 +442,6 @@ Themes turned into specified features (AD-022 — shipped on `v0.9.x` / `v0.10.0
 - [x] Execute `canvas-invoke-node` (INV-T1…T6) on `v0.9.x`
 - [x] Release `v0.9.0` (M8) + `v0.10.0` (`canvas-invoke-node`)
 - [x] AD-023: open M9 on `v0.10.x` (Studio UX + RAG harden + neuron-ai)
-- [ ] Merge M9 `feat/knowledge-base-rag` → `v0.10.x` (single PR)
-- [ ] Release `v0.11.0` (or next minor) when M9 is stable on the line
+- [x] Merge M9 → `main` + release `v1.0.0` (breaking major)
+- [x] AD-024 / AD-025: Specify M10 `canvas-tool-mode`; open `v1.0.x` + `v1.1.x`
+- [ ] Execute M10 `canvas-tool-mode` (CTM-T1…T10) on `v1.1.x`

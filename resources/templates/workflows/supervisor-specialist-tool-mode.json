@@ -1,0 +1,111 @@
+{
+  "meta": {
+    "id": "supervisor-specialist-tool-mode",
+    "name": "Supervisor + Specialist (Tool Mode)",
+    "description": "Supervisor agent delegates to a Tool Mode specialist via toolset→tools. Control-flow is Start→supervisor→Stop only.",
+    "complexity": "intermediate",
+    "category": "agents",
+    "tags": [
+      "agent",
+      "tool-mode",
+      "supervisor",
+      "specialist"
+    ],
+    "agents": []
+  },
+  "graph": {
+    "version": 1,
+    "nodes": [
+      {
+        "id": "start_1",
+        "type": "start",
+        "position": {
+          "x": 40,
+          "y": 40
+        },
+        "data": {}
+      },
+      {
+        "id": "supervisor_1",
+        "type": "agent",
+        "position": {
+          "x": 440,
+          "y": 128
+        },
+        "data": {
+          "config_mode": "inline",
+          "tool_mode": false,
+          "provider": "openai",
+          "model": "gpt-4o-mini",
+          "instructions": "You are a supervisor. When research is needed, call the research_agent tool with a clear task. Summarize the specialist reply for the user.",
+          "message": "{{input}}",
+          "output_key": "agent_response",
+          "stream": true
+        }
+      },
+      {
+        "id": "specialist_1",
+        "type": "agent",
+        "position": {
+          "x": 40,
+          "y": 216
+        },
+        "data": {
+          "config_mode": "inline",
+          "tool_mode": true,
+          "provider": "openai",
+          "model": "gpt-4o-mini",
+          "instructions": "You are a research specialist. Answer the task thoroughly and concisely.",
+          "tool_exposure": {
+            "slug": "research_agent",
+            "description": "Delegate a research or analysis task to the specialist agent.",
+            "parameters": {
+              "input": {
+                "controlled_by": "caller",
+                "description": "Task for the specialist"
+              }
+            }
+          },
+          "stream": true
+        }
+      },
+      {
+        "id": "stop_1",
+        "type": "stop",
+        "position": {
+          "x": 840,
+          "y": 128
+        },
+        "data": {}
+      }
+    ],
+    "edges": [
+      {
+        "id": "edge_start_supervisor",
+        "source": "start_1",
+        "target": "supervisor_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_supervisor_stop",
+        "source": "supervisor_1",
+        "target": "stop_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "edge_specialist_toolset",
+        "source": "specialist_1",
+        "target": "supervisor_1",
+        "sourceHandle": "toolset",
+        "targetHandle": "tools"
+      }
+    ],
+    "viewport": {
+      "x": 0,
+      "y": 0,
+      "zoom": 1
+    }
+  }
+}

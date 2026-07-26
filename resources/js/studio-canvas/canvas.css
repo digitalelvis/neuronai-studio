@@ -140,8 +140,10 @@
 .ab-flow-handle-continue { background: #3b82f6 !important; }
 .ab-flow-handle-exit { background: #a855f7 !important; }
 .ab-flow-handle-tools { background: #22d3ee !important; }
+.ab-flow-handle-toolset { background: #f59e0b !important; }
 
 .ab-flow-handle-label-tools { color: #22d3ee; }
+.ab-flow-handle-label-toolset { color: #f59e0b; }
 
 .ab-flow-agent-response-row {
     display: flex;

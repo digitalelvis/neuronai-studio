@@ -15,7 +15,9 @@ import StructuredOutputFields from './shared/StructuredOutputFields';
 import StreamToggleField from './shared/StreamToggleField';
 import RagFields from './shared/RagFields';
 import { Checkbox } from '@/components/ui/checkbox';
-import { resolveAgentConfigMode } from './nodeUtils';
+import { Switch } from '@/components/ui/switch';
+import { resolveAgentConfigMode, isToolModeEnabled, isNodeTypeToolable, defaultToolExposure } from './nodeUtils';
+import { useCanvasUi } from '../CanvasUiContext';
 
 export default function NodeConfigForm({
     node,
@@ -29,6 +31,7 @@ export default function NodeConfigForm({
     providerModels = {},
     defaultProvider = '',
     defaultModel = '',
+    nodeTypesMeta: nodeTypesMetaProp,
     readOnly,
     onUpdate,
     onRemove,
@@ -37,6 +40,9 @@ export default function NodeConfigForm({
     showRemove = true,
     showType = true,
 }) {
+    const canvasUi = useCanvasUi();
+    const nodeTypesMeta = nodeTypesMetaProp || canvasUi.nodeTypesMeta || {};
+
     if (!node) {
         return <p className="text-sm text-muted-foreground">Select a node to configure it.</p>;
     }
@@ -44,8 +50,44 @@ export default function NodeConfigForm({
     const data = node.data || {};
     const showControls = section === 'all' || section === 'controls';
     const showAdvanced = section === 'all' || section === 'advanced';
+    const typeMeta = nodeTypesMeta[node.type] || {};
+    const toolable = isNodeTypeToolable(typeMeta);
+    const toolMode = isToolModeEnabled(data);
     const updateField = (key, value) => {
         onUpdate?.({ ...data, [key]: value });
+    };
+
+    const setToolMode = (enabled) => {
+        if (!enabled) {
+            onUpdate?.({ ...data, tool_mode: false });
+            return;
+        }
+
+        onUpdate?.({
+            ...data,
+            tool_mode: true,
+            tool_exposure: defaultToolExposure(data, typeMeta),
+        });
+    };
+
+    const openActions = () => {
+        window.dispatchEvent(
+            new CustomEvent('canvas-tool-exposure-edit', {
+                detail: { id: node.id, data },
+            }),
+        );
+    };
+
+    const openToolActions = () => {
+        window.dispatchEvent(
+            new CustomEvent('canvas-tool-actions-edit', {
+                detail: {
+                    id: node.id,
+                    data,
+                    toolRef: data.tool_ref || '',
+                },
+            }),
+        );
     };
 
     const updateParametersJson = (json) => {
@@ -72,6 +114,27 @@ export default function NodeConfigForm({
                 <>
                     {showControls && (
                         <>
+                            {toolable && (
+                                <div className="flex items-center justify-between gap-2 rounded-md border border-border px-2 py-1.5">
+                                    <div className="min-w-0">
+                                        <Label htmlFor={`tool-mode-${node.id}`} className="text-[11px]">
+                                            Tool Mode
+                                        </Label>
+                                        <p className="text-[10px] text-muted-foreground leading-tight">
+                                            {toolMode
+                                                ? 'Acts as a toolset for a supervisor agent.'
+                                                : 'Acts as a workflow step.'}
+                                        </p>
+                                    </div>
+                                    <Switch
+                                        id={`tool-mode-${node.id}`}
+                                        checked={toolMode}
+                                        onCheckedChange={(checked) => setToolMode(Boolean(checked))}
+                                        disabled={readOnly}
+                                    />
+                                </div>
+                            )}
+
                             <div className="grid grid-cols-2 gap-0.5 rounded-md border border-border p-0.5">
                                 <Button
                                     type="button"
@@ -127,15 +190,17 @@ export default function NodeConfigForm({
                                             disabled={readOnly}
                                         />
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label>Message override</Label>
-                                        <Input
-                                            value={data.message ?? ''}
-                                            onChange={(e) => updateField('message', e.target.value)}
-                                            placeholder="{{input}}"
-                                            disabled={readOnly}
-                                        />
-                                    </div>
+                                    {!toolMode && (
+                                        <div className="space-y-2">
+                                            <Label>Message override</Label>
+                                            <Input
+                                                value={data.message ?? ''}
+                                                onChange={(e) => updateField('message', e.target.value)}
+                                                placeholder="{{input}}"
+                                                disabled={readOnly}
+                                            />
+                                        </div>
+                                    )}
                                 </>
                             ) : (
                                 <>
@@ -163,36 +228,67 @@ export default function NodeConfigForm({
                                         <Label>Tools</Label>
                                         <p className="ab-flow-agent-tools-hint">
                                             Connect Tool or MCP nodes to the cyan tools handle.
+                                            {toolMode
+                                                ? ' Connect the amber toolset handle to a supervisor tools pin.'
+                                                : ''}
                                         </p>
                                     </div>
-                                    <div className="space-y-2">
-                                        <Label>Input</Label>
-                                        <Input
-                                            value={data.message ?? ''}
-                                            onChange={(e) => updateField('message', e.target.value)}
-                                            placeholder="{{input}}"
-                                            disabled={readOnly}
-                                        />
-                                    </div>
+                                    {!toolMode && (
+                                        <div className="space-y-2">
+                                            <Label>Input</Label>
+                                            <Input
+                                                value={data.message ?? ''}
+                                                onChange={(e) => updateField('message', e.target.value)}
+                                                placeholder="{{input}}"
+                                                disabled={readOnly}
+                                            />
+                                        </div>
+                                    )}
                                 </>
                             )}
 
-                            <div className="space-y-2">
-                                <Label>Output Key</Label>
-                                <Input
-                                    value={data.output_key ?? 'agent_response'}
-                                    onChange={(e) => updateField('output_key', e.target.value)}
-                                    disabled={readOnly}
-                                />
-                                {!compact && (
-                                    <p className="text-xs text-muted-foreground">
-                                        State key where the agent response is stored.
+                            {toolMode && (
+                                <div className="space-y-1">
+                                    <Label>Actions</Label>
+                                    <Button
+                                        type="button"
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-8 w-full justify-between text-[11px]"
+                                        disabled={readOnly}
+                                        onClick={openActions}
+                                    >
+                                        <span>
+                                            {(data.tool_exposure?.slug || typeMeta?.tool_exposure?.slug_prefix || 'call_agent')}
+                                        </span>
+                                        <span className="text-muted-foreground">Edit</span>
+                                    </Button>
+                                    <p className="text-[10px] text-muted-foreground">
+                                        Slug, description, and parameters for the supervisor tool call.
                                     </p>
-                                )}
-                            </div>
-                            <div className="ab-flow-agent-response-row">
-                                <span>Response</span>
-                            </div>
+                                </div>
+                            )}
+
+                            {!toolMode && (
+                                <>
+                                    <div className="space-y-2">
+                                        <Label>Output Key</Label>
+                                        <Input
+                                            value={data.output_key ?? 'agent_response'}
+                                            onChange={(e) => updateField('output_key', e.target.value)}
+                                            disabled={readOnly}
+                                        />
+                                        {!compact && (
+                                            <p className="text-xs text-muted-foreground">
+                                                State key where the agent response is stored.
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="ab-flow-agent-response-row">
+                                        <span>Response</span>
+                                    </div>
+                                </>
+                            )}
                             <StreamToggleField
                                 stream={Boolean(data.stream)}
                                 structured={Boolean(data.structured)}
@@ -590,6 +686,32 @@ export default function NodeConfigForm({
                                     onChange={(e) => updateField('output_key', e.target.value)}
                                     disabled={readOnly}
                                 />
+                            </div>
+                            <div className="space-y-1">
+                                <Label>Actions</Label>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 w-full justify-between text-[11px]"
+                                    disabled={!data.tool_ref}
+                                    onClick={openToolActions}
+                                >
+                                    <span className="truncate">
+                                        {data.tool_ref
+                                            ? tools.find((tool) => tool.ref === data.tool_ref)?.label ||
+                                              data.tool_ref
+                                            : 'Select a tool'}
+                                    </span>
+                                    <span className="text-muted-foreground">
+                                        {tools.find((tool) => tool.ref === data.tool_ref)?.editable
+                                            ? 'Edit'
+                                            : 'View'}
+                                    </span>
+                                </Button>
+                                <p className="text-[10px] text-muted-foreground">
+                                    Slug, description, and parameters (ToolInterface schema).
+                                </p>
                             </div>
                         </>
                     )}

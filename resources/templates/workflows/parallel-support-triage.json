@@ -5,8 +5,17 @@
     "description": "Runs three independent analyses of a support ticket in parallel (sentiment, extracted facts, priority & routing), merges them at a join node, and composes a triage summary plus a suggested reply. Analysis nodes are checkpointed so re-runs and resumes reuse cached results instead of calling the provider again.",
     "complexity": "intermediate",
     "category": "support",
-    "tags": ["parallel", "fork", "join", "checkpoints", "support", "triage"],
-    "agents": ["support-triage-composer"]
+    "tags": [
+      "parallel",
+      "fork",
+      "join",
+      "checkpoints",
+      "support",
+      "triage"
+    ],
+    "agents": [
+      "support-triage-composer"
+    ]
   },
   "graph": {
     "version": 1,
@@ -14,13 +23,19 @@
       {
         "id": "start_1",
         "type": "start",
-        "position": { "x": 40, "y": 300 },
+        "position": {
+          "x": 40,
+          "y": 128
+        },
         "data": {}
       },
       {
         "id": "set_ticket",
         "type": "set_state",
-        "position": { "x": 200, "y": 300 },
+        "position": {
+          "x": 440,
+          "y": 128
+        },
         "data": {
           "key": "ticket",
           "from_key": "input"
@@ -29,7 +44,10 @@
       {
         "id": "fork_1",
         "type": "fork",
-        "position": { "x": 400, "y": 300 },
+        "position": {
+          "x": 840,
+          "y": 128
+        },
         "data": {
           "join": "join_1"
         }
@@ -37,7 +55,10 @@
       {
         "id": "llm_sentiment",
         "type": "llm",
-        "position": { "x": 640, "y": 120 },
+        "position": {
+          "x": 1240,
+          "y": 40
+        },
         "data": {
           "provider": "openai",
           "model": "gpt-4o-mini",
@@ -49,7 +70,10 @@
       {
         "id": "llm_facts",
         "type": "llm",
-        "position": { "x": 640, "y": 300 },
+        "position": {
+          "x": 1240,
+          "y": 216
+        },
         "data": {
           "provider": "openai",
           "model": "gpt-4o-mini",
@@ -61,7 +85,10 @@
       {
         "id": "llm_priority",
         "type": "llm",
-        "position": { "x": 640, "y": 480 },
+        "position": {
+          "x": 1240,
+          "y": 392
+        },
         "data": {
           "provider": "openai",
           "model": "gpt-4o-mini",
@@ -73,7 +100,10 @@
       {
         "id": "join_1",
         "type": "join",
-        "position": { "x": 900, "y": 300 },
+        "position": {
+          "x": 1640,
+          "y": 128
+        },
         "data": {
           "output_key": "analyses"
         }
@@ -81,7 +111,10 @@
       {
         "id": "agent_compose",
         "type": "agent",
-        "position": { "x": 1100, "y": 300 },
+        "position": {
+          "x": 2040,
+          "y": 128
+        },
         "data": {
           "agent_ref": "support-triage-composer",
           "checkpoint": true,
@@ -92,7 +125,10 @@
       {
         "id": "stop_1",
         "type": "stop",
-        "position": { "x": 1320, "y": 300 },
+        "position": {
+          "x": 2440,
+          "y": 128
+        },
         "data": {}
       }
     ],
@@ -175,6 +211,10 @@
         "targetHandle": "default"
       }
     ],
-    "viewport": { "x": 0, "y": 0, "zoom": 1 }
+    "viewport": {
+      "x": 0,
+      "y": 0,
+      "zoom": 1
+    }
   }
 }

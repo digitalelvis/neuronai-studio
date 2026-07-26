@@ -12,6 +12,7 @@ const CanvasUiContext = createContext({
     providerModels: {},
     defaultProvider: '',
     defaultModel: '',
+    nodeTypesMeta: {},
 });
 
 export function CanvasUiProvider({
@@ -26,6 +27,7 @@ export function CanvasUiProvider({
     providerModels = {},
     defaultProvider = '',
     defaultModel = '',
+    nodeTypesMeta = {},
     children,
 }) {
     return (
@@ -42,6 +44,7 @@ export function CanvasUiProvider({
                 providerModels,
                 defaultProvider,
                 defaultModel,
+                nodeTypesMeta,
             }}
         >
             {children}

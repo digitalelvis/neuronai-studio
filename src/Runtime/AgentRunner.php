@@ -28,6 +28,9 @@ use NeuronAI\Chat\Messages\UserMessage;
 use NeuronAI\Exceptions\AgentException;
 use NeuronAI\Exceptions\ProviderException;
 use NeuronAI\Testing\FakeAIProvider;
+use NeuronAI\Tools\ProviderToolInterface;
+use NeuronAI\Tools\ToolInterface;
+use NeuronAI\Tools\Toolkits\ToolkitInterface;
 use NeuronAI\Workflow\Interrupt\ApprovalRequest;
 use NeuronAI\Workflow\Interrupt\WorkflowInterrupt;
 use NeuronAI\Workflow\Persistence\InMemoryPersistence;
@@ -199,7 +202,12 @@ class AgentRunner
             'message' => $message instanceof UserMessage ? $message->getContent() : $message
         ], $parentRun);
 
-        $agent = $this->makeAgent($definition, $config, $threadKey ?? $run->thread_id, $fake);
+        $agent = $this->makeAgent(
+            $definition,
+            $this->withToolParentRun($config, $run),
+            $threadKey ?? $run->thread_id,
+            $fake,
+        );
         $agent->setPersistence(new InMemoryPersistence, $run->id);
 
         $this->attachObservability($agent, $run, $trace, $config, $parentRun);
@@ -253,7 +261,7 @@ class AgentRunner
             'message' => $message instanceof UserMessage ? $message->getContent() : $message
         ], $parentRun);
 
-        $agent = $this->makeAgent($definition, $config, $threadKey, $fake);
+        $agent = $this->makeAgent($definition, $this->withToolParentRun($config, $run), $threadKey, $fake);
         $agent->setPersistence(new InMemoryPersistence, $run->id);
 
         $this->attachObservability($agent, $run, $trace, $config, $parentRun);
@@ -474,7 +482,7 @@ class AgentRunner
             'message' => $message instanceof UserMessage ? $message->getContent() : $message
         ], $parentRun);
 
-        $agent = $this->makeAgent($definition, $config, $threadKey, $fake);
+        $agent = $this->makeAgent($definition, $this->withToolParentRun($config, $run), $threadKey, $fake);
         $agent->setPersistence(new InMemoryPersistence, $run->id);
 
         $this->attachObservability($agent, $run, $trace, $config, $parentRun);
@@ -742,7 +750,22 @@ class AgentRunner
             );
         }
 
-        $tools = $this->toolResolver->resolveMany($config['tools'] ?? []);
+        $tools = [];
+        foreach ($config['tools'] ?? [] as $item) {
+            if ($item instanceof ToolInterface || $item instanceof ToolkitInterface || $item instanceof ProviderToolInterface) {
+                $tools[] = $item;
+
+                continue;
+            }
+
+            if (! is_array($item) || empty($item['ref'])) {
+                continue;
+            }
+
+            foreach ($this->toolResolver->resolve((string) $item['ref'], $item) as $resolved) {
+                $tools[] = $resolved;
+            }
+        }
         $memory = $this->resolveMemoryConfig($definition, $config);
 
         $agent = new DynamicAgent(
@@ -763,6 +786,34 @@ class AgentRunner
         $this->applyToolControls($agent, $config, $definition);
 
         return $agent;
+    }
+
+    /**
+     * Stamp supervisor run id onto node: tool bindings so nested specialists nest metering.
+     *
+     * @param  array<string, mixed>  $config
+     * @return array<string, mixed>
+     */
+    protected function withToolParentRun(array $config, StudioRun $run): array
+    {
+        if (! isset($config['tools']) || ! is_array($config['tools'])) {
+            return $config;
+        }
+
+        $config['tools'] = array_map(static function ($binding) use ($run) {
+            if (! is_array($binding)) {
+                return $binding;
+            }
+
+            $ref = (string) ($binding['ref'] ?? '');
+            if (str_starts_with($ref, 'node:')) {
+                $binding['parent_run_id'] = $run->id;
+            }
+
+            return $binding;
+        }, $config['tools']);
+
+        return $config;
     }
 
     /**

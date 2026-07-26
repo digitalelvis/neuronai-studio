@@ -110,7 +110,12 @@ class TemplateInstaller
             $data = $node['data'] ?? [];
             $ref = (string) ($data['agent_ref'] ?? '');
 
-            if ($ref === '' || ! isset($agentMap[$ref])) {
+            // Inline agents (Tool Mode specialists, canvas-configured supervisors) omit agent_ref.
+            if ($ref === '') {
+                continue;
+            }
+
+            if (! isset($agentMap[$ref])) {
                 throw new InvalidArgumentException("Workflow template references unknown agent: {$ref}");
             }
 

@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 import { useCanvasUi } from '../CanvasUiContext';
 import { categoryColor } from '../graph';
-import { normalizeNodeForEdit, resolveAgentConfigMode } from '../inspector/nodeUtils';
+import { normalizeNodeForEdit, resolveAgentConfigMode, isToolModeEnabled } from '../inspector/nodeUtils';
 import NodeConfigForm from '../inspector/NodeConfigForm';
 import { NodeTypeIcon } from './nodeIcons';
 
@@ -108,14 +108,61 @@ function NodeHandles({ nodeType, config, expanded = false }) {
     }
 
     if (nodeType === 'agent') {
-        const mode = resolveAgentConfigMode(config || {});
-        const showTools = mode === 'inline';
+        const toolMode = isToolModeEnabled(config || {});
+        // D8: tools target visible for inline and existing supervisors.
+        // v1: specialists in Tool Mode keep tools target so they can bind tool/mcp too.
+        const showToolsTarget = true;
+
+        if (toolMode) {
+            if (!expanded) {
+                return (
+                    <>
+                        {showToolsTarget && (
+                            <Handle
+                                type="target"
+                                position={Position.Left}
+                                id="tools"
+                                className="ab-flow-handle ab-flow-handle-tools"
+                                style={{ top: '38%' }}
+                            />
+                        )}
+                        <Handle
+                            type="source"
+                            position={Position.Right}
+                            id="toolset"
+                            className="ab-flow-handle ab-flow-handle-toolset"
+                        />
+                    </>
+                );
+            }
+
+            return (
+                <>
+                    {showToolsTarget && (
+                        <Handle
+                            type="target"
+                            position={Position.Left}
+                            id="tools"
+                            className="ab-flow-handle ab-flow-handle-tools"
+                            style={{ top: 'calc(100% - 15.25rem)' }}
+                        />
+                    )}
+                    <Handle
+                        type="source"
+                        position={Position.Right}
+                        id="toolset"
+                        className="ab-flow-handle ab-flow-handle-toolset"
+                        style={{ top: 'calc(100% - 5.25rem)' }}
+                    />
+                </>
+            );
+        }
 
         if (!expanded) {
             return (
                 <>
                     <Handle type="target" position={Position.Left} id="default" className="ab-flow-handle" />
-                    {showTools && (
+                    {showToolsTarget && (
                         <Handle
                             type="target"
                             position={Position.Left}
@@ -133,7 +180,7 @@ function NodeHandles({ nodeType, config, expanded = false }) {
         // sit below Input; Tools sits just above Input in inline mode).
         return (
             <>
-                {showTools && (
+                {showToolsTarget && (
                     <Handle
                         type="target"
                         position={Position.Left}
@@ -193,6 +240,7 @@ export default function WorkflowNode({ id, data, selected }) {
     const expanded = !collapsed && data.nodeType !== 'start' && data.nodeType !== 'stop';
 
     const agentMode = data.nodeType === 'agent' ? resolveAgentConfigMode(data.config || {}) : null;
+    const agentToolMode = data.nodeType === 'agent' ? isToolModeEnabled(data.config || {}) : false;
     const agentName =
         data.nodeType === 'agent' && agentMode === 'existing' && data.config?.agent_id
             ? agents.find((agent) => String(agent.id) === String(data.config.agent_id))?.name
@@ -338,7 +386,13 @@ export default function WorkflowNode({ id, data, selected }) {
                     )}
                     {agentName && <div className="ab-flow-node-meta">{agentName}</div>}
                     {agentInlineMeta && <div className="ab-flow-node-meta">{agentInlineMeta}</div>}
-                    {data.nodeType === 'agent' && agentMode === 'inline' && (
+                    {data.nodeType === 'agent' && agentToolMode && (
+                        <div className="ab-flow-node-handles-labels">
+                            <span className="ab-flow-handle-label ab-flow-handle-label-tools">tools</span>
+                            <span className="ab-flow-handle-label ab-flow-handle-label-toolset">toolset</span>
+                        </div>
+                    )}
+                    {data.nodeType === 'agent' && !agentToolMode && (
                         <div className="ab-flow-node-handles-labels">
                             <span className="ab-flow-handle-label ab-flow-handle-label-tools">tools</span>
                         </div>

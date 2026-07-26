@@ -39,9 +39,10 @@ Legacy graphs without `config_mode` resolve to **existing** when `agent_id` is s
 
 | Handle | Side | Role |
 |--------|------|------|
-| `default` (target) | Left — Input | Control-flow input |
-| `tools` (target) | Left — Tools (inline only) | Binding pin: connect **Tool** or **MCP** nodes. These edges are **not** workflow steps — they become tool bindings at runtime |
-| `default` (source) | Right — Response | Control-flow output |
+| `default` (target) | Left — Input | Control-flow input (Step Mode only) |
+| `tools` (target) | Left — Tools | Binding pin: connect **Tool**, **MCP**, or Tool Mode agent **toolset** edges. Not a workflow step |
+| `default` (source) | Right — Response | Control-flow output (Step Mode only) |
+| `toolset` (source) | Right — Toolset | Tool Mode only: expose this agent as a tool for a supervisor |
 
 ```mermaid
 flowchart LR
@@ -51,11 +52,37 @@ flowchart LR
   Agent -->|default| Stop
 ```
 
-In **existing** mode, tools come from the AgentDefinition bindings (and MCP pivot). The `tools` handle is hidden.
+The cyan **tools** handle is visible in both **inline** and **existing** modes. Existing supervisors merge AgentDefinition tools with canvas bindings at runtime. Inline supervisors use canvas bindings only.
 
-In **inline** mode, connect Tool/MCP nodes to the cyan `tools` handle. The runtime resolves each source into a `{ ref }` binding (`tool_ref` or `mcp:{slug}`). Binding edges are excluded from cycle detection and next-step routing.
+Binding edges (`targetHandle: tools` / `sourceHandle: toolset`) are excluded from cycle detection and next-step routing.
 
-Example message:
+### Tool Mode (agent-as-tool)
+
+Nodes with meta `toolable: true` (built-in **Agent** in v1) can flip between:
+
+| Mode | UI | Graph role |
+|------|-----|------------|
+| **Step** (`tool_mode: false`) | Input + Response | Control-flow step |
+| **Tool** (`tool_mode: true`) | Actions + Toolset | Binding-only specialist |
+
+When Tool Mode is on:
+
+1. Message **Input** is hidden; control-flow edges to/from the node are invalid.
+2. **Actions** configures `tool_exposure` (slug, description, caller-controlled `input` param).
+3. Connect the amber **toolset** handle → supervisor **tools** handle.
+
+```mermaid
+flowchart LR
+  Start -->|default| Supervisor
+  Specialist -->|toolset| Supervisor
+  Supervisor -->|default| Stop
+```
+
+Runtime resolves each toolset edge as a `node:{id}` binding → Studio `NodeAsTool` (Neuron `Tool` wrapper that runs the specialist via `AgentRunner`). Native export **snapshots** the specialist config into generated PHP and omits the specialist as a linear workflow Node.
+
+Empty slug defaults to meta `tool_exposure.slug_prefix` (e.g. `call_agent`). Slugs must be unique per supervisor and valid function names.
+
+Example message (Step Mode):
 
 ```
 Customer inquiry: {{input}}
