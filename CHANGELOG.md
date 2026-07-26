@@ -1,5 +1,25 @@
 # Changelog
 
+# [1.1.0](https://github.com/digitalelvis/neuronai-studio/compare/v1.0.0...v1.1.0) (2026-07-26)
+
+
+### Bug Fixes
+
+* **canvas:** auto-layout overlapping nodes on graph load ([a1f81c4](https://github.com/digitalelvis/neuronai-studio/commit/a1f81c47bd3ba5bba7f8d4812aa3cb1959bf42a8))
+* **templates:** recalibrate workflow node positions for current size ([dcaee13](https://github.com/digitalelvis/neuronai-studio/commit/dcaee13b7915dd5afa7c0cd70373eafe05d823da))
+
+
+### Features
+
+* **canvas:** add Tool Mode UI and Actions exposure modal ([a37869b](https://github.com/digitalelvis/neuronai-studio/commit/a37869b1c9dcd639b4ab4feb0080ba546e5fa3b7))
+* **canvas:** add Tools/MCP catalogs and tool Actions modal ([6126f40](https://github.com/digitalelvis/neuronai-studio/commit/6126f40906ea40686ee559b8369d4f00a52b60af))
+* **canvas:** expose toolable meta for agent node types ([a6ae46d](https://github.com/digitalelvis/neuronai-studio/commit/a6ae46d1591951414192dffbe3fc0432cdaae48a))
+* **codegen:** snapshot Tool Mode specialists into supervisor tools ([1a2f27b](https://github.com/digitalelvis/neuronai-studio/commit/1a2f27be3c33011c8c327b6f799e6a0d892c89da))
+* **runtime:** collect toolset edges as node tool bindings ([4111a9f](https://github.com/digitalelvis/neuronai-studio/commit/4111a9fc56c3c138bfb06570039121d3b95630b0))
+* **runtime:** merge canvas tool bindings with agent definition tools ([034aa60](https://github.com/digitalelvis/neuronai-studio/commit/034aa6069a957734a958fa80bfdb2e7325f0c2d8))
+* **runtime:** resolve node tool bindings via NodeAsTool ([77c386c](https://github.com/digitalelvis/neuronai-studio/commit/77c386c1e7e5b5ddd2d51875e719f298c2ad5951))
+* **runtime:** validate Tool Mode agents and toolset edges ([4b35050](https://github.com/digitalelvis/neuronai-studio/commit/4b350509e83a0010990c9af774aca26dcba60df3))
+
 # [1.0.0](https://github.com/digitalelvis/neuronai-studio/compare/v0.10.0...v1.0.0) (2026-07-25)
 
 
