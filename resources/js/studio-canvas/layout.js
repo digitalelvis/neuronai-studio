@@ -38,3 +38,54 @@ export function layoutWithDagre(nodes, edges, direction = 'LR') {
         };
     });
 }
+
+function nodeBounds(node, width = NODE_WIDTH, height = NODE_HEIGHT) {
+    const x = node.position?.x ?? 0;
+    const y = node.position?.y ?? 0;
+
+    return {
+        left: x,
+        top: y,
+        right: x + width,
+        bottom: y + height,
+    };
+}
+
+function boundsOverlap(a, b) {
+    return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
+}
+
+export function nodesHaveOverlap(nodes, width = NODE_WIDTH, height = NODE_HEIGHT) {
+    const workflowNodes = (nodes || []).filter(
+        (node) => node.data?.nodeType !== 'note' && node.type !== 'stickyNote',
+    );
+
+    for (let i = 0; i < workflowNodes.length; i += 1) {
+        const a = nodeBounds(workflowNodes[i], width, height);
+
+        for (let j = i + 1; j < workflowNodes.length; j += 1) {
+            const b = nodeBounds(workflowNodes[j], width, height);
+
+            if (boundsOverlap(a, b)) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+export function ensureLayoutedGraph(nodes, edges) {
+    if (!nodesHaveOverlap(nodes)) {
+        return nodes;
+    }
+
+    const workflowOnly = nodes.filter(
+        (node) => node.data?.nodeType !== 'note' && node.type !== 'stickyNote',
+    );
+    const notes = nodes.filter(
+        (node) => node.data?.nodeType === 'note' || node.type === 'stickyNote',
+    );
+
+    return [...layoutWithDagre(workflowOnly, edges), ...notes];
+}

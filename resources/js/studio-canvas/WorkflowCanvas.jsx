@@ -19,7 +19,7 @@ import WorkflowEdge from './edges/WorkflowEdge';
 import WorkflowNode from './nodes/WorkflowNode';
 import StickyNote from './nodes/StickyNote';
 import { useUndoRedo } from './hooks/useUndoRedo';
-import { layoutWithDagre } from './layout';
+import { ensureLayoutedGraph, layoutWithDagre } from './layout';
 import {
     buildFlowEdge,
     buildFlowNode,
@@ -80,11 +80,12 @@ function WorkflowCanvasInner({
     providers = {},
     providerModels = {},
 }) {
-    const initialNodes = useMemo(
-        () => toFlowNodes(graph?.nodes, nodeTypesMeta, graph?.annotations),
-        [],
-    );
     const initialEdges = useMemo(() => toFlowEdges(graph?.edges), []);
+    const initialNodes = useMemo(() => {
+        const flowNodes = toFlowNodes(graph?.nodes, nodeTypesMeta, graph?.annotations);
+
+        return ensureLayoutedGraph(flowNodes, initialEdges);
+    }, []);
     const initialViewport = graph?.viewport || { x: 0, y: 0, zoom: 1 };
 
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -218,8 +219,11 @@ function WorkflowCanvasInner({
                 return;
             }
 
-            const flowNodes = toFlowNodes(nextGraph.nodes, nodeTypesMeta, nextGraph.annotations);
             const flowEdges = toFlowEdges(nextGraph.edges);
+            const flowNodes = ensureLayoutedGraph(
+                toFlowNodes(nextGraph.nodes, nodeTypesMeta, nextGraph.annotations),
+                flowEdges,
+            );
             const viewport = nextGraph.viewport || { x: 0, y: 0, zoom: 1 };
 
             setNodes(flowNodes);
