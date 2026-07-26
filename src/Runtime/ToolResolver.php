@@ -4,6 +4,7 @@ namespace DigitalElvis\NeuronAIStudio\Runtime;
 
 use DigitalElvis\NeuronAIStudio\Models\ToolDefinition;
 use DigitalElvis\NeuronAIStudio\Registry\ToolRegistry;
+use DigitalElvis\NeuronAIStudio\Runtime\Tools\NodeAsTool;
 use DigitalElvis\NeuronAIStudio\Tools\KnowledgeBaseTool;
 use DigitalElvis\NeuronAIStudio\Tools\WebhookTool;
 use Illuminate\Support\Str;
@@ -72,7 +73,61 @@ class ToolResolver
             return [$this->resolveProviderTool($config)];
         }
 
+        if (str_starts_with($ref, 'node:')) {
+            return [$this->resolveNodeAsTool($ref, $binding)];
+        }
+
         return [];
+    }
+
+    /**
+     * @param  array<string, mixed>  $binding
+     */
+    protected function resolveNodeAsTool(string $ref, array $binding): ToolInterface
+    {
+        $nodeId = Str::after($ref, 'node:');
+        $node = is_array($binding['node'] ?? null) ? $binding['node'] : [];
+        $data = is_array($node['data'] ?? null) ? $node['data'] : [];
+        $exposure = is_array($binding['exposure'] ?? null) ? $binding['exposure'] : [];
+
+        $slug = trim((string) ($exposure['slug'] ?? ''));
+        if ($slug === '') {
+            $slug = (string) (
+                config('neuronai-studio.node_types.agent.tool_exposure.slug_prefix')
+                ?: 'call_agent'
+            );
+        }
+
+        $description = trim((string) ($exposure['description'] ?? ''));
+        if ($description === '') {
+            $description = (string) (
+                config('neuronai-studio.node_types.agent.tool_exposure.default_description')
+                ?: 'Delegate a task to this specialized agent.'
+            );
+        }
+
+        $inputDescription = 'Task for the specialist';
+        $parameters = is_array($exposure['parameters'] ?? null) ? $exposure['parameters'] : [];
+        $input = is_array($parameters['input'] ?? null) ? $parameters['input'] : [];
+        if (is_string($input['description'] ?? null) && trim((string) $input['description']) !== '') {
+            $inputDescription = trim((string) $input['description']);
+        }
+
+        $parentRunId = isset($binding['parent_run_id']) && $binding['parent_run_id'] !== '' && $binding['parent_run_id'] !== null
+            ? (string) $binding['parent_run_id']
+            : null;
+
+        if ($data === []) {
+            throw new \InvalidArgumentException("Node tool binding for [{$nodeId}] is missing node data.");
+        }
+
+        return new NodeAsTool(
+            $slug,
+            $description,
+            $data,
+            $parentRunId,
+            $inputDescription,
+        );
     }
 
     /**

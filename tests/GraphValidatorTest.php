@@ -235,4 +235,190 @@ class GraphValidatorTest extends TestCase
         $this->assertFalse($result['valid']);
         $this->assertStringContainsString('provider', strtolower(implode(' ', $result['errors'])));
     }
+
+    public function test_accepts_supervisor_with_tool_mode_specialist(): void
+    {
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate($this->supervisorSpecialistGraph());
+
+        $this->assertTrue($result['valid'], implode(' ', $result['errors']));
+    }
+
+    public function test_accepts_toolset_edge_on_existing_supervisor(): void
+    {
+        $graph = $this->supervisorSpecialistGraph();
+        $graph['nodes'][1]['data'] = [
+            'config_mode' => 'existing',
+            'agent_id' => 42,
+        ];
+
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate($graph);
+
+        $this->assertTrue($result['valid'], implode(' ', $result['errors']));
+    }
+
+    public function test_rejects_control_flow_edge_to_tool_mode_agent(): void
+    {
+        $graph = $this->supervisorSpecialistGraph();
+        $graph['edges'][] = [
+            'id' => 'e_cf',
+            'source' => 'start_1',
+            'target' => 'specialist_1',
+            'sourceHandle' => 'default',
+            'targetHandle' => 'default',
+        ];
+
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate($graph);
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('tool mode', strtolower(implode(' ', $result['errors'])));
+    }
+
+    public function test_rejects_control_flow_edge_from_tool_mode_agent(): void
+    {
+        $graph = $this->supervisorSpecialistGraph();
+        $graph['edges'][] = [
+            'id' => 'e_cf',
+            'source' => 'specialist_1',
+            'target' => 'stop_1',
+            'sourceHandle' => 'default',
+            'targetHandle' => 'default',
+        ];
+
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate($graph);
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('tool mode', strtolower(implode(' ', $result['errors'])));
+    }
+
+    public function test_rejects_duplicate_toolset_slug_on_same_supervisor(): void
+    {
+        $graph = $this->supervisorSpecialistGraph();
+        $graph['nodes'][] = [
+            'id' => 'specialist_2',
+            'type' => 'agent',
+            'position' => ['x' => 100, 'y' => 240],
+            'data' => [
+                'config_mode' => 'inline',
+                'provider' => 'openai',
+                'model' => 'gpt-4o-mini',
+                'tool_mode' => true,
+                'tool_exposure' => [
+                    'slug' => 'research_agent',
+                    'description' => 'Second specialist',
+                ],
+            ],
+        ];
+        $graph['edges'][] = [
+            'id' => 'e4',
+            'source' => 'specialist_2',
+            'target' => 'supervisor_1',
+            'sourceHandle' => 'toolset',
+            'targetHandle' => 'tools',
+        ];
+
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate($graph);
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('slug', strtolower(implode(' ', $result['errors'])));
+    }
+
+    public function test_rejects_toolset_edge_from_agent_without_tool_mode(): void
+    {
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate([
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                [
+                    'id' => 'supervisor_1',
+                    'type' => 'agent',
+                    'position' => ['x' => 100, 'y' => 0],
+                    'data' => [
+                        'config_mode' => 'inline',
+                        'provider' => 'openai',
+                        'model' => 'gpt-4o-mini',
+                    ],
+                ],
+                [
+                    'id' => 'agent_2',
+                    'type' => 'agent',
+                    'position' => ['x' => 100, 'y' => 120],
+                    'data' => [
+                        'config_mode' => 'inline',
+                        'provider' => 'openai',
+                        'model' => 'gpt-4o-mini',
+                        'tool_mode' => false,
+                    ],
+                ],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'supervisor_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'supervisor_1', 'target' => 'stop_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ['id' => 'e3', 'source' => 'agent_2', 'target' => 'supervisor_1', 'sourceHandle' => 'toolset', 'targetHandle' => 'tools'],
+            ],
+        ]);
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('tool_mode', strtolower(implode(' ', $result['errors'])));
+    }
+
+    public function test_rejects_invalid_tool_exposure_slug(): void
+    {
+        $graph = $this->supervisorSpecialistGraph();
+        $graph['nodes'][2]['data']['tool_exposure']['slug'] = 'bad-slug!';
+
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate($graph);
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('invalid tool_exposure.slug', strtolower(implode(' ', $result['errors'])));
+    }
+
+    /**
+     * @return array{nodes: array<int, array<string, mixed>>, edges: array<int, array<string, mixed>>}
+     */
+    protected function supervisorSpecialistGraph(): array
+    {
+        return [
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                [
+                    'id' => 'supervisor_1',
+                    'type' => 'agent',
+                    'position' => ['x' => 100, 'y' => 0],
+                    'data' => [
+                        'config_mode' => 'inline',
+                        'provider' => 'openai',
+                        'model' => 'gpt-4o-mini',
+                    ],
+                ],
+                [
+                    'id' => 'specialist_1',
+                    'type' => 'agent',
+                    'position' => ['x' => 100, 'y' => 120],
+                    'data' => [
+                        'config_mode' => 'inline',
+                        'provider' => 'openai',
+                        'model' => 'gpt-4o-mini',
+                        'tool_mode' => true,
+                        'tool_exposure' => [
+                            'slug' => 'research_agent',
+                            'description' => 'Research specialist',
+                        ],
+                    ],
+                ],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'supervisor_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'supervisor_1', 'target' => 'stop_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ['id' => 'e3', 'source' => 'specialist_1', 'target' => 'supervisor_1', 'sourceHandle' => 'toolset', 'targetHandle' => 'tools'],
+            ],
+        ];
+    }
 }

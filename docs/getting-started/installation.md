@@ -184,8 +184,19 @@ php artisan migrate
 
 Migrations are also loaded automatically from the package — you do not need to publish them unless you want to modify them.
 
+## Optional — AI-assisted development
+
+NeuronAI Studio ships an [Agent Skill](https://agentskills.io/) for Cursor, Claude Code, and similar tools:
+
+```text
+vendor/digitalelvis/neuronai-studio/skills/neuronai-studio/
+```
+
+Install or point your assistant at that directory so it follows Studio conventions and links into the package docs. Full instructions: [AI-Assisted Development](../guides/ai-assisted-development.md).
+
 ## Next steps
 
 - [Quickstart: First Agent](quickstart-first-agent.md) — create and test an agent in five minutes
 - [Quickstart: First Workflow](quickstart-first-workflow.md) — run a workflow from a template
 - [Demo App](demo-app.md) — local development with the bundled example app
+- [AI-Assisted Development](../guides/ai-assisted-development.md) — use Studio skills with Cursor / Claude

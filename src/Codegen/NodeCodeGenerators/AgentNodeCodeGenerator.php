@@ -33,6 +33,10 @@ PHP;
         if (isset($data['agent_id'])) {
             $agentId = (int) $data['agent_id'];
             $threadKey = 'is_string($state->get(\'__studio_thread_id\')) ? $state->get(\'__studio_thread_id\') : null';
+            $canvasTools = $this->exportToolsExpression(is_array($data['canvas_tools'] ?? null) ? $data['canvas_tools'] : []);
+            $toolsExpr = $canvasTools['code'] === '[]'
+                ? '\$agent->tools ?? []'
+                : 'array_values(array_merge(\$agent->tools ?? [], '.$canvasTools['code'].'))';
 
             if ($structured) {
                 $body = <<<PHP
@@ -43,7 +47,7 @@ PHP;
             'provider' => \$agent->provider,
             'model' => \$agent->model,
             'instructions' => \$agent->instructions,
-            'tools' => \$agent->tools ?? [],
+            'tools' => {$toolsExpr},
         ], \$userMessage, {$shortClass}::class, \$agent, {$threadKey});
 
         \$state->set({$outputKey}, \$response->structured);
@@ -62,7 +66,7 @@ PHP;
             'provider' => \$agent->provider,
             'model' => \$agent->model,
             'instructions' => \$agent->instructions,
-            'tools' => \$agent->tools ?? [],{$approvalLine}{$toolControlLine}{$memoryLine}
+            'tools' => {$toolsExpr},{$approvalLine}{$toolControlLine}{$memoryLine}
         ], \$userMessage, \$agent, {$threadKey});
 
         \$state->set({$outputKey}, \$response->content);
@@ -73,19 +77,20 @@ PHP;
 
             return [
                 'body' => $body,
-                'imports' => array_values(array_filter([
+                'imports' => array_values(array_unique(array_filter([
                     'DigitalElvis\\NeuronAIStudio\\Models\\AgentDefinition',
                     'DigitalElvis\\NeuronAIStudio\\Runtime\\AgentRunner',
                     'DigitalElvis\\NeuronAIStudio\\Runtime\\MessageFactory',
                     $structured && $outputClass !== '' ? $outputClass : null,
-                ])),
+                    ...$canvasTools['imports'],
+                ]))),
             ];
         }
 
         $provider = (string) ($data['provider'] ?? config('neuronai-studio.default_provider', 'openai'));
         $model = (string) ($data['model'] ?? config('neuronai-studio.default_model', 'gpt-4o-mini'));
         $instructions = var_export((string) ($data['instructions'] ?? ''), true);
-        $toolsExport = var_export($data['tools'] ?? [], true);
+        $toolsExport = $this->exportToolsExpression(is_array($data['tools'] ?? null) ? $data['tools'] : []);
         $threadKey = 'is_string($state->get(\'__studio_thread_id\')) ? $state->get(\'__studio_thread_id\') : null';
 
         if ($structured) {
@@ -96,7 +101,7 @@ PHP;
             'provider' => {$this->exportConfigValue($provider)},
             'model' => {$this->exportConfigValue($model)},
             'instructions' => {$instructions},
-            'tools' => {$toolsExport},
+            'tools' => {$toolsExport['code']},
         ], \$userMessage, {$shortClass}::class, null, {$threadKey});
 
         \$state->set({$outputKey}, \$response->structured);
@@ -106,11 +111,12 @@ PHP;
 
             return [
                 'body' => $body,
-                'imports' => array_values(array_filter([
+                'imports' => array_values(array_unique(array_filter([
                     'DigitalElvis\\NeuronAIStudio\\Runtime\\AgentRunner',
                     'DigitalElvis\\NeuronAIStudio\\Runtime\\MessageFactory',
                     $outputClass !== '' ? $outputClass : null,
-                ])),
+                    ...$toolsExport['imports'],
+                ]))),
             ];
         }
 
@@ -124,7 +130,7 @@ PHP;
             'provider' => {$this->exportConfigValue($provider)},
             'model' => {$this->exportConfigValue($model)},
             'instructions' => {$instructions},
-            'tools' => {$toolsExport},{$approvalLine}{$toolControlLine}{$memoryLine}
+            'tools' => {$toolsExport['code']},{$approvalLine}{$toolControlLine}{$memoryLine}
         ], \$userMessage, null, {$threadKey});
 
         \$state->set({$outputKey}, \$response->content);
@@ -134,10 +140,75 @@ PHP;
 
         return [
             'body' => $body,
-            'imports' => [
+            'imports' => array_values(array_unique([
                 'DigitalElvis\\NeuronAIStudio\\Runtime\\AgentRunner',
                 'DigitalElvis\\NeuronAIStudio\\Runtime\\MessageFactory',
-            ],
+                ...$toolsExport['imports'],
+            ])),
+        ];
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $bindings
+     * @return array{code: string, imports: array<int, string>}
+     */
+    protected function exportToolsExpression(array $bindings): array
+    {
+        if ($bindings === []) {
+            return ['code' => '[]', 'imports' => []];
+        }
+
+        $lines = [];
+        $imports = [];
+
+        foreach ($bindings as $binding) {
+            if (! is_array($binding)) {
+                continue;
+            }
+
+            $ref = (string) ($binding['ref'] ?? '');
+
+            if ($ref === 'node_as_tool') {
+                $imports[] = 'DigitalElvis\\NeuronAIStudio\\Runtime\\Tools\\NodeAsTool';
+                $slug = var_export((string) ($binding['slug'] ?? 'call_agent'), true);
+                $description = var_export((string) ($binding['description'] ?? ''), true);
+                $inputDescription = var_export((string) ($binding['input_description'] ?? 'Task for the specialist'), true);
+                $agentConfig = var_export(is_array($binding['agent_config'] ?? null) ? $binding['agent_config'] : [], true);
+                $lines[] = "new NodeAsTool({$slug}, {$description}, {$agentConfig}, null, {$inputDescription})";
+
+                continue;
+            }
+
+            if (str_starts_with($ref, 'toolkit:')) {
+                $slug = substr($ref, strlen('toolkit:'));
+                $class = config("neuronai-studio.tools.{$slug}.class");
+                if (is_string($class) && $class !== '') {
+                    $lines[] = '\\'.$class.'::make()';
+                }
+
+                continue;
+            }
+
+            if (str_starts_with($ref, 'class:')) {
+                $class = substr($ref, strlen('class:'));
+                if ($class !== '') {
+                    $lines[] = '\\'.$class.'::make()';
+                }
+
+                continue;
+            }
+
+            // Fallback: keep binding array for ToolResolver at runtime.
+            $lines[] = var_export($binding, true);
+        }
+
+        if ($lines === []) {
+            return ['code' => '[]', 'imports' => []];
+        }
+
+        return [
+            'code' => "[\n            ".implode(",\n            ", $lines).",\n        ]",
+            'imports' => array_values(array_unique($imports)),
         ];
     }
 

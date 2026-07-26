@@ -5,8 +5,13 @@
     "description": "Minimal workflow: user input flows through a single agent node to produce a response.",
     "complexity": "basic",
     "category": "starter",
-    "tags": ["agent", "chat"],
-    "agents": ["support-assistant"]
+    "tags": [
+      "agent",
+      "chat"
+    ],
+    "agents": [
+      "support-assistant"
+    ]
   },
   "graph": {
     "version": 1,
@@ -14,13 +19,19 @@
       {
         "id": "start_1",
         "type": "start",
-        "position": { "x": 100, "y": 200 },
+        "position": {
+          "x": 40,
+          "y": 40
+        },
         "data": {}
       },
       {
         "id": "agent_1",
         "type": "agent",
-        "position": { "x": 320, "y": 200 },
+        "position": {
+          "x": 440,
+          "y": 40
+        },
         "data": {
           "agent_ref": "support-assistant",
           "message": "",
@@ -30,7 +41,10 @@
       {
         "id": "stop_1",
         "type": "stop",
-        "position": { "x": 540, "y": 200 },
+        "position": {
+          "x": 840,
+          "y": 40
+        },
         "data": {}
       }
     ],
@@ -50,6 +64,10 @@
         "targetHandle": "default"
       }
     ],
-    "viewport": { "x": 0, "y": 0, "zoom": 1 }
+    "viewport": {
+      "x": 0,
+      "y": 0,
+      "zoom": 1
+    }
   }
 }

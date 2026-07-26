@@ -19,7 +19,7 @@ import WorkflowEdge from './edges/WorkflowEdge';
 import WorkflowNode from './nodes/WorkflowNode';
 import StickyNote from './nodes/StickyNote';
 import { useUndoRedo } from './hooks/useUndoRedo';
-import { layoutWithDagre } from './layout';
+import { ensureLayoutedGraph, layoutWithDagre } from './layout';
 import {
     buildFlowEdge,
     buildFlowNode,
@@ -30,12 +30,14 @@ import {
     findEdgeNearPoint,
     FLOW_NODE_HEIGHT,
     FLOW_NODE_WIDTH,
+    isToolBindingEdge,
     spliceNodeIntoEdge,
     toFlowEdges,
     toFlowNodes,
     toPackageGraph,
 } from './graph';
 import './canvas.css';
+import { isToolModeEnabled } from './inspector/nodeUtils';
 
 const nodeTypes = { workflowNode: WorkflowNode, stickyNote: StickyNote };
 const edgeTypes = { workflowEdge: WorkflowEdge };
@@ -78,11 +80,12 @@ function WorkflowCanvasInner({
     providers = {},
     providerModels = {},
 }) {
-    const initialNodes = useMemo(
-        () => toFlowNodes(graph?.nodes, nodeTypesMeta, graph?.annotations),
-        [],
-    );
     const initialEdges = useMemo(() => toFlowEdges(graph?.edges), []);
+    const initialNodes = useMemo(() => {
+        const flowNodes = toFlowNodes(graph?.nodes, nodeTypesMeta, graph?.annotations);
+
+        return ensureLayoutedGraph(flowNodes, initialEdges);
+    }, []);
     const initialViewport = graph?.viewport || { x: 0, y: 0, zoom: 1 };
 
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
@@ -216,8 +219,11 @@ function WorkflowCanvasInner({
                 return;
             }
 
-            const flowNodes = toFlowNodes(nextGraph.nodes, nodeTypesMeta, nextGraph.annotations);
             const flowEdges = toFlowEdges(nextGraph.edges);
+            const flowNodes = ensureLayoutedGraph(
+                toFlowNodes(nextGraph.nodes, nodeTypesMeta, nextGraph.annotations),
+                flowEdges,
+            );
             const viewport = nextGraph.viewport || { x: 0, y: 0, zoom: 1 };
 
             setNodes(flowNodes);
@@ -259,23 +265,26 @@ function WorkflowCanvasInner({
                 return false;
             }
 
+            const sourceHandle = connection.sourceHandle || 'default';
             const targetHandle = connection.targetHandle || 'default';
+            const sourceToolMode = isToolModeEnabled(source.data?.config || {});
+            const targetToolMode = isToolModeEnabled(target.data?.config || {});
 
-            if (targetHandle === 'tools') {
-                if (target.data?.nodeType !== 'agent') {
+            if (targetHandle === 'tools' || sourceHandle === 'toolset') {
+                if (target.data?.nodeType !== 'agent' || targetHandle !== 'tools') {
                     return false;
                 }
 
-                const mode = target.data?.config?.config_mode;
-                const isInline =
-                    mode === 'inline' ||
-                    (mode !== 'existing' && !(target.data?.config?.agent_id != null && target.data?.config?.agent_id !== ''));
-
-                if (!isInline) {
-                    return false;
+                if (sourceHandle === 'toolset') {
+                    return source.data?.nodeType === 'agent' && sourceToolMode;
                 }
 
                 return source.data?.nodeType === 'tool' || source.data?.nodeType === 'mcp';
+            }
+
+            // Control-flow edges cannot touch Tool Mode nodes.
+            if (sourceToolMode || targetToolMode) {
+                return false;
             }
 
             return true;
@@ -329,7 +338,7 @@ function WorkflowCanvasInner({
     );
 
     const addNodeAt = useCallback(
-        (type, position) => {
+        (type, position, seedConfig = {}) => {
             if (readOnly || !position) {
                 return;
             }
@@ -365,6 +374,7 @@ function WorkflowCanvasInner({
                     : type === 'agent'
                       ? {
                             config_mode: 'inline',
+                            tool_mode: false,
                             stream: true,
                             provider: defaultProvider,
                             model: defaultModel,
@@ -372,11 +382,18 @@ function WorkflowCanvasInner({
                         }
                       : type === 'invoke'
                         ? { output_key: 'invoke_result' }
-                        : type === 'note'
-                          ? { text: '' }
-                          : {};
+                        : type === 'tool'
+                          ? { output_key: 'tool_result' }
+                          : type === 'mcp'
+                            ? { output_key: 'mcp_result' }
+                            : type === 'note'
+                              ? { text: '' }
+                              : {};
 
-            const node = buildFlowNode(type, nodePosition, nodeTypesMeta, defaultConfig);
+            const node = buildFlowNode(type, nodePosition, nodeTypesMeta, {
+                ...defaultConfig,
+                ...seedConfig,
+            });
             const nextNodes = [...currentNodes, node];
 
             setNodes(nextNodes);
@@ -394,13 +411,26 @@ function WorkflowCanvasInner({
         (nodeId, data) => {
             setNodes((current) => {
                 const previous = current.find((node) => node.id === nodeId);
-                const previousMode = previous?.data?.config?.config_mode;
-                const nextMode = data?.config_mode;
+                const previousToolMode = isToolModeEnabled(previous?.data?.config || {});
+                const nextToolMode = isToolModeEnabled(data || {});
 
-                if (nextMode === 'existing' && previousMode !== 'existing') {
+                if (nextToolMode && !previousToolMode) {
+                    setEdges((edges) =>
+                        edges.filter((edge) => {
+                            if (edge.source !== nodeId && edge.target !== nodeId) {
+                                return true;
+                            }
+
+                            return isToolBindingEdge(edge);
+                        }),
+                    );
+                }
+
+                if (!nextToolMode && previousToolMode) {
                     setEdges((edges) =>
                         edges.filter(
-                            (edge) => !(edge.target === nodeId && (edge.targetHandle || 'default') === 'tools'),
+                            (edge) =>
+                                !(edge.source === nodeId && (edge.sourceHandle || 'default') === 'toolset'),
                         ),
                     );
                 }
@@ -507,8 +537,24 @@ function WorkflowCanvasInner({
                 return;
             }
 
+            let seedConfig = {};
+            const rawConfig = event.dataTransfer.getData('application/x-neuronai-node-config');
+
+            if (rawConfig) {
+                try {
+                    const payload = JSON.parse(rawConfig);
+                    if (payload?.toolRef) {
+                        seedConfig = { tool_ref: payload.toolRef, output_key: 'tool_result' };
+                    } else if (payload?.mcpServer) {
+                        seedConfig = { mcp_server: payload.mcpServer, output_key: 'mcp_result' };
+                    }
+                } catch {
+                    seedConfig = {};
+                }
+            }
+
             const position = dropFlowPosition(screenToFlowPosition, event.clientX, event.clientY);
-            addNodeAt(type, position);
+            addNodeAt(type, position, seedConfig);
         },
         [addNodeAt, screenToFlowPosition],
     );
@@ -668,6 +714,7 @@ function WorkflowCanvasInner({
             providerModels={providerModels}
             defaultProvider={defaultProvider}
             defaultModel={defaultModel}
+            nodeTypesMeta={nodeTypesMeta}
         >
             <div className="relative h-full w-full">
                 <CanvasEmptyState visible={showEmptyState && !isTestRunning} />

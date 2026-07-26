@@ -7,5 +7,7 @@
 /public/
 # Cópias locais de vendor:publish (não confundir com /vendor/ do Composer)
 /resources/**/vendor/
+# Source maps from Vite builds — not shipped to package consumers
+/resources/js/dist/*.map
 .cursor/
 .agents/mcp.json

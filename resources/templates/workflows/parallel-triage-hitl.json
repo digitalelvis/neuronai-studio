@@ -5,8 +5,18 @@
     "description": "Full M3 showcase: forks a support ticket into three automated analyses plus a human review branch. The automated branches run and are checkpointed first; the human branch pauses the workflow (parallel interrupt). On resume, the completed branches are reused from their checkpoints and only the human branch finishes before the join and the triage composer run.",
     "complexity": "advanced",
     "category": "support",
-    "tags": ["parallel", "fork", "join", "checkpoints", "human", "hitl", "resume"],
-    "agents": ["support-triage-composer"]
+    "tags": [
+      "parallel",
+      "fork",
+      "join",
+      "checkpoints",
+      "human",
+      "hitl",
+      "resume"
+    ],
+    "agents": [
+      "support-triage-composer"
+    ]
   },
   "graph": {
     "version": 1,
@@ -14,13 +24,19 @@
       {
         "id": "start_1",
         "type": "start",
-        "position": { "x": 40, "y": 340 },
+        "position": {
+          "x": 40,
+          "y": 216
+        },
         "data": {}
       },
       {
         "id": "set_ticket",
         "type": "set_state",
-        "position": { "x": 200, "y": 340 },
+        "position": {
+          "x": 440,
+          "y": 216
+        },
         "data": {
           "key": "ticket",
           "from_key": "input"
@@ -29,7 +45,10 @@
       {
         "id": "fork_1",
         "type": "fork",
-        "position": { "x": 400, "y": 340 },
+        "position": {
+          "x": 840,
+          "y": 216
+        },
         "data": {
           "join": "join_1"
         }
@@ -37,7 +56,10 @@
       {
         "id": "llm_sentiment",
         "type": "llm",
-        "position": { "x": 640, "y": 100 },
+        "position": {
+          "x": 1240,
+          "y": 40
+        },
         "data": {
           "provider": "openai",
           "model": "gpt-4o-mini",
@@ -49,7 +71,10 @@
       {
         "id": "llm_facts",
         "type": "llm",
-        "position": { "x": 640, "y": 280 },
+        "position": {
+          "x": 1240,
+          "y": 216
+        },
         "data": {
           "provider": "openai",
           "model": "gpt-4o-mini",
@@ -61,7 +86,10 @@
       {
         "id": "llm_priority",
         "type": "llm",
-        "position": { "x": 640, "y": 460 },
+        "position": {
+          "x": 1240,
+          "y": 392
+        },
         "data": {
           "provider": "openai",
           "model": "gpt-4o-mini",
@@ -73,7 +101,10 @@
       {
         "id": "human_review",
         "type": "human",
-        "position": { "x": 640, "y": 640 },
+        "position": {
+          "x": 1240,
+          "y": 568
+        },
         "data": {
           "prompt": "Review this ticket before the automated reply is composed. Add internal notes or approval for the customer:\n\n{{ticket}}",
           "output_key": "review_notes"
@@ -82,7 +113,10 @@
       {
         "id": "join_1",
         "type": "join",
-        "position": { "x": 900, "y": 340 },
+        "position": {
+          "x": 1640,
+          "y": 216
+        },
         "data": {
           "output_key": "analyses"
         }
@@ -90,7 +124,10 @@
       {
         "id": "agent_compose",
         "type": "agent",
-        "position": { "x": 1100, "y": 340 },
+        "position": {
+          "x": 2040,
+          "y": 216
+        },
         "data": {
           "agent_ref": "support-triage-composer",
           "checkpoint": true,
@@ -101,7 +138,10 @@
       {
         "id": "stop_1",
         "type": "stop",
-        "position": { "x": 1320, "y": 340 },
+        "position": {
+          "x": 2440,
+          "y": 216
+        },
         "data": {}
       }
     ],
@@ -198,6 +238,10 @@
         "targetHandle": "default"
       }
     ],
-    "viewport": { "x": 0, "y": 0, "zoom": 1 }
+    "viewport": {
+      "x": 0,
+      "y": 0,
+      "zoom": 1
+    }
   }
 }

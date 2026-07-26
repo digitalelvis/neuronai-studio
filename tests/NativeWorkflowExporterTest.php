@@ -513,6 +513,85 @@ class NativeWorkflowExporterTest extends TestCase
         $this->cleanupExport($exportPath);
     }
 
+    public function test_tool_mode_specialist_omitted_and_supervisor_snapshots_node_as_tool(): void
+    {
+        $exportPath = $this->exportPath();
+        config([
+            'neuronai-studio.export_path' => $exportPath,
+            'neuronai-studio.export_namespace' => 'App\\Neuron',
+            'neuronai-studio.tools.calculator' => [
+                'class' => \NeuronAI\Tools\Toolkits\Calculator\CalculatorToolkit::class,
+            ],
+        ]);
+
+        $workflow = WorkflowDefinition::make([
+            'name' => 'Tool Mode Flow',
+            'slug' => 'tool-mode-flow',
+            'graph' => [
+                'version' => 1,
+                'nodes' => [
+                    ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                    [
+                        'id' => 'supervisor_1',
+                        'type' => 'agent',
+                        'position' => ['x' => 100, 'y' => 0],
+                        'data' => [
+                            'config_mode' => 'inline',
+                            'provider' => 'openai',
+                            'model' => 'gpt-4o-mini',
+                            'instructions' => 'You coordinate specialists.',
+                            'output_key' => 'agent_response',
+                        ],
+                    ],
+                    [
+                        'id' => 'specialist_1',
+                        'type' => 'agent',
+                        'position' => ['x' => 100, 'y' => 120],
+                        'data' => [
+                            'config_mode' => 'inline',
+                            'provider' => 'openai',
+                            'model' => 'gpt-4o-mini',
+                            'instructions' => 'You research topics.',
+                            'tool_mode' => true,
+                            'tool_exposure' => [
+                                'slug' => 'research_agent',
+                                'description' => 'Research specialist',
+                            ],
+                        ],
+                    ],
+                    [
+                        'id' => 'tool_1',
+                        'type' => 'tool',
+                        'position' => ['x' => 40, 'y' => 120],
+                        'data' => ['tool_ref' => 'toolkit:calculator'],
+                    ],
+                    ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 220, 'y' => 0], 'data' => []],
+                ],
+                'edges' => [
+                    ['id' => 'e1', 'source' => 'start_1', 'target' => 'supervisor_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                    ['id' => 'e2', 'source' => 'supervisor_1', 'target' => 'stop_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                    ['id' => 'e3', 'source' => 'specialist_1', 'target' => 'supervisor_1', 'sourceHandle' => 'toolset', 'targetHandle' => 'tools'],
+                    ['id' => 'e4', 'source' => 'tool_1', 'target' => 'supervisor_1', 'sourceHandle' => 'default', 'targetHandle' => 'tools'],
+                ],
+                'viewport' => ['x' => 0, 'y' => 0, 'zoom' => 1],
+            ],
+            'status' => 'draft',
+        ]);
+
+        $preview = app(NativeWorkflowExporter::class)->preview($workflow);
+
+        $this->assertStringNotContainsString('class Specialist1Node', $preview);
+        $this->assertStringNotContainsString("new Specialist1Node()", $preview);
+        $this->assertStringNotContainsString("'ref' => 'node:specialist_1'", $preview);
+        $this->assertStringContainsString('NodeAsTool', $preview);
+        $this->assertStringContainsString('research_agent', $preview);
+        $this->assertStringContainsString('You research topics.', $preview);
+        $this->assertStringContainsString('CalculatorToolkit::make()', $preview);
+        $this->assertStringContainsString('class Supervisor1Node', $preview);
+
+        $this->cleanupExport($exportPath);
+    }
+
     protected function cleanupExport(string $exportPath): void
     {
         if (! is_dir($exportPath)) {

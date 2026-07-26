@@ -52,8 +52,14 @@ class GraphTranspiler
         foreach ($nodes as $node) {
             $id = (string) ($node['id'] ?? '');
             $type = (string) ($node['type'] ?? '');
+            $data = is_array($node['data'] ?? null) ? $node['data'] : [];
 
             if ($id === '' || in_array($type, ['start'], true)) {
+                continue;
+            }
+
+            // Tool Mode agents are binding-only specialists — not linear workflow Nodes.
+            if ($type === 'agent' && $this->isToolModeEnabled($data)) {
                 continue;
             }
 
@@ -145,7 +151,7 @@ class GraphTranspiler
             $executableNodes[$id] = [
                 'id' => $id,
                 'type' => $type,
-                'data' => $this->nodeDataForPlan($id, $type, is_array($node['data'] ?? null) ? $node['data'] : [], $context),
+                'data' => $this->nodeDataForPlan($id, $type, $data, $context),
                 'className' => $this->nodeClassName($id),
                 'inputEvent' => $inputEvent,
                 'returnType' => $returnType,
@@ -173,20 +179,128 @@ class GraphTranspiler
             return $data;
         }
 
+        $bindings = $this->snapshotToolBindings($context->toolBindingsFor($id), $context);
+        if ($bindings === []) {
+            return $data;
+        }
+
         $mode = (string) ($data['config_mode'] ?? '');
         $isInline = $mode === 'inline'
             || ($mode !== 'existing' && (! isset($data['agent_id']) || $data['agent_id'] === '' || $data['agent_id'] === null));
 
-        if (! $isInline) {
-            return $data;
-        }
-
-        $bindings = $context->toolBindingsFor($id);
-        if ($bindings !== []) {
+        if ($isInline) {
             $data['tools'] = $bindings;
+        } else {
+            // Existing agents keep AgentDefinition tools at runtime; canvas bindings append.
+            $data['canvas_tools'] = $bindings;
         }
 
         return $data;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $bindings
+     * @return array<int, array<string, mixed>>
+     */
+    protected function snapshotToolBindings(array $bindings, GraphContext $context): array
+    {
+        $snapshotted = [];
+
+        foreach ($bindings as $binding) {
+            if (! is_array($binding) || empty($binding['ref'])) {
+                continue;
+            }
+
+            $ref = (string) $binding['ref'];
+            if (! str_starts_with($ref, 'node:')) {
+                $snapshotted[] = $binding;
+
+                continue;
+            }
+
+            $nodeId = substr($ref, strlen('node:'));
+            $node = is_array($binding['node'] ?? null) ? $binding['node'] : [];
+            $data = is_array($node['data'] ?? null) ? $node['data'] : [];
+            $exposure = is_array($binding['exposure'] ?? null) ? $binding['exposure'] : [];
+
+            $agentConfig = $this->snapshotSpecialistConfig($data, $nodeId, $context);
+            $slug = trim((string) ($exposure['slug'] ?? ''));
+            if ($slug === '') {
+                $slug = (string) (
+                    config('neuronai-studio.node_types.agent.tool_exposure.slug_prefix')
+                    ?: 'call_agent'
+                );
+            }
+
+            $description = trim((string) ($exposure['description'] ?? ''));
+            if ($description === '') {
+                $description = (string) (
+                    config('neuronai-studio.node_types.agent.tool_exposure.default_description')
+                    ?: 'Delegate a task to this specialized agent.'
+                );
+            }
+
+            $inputDescription = 'Task for the specialist';
+            $parameters = is_array($exposure['parameters'] ?? null) ? $exposure['parameters'] : [];
+            $input = is_array($parameters['input'] ?? null) ? $parameters['input'] : [];
+            if (is_string($input['description'] ?? null) && trim((string) $input['description']) !== '') {
+                $inputDescription = trim((string) $input['description']);
+            }
+
+            $snapshotted[] = [
+                'ref' => 'node_as_tool',
+                'slug' => $slug,
+                'description' => $description,
+                'input_description' => $inputDescription,
+                'agent_config' => $agentConfig,
+            ];
+        }
+
+        return $snapshotted;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function snapshotSpecialistConfig(array $data, string $nodeId, GraphContext $context): array
+    {
+        $mode = (string) ($data['config_mode'] ?? '');
+        $agentId = $data['agent_id'] ?? null;
+        $isExisting = $mode === 'existing'
+            || ($mode !== 'inline' && $agentId !== null && $agentId !== '');
+
+        $nestedTools = $context->toolBindingsFor($nodeId);
+
+        if ($isExisting && $agentId !== null && $agentId !== '') {
+            $definition = \DigitalElvis\NeuronAIStudio\Models\AgentDefinition::query()->find($agentId);
+            if ($definition !== null) {
+                return [
+                    'provider' => $definition->provider,
+                    'model' => $definition->model,
+                    'instructions' => $definition->instructions,
+                    'tools' => array_values(array_merge(
+                        is_array($definition->tools) ? $definition->tools : [],
+                        $nestedTools,
+                    )),
+                ];
+            }
+        }
+
+        return [
+            'provider' => $data['provider'] ?? config('neuronai-studio.default_provider'),
+            'model' => $data['model'] ?? config('neuronai-studio.default_model'),
+            'instructions' => $data['instructions'] ?? 'You are a helpful AI assistant.',
+            'tools' => $nestedTools,
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function isToolModeEnabled(array $data): bool
+    {
+        return filter_var($data['tool_mode'] ?? false, FILTER_VALIDATE_BOOLEAN);
     }
 
     /**

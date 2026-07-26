@@ -94,7 +94,7 @@ redirects:
 Add to the repository README once your space URL is known:
 
 ```markdown
-[![Documentation](https://img.shields.io/badge/docs-GitBook-blue)](https://YOUR_ORG.gitbook.io/neuronai-studio)
+[![Documentation](https://img.shields.io/badge/docs-GitBook-blue)](https://vibemx.gitbook.io/neuronai-studio)
 ```
 
 ## Optional: release notes via API

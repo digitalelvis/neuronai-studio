@@ -5,8 +5,18 @@
     "description": "Forks a refund request into an LLM eligibility analysis and an approval-gated refund agent. The agent pauses for tool approval inside the parallel branch; after approve/reject, join merges both results and the triage composer drafts the customer-facing reply.",
     "complexity": "advanced",
     "category": "support",
-    "tags": ["parallel", "fork", "join", "tool-approval", "refund", "hitl"],
-    "agents": ["refund-actions-agent", "support-triage-composer"]
+    "tags": [
+      "parallel",
+      "fork",
+      "join",
+      "tool-approval",
+      "refund",
+      "hitl"
+    ],
+    "agents": [
+      "refund-actions-agent",
+      "support-triage-composer"
+    ]
   },
   "graph": {
     "version": 1,
@@ -14,13 +24,19 @@
       {
         "id": "start_1",
         "type": "start",
-        "position": { "x": 40, "y": 280 },
+        "position": {
+          "x": 40,
+          "y": 40
+        },
         "data": {}
       },
       {
         "id": "set_ticket",
         "type": "set_state",
-        "position": { "x": 200, "y": 280 },
+        "position": {
+          "x": 440,
+          "y": 40
+        },
         "data": {
           "key": "ticket",
           "from_key": "input"
@@ -29,7 +45,10 @@
       {
         "id": "fork_1",
         "type": "fork",
-        "position": { "x": 400, "y": 280 },
+        "position": {
+          "x": 840,
+          "y": 40
+        },
         "data": {
           "join": "join_1"
         }
@@ -37,7 +56,10 @@
       {
         "id": "llm_eligibility",
         "type": "llm",
-        "position": { "x": 640, "y": 120 },
+        "position": {
+          "x": 1240,
+          "y": 40
+        },
         "data": {
           "provider": "openai",
           "model": "gpt-4o-mini",
@@ -49,7 +71,10 @@
       {
         "id": "agent_refund",
         "type": "agent",
-        "position": { "x": 640, "y": 400 },
+        "position": {
+          "x": 1240,
+          "y": 216
+        },
         "data": {
           "agent_ref": "refund-actions-agent",
           "require_tool_approval": true,
@@ -61,7 +86,10 @@
       {
         "id": "join_1",
         "type": "join",
-        "position": { "x": 900, "y": 280 },
+        "position": {
+          "x": 1640,
+          "y": 40
+        },
         "data": {
           "output_key": "analyses"
         }
@@ -69,7 +97,10 @@
       {
         "id": "agent_compose",
         "type": "agent",
-        "position": { "x": 1100, "y": 280 },
+        "position": {
+          "x": 2040,
+          "y": 40
+        },
         "data": {
           "agent_ref": "support-triage-composer",
           "checkpoint": true,
@@ -80,7 +111,10 @@
       {
         "id": "stop_1",
         "type": "stop",
-        "position": { "x": 1320, "y": 280 },
+        "position": {
+          "x": 2440,
+          "y": 40
+        },
         "data": {}
       }
     ],
@@ -149,6 +183,10 @@
         "targetHandle": "default"
       }
     ],
-    "viewport": { "x": 0, "y": 0, "zoom": 1 }
+    "viewport": {
+      "x": 0,
+      "y": 0,
+      "zoom": 1
+    }
   }
 }

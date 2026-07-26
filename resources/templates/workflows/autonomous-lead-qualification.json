@@ -5,8 +5,16 @@
     "description": "Conversational agent loop that qualifies leads from multimodal input, asks for missing fields via human-in-the-loop, and completes when an email is found.",
     "complexity": "intermediate",
     "category": "sales",
-    "tags": ["agent", "loop", "multimodal", "tools", "human"],
-    "agents": ["lead-qualifier"]
+    "tags": [
+      "agent",
+      "loop",
+      "multimodal",
+      "tools",
+      "human"
+    ],
+    "agents": [
+      "lead-qualifier"
+    ]
   },
   "graph": {
     "version": 1,
@@ -14,13 +22,19 @@
       {
         "id": "start_1",
         "type": "start",
-        "position": { "x": 80, "y": 220 },
+        "position": {
+          "x": 40,
+          "y": 226
+        },
         "data": {}
       },
       {
         "id": "set_1",
         "type": "set_state",
-        "position": { "x": 240, "y": 220 },
+        "position": {
+          "x": 440,
+          "y": 226
+        },
         "data": {
           "key": "lead_message",
           "from_key": "input"
@@ -29,7 +43,10 @@
       {
         "id": "loop_1",
         "type": "loop",
-        "position": { "x": 420, "y": 220 },
+        "position": {
+          "x": 840,
+          "y": 226
+        },
         "data": {
           "max_steps": 10,
           "state_key": "lead_profile",
@@ -40,7 +57,10 @@
       {
         "id": "agent_qualify",
         "type": "agent",
-        "position": { "x": 640, "y": 320 },
+        "position": {
+          "x": 1240,
+          "y": 40
+        },
         "data": {
           "agent_ref": "lead-qualifier",
           "message": "Qualify this lead from the conversation and any attachments.\n\nConversation:\n{{lead_message}}\n\nIf you can extract a valid email, respond with:\nName: ...\nEmail: ...\nInterest: ...\n\nIf the email is still missing, ask ONE friendly question for the most important missing field. Do not invent data.",
@@ -50,7 +70,10 @@
       {
         "id": "cond_has_email",
         "type": "condition",
-        "position": { "x": 860, "y": 320 },
+        "position": {
+          "x": 1640,
+          "y": 89
+        },
         "data": {
           "state_key": "lead_profile",
           "operator": "contains",
@@ -60,7 +83,10 @@
       {
         "id": "human_collect",
         "type": "human",
-        "position": { "x": 1080, "y": 420 },
+        "position": {
+          "x": 2040,
+          "y": 89
+        },
         "data": {
           "prompt": "{{lead_profile}}",
           "output_key": "human_response"
@@ -69,7 +95,10 @@
       {
         "id": "set_append_message",
         "type": "set_state",
-        "position": { "x": 1080, "y": 520 },
+        "position": {
+          "x": 2440,
+          "y": 226
+        },
         "data": {
           "key": "lead_message",
           "append_from_key": "human_response"
@@ -78,7 +107,10 @@
       {
         "id": "set_qualified",
         "type": "set_state",
-        "position": { "x": 640, "y": 120 },
+        "position": {
+          "x": 1240,
+          "y": 275
+        },
         "data": {
           "key": "result",
           "value": "qualified"
@@ -87,7 +119,10 @@
       {
         "id": "stop_qualified",
         "type": "stop",
-        "position": { "x": 860, "y": 120 },
+        "position": {
+          "x": 1640,
+          "y": 275
+        },
         "data": {}
       }
     ],
@@ -163,6 +198,10 @@
         "targetHandle": "default"
       }
     ],
-    "viewport": { "x": 0, "y": 0, "zoom": 1 }
+    "viewport": {
+      "x": 0,
+      "y": 0,
+      "zoom": 1
+    }
   }
 }

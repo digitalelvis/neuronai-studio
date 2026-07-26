@@ -40,6 +40,7 @@ Repeating the same workflow template creates a new workflow. Agents referenced b
 | ID | Complexity | Description |
 |----|------------|-------------|
 | `basic-agent-chat` | Basic | Single agent chat flow |
+| `supervisor-specialist-tool-mode` | Intermediate | Supervisor delegates to a Tool Mode specialist via toolset→tools |
 | `rag-knowledge-qna` | Basic | RAG node → knowledge agent with `{{ rag_context.context }}` |
 | `lead-qualification` | Intermediate | LLM extraction + condition branching |
 | `lead-qualification-loop` | Intermediate | LLM extraction in a cyclic loop until email found |

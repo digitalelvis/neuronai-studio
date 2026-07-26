@@ -8,6 +8,7 @@
 * [Quickstart: First Agent](getting-started/quickstart-first-agent.md)
 * [Quickstart: First Workflow](getting-started/quickstart-first-workflow.md)
 * [Demo App](getting-started/demo-app.md)
+* [AI-Assisted Development](guides/ai-assisted-development.md)
 * [GitBook Setup](getting-started/gitbook-setup.md)
 
 ## Guides

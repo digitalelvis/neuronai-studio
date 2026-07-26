@@ -3,8 +3,8 @@
 **Spec**: [spec.md](./spec.md)  
 **Design**: [design.md](./design.md)  
 **Context**: [context.md](./context.md)  
-**Status**: Specified — ready for Execute  
-**Linha**: `v1.1.x` · **AD-025**
+**Status**: Execute complete — ready for UAT / PR  
+**Linha**: `v1.1.x` · **AD-025** · branch `feat/canvas-tool-mode`
 
 ---
 
@@ -29,11 +29,11 @@ CTM-T8, CTM-T9 → CTM-T10
 **Where**: `config/neuronai-studio.php`, `NodeTypeRegistry.php`, Livewire Editor nodeTypes payload if needed  
 **Done when**:
 
-- [ ] Canvas receives `toolable: true` for agent
-- [ ] Other built-in types omit or `toolable: false`
+- [x] Canvas receives `toolable: true` for agent
+- [x] Other built-in types omit or `toolable: false`
 
 **Tests**: unit registry/meta if existing pattern; else config assert in feature test  
-**Status**: Pending
+**Status**: Done
 
 ---
 
@@ -43,11 +43,11 @@ CTM-T8, CTM-T9 → CTM-T10
 **Where**: `src/Runtime/GraphValidator.php`  
 **Done when**:
 
-- [ ] Invalid graphs produce clear errors
-- [ ] Valid supervisor+specialist graph passes
+- [x] Invalid graphs produce clear errors
+- [x] Valid supervisor+specialist graph passes
 
 **Tests**: `GraphValidatorTest` cases  
-**Status**: Pending
+**Status**: Done
 
 ---
 
@@ -57,11 +57,11 @@ CTM-T8, CTM-T9 → CTM-T10
 **Where**: `GraphContext.php`, `graph.js` `isToolBindingEdge` if mirrored  
 **Done when**:
 
-- [ ] toolset edge appears in bindings array
-- [ ] tool/mcp bindings still work
+- [x] toolset edge appears in bindings array
+- [x] tool/mcp bindings still work
 
 **Tests**: `GraphContextToolBindingsTest` (or new)  
-**Status**: Pending
+**Status**: Done
 
 ---
 
@@ -71,11 +71,11 @@ CTM-T8, CTM-T9 → CTM-T10
 **Where**: `WorkflowNode.jsx`, `WorkflowCanvas.jsx`, `graph.js`, `nodeUtils.js`, inspector as needed  
 **Done when**:
 
-- [ ] Toggle changes UI/handles
-- [ ] Illegal connections blocked in `isValidConnection`
+- [x] Toggle changes UI/handles
+- [x] Illegal connections blocked in `isValidConnection`
 
 **Tests**: none required (JS); manual checklist in SUMMARY  
-**Status**: Pending
+**Status**: Done
 
 ---
 
@@ -85,11 +85,11 @@ CTM-T8, CTM-T9 → CTM-T10
 **Where**: new `ToolExposureModal.jsx` (or equivalent), wire from Actions  
 **Done when**:
 
-- [ ] Values round-trip in graph JSON
-- [ ] Empty slug gets default on blur/save
+- [x] Values round-trip in graph JSON
+- [x] Empty slug gets default on blur/save
 
 **Tests**: none required  
-**Status**: Pending
+**Status**: Done
 
 ---
 
@@ -99,11 +99,11 @@ CTM-T8, CTM-T9 → CTM-T10
 **Where**: `src/Runtime/Tools/NodeAsTool.php` (or `AgentAsTool.php`), `ToolResolver.php`  
 **Done when**:
 
-- [ ] `__invoke` returns specialist content string
-- [ ] Fake provider test covers happy path + error string
+- [x] `__invoke` returns specialist content string
+- [x] Fake provider test covers happy path + error string
 
 **Tests**: unit `NodeAsToolTest` / resolver test  
-**Status**: Pending
+**Status**: Done
 
 ---
 
@@ -113,11 +113,11 @@ CTM-T8, CTM-T9 → CTM-T10
 **Where**: `AgentNodeExecutor.php`  
 **Done when**:
 
-- [ ] Existing supervisor with toolset edge runs NodeAsTool
-- [ ] Inline supervisor still gets tool/mcp + toolset
+- [x] Existing supervisor with toolset edge runs NodeAsTool
+- [x] Inline supervisor still gets tool/mcp + toolset
 
 **Tests**: feature `AgentNodeExecutor` / workflow interpreted test  
-**Status**: Pending
+**Status**: Done
 
 ---
 
@@ -127,11 +127,11 @@ CTM-T8, CTM-T9 → CTM-T10
 **Where**: `GraphTranspiler.php`, `AgentNodeCodeGenerator.php`, exporter  
 **Done when**:
 
-- [ ] Export has no specialist linear node
-- [ ] Generated PHP constructs equivalent Tool
+- [x] Export has no specialist linear node
+- [x] Generated PHP constructs equivalent Tool
 
 **Tests**: codegen unit/feature if pattern exists  
-**Status**: Pending
+**Status**: Done
 
 ---
 
@@ -141,10 +141,10 @@ CTM-T8, CTM-T9 → CTM-T10
 **Where**: `docs/guides/workflows/node-types/ai-nodes.md`, `canvas-editor.md`, `docs/extending/custom-node-types.md`  
 **Done when**:
 
-- [ ] Sections live with mermaid for toolset→tools
+- [x] Sections live with mermaid for toolset→tools
 
 **Tests**: none  
-**Status**: Pending
+**Status**: Done
 
 ---
 
@@ -154,10 +154,10 @@ CTM-T8, CTM-T9 → CTM-T10
 **Where**: templates registry / JSON under package templates  
 **Done when**:
 
-- [ ] Template installs; harness run shows tool delegation (Fake or documented manual)
+- [x] Template installs; harness run shows tool delegation (Fake or documented manual)
 
 **Tests**: template install smoke if existing  
-**Status**: Pending
+**Status**: Done
 
 ---
 
