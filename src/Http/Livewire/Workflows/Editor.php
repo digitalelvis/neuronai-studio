@@ -13,10 +13,12 @@ use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\NodeTypeRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\OutputClassRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
+use DigitalElvis\NeuronAIStudio\Models\ToolDefinition;
 use DigitalElvis\NeuronAIStudio\Registry\ToolRegistry;
 use DigitalElvis\NeuronAIStudio\Runtime\GraphValidator;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
 use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
+use DigitalElvis\NeuronAIStudio\Support\ToolSchemaInspector;
 use Illuminate\Support\Str;
 use Livewire\Component;
 
@@ -77,6 +79,83 @@ class Editor extends Component
 
         $this->graph = $graph;
         $this->save();
+    }
+
+    /**
+     * Persist ToolDefinition schema edits from the canvas Actions modal.
+     *
+     * @param  array{name?: string, description?: string|null, properties?: array<int, array{name: string, type?: string, description?: string|null, required?: bool}>}  $action
+     * @return array{ok: bool, error?: string, tool?: array<string, mixed>}
+     */
+    public function updateToolDefinition(int $toolId, array $action): array
+    {
+        if ($this->readOnly) {
+            return ['ok' => false, 'error' => 'Workflow is read-only.'];
+        }
+
+        $definition = ToolDefinition::find($toolId);
+
+        if (! $definition) {
+            return ['ok' => false, 'error' => 'Tool not found.'];
+        }
+
+        $name = trim((string) ($action['name'] ?? ''));
+        $description = trim((string) ($action['description'] ?? ''));
+        $properties = is_array($action['properties'] ?? null) ? $action['properties'] : [];
+
+        if ($name === '' || ! preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $name)) {
+            return ['ok' => false, 'error' => 'Name must be a valid function name.'];
+        }
+
+        if ($description === '') {
+            return ['ok' => false, 'error' => 'Description is required.'];
+        }
+
+        $inputSchema = [];
+
+        foreach ($properties as $property) {
+            if (! is_array($property) || empty($property['name'])) {
+                continue;
+            }
+
+            $propName = trim((string) $property['name']);
+
+            if ($propName === '' || ! preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $propName)) {
+                return ['ok' => false, 'error' => "Invalid property name: {$propName}"];
+            }
+
+            $type = (string) ($property['type'] ?? 'string');
+
+            if (! in_array($type, ['string', 'integer', 'number', 'boolean'], true)) {
+                return ['ok' => false, 'error' => "Invalid property type: {$type}"];
+            }
+
+            $inputSchema[] = [
+                'name' => $propName,
+                'type' => $type,
+                'description' => isset($property['description']) ? (string) $property['description'] : '',
+                'required' => (bool) ($property['required'] ?? false),
+            ];
+        }
+
+        $config = is_array($definition->config) ? $definition->config : [];
+        $config['tool_name'] = $name;
+
+        $definition->update([
+            'description' => $description,
+            'input_schema' => $inputSchema,
+            'config' => $config,
+        ]);
+
+        $enriched = app(ToolSchemaInspector::class)->enrich([
+            'ref' => $definition->bindingRef(),
+            'label' => $definition->name,
+            'type' => $definition->type,
+            'category' => 'studio',
+            'description' => $definition->description,
+        ]);
+
+        return ['ok' => true, 'tool' => $enriched];
     }
 
     /** @return array{valid: bool, errors: array<int, string>} */
@@ -298,11 +377,16 @@ class Editor extends Component
             'agentsForCanvas' => AgentDefinition::orderBy('name')->get(['id', 'name'])->values()->all(),
             'knowledgeBasesForCanvas' => KnowledgeBase::orderBy('name')->get(['id', 'name'])->values()->all(),
             'toolsForCanvas' => collect(app(ToolRegistry::class)->all())
-                ->map(fn (array $tool) => ['ref' => $tool['ref'], 'label' => $tool['label']])
+                ->map(fn (array $tool) => app(ToolSchemaInspector::class)->enrich($tool))
                 ->values()
                 ->all(),
-            'mcpServersForCanvas' => collect(app(McpRegistry::class)->labels(includeDisabled: false))
-                ->map(fn (string $label, string $slug) => ['slug' => $slug, 'label' => $label])
+            'mcpServersForCanvas' => collect(app(McpRegistry::class)->all(includeDisabled: false))
+                ->filter(fn (array $entry) => $entry['enabled'] ?? true)
+                ->map(fn (array $entry, string $slug) => [
+                    'slug' => $slug,
+                    'label' => $entry['label'] ?? Str::headline($slug),
+                    'description' => $entry['description'] ?? null,
+                ])
                 ->values()
                 ->all(),
             'outputClassesForCanvas' => collect(app(OutputClassRegistry::class)->all())

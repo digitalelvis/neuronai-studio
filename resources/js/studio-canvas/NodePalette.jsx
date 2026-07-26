@@ -12,26 +12,40 @@ const CATEGORY_LABELS = {
     utilities: 'Utilities',
 };
 
-export default function NodePalette({ nodeTypes = {}, readOnly = false }) {
+const CATALOG_ORDER = ['tools', 'mcp'];
+const CATALOG_LABELS = {
+    tools: 'Tools',
+    mcp: 'MCP',
+};
+
+function matchesQuery(haystacks, query) {
+    if (!query) {
+        return true;
+    }
+
+    return haystacks.some((value) => String(value || '').toLowerCase().includes(query));
+}
+
+export default function NodePalette({
+    nodeTypes = {},
+    tools = [],
+    mcpServers = [],
+    readOnly = false,
+}) {
     const [query, setQuery] = useState('');
     const [openCategories, setOpenCategories] = useState(() =>
-        Object.fromEntries(CATEGORY_ORDER.map((key) => [key, true])),
+        Object.fromEntries([...CATEGORY_ORDER, ...CATALOG_ORDER].map((key) => [key, true])),
     );
 
-    const paletteTypes = useMemo(() => {
-        const q = query.trim().toLowerCase();
+    const q = query.trim().toLowerCase();
 
+    const paletteTypes = useMemo(() => {
         return Object.entries(nodeTypes)
             .filter(([type]) => !['start', 'stop'].includes(type))
-            .filter(([type, meta]) => {
-                if (!q) {
-                    return true;
-                }
-
-                const label = (meta.label ?? type).toLowerCase();
-                return label.includes(q) || type.includes(q) || (meta.category || '').includes(q);
-            });
-    }, [nodeTypes, query]);
+            .filter(([type, meta]) =>
+                matchesQuery([meta.label ?? type, type, meta.category], q),
+            );
+    }, [nodeTypes, q]);
 
     const grouped = useMemo(() => {
         const groups = {};
@@ -50,6 +64,28 @@ export default function NodePalette({ nodeTypes = {}, readOnly = false }) {
             items: groups[key],
         }));
     }, [paletteTypes]);
+
+    const catalogTools = useMemo(
+        () =>
+            tools.filter(
+                (tool) =>
+                    !String(tool.ref || '').startsWith('mcp:') &&
+                    matchesQuery([tool.label, tool.ref, tool.description, tool.category], q),
+            ),
+        [tools, q],
+    );
+
+    const catalogMcp = useMemo(
+        () =>
+            mcpServers.filter((server) =>
+                matchesQuery([server.label, server.slug, server.description], q),
+            ),
+        [mcpServers, q],
+    );
+
+    const setSectionOpen = (key, open) => {
+        setOpenCategories((current) => ({ ...current, [key]: open }));
+    };
 
     return (
         <aside
@@ -73,7 +109,7 @@ export default function NodePalette({ nodeTypes = {}, readOnly = false }) {
             </div>
 
             <div className="min-h-0 flex-1 overflow-auto p-2">
-                {grouped.length === 0 && (
+                {grouped.length === 0 && catalogTools.length === 0 && catalogMcp.length === 0 && (
                     <p className="px-2 py-4 text-center text-xs text-muted-foreground">No matching nodes.</p>
                 )}
 
@@ -81,9 +117,7 @@ export default function NodePalette({ nodeTypes = {}, readOnly = false }) {
                     <Collapsible
                         key={group.key}
                         open={openCategories[group.key] !== false}
-                        onOpenChange={(open) =>
-                            setOpenCategories((current) => ({ ...current, [group.key]: open }))
-                        }
+                        onOpenChange={(open) => setSectionOpen(group.key, open)}
                         className="mb-1"
                     >
                         <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:bg-muted/40">
@@ -111,6 +145,74 @@ export default function NodePalette({ nodeTypes = {}, readOnly = false }) {
                         </CollapsibleContent>
                     </Collapsible>
                 ))}
+
+                {catalogTools.length > 0 && (
+                    <Collapsible
+                        open={openCategories.tools !== false}
+                        onOpenChange={(open) => setSectionOpen('tools', open)}
+                        className="mb-1"
+                    >
+                        <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:bg-muted/40">
+                            {CATALOG_LABELS.tools}
+                            <ChevronDown
+                                className={`h-3.5 w-3.5 transition-transform ${openCategories.tools === false ? '-rotate-90' : ''}`}
+                            />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="space-y-1 pb-2 pt-1">
+                            {catalogTools.map((tool) => (
+                                <div
+                                    key={tool.ref}
+                                    className="ab-palette-item flex cursor-grab items-center gap-2 rounded-md border border-transparent bg-muted/20 px-2.5 py-2 text-sm transition-colors hover:border-border hover:bg-muted/50 active:cursor-grabbing"
+                                    draggable={!readOnly}
+                                    data-canvas-node-type="tool"
+                                    data-tool-ref={tool.ref}
+                                    title={tool.description || tool.ref}
+                                    role="button"
+                                    tabIndex={0}
+                                >
+                                    <span className="flex h-6 w-6 items-center justify-center rounded-md bg-background text-muted-foreground">
+                                        <NodeTypeIcon name="wrench" />
+                                    </span>
+                                    <span className="truncate">{tool.label || tool.ref}</span>
+                                </div>
+                            ))}
+                        </CollapsibleContent>
+                    </Collapsible>
+                )}
+
+                {catalogMcp.length > 0 && (
+                    <Collapsible
+                        open={openCategories.mcp !== false}
+                        onOpenChange={(open) => setSectionOpen('mcp', open)}
+                        className="mb-1"
+                    >
+                        <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:bg-muted/40">
+                            {CATALOG_LABELS.mcp}
+                            <ChevronDown
+                                className={`h-3.5 w-3.5 transition-transform ${openCategories.mcp === false ? '-rotate-90' : ''}`}
+                            />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="space-y-1 pb-2 pt-1">
+                            {catalogMcp.map((server) => (
+                                <div
+                                    key={server.slug}
+                                    className="ab-palette-item flex cursor-grab items-center gap-2 rounded-md border border-transparent bg-muted/20 px-2.5 py-2 text-sm transition-colors hover:border-border hover:bg-muted/50 active:cursor-grabbing"
+                                    draggable={!readOnly}
+                                    data-canvas-node-type="mcp"
+                                    data-mcp-server={server.slug}
+                                    title={server.description || server.slug}
+                                    role="button"
+                                    tabIndex={0}
+                                >
+                                    <span className="flex h-6 w-6 items-center justify-center rounded-md bg-background text-muted-foreground">
+                                        <NodeTypeIcon name="plug" />
+                                    </span>
+                                    <span className="truncate">{server.label || server.slug}</span>
+                                </div>
+                            ))}
+                        </CollapsibleContent>
+                    </Collapsible>
+                )}
             </div>
         </aside>
     );

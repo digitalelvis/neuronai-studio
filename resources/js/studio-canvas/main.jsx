@@ -139,7 +139,14 @@ function bindPaletteDrag() {
         }
 
         const type = item.dataset.canvasNodeType;
+        const payload = {
+            type,
+            toolRef: item.dataset.toolRef || null,
+            mcpServer: item.dataset.mcpServer || null,
+        };
+
         event.dataTransfer.setData('application/x-neuronai-node', type);
+        event.dataTransfer.setData('application/x-neuronai-node-config', JSON.stringify(payload));
         event.dataTransfer.setData('text/plain', type);
         event.dataTransfer.effectAllowed = 'copy';
         item.classList.add('is-dragging');

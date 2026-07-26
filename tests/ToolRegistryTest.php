@@ -28,6 +28,31 @@ class ToolRegistryTest extends TestCase
         $this->assertSame('Calculator', $entries[0]['label']);
     }
 
+    public function test_schema_inspector_enriches_toolkit_actions(): void
+    {
+        config([
+            'neuronai-studio.tools' => [
+                'calculator' => [
+                    'type' => 'toolkit',
+                    'class' => \NeuronAI\Tools\Toolkits\Calculator\CalculatorToolkit::class,
+                    'label' => 'Calculator',
+                    'category' => 'builtin',
+                    'description' => 'Math toolkit',
+                ],
+            ],
+            'neuronai-studio.tool_scan_paths' => [],
+            'neuronai-studio.mcp_servers' => [],
+        ]);
+
+        $entry = app(ToolRegistry::class)->all()[0];
+        $enriched = app(\DigitalElvis\NeuronAIStudio\Support\ToolSchemaInspector::class)->enrich($entry);
+
+        $this->assertFalse($enriched['editable']);
+        $this->assertNotEmpty($enriched['actions']);
+        $this->assertSame('sum', $enriched['actions'][0]['name']);
+        $this->assertNotEmpty($enriched['actions'][0]['properties']);
+    }
+
     public function test_config_for_toolkit_ref(): void
     {
         config([

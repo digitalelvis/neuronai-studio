@@ -338,7 +338,7 @@ function WorkflowCanvasInner({
     );
 
     const addNodeAt = useCallback(
-        (type, position) => {
+        (type, position, seedConfig = {}) => {
             if (readOnly || !position) {
                 return;
             }
@@ -382,11 +382,18 @@ function WorkflowCanvasInner({
                         }
                       : type === 'invoke'
                         ? { output_key: 'invoke_result' }
-                        : type === 'note'
-                          ? { text: '' }
-                          : {};
+                        : type === 'tool'
+                          ? { output_key: 'tool_result' }
+                          : type === 'mcp'
+                            ? { output_key: 'mcp_result' }
+                            : type === 'note'
+                              ? { text: '' }
+                              : {};
 
-            const node = buildFlowNode(type, nodePosition, nodeTypesMeta, defaultConfig);
+            const node = buildFlowNode(type, nodePosition, nodeTypesMeta, {
+                ...defaultConfig,
+                ...seedConfig,
+            });
             const nextNodes = [...currentNodes, node];
 
             setNodes(nextNodes);
@@ -530,8 +537,24 @@ function WorkflowCanvasInner({
                 return;
             }
 
+            let seedConfig = {};
+            const rawConfig = event.dataTransfer.getData('application/x-neuronai-node-config');
+
+            if (rawConfig) {
+                try {
+                    const payload = JSON.parse(rawConfig);
+                    if (payload?.toolRef) {
+                        seedConfig = { tool_ref: payload.toolRef, output_key: 'tool_result' };
+                    } else if (payload?.mcpServer) {
+                        seedConfig = { mcp_server: payload.mcpServer, output_key: 'mcp_result' };
+                    }
+                } catch {
+                    seedConfig = {};
+                }
+            }
+
             const position = dropFlowPosition(screenToFlowPosition, event.clientX, event.clientY);
-            addNodeAt(type, position);
+            addNodeAt(type, position, seedConfig);
         },
         [addNodeAt, screenToFlowPosition],
     );

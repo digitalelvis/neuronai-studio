@@ -15,6 +15,7 @@ import StructuredOutputFields from './shared/StructuredOutputFields';
 import StreamToggleField from './shared/StreamToggleField';
 import RagFields from './shared/RagFields';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Switch } from '@/components/ui/switch';
 import { resolveAgentConfigMode, isToolModeEnabled, isNodeTypeToolable, defaultToolExposure } from './nodeUtils';
 import { useCanvasUi } from '../CanvasUiContext';
 
@@ -77,6 +78,18 @@ export default function NodeConfigForm({
         );
     };
 
+    const openToolActions = () => {
+        window.dispatchEvent(
+            new CustomEvent('canvas-tool-actions-edit', {
+                detail: {
+                    id: node.id,
+                    data,
+                    toolRef: data.tool_ref || '',
+                },
+            }),
+        );
+    };
+
     const updateParametersJson = (json) => {
         try {
             const parameters = JSON.parse(json || '{}');
@@ -113,7 +126,7 @@ export default function NodeConfigForm({
                                                 : 'Acts as a workflow step.'}
                                         </p>
                                     </div>
-                                    <Checkbox
+                                    <Switch
                                         id={`tool-mode-${node.id}`}
                                         checked={toolMode}
                                         onCheckedChange={(checked) => setToolMode(Boolean(checked))}
@@ -673,6 +686,32 @@ export default function NodeConfigForm({
                                     onChange={(e) => updateField('output_key', e.target.value)}
                                     disabled={readOnly}
                                 />
+                            </div>
+                            <div className="space-y-1">
+                                <Label>Actions</Label>
+                                <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-8 w-full justify-between text-[11px]"
+                                    disabled={!data.tool_ref}
+                                    onClick={openToolActions}
+                                >
+                                    <span className="truncate">
+                                        {data.tool_ref
+                                            ? tools.find((tool) => tool.ref === data.tool_ref)?.label ||
+                                              data.tool_ref
+                                            : 'Select a tool'}
+                                    </span>
+                                    <span className="text-muted-foreground">
+                                        {tools.find((tool) => tool.ref === data.tool_ref)?.editable
+                                            ? 'Edit'
+                                            : 'View'}
+                                    </span>
+                                </Button>
+                                <p className="text-[10px] text-muted-foreground">
+                                    Slug, description, and parameters (ToolInterface schema).
+                                </p>
                             </div>
                         </>
                     )}

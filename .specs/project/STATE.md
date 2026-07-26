@@ -4,11 +4,18 @@
 **Development line (features):** `v1.1.x` (M10)
 **Patch line:** `v1.0.x`
 **Latest published:** `v1.0.0` on Packagist / `main`
-**Current Work:** M10 `canvas-tool-mode` Execute complete on `feat/canvas-tool-mode` (CTM-T1–T10). Next: UAT / PR → `v1.1.x`. TraceDetail bridge + OBS-06/OTel stay deferred.
+**Current Work:** `canvas-tools-catalog` in progress (Tool Mode Switch, Tool Actions modal, Tools/MCP palette catalogs). M10 `canvas-tool-mode` Execute complete on `feat/canvas-tool-mode` (CTM-T1–T10). TraceDetail bridge + OBS-06/OTel stay deferred.
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-026: Canvas Tools Catalog + Tool Actions (2026-07-25)
+
+**Decision:** Add palette catalogs **Tools** and **MCP** (drag pre-fills refs); keep generic Tool/MCP node types until a later deprecation. Tool node gains an Actions modal aligned with Neuron `ToolInterface` (name, description, properties). Builtins/toolkits are read-only; `tool:db:*` is editable via Livewire `updateToolDefinition`. Tool Mode checkbox becomes a Switch. Param `controlled_by` / variables / tokens remain deferred (UI badge only).
+**Reason:** Authors need faster discovery of Calculator/Filesystem-style components and a schema surface matching Neuron tools.
+**Trade-off:** Dual path (generic node + catalog) until deprecation; toolkit children stay in the modal, not the palette.
+**Impact:** Specs in [.specs/features/canvas-tools-catalog/](../features/canvas-tools-catalog/).
 
 ### AD-025: Publish `v1.0.0` + open `v1.0.x` / `v1.1.x` for M10 (2026-07-25)
 
