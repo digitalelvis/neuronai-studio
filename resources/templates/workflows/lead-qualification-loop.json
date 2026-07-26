@@ -5,8 +5,15 @@
     "description": "Extracts lead details in a loop until a valid email is present or max_steps is reached.",
     "complexity": "intermediate",
     "category": "sales",
-    "tags": ["llm", "loop", "condition", "set_state"],
-    "agents": ["support-assistant"]
+    "tags": [
+      "llm",
+      "loop",
+      "condition",
+      "set_state"
+    ],
+    "agents": [
+      "support-assistant"
+    ]
   },
   "graph": {
     "version": 1,
@@ -14,13 +21,19 @@
       {
         "id": "start_1",
         "type": "start",
-        "position": { "x": 80, "y": 220 },
+        "position": {
+          "x": 40,
+          "y": 118
+        },
         "data": {}
       },
       {
         "id": "set_1",
         "type": "set_state",
-        "position": { "x": 240, "y": 220 },
+        "position": {
+          "x": 440,
+          "y": 118
+        },
         "data": {
           "key": "lead_message",
           "from_key": "input"
@@ -29,7 +42,10 @@
       {
         "id": "loop_1",
         "type": "loop",
-        "position": { "x": 420, "y": 220 },
+        "position": {
+          "x": 840,
+          "y": 118
+        },
         "data": {
           "max_steps": 5,
           "state_key": "lead_profile",
@@ -40,7 +56,10 @@
       {
         "id": "llm_extract",
         "type": "llm",
-        "position": { "x": 620, "y": 320 },
+        "position": {
+          "x": 1240,
+          "y": 40
+        },
         "data": {
           "prompt": "Extract lead information from this message. Return name, email, and interest on separate lines.\n\nMessage: {{lead_message}}",
           "output_key": "lead_profile"
@@ -49,7 +68,10 @@
       {
         "id": "agent_followup",
         "type": "agent",
-        "position": { "x": 640, "y": 120 },
+        "position": {
+          "x": 1640,
+          "y": 128
+        },
         "data": {
           "agent_ref": "support-assistant",
           "message": "Write a personalized follow-up for this lead profile:\n\n{{lead_profile}}",
@@ -59,7 +81,10 @@
       {
         "id": "llm_ask_email",
         "type": "llm",
-        "position": { "x": 840, "y": 220 },
+        "position": {
+          "x": 1640,
+          "y": 304
+        },
         "data": {
           "prompt": "The lead profile is missing an email address after maximum parse attempts. Write a short, friendly message asking for their email.\n\nProfile so far:\n{{lead_profile}}",
           "output_key": "follow_up_message"
@@ -68,19 +93,28 @@
       {
         "id": "stop_qualified",
         "type": "stop",
-        "position": { "x": 860, "y": 120 },
+        "position": {
+          "x": 2040,
+          "y": 128
+        },
         "data": {}
       },
       {
         "id": "stop_missing_email",
         "type": "stop",
-        "position": { "x": 1060, "y": 220 },
+        "position": {
+          "x": 2040,
+          "y": 304
+        },
         "data": {}
       },
       {
         "id": "cond_has_email",
         "type": "condition",
-        "position": { "x": 840, "y": 120 },
+        "position": {
+          "x": 1240,
+          "y": 216
+        },
         "data": {
           "state_key": "lead_profile",
           "operator": "contains",
@@ -153,6 +187,10 @@
         "targetHandle": "default"
       }
     ],
-    "viewport": { "x": 0, "y": 0, "zoom": 1 }
+    "viewport": {
+      "x": 0,
+      "y": 0,
+      "zoom": 1
+    }
   }
 }

@@ -5,8 +5,17 @@
     "description": "Long-running tech-support loop with RAG, human-in-the-loop clarifications, multimodal attachments, tools, and per-node memory overrides. Select a knowledge base on the RAG node after installing; context is empty until configured.",
     "complexity": "advanced",
     "category": "support",
-    "tags": ["memory", "rag", "loop", "human", "tools", "multimodal"],
-    "agents": ["dev-support-specialist"]
+    "tags": [
+      "memory",
+      "rag",
+      "loop",
+      "human",
+      "tools",
+      "multimodal"
+    ],
+    "agents": [
+      "dev-support-specialist"
+    ]
   },
   "graph": {
     "version": 1,
@@ -14,13 +23,19 @@
       {
         "id": "start_1",
         "type": "start",
-        "position": { "x": 60, "y": 240 },
+        "position": {
+          "x": 40,
+          "y": 265
+        },
         "data": {}
       },
       {
         "id": "set_ticket_message",
         "type": "set_state",
-        "position": { "x": 220, "y": 240 },
+        "position": {
+          "x": 440,
+          "y": 265
+        },
         "data": {
           "key": "ticket_message",
           "from_key": "input"
@@ -29,7 +44,10 @@
       {
         "id": "loop_1",
         "type": "loop",
-        "position": { "x": 400, "y": 240 },
+        "position": {
+          "x": 840,
+          "y": 265
+        },
         "data": {
           "max_steps": 12,
           "state_key": "support_reply",
@@ -40,7 +58,10 @@
       {
         "id": "rag_1",
         "type": "rag",
-        "position": { "x": 600, "y": 360 },
+        "position": {
+          "x": 1240,
+          "y": 40
+        },
         "data": {
           "query": "{{ticket_message}}",
           "top_k": 5,
@@ -50,7 +71,10 @@
       {
         "id": "agent_support",
         "type": "agent",
-        "position": { "x": 820, "y": 360 },
+        "position": {
+          "x": 1640,
+          "y": 40
+        },
         "data": {
           "agent_ref": "dev-support-specialist",
           "message": "Troubleshoot this support ticket using the conversation, any attachments, and knowledge-base context.\n\nConversation:\n{{ticket_message}}\n\nKnowledge base context:\n{{rag_context.context}}\n\nIf you can resolve the issue, explain briefly and end with:\nRESOLVED: <one-line summary>\n\nOtherwise ask ONE clarifying question for the most important missing fact. Do not invent data.",
@@ -63,7 +87,10 @@
       {
         "id": "cond_resolved",
         "type": "condition",
-        "position": { "x": 1040, "y": 360 },
+        "position": {
+          "x": 2040,
+          "y": 177
+        },
         "data": {
           "state_key": "support_reply",
           "operator": "contains",
@@ -73,7 +100,10 @@
       {
         "id": "human_clarify",
         "type": "human",
-        "position": { "x": 1260, "y": 460 },
+        "position": {
+          "x": 2440,
+          "y": 177
+        },
         "data": {
           "prompt": "{{support_reply}}",
           "output_key": "human_response"
@@ -82,7 +112,10 @@
       {
         "id": "set_append_message",
         "type": "set_state",
-        "position": { "x": 1260, "y": 560 },
+        "position": {
+          "x": 2840,
+          "y": 226
+        },
         "data": {
           "key": "ticket_message",
           "append_from_key": "human_response"
@@ -91,7 +124,10 @@
       {
         "id": "set_resolved",
         "type": "set_state",
-        "position": { "x": 600, "y": 100 },
+        "position": {
+          "x": 1240,
+          "y": 216
+        },
         "data": {
           "key": "result",
           "value": "resolved"
@@ -100,7 +136,10 @@
       {
         "id": "stop_resolved",
         "type": "stop",
-        "position": { "x": 820, "y": 100 },
+        "position": {
+          "x": 1640,
+          "y": 216
+        },
         "data": {}
       }
     ],
@@ -183,6 +222,10 @@
         "targetHandle": "default"
       }
     ],
-    "viewport": { "x": 0, "y": 0, "zoom": 0.85 }
+    "viewport": {
+      "x": 0,
+      "y": 0,
+      "zoom": 0.85
+    }
   }
 }

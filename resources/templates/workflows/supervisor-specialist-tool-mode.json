@@ -5,7 +5,12 @@
     "description": "Supervisor agent delegates to a Tool Mode specialist via toolset→tools. Control-flow is Start→supervisor→Stop only.",
     "complexity": "intermediate",
     "category": "agents",
-    "tags": ["agent", "tool-mode", "supervisor", "specialist"],
+    "tags": [
+      "agent",
+      "tool-mode",
+      "supervisor",
+      "specialist"
+    ],
     "agents": []
   },
   "graph": {
@@ -14,13 +19,19 @@
       {
         "id": "start_1",
         "type": "start",
-        "position": { "x": 80, "y": 200 },
+        "position": {
+          "x": 40,
+          "y": 40
+        },
         "data": {}
       },
       {
         "id": "supervisor_1",
         "type": "agent",
-        "position": { "x": 320, "y": 200 },
+        "position": {
+          "x": 440,
+          "y": 128
+        },
         "data": {
           "config_mode": "inline",
           "tool_mode": false,
@@ -35,7 +46,10 @@
       {
         "id": "specialist_1",
         "type": "agent",
-        "position": { "x": 320, "y": 380 },
+        "position": {
+          "x": 40,
+          "y": 216
+        },
         "data": {
           "config_mode": "inline",
           "tool_mode": true,
@@ -58,7 +72,10 @@
       {
         "id": "stop_1",
         "type": "stop",
-        "position": { "x": 560, "y": 200 },
+        "position": {
+          "x": 840,
+          "y": 128
+        },
         "data": {}
       }
     ],
@@ -85,6 +102,10 @@
         "targetHandle": "tools"
       }
     ],
-    "viewport": { "x": 0, "y": 0, "zoom": 1 }
+    "viewport": {
+      "x": 0,
+      "y": 0,
+      "zoom": 1
+    }
   }
 }
