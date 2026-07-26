@@ -51,6 +51,10 @@ class InstallCommand extends Command
         $this->line('Visit /'.config('neuronai-studio.route_prefix', 'neuronai-studio').' to open the dashboard.');
         $this->line('JS assets are pre-built. To rebuild after editing resources/js/, run: npm install && npm run build && php artisan vendor:publish --tag=neuronai-studio-assets --force');
         $this->line('Views load from the package by default. Use --with-views on install (or vendor:publish --tag=neuronai-studio-views) only when customizing Blade templates.');
+        $this->newLine();
+        $this->line('AI coding assistants: Agent Skill at vendor/digitalelvis/neuronai-studio/skills/neuronai-studio/');
+        $this->line('  Claude: npx skills add ./vendor/digitalelvis/neuronai-studio/skills');
+        $this->line('  Docs: vendor/digitalelvis/neuronai-studio/docs/guides/ai-assisted-development.md');
 
         return self::SUCCESS;
     }
