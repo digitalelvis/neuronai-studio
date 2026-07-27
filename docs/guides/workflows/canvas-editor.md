@@ -21,8 +21,10 @@ The workflow canvas is a React Flow-based visual editor embedded in Livewire. Dr
 | Feature | Description |
 |---------|-------------|
 | **Node palette** | Searchable, categorized drag-and-drop component list |
+| **Tools / MCP catalogs** | Browse registry and MCP tools to attach bindings without leaving the canvas |
 | **Inline node forms** | Selected nodes expand with configuration fields on the canvas |
 | **Node toolbar** | Controls / Advanced / Collapse / Duplicate / Delete on selection |
+| **Actions modal** | Configure Tool Mode `tool_exposure` (slug, description, `input` param) on specialists |
 | **Playground** | Floating top-right overlay to run and chat with the workflow |
 | **Share** | Floating menu for Connect API, PHP export, and JSON |
 | **Logs** | Bottom-left drawer for traces, live events, and validation |
@@ -67,17 +69,22 @@ Fix validation errors in the Logs drawer (Validation tab) before saving.
 
 ## Agent tools on the canvas
 
-Agent nodes expose a cyan **tools** handle in both inline and existing modes. Connecting a Tool or MCP node to that handle attaches the tool as an agent binding (the model may call it during the Agent step). It does **not** run the Tool/MCP node as a sequential step unless that node is also on the Start→Stop path via `default` handles.
+Agent nodes expose a cyan **tools** handle in both inline and existing modes. Attach tools by:
+
+- Connecting a **Tool** or **MCP** node to the **tools** handle
+- Picking entries from the **Tools** / **MCP** catalogs on the canvas (same registry refs as the agent editor)
+
+Canvas bindings merge with tools already defined on the agent definition. A Tool/MCP node on a **tools** edge is a binding only — it does **not** run as a sequential step unless that node is also on the Start→Stop path via `default` handles.
 
 ### Tool Mode / Toolset
 
-Enable **Tool Mode** on a toolable Agent to turn it into a specialist. The node shows an amber **toolset** source handle instead of control-flow Response. Wire:
+Enable **Tool Mode** on a toolable Agent to turn it into a specialist. The node shows an amber **toolset** source handle instead of control-flow Response. Use the **Actions** modal to set `tool_exposure` (slug, description, caller-controlled `input`). Wire:
 
 ```text
 specialist (toolset) → supervisor (tools)
 ```
 
-Control-flow stays `Start → supervisor → Stop`. The specialist is invoked only when the supervisor’s model calls the Actions slug. See [AI nodes → Tool Mode](node-types/ai-nodes.md#tool-mode-agent-as-tool).
+Control-flow stays `Start → supervisor → Stop`. The specialist is invoked only when the supervisor’s model calls the Actions slug (`node:{id}` → `NodeAsTool`). See [AI nodes → Tool Mode](node-types/ai-nodes.md#tool-mode-agent-as-tool).
 
 ## JSON graph format
 

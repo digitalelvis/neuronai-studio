@@ -29,7 +29,7 @@ flowchart TB
 | Test | Playground | [Playground & Threads](playground-and-threads.md) |
 | Evaluate | Evals UI or CLI | [Evaluations](evaluations.md) |
 | Use in workflow | Agent node | [AI Nodes](../workflows/node-types/ai-nodes.md) |
-| Export | CLI or future UI | [Export & Production](../export-and-production.md) |
+| Export | Studio UI, CLI, or codegen preview | [Export & Production](../export-and-production.md) |
 
 ## Studio routes
 
