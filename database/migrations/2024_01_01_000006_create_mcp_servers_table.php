@@ -1,5 +1,6 @@
 <?php
 
+use DigitalElvis\NeuronAIStudio\Support\StudioTables;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -8,7 +9,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('mcp_servers', function (Blueprint $table) {
+        Schema::create(StudioTables::name('mcp_servers'), function (Blueprint $table) {
             $table->id();
             $table->string('name');
             $table->string('slug')->unique();
@@ -32,6 +33,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('mcp_servers');
+        Schema::dropIfExists(StudioTables::name('mcp_servers'));
     }
 };

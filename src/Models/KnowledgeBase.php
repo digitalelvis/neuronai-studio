@@ -2,6 +2,7 @@
 
 namespace DigitalElvis\NeuronAIStudio\Models;
 
+use DigitalElvis\NeuronAIStudio\Support\StudioTables;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
@@ -9,6 +10,8 @@ use Illuminate\Support\Str;
 /** @property-read \Illuminate\Database\Eloquent\Collection<int, KnowledgeDocument> $documents */
 class KnowledgeBase extends Model
 {
+    protected $table;
+
     protected $fillable = [
         'name',
         'slug',
@@ -22,6 +25,13 @@ class KnowledgeBase extends Model
         'source',
         'class_path',
     ];
+
+    public function __construct(array $attributes = [])
+    {
+        $this->table = StudioTables::name('knowledge_bases');
+
+        parent::__construct($attributes);
+    }
 
     protected function casts(): array
     {

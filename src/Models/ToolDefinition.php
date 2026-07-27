@@ -2,10 +2,13 @@
 
 namespace DigitalElvis\NeuronAIStudio\Models;
 
+use DigitalElvis\NeuronAIStudio\Support\StudioTables;
 use Illuminate\Database\Eloquent\Model;
 
 class ToolDefinition extends Model
 {
+    protected $table;
+
     protected $fillable = [
         'name',
         'slug',
@@ -15,6 +18,13 @@ class ToolDefinition extends Model
         'config',
         'metadata',
     ];
+
+    public function __construct(array $attributes = [])
+    {
+        $this->table = StudioTables::name('tool_definitions');
+
+        parent::__construct($attributes);
+    }
 
     protected function casts(): array
     {

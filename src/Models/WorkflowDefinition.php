@@ -2,12 +2,15 @@
 
 namespace DigitalElvis\NeuronAIStudio\Models;
 
+use DigitalElvis\NeuronAIStudio\Support\StudioTables;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
 
 class WorkflowDefinition extends Model
 {
+    protected $table;
+
     protected $fillable = [
         'name',
         'slug',
@@ -19,6 +22,13 @@ class WorkflowDefinition extends Model
         'source',
         'locked',
     ];
+
+    public function __construct(array $attributes = [])
+    {
+        $this->table = StudioTables::name('workflow_definitions');
+
+        parent::__construct($attributes);
+    }
 
     protected function casts(): array
     {

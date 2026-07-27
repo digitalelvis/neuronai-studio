@@ -15,14 +15,34 @@ class MigrationTest extends TestCase
 {
     public function test_migrations_create_tables(): void
     {
-        $this->assertTrue(\Schema::hasTable('agent_definitions'));
-        $this->assertTrue(\Schema::hasTable('workflow_definitions'));
+        $this->assertTrue(\Schema::hasTable(StudioTables::name('agent_definitions')));
+        $this->assertTrue(\Schema::hasTable(StudioTables::name('workflow_definitions')));
         $this->assertTrue(\Schema::hasTable(StudioTables::name('threads')));
         $this->assertTrue(\Schema::hasTable(StudioTables::name('runs')));
         $this->assertTrue(\Schema::hasTable(StudioTables::name('traces')));
         $this->assertTrue(\Schema::hasTable(StudioTables::name('trace_spans')));
-        $this->assertTrue(\Schema::hasTable('mcp_servers'));
-        $this->assertTrue(\Schema::hasTable('agent_mcp_server'));
+        $this->assertTrue(\Schema::hasTable(StudioTables::name('mcp_servers')));
+        $this->assertTrue(\Schema::hasTable(StudioTables::name('agent_mcp_server')));
+    }
+
+    public function test_all_package_tables_use_prefix(): void
+    {
+        foreach (StudioTables::TABLES as $table) {
+            $this->assertTrue(
+                \Schema::hasTable(StudioTables::name($table)),
+                "Expected prefixed table for [{$table}]"
+            );
+            $this->assertFalse(
+                \Schema::hasTable($table),
+                "Unprefixed table [{$table}] must not exist"
+            );
+        }
+
+        $this->assertCount(count(StudioTables::TABLES), StudioTables::all());
+        $this->assertSame(
+            array_map(fn (string $table) => StudioTables::name($table), StudioTables::TABLES),
+            StudioTables::all()
+        );
     }
 
     public function test_models_can_persist_records(): void
@@ -66,8 +86,8 @@ class MigrationTest extends TestCase
             'status' => 'completed',
         ]);
 
-        $this->assertDatabaseHas('agent_definitions', ['id' => $agent->id]);
-        $this->assertDatabaseHas('workflow_definitions', ['id' => $workflow->id]);
+        $this->assertDatabaseHas(StudioTables::name('agent_definitions'), ['id' => $agent->id]);
+        $this->assertDatabaseHas(StudioTables::name('workflow_definitions'), ['id' => $workflow->id]);
         $this->assertDatabaseHas(StudioTables::name('threads'), ['id' => $thread->id]);
         $this->assertDatabaseHas(StudioTables::name('runs'), ['id' => $run->id]);
         $this->assertDatabaseHas(StudioTables::name('traces'), ['id' => $trace->id]);

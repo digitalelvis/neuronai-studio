@@ -2,6 +2,7 @@
 
 namespace DigitalElvis\NeuronAIStudio\Models;
 
+use DigitalElvis\NeuronAIStudio\Support\StudioTables;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
@@ -10,6 +11,8 @@ use Illuminate\Support\Str;
 
 class AgentDefinition extends Model
 {
+    protected $table;
+
     protected $fillable = [
         'name',
         'slug',
@@ -24,6 +27,13 @@ class AgentDefinition extends Model
         'memory_config',
         'metadata',
     ];
+
+    public function __construct(array $attributes = [])
+    {
+        $this->table = StudioTables::name('agent_definitions');
+
+        parent::__construct($attributes);
+    }
 
     protected function casts(): array
     {

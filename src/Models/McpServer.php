@@ -2,12 +2,15 @@
 
 namespace DigitalElvis\NeuronAIStudio\Models;
 
+use DigitalElvis\NeuronAIStudio\Support\StudioTables;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Support\Str;
 
 class McpServer extends Model
 {
+    protected $table;
+
     protected $fillable = [
         'name',
         'slug',
@@ -26,6 +29,13 @@ class McpServer extends Model
         'enabled',
         'metadata',
     ];
+
+    public function __construct(array $attributes = [])
+    {
+        $this->table = StudioTables::name('mcp_servers');
+
+        parent::__construct($attributes);
+    }
 
     protected function casts(): array
     {
@@ -51,7 +61,7 @@ class McpServer extends Model
 
     public function agents(): BelongsToMany
     {
-        return $this->belongsToMany(AgentDefinition::class, 'agent_mcp_server')
+        return $this->belongsToMany(AgentDefinition::class, StudioTables::name('agent_mcp_server'))
             ->withPivot(['mcp_server_slug', 'only_tools', 'exclude_tools'])
             ->withTimestamps();
     }

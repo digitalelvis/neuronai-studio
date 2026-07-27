@@ -25,7 +25,7 @@ flowchart TB
     TR[ToolRegistry]
     TR --> Config[config tools + toolkits]
     TR --> Scan[tool_scan_paths]
-    TR --> DB[tool_definitions table]
+    TR --> DB[neuronai_studio_tool_definitions]
     TR --> MCP[McpRegistry tools]
 ```
 

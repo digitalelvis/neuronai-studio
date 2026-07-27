@@ -2,7 +2,7 @@
 
 ## What
 
-Visual graphs in `workflow_definitions` (nodes + edges JSON). Shared **state**, persisted **traces**. Runner: `WorkflowRunner` → node executors.
+Visual graphs in `workflow_definitions` (prefixed table; nodes + edges JSON). Shared **state**, persisted **traces**. Runner: `WorkflowRunner` → node executors.
 
 ## Node categories
 

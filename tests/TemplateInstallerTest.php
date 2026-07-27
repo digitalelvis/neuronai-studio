@@ -7,6 +7,7 @@ use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
 use DigitalElvis\NeuronAIStudio\Runtime\GraphValidator;
 use DigitalElvis\NeuronAIStudio\Services\TemplateInstaller;
+use DigitalElvis\NeuronAIStudio\Support\StudioTables;
 use Livewire\Livewire;
 
 class TemplateInstallerTest extends TestCase
@@ -15,7 +16,7 @@ class TemplateInstallerTest extends TestCase
     {
         $agent = app(TemplateInstaller::class)->installAgent('support-assistant');
 
-        $this->assertDatabaseHas('agent_definitions', [
+        $this->assertDatabaseHas(StudioTables::name('agent_definitions'), [
             'id' => $agent->id,
             'slug' => 'support-assistant',
             'name' => 'Support Assistant',
@@ -36,7 +37,7 @@ class TemplateInstallerTest extends TestCase
     {
         $workflow = app(TemplateInstaller::class)->installWorkflow('basic-agent-chat');
 
-        $this->assertDatabaseHas('workflow_definitions', [
+        $this->assertDatabaseHas(StudioTables::name('workflow_definitions'), [
             'id' => $workflow->id,
             'name' => 'Basic Agent Chat',
             'source' => 'studio',
