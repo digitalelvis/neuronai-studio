@@ -2,12 +2,13 @@
 
 namespace DigitalElvis\NeuronAIStudio\Models;
 
+use DigitalElvis\NeuronAIStudio\Support\StudioTables;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class AgentMcpServer extends Model
 {
-    protected $table = 'agent_mcp_server';
+    protected $table;
 
     protected $fillable = [
         'agent_definition_id',
@@ -16,6 +17,13 @@ class AgentMcpServer extends Model
         'only_tools',
         'exclude_tools',
     ];
+
+    public function __construct(array $attributes = [])
+    {
+        $this->table = StudioTables::name('agent_mcp_server');
+
+        parent::__construct($attributes);
+    }
 
     protected function casts(): array
     {

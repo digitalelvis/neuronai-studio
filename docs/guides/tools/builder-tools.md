@@ -31,7 +31,7 @@ flowchart LR
     Class --> Result[Return structured result]
 ```
 
-1. The invoke body is stored in `tool_definitions.config.invoke_body` (database) for editing and preview.
+1. The invoke body is stored in `tool_definitions.config.invoke_body` (prefixed table, e.g. `neuronai_studio_tool_definitions`) for editing and preview.
 2. **Export** (CodeGen) generates a PHP class under `export_path/Tools/` and stores `config.class_path`.
 3. At runtime, `ToolResolver` instantiates that class — it does **not** `eval()` the database body.
 

@@ -6,27 +6,29 @@ NeuronAI Studio stores definitions and runtime data in prefixed database tables.
 
 Default: `neuronai_studio_`
 
-Configure with `NEURONAI_STUDIO_TABLE_PREFIX`.
+Configure with `NEURONAI_STUDIO_TABLE_PREFIX` (`config('neuronai-studio.table_prefix')`).
+
+**Every** package table uses this prefix — there are no unprefixed exceptions. Logical names below (e.g. `agent_definitions`) resolve to `neuronai_studio_agent_definitions` via `StudioTables::name()`.
 
 ## Tables
 
-| Table | Purpose |
-|-------|---------|
-| `agent_definitions` | Agent name, provider, model, instructions, tool bindings |
-| `workflow_definitions` | Workflow name, graph JSON, code source metadata |
-| `tool_definitions` | Builder and webhook tool configs |
-| `mcp_servers` | MCP server transport configuration |
-| `agent_mcp_server` | Agent ↔ MCP server pivot with filters |
-| `threads` | Conversation / execution threads (polymorphic entity) |
-| `runs` | Unified execution records (agent or workflow) |
-| `traces` | Observability root per run |
-| `trace_spans` | Node / LLM / tool spans under a trace |
-| `chat_messages` | Persisted playground / thread chat history |
-| `eval_suites` | Agent evaluation datasets and judge config |
-| `eval_runs` | Evaluation execution records |
-| `eval_run_items` | Per-case results (input, output, pass/fail) |
-| `knowledge_bases` | RAG knowledge base metadata |
-| `knowledge_documents` | Ingested documents per knowledge base |
+| Logical name | Physical name (default prefix) | Purpose |
+|--------------|--------------------------------|---------|
+| `agent_definitions` | `neuronai_studio_agent_definitions` | Agent name, provider, model, instructions, tool bindings |
+| `workflow_definitions` | `neuronai_studio_workflow_definitions` | Workflow name, graph JSON, code source metadata |
+| `tool_definitions` | `neuronai_studio_tool_definitions` | Builder and webhook tool configs |
+| `mcp_servers` | `neuronai_studio_mcp_servers` | MCP server transport configuration |
+| `agent_mcp_server` | `neuronai_studio_agent_mcp_server` | Agent ↔ MCP server pivot with filters |
+| `threads` | `neuronai_studio_threads` | Conversation / execution threads (polymorphic entity) |
+| `runs` | `neuronai_studio_runs` | Unified execution records (agent or workflow) |
+| `traces` | `neuronai_studio_traces` | Observability root per run |
+| `trace_spans` | `neuronai_studio_trace_spans` | Node / LLM / tool spans under a trace |
+| `chat_messages` | `neuronai_studio_chat_messages` | Persisted playground / thread chat history |
+| `eval_suites` | `neuronai_studio_eval_suites` | Agent evaluation datasets and judge config |
+| `eval_runs` | `neuronai_studio_eval_runs` | Evaluation execution records |
+| `eval_run_items` | `neuronai_studio_eval_run_items` | Per-case results (input, output, pass/fail) |
+| `knowledge_bases` | `neuronai_studio_knowledge_bases` | RAG knowledge base metadata |
+| `knowledge_documents` | `neuronai_studio_knowledge_documents` | Ingested documents per knowledge base |
 
 > **Note:** Legacy `workflow_traces` / `workflow_trace_steps` / `workflow_checkpoints` tables were replaced by the unified `threads` → `runs` → `traces` → `trace_spans` model. Node checkpoints live in `runs.checkpoint_state`.
 
@@ -49,6 +51,8 @@ erDiagram
     eval_runs ||--o{ eval_run_items : contains
     knowledge_bases ||--o{ knowledge_documents : contains
 ```
+
+Diagram nodes use logical names; physical tables always include the configured prefix.
 
 ## Key columns
 

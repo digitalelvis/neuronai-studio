@@ -7,6 +7,7 @@ use DigitalElvis\NeuronAIStudio\Http\Livewire\KnowledgeBases\Index;
 use DigitalElvis\NeuronAIStudio\Models\KnowledgeBase;
 use DigitalElvis\NeuronAIStudio\Models\KnowledgeDocument;
 use DigitalElvis\NeuronAIStudio\Runtime\Rag\EmbeddingsFactory;
+use DigitalElvis\NeuronAIStudio\Support\StudioTables;
 use DigitalElvis\NeuronAIStudio\Tests\Support\FakeEmbeddingsProvider;
 use DigitalElvis\NeuronAIStudio\Tests\TestCase;
 use Livewire\Livewire;
@@ -122,7 +123,7 @@ class KnowledgeBaseCrudTest extends TestCase
         Livewire::test(Edit::class, ['knowledgeBase' => $kb])
             ->call('deleteDocument', $document->id);
 
-        $this->assertDatabaseMissing('knowledge_documents', ['id' => $document->id]);
+        $this->assertDatabaseMissing(StudioTables::name('knowledge_documents'), ['id' => $document->id]);
     }
 
     public function test_run_search_previews_retrieved_chunks(): void
@@ -146,6 +147,6 @@ class KnowledgeBaseCrudTest extends TestCase
             ->assertSee('Support Docs')
             ->call('delete', $kb->id);
 
-        $this->assertDatabaseMissing('knowledge_bases', ['id' => $kb->id]);
+        $this->assertDatabaseMissing(StudioTables::name('knowledge_bases'), ['id' => $kb->id]);
     }
 }

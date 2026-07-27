@@ -45,7 +45,7 @@ flowchart LR
     Shell --> Share[ShareMenu]
     Shell --> Logs[LogsDrawer]
     Canvas -->|save| Livewire
-    Livewire --> DB[(workflow_definitions.graph)]
+    Livewire --> DB[(neuronai_studio_workflow_definitions.graph)]
 ```
 
 React bundles communicate with Livewire via `window.Livewire` calls. See [Frontend Bundles](../../reference/frontend-bundles.md).

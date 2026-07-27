@@ -2,7 +2,7 @@
 
 ## What
 
-DB `agent_definitions`: provider, model, instructions, tool/MCP bindings, optional memory. Run via Playground or as workflow **agent** nodes. Runtime: `AgentRunner` → dynamic Neuron agent.
+DB `agent_definitions` (prefixed, e.g. `neuronai_studio_agent_definitions`): provider, model, instructions, tool/MCP bindings, optional memory. Run via Playground or as workflow **agent** nodes. Runtime: `AgentRunner` → dynamic Neuron agent.
 
 ## Workflow
 

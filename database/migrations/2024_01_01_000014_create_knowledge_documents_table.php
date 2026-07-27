@@ -1,5 +1,6 @@
 <?php
 
+use DigitalElvis\NeuronAIStudio\Support\StudioTables;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
@@ -8,10 +9,10 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::create('knowledge_documents', function (Blueprint $table) {
+        Schema::create(StudioTables::name('knowledge_documents'), function (Blueprint $table) {
             $table->id();
             $table->foreignId('knowledge_base_id')
-                ->constrained('knowledge_bases')
+                ->constrained(StudioTables::name('knowledge_bases'))
                 ->cascadeOnDelete();
             $table->string('name');
             $table->string('source_type')->default('manual');
@@ -27,6 +28,6 @@ return new class extends Migration
 
     public function down(): void
     {
-        Schema::dropIfExists('knowledge_documents');
+        Schema::dropIfExists(StudioTables::name('knowledge_documents'));
     }
 };

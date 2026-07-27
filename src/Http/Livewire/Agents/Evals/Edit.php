@@ -8,6 +8,7 @@ use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use DigitalElvis\NeuronAIStudio\Models\EvalRun;
 use DigitalElvis\NeuronAIStudio\Models\EvalSuite;
 use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
+use DigitalElvis\NeuronAIStudio\Support\StudioTables;
 use Illuminate\Support\Str;
 use Livewire\Component;
 use NeuronAI\Evaluation\Runner\EvaluatorRunner;
@@ -53,7 +54,7 @@ class Edit extends Component
         $this->validate([
             'name' => 'required|string|max:255',
             'datasetJson' => 'required|string',
-            'judgeAgentId' => 'nullable|integer|exists:agent_definitions,id',
+            'judgeAgentId' => 'nullable|integer|exists:'.StudioTables::name('agent_definitions').',id',
         ]);
 
         $dataset = json_decode($this->datasetJson, true);

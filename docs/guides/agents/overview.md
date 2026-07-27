@@ -51,7 +51,7 @@ flowchart TB
 
 ## Database model
 
-Agents are stored in the `agent_definitions` table (prefix configurable). Key fields:
+Agents are stored in the `agent_definitions` table (always prefixed, e.g. `neuronai_studio_agent_definitions`). Key fields:
 
 - `name`, `slug` — display name and unique identifier
 - `provider`, `model` — LLM configuration

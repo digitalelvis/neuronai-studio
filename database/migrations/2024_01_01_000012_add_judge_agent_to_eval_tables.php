@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('judge_agent_definition_id')
                 ->nullable()
                 ->after('dataset')
-                ->constrained('agent_definitions')
+                ->constrained(StudioTables::name('agent_definitions'))
                 ->nullOnDelete();
         });
 
@@ -21,7 +21,7 @@ return new class extends Migration
             $table->foreignId('judge_agent_definition_id')
                 ->nullable()
                 ->after('model')
-                ->constrained('agent_definitions')
+                ->constrained(StudioTables::name('agent_definitions'))
                 ->nullOnDelete();
             $table->string('judge_provider')->nullable()->after('judge_agent_definition_id');
             $table->string('judge_model')->nullable()->after('judge_provider');

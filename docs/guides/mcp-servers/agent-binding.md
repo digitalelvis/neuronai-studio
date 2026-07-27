@@ -11,7 +11,7 @@ Bind MCP servers to agents to expose their tools during Playground sessions and 
 
 ```mermaid
 flowchart TB
-    Agent[AgentDefinition] --> Pivot[agent_mcp_server pivot]
+    Agent[AgentDefinition] --> Pivot[neuronai_studio_agent_mcp_server]
     Pivot --> Server[McpServer record]
     Server --> Resolver[McpToolResolver]
     Resolver --> Tools[Discovered MCP tools]
@@ -47,7 +47,7 @@ Same as regular tool bindings:
 
 ## Database schema
 
-The `agent_mcp_server` pivot table links agents to MCP servers with optional filter JSON.
+The `agent_mcp_server` pivot table (prefixed, e.g. `neuronai_studio_agent_mcp_server`) links agents to MCP servers with optional filter JSON.
 
 ## Workflow usage
 
