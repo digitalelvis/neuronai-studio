@@ -11,7 +11,7 @@ return new class extends Migration
     {
         Schema::create(StudioTables::name('eval_suites'), function (Blueprint $table) {
             $table->id();
-            $table->foreignId('agent_definition_id')->constrained('agent_definitions')->cascadeOnDelete();
+            $table->foreignId('agent_definition_id')->constrained(StudioTables::name('agent_definitions'))->cascadeOnDelete();
             $table->string('name');
             $table->string('slug');
             $table->json('dataset');
@@ -25,7 +25,7 @@ return new class extends Migration
         Schema::create(StudioTables::name('eval_runs'), function (Blueprint $table) {
             $table->id();
             $table->foreignId('eval_suite_id')->constrained(StudioTables::name('eval_suites'))->cascadeOnDelete();
-            $table->foreignId('agent_definition_id')->constrained('agent_definitions')->cascadeOnDelete();
+            $table->foreignId('agent_definition_id')->constrained(StudioTables::name('agent_definitions'))->cascadeOnDelete();
             $table->string('status')->default('pending');
             $table->string('provider')->nullable();
             $table->string('model')->nullable();

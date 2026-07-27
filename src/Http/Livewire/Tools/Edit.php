@@ -10,6 +10,7 @@ use DigitalElvis\NeuronAIStudio\Codegen\ToolExporter;
 use DigitalElvis\NeuronAIStudio\Models\KnowledgeBase;
 use DigitalElvis\NeuronAIStudio\Models\ToolDefinition;
 use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
+use DigitalElvis\NeuronAIStudio\Support\StudioTables;
 use Illuminate\Support\Str;
 use Livewire\Component;
 
@@ -323,7 +324,7 @@ class Edit extends Component
             'name' => 'required|string|max:255',
             'toolName' => 'required|string|max:255|regex:/^[a-z0-9_]+$/',
             'description' => 'required|string',
-            'knowledgeBaseId' => 'required|integer|exists:knowledge_bases,id',
+            'knowledgeBaseId' => 'required|integer|exists:'.StudioTables::name('knowledge_bases').',id',
             'topK' => 'nullable|integer|min:1|max:100',
             'threshold' => 'nullable|numeric|min:0|max:1',
         ]);

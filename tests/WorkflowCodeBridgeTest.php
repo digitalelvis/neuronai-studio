@@ -5,6 +5,7 @@ namespace DigitalElvis\NeuronAIStudio\Tests;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\Workflows\Editor;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\Workflows\Index;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
+use DigitalElvis\NeuronAIStudio\Support\StudioTables;
 use DigitalElvis\NeuronAIStudio\Tests\Fixtures\SampleStudioWorkflow;
 use Livewire\Livewire;
 
@@ -18,7 +19,7 @@ class WorkflowCodeBridgeTest extends TestCase
             ->assertSet('linkedClassPath', SampleStudioWorkflow::class)
             ->assertSet('name', 'Sample Workflow');
 
-        $this->assertDatabaseHas('workflow_definitions', [
+        $this->assertDatabaseHas(StudioTables::name('workflow_definitions'), [
             'class_path' => SampleStudioWorkflow::class,
             'source' => 'code',
             'locked' => true,
@@ -31,7 +32,7 @@ class WorkflowCodeBridgeTest extends TestCase
             ->call('importToStudio', 'class:'.SampleStudioWorkflow::class)
             ->assertRedirect();
 
-        $this->assertDatabaseHas('workflow_definitions', [
+        $this->assertDatabaseHas(StudioTables::name('workflow_definitions'), [
             'name' => 'Sample Workflow',
             'source' => 'studio',
             'locked' => false,

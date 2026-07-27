@@ -6,7 +6,7 @@ Workflows are visual graphs that orchestrate multi-step AI processes. Compose no
 
 | Concept | Description |
 |---------|-------------|
-| **Graph** | Nodes and edges stored as JSON in `workflow_definitions` |
+| **Graph** | Nodes and edges stored as JSON in `workflow_definitions` (prefixed table) |
 | **State** | Mutable key-value map shared across nodes during a run |
 | **Trace** | Persisted execution record with per-step timeline |
 | **Node** | A single step (agent call, condition, delay, etc.) |
@@ -14,7 +14,7 @@ Workflows are visual graphs that orchestrate multi-step AI processes. Compose no
 
 ```mermaid
 flowchart TB
-    Editor[Workflow Canvas] --> DB[(workflow_definitions)]
+    Editor[Workflow Canvas] --> DB[(neuronai_studio_workflow_definitions)]
     DB --> Runner[WorkflowRunner]
     Runner --> Loop[GraphExecutionLoop]
     Loop --> Executors[Node Executors]

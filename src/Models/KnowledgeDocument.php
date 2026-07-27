@@ -2,6 +2,7 @@
 
 namespace DigitalElvis\NeuronAIStudio\Models;
 
+use DigitalElvis\NeuronAIStudio\Support\StudioTables;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -16,6 +17,8 @@ class KnowledgeDocument extends Model
 
     public const STATUS_FAILED = 'failed';
 
+    protected $table;
+
     protected $fillable = [
         'knowledge_base_id',
         'name',
@@ -27,6 +30,13 @@ class KnowledgeDocument extends Model
         'error',
         'metadata',
     ];
+
+    public function __construct(array $attributes = [])
+    {
+        $this->table = StudioTables::name('knowledge_documents');
+
+        parent::__construct($attributes);
+    }
 
     protected function casts(): array
     {

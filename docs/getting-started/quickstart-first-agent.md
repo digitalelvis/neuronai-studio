@@ -54,7 +54,7 @@ Replace `{id}` with your agent's database ID. The file is written to `app/Neuron
 
 ```mermaid
 flowchart LR
-    Studio[Agent Editor] --> DB[(agent_definitions)]
+    Studio[Agent Editor] --> DB[(neuronai_studio_agent_definitions)]
     Playground[Playground] --> Runner[AgentRunner]
     Runner --> Provider[Neuron LLM Provider]
     DB --> Export[AgentExporter]

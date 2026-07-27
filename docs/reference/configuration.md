@@ -11,7 +11,7 @@ php artisan vendor:publish --tag=neuronai-studio-config
 | Key | Env | Default | Description |
 |-----|-----|---------|-------------|
 | `route_prefix` | `NEURONAI_STUDIO_ROUTE_PREFIX` | `neuronai-studio` | URL prefix for all studio routes |
-| `table_prefix` | `NEURONAI_STUDIO_TABLE_PREFIX` | `neuronai_studio_` | Database table prefix |
+| `table_prefix` | `NEURONAI_STUDIO_TABLE_PREFIX` | `neuronai_studio_` | Prefix applied to **all** package tables (definitions, MCP, RAG, runs/traces, evals). See [Database schema](database-schema.md). |
 | `middleware` | — | `['web', 'neuronai-studio.auth']` | Route middleware stack |
 | `gate` | — | `viewNeuronAIStudio` | Authorization gate name |
 

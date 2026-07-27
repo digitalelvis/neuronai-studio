@@ -8,6 +8,7 @@ use DigitalElvis\NeuronAIStudio\Models\KnowledgeDocument;
 use DigitalElvis\NeuronAIStudio\Runtime\Rag\DocumentIngestService;
 use DigitalElvis\NeuronAIStudio\Runtime\Rag\EmbeddingsFactory;
 use DigitalElvis\NeuronAIStudio\Runtime\Rag\RagRetrievalService;
+use DigitalElvis\NeuronAIStudio\Support\StudioTables;
 use DigitalElvis\NeuronAIStudio\Tests\Support\FakeEmbeddingsProvider;
 use DigitalElvis\NeuronAIStudio\Tests\TestCase;
 use Illuminate\Support\Facades\Queue;
@@ -68,7 +69,7 @@ class DocumentLifecycleTest extends TestCase
 
         $ingest->removeDocument($document);
 
-        $this->assertDatabaseMissing('knowledge_documents', ['id' => $document->id]);
+        $this->assertDatabaseMissing(StudioTables::name('knowledge_documents'), ['id' => $document->id]);
         $this->assertSame([], app(RagRetrievalService::class)->search($kb, 'refund window'));
     }
 
@@ -98,7 +99,7 @@ class DocumentLifecycleTest extends TestCase
 
         $ingest->removeKnowledgeBase($kb);
 
-        $this->assertDatabaseMissing('knowledge_bases', ['id' => $kb->id]);
+        $this->assertDatabaseMissing(StudioTables::name('knowledge_bases'), ['id' => $kb->id]);
         $this->assertFileDoesNotExist($storeFile);
     }
 
