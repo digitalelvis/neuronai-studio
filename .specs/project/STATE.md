@@ -1,14 +1,21 @@
 # State
 
-**Last Updated:** 2026-07-25
-**Development line (features):** `v1.1.x` (M10)
-**Patch line:** `v1.0.x`
-**Latest published:** `v1.0.0` on Packagist / `main`
-**Current Work:** `canvas-tools-catalog` in progress (Tool Mode Switch, Tool Actions modal, Tools/MCP palette catalogs). M10 `canvas-tool-mode` Execute complete on `feat/canvas-tool-mode` (CTM-T1–T10). TraceDetail bridge + OBS-06/OTel stay deferred.
+**Last Updated:** 2026-07-27
+**Development line (features):** `v2.1.x`
+**Patch line:** `v2.0.x`
+**Latest published:** `v2.0.0` on Packagist / `main`
+**Current Work:** Post-`v2.0.0` sync complete (AD-027). M10 done (`v1.1.0`); table-prefix major published. Next features target `v2.1.x`. TraceDetail bridge + OBS-06/OTel stay deferred.
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-027: Keep `v2.0.0` + open `v2.0.x` / `v2.1.x` (2026-07-27)
+
+**Decision:** Accept published **`v2.0.0`** (do **not** retag as `v1.2.0`). Open **`v2.0.x`** as patch line and **`v2.1.x`** as feature line from `main`. Back-merge release metadata into `v1.1.x`. Close `v1.0.x` / `v1.1.x` for new features.
+**Reason:** Commit `feat(database)!` + `BREAKING CHANGE` footer correctly forced a **major** bump via release-it (Angular conventional commits). Table rename is breaking for existing host DBs (`migrate:fresh` or rename migration). A `v1.2.0` would have required committing without `!` / BREAKING footer — rewriting published tags is worse than keeping an honest major.
+**Trade-off:** Hosts on `1.x` see another major soon after `1.0.0`/`1.1.0`; migration path is documented in CHANGELOG / database-schema.
+**Impact:** ROADMAP/STATE/RELEASE → `v2.1.x` / `v2.0.x` / `v2.0.0`. Historical: `v1.1.0` = M10; `v2.0.0` = prefixed tables.
 
 ### AD-026: Canvas Tools Catalog + Tool Actions (2026-07-25)
 
@@ -352,7 +359,8 @@
 | context-engineering | 2026-07-21 | 0.9.x | ✅ Done |
 | canvas-invoke-node | 2026-07-21 | 0.9.x → 0.10.0 | ✅ Done |
 | M9 (RAG / Studio UX / neuron-ai) | 2026-07-25 | 1.0.0 | ✅ Done |
-| canvas-tool-mode | 2026-07-25 | M10 / `v1.1.x` | 📋 Specified |
+| canvas-tool-mode + tools catalog | 2026-07-26 | 1.1.0 | ✅ Done |
+| table-prefix (StudioTables) | 2026-07-27 | 2.0.0 | ✅ Done |
 
 ---
 
@@ -370,7 +378,7 @@ Themes turned into specified features (AD-022 — shipped on `v0.9.x` / `v0.10.0
 ### P2 — Valuable later (not M10 core)
 
 - [x] **Canvas `invoke` / allowlisted hook node** — done: [`canvas-invoke-node`](../features/canvas-invoke-node/spec.md) shipped `v0.10.0`
-- [x] **Agent-as-tool / Tool Mode** — specified as [`canvas-tool-mode`](../features/canvas-tool-mode/spec.md) (M10 / AD-024); Execute on `v1.1.x`
+- [x] **Agent-as-tool / Tool Mode** — specified as [`canvas-tool-mode`](../features/canvas-tool-mode/spec.md) (M10 / AD-024); shipped `v1.1.0`
 - [ ] Dedicated Usage page / advanced charts / filters (beyond M5 minimal Dashboard)
 - [ ] Multi-tenant / user attribution in usage
 - [ ] Embeddings / RAG cost as a separate line item
@@ -444,4 +452,7 @@ Themes turned into specified features (AD-022 — shipped on `v0.9.x` / `v0.10.0
 - [x] AD-023: open M9 on `v0.10.x` (Studio UX + RAG harden + neuron-ai)
 - [x] Merge M9 → `main` + release `v1.0.0` (breaking major)
 - [x] AD-024 / AD-025: Specify M10 `canvas-tool-mode`; open `v1.0.x` + `v1.1.x`
-- [ ] Execute M10 `canvas-tool-mode` (CTM-T1…T10) on `v1.1.x`
+- [x] Execute M10 `canvas-tool-mode` (CTM-T1…T10) → release `v1.1.0`
+- [x] Table-prefix `feat(database)!` → release `v2.0.0` (AD-027)
+- [x] Open `v2.0.x` (patch) + `v2.1.x` (features); sync `v1.1.x` metadata
+- [ ] Next feature / milestone on `v2.1.x`
