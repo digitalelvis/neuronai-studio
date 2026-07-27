@@ -1,5 +1,15 @@
 # Changelog
 
+# [2.0.0](https://github.com/digitalelvis/neuronai-studio/compare/v1.1.0...v2.0.0) (2026-07-27)
+
+
+* feat(database)!: prefix all package tables ([a1abe64](https://github.com/digitalelvis/neuronai-studio/commit/a1abe644627f3368998c0fdc72a3dee6967d33bb))
+
+
+### BREAKING CHANGES
+
+* agent_definitions, workflow_definitions, tool_definitions, mcp_servers, agent_mcp_server, knowledge_bases, and knowledge_documents are now prefixed. Fresh installs get prefixed names; existing DBs need migrate:fresh or a rename migration.
+
 # [1.1.0](https://github.com/digitalelvis/neuronai-studio/compare/v1.0.0...v1.1.0) (2026-07-26)
 
 
