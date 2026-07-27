@@ -14,10 +14,10 @@ Operational guide for versioning and publishing `digitalelvis/neuronai-studio` o
 
 ## Day-to-day development
 
-1. Branch from the active feature line (currently `v1.1.x` for M10):
+1. Branch from the active feature line (currently `v2.1.x`):
 
    ```bash
-   git checkout v1.1.x
+   git checkout v2.1.x
    git pull
    git checkout -b feat/my-feature
    ```
@@ -26,7 +26,7 @@ Operational guide for versioning and publishing `digitalelvis/neuronai-studio` o
 
 3. Open a PR targeting the line you branched from. CI must pass before merge.
 
-Patches for the published `1.0` series go to `v1.0.x`. Older lines (`v0.10.x`, `v0.9.x`, …) are historical.
+Patches for the published `2.0` series go to `v2.0.x`. Older lines (`v1.1.x`, `v1.0.x`, `v0.10.x`, …) are historical.
 
 ## Standard release
 
@@ -191,27 +191,25 @@ For future releases:
 4. Verify Packagist shows the new version (auto-update webhook).
 5. Back-merge `main` → active `vX.Y.x` lines.
 
-## v0.9.x / v0.8.x / v0.7.x development lines
+## v2.1.x / v2.0.x / v1.x development lines
 
 | Line | Role |
 |------|------|
-| **`v0.9.x`** | Active **feature** line for M8 — performance/memory/context (AD-021/AD-022) |
-| **`v0.8.x`** | **Patch** line for the published `0.8` series (M7) |
-| **`v0.7.x`** | **Patch** line for the published `0.7` series (M6) |
-| Latest published | **`v0.8.1`** on Packagist / `main` |
+| **`v2.1.x`** | Active **feature** line (post-`v2.0.0`) |
+| **`v2.0.x`** | **Patch** line for the published `2.0` series (prefixed tables) |
+| **`v1.1.x` / `v1.0.x`** | Historical — closed for new features |
+| Latest published | **`v2.0.0`** on Packagist / `main` |
 
 | Area | Status |
 |------|--------|
-| M1–M4 (cyclic graphs, RAG, structured output, HITL, parallel, queue, stream adapters, unified runs) | ✅ Published in `v0.3.0` |
-| Release bot (`RELEASE_TOKEN` + push `main` before tag) | ✅ Verified through `v0.8.0` |
-| M5 `cost-estimation` | ✅ Shipped in `v0.4.0` |
-| M5 `usage-analytics` | ✅ Shipped in `v0.5.0` |
-| M5 `usage-export-api` | ✅ Shipped in `v0.6.0` |
-| M6 runtime/agent | ✅ Shipped in `v0.7.0` |
-| M7 external observability | ✅ Shipped in `v0.8.0` |
-| M8 performance / memory / context | 🚧 Execute on `v0.9.x` (AMC → CTX → PTA; AD-022) |
+| M1–M9 | ✅ Published through `v1.0.0` |
+| M10 Tool Mode + tools catalog | ✅ Shipped in `v1.1.0` |
+| Table prefix (`StudioTables`) | ✅ Shipped in `v2.0.0` (BREAKING — AD-027) |
+| Release bot (`RELEASE_TOKEN`) | ✅ Verified through `v2.0.0` |
 
-Lines `v0.3.x`–`v0.8.x` are closed for new features. Consumers on older minors can stay until ready to adopt `v0.8.0`+.
+**Why `v2.0.0` instead of `v1.2.0`:** the commit used `feat(database)!` + a `BREAKING CHANGE` footer, so release-it correctly applied a **major** bump. Do not retag; keep hosts migrating via documented rename / `migrate:fresh`.
+
+Lines `v0.3.x`–`v1.1.x` are closed for new features. Consumers on `1.x` should plan the table-prefix migration before adopting `2.0.0`+.
 
 ## Troubleshooting
 
