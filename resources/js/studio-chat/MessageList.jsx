@@ -61,6 +61,14 @@ function ToolEventBlock({ tool }) {
 }
 
 function WorkflowAssistantContent({ message, viewMode }) {
+    if (message.meta?.status === 'failed') {
+        return (
+            <div className="whitespace-pre-wrap text-sm leading-relaxed text-destructive">
+                {message.content || 'Request failed.'}
+            </div>
+        );
+    }
+
     const isWorkflowResult =
         message.meta?.workflowOutput != null || message.meta?.stepEvents != null || message.meta?.status === 'running';
 

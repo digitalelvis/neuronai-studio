@@ -21,7 +21,7 @@ class WorkflowRunController
             ], 501);
         }
 
-        $validated = $request->validate([
+        $validated = $this->validateStreamRequest($request, [
             'state' => 'nullable|array',
             'thread_id' => 'nullable|uuid',
         ]);

@@ -443,7 +443,11 @@ export default forwardRef(function StudioChat({
             const message = sendError instanceof Error ? sendError.message : 'Request failed.';
             setError(message);
             if (assistantId) {
-                updateMessage(assistantId, { content: message, streaming: false, meta: { status: 'failed' } });
+                updateMessage(assistantId, (current) => ({
+                    content: message,
+                    streaming: false,
+                    meta: { ...current.meta, status: 'failed' },
+                }));
             }
         } finally {
             setSending(false);
@@ -459,7 +463,14 @@ export default forwardRef(function StudioChat({
                                   streaming: false,
                                   meta: { ...message.meta, status: 'failed' },
                               }
-                            : message,
+                            : message.id === assistantId && message.streaming
+                              ? {
+                                    ...message,
+                                    content: message.content || 'No response received.',
+                                    streaming: false,
+                                    meta: { ...message.meta, status: 'failed' },
+                                }
+                              : message,
                     ),
                 );
             }
