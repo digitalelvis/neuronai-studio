@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { collectLivewireErrors, formatLivewireErrorSummary } from '@/lib/livewireErrors';
 import ConnectPanel from '@/components/ConnectPanel';
+import VariableInput from './VariableInput';
 
 const categoryLabels = {
     builtin: 'Built-in Toolkits',
@@ -27,6 +28,7 @@ export default function AgentForm({ config }) {
     const [provider, setProvider] = useState(initial.provider ?? config.defaultProvider ?? '');
     const [model, setModel] = useState(initial.model ?? '');
     const [instructions, setInstructions] = useState(initial.instructions ?? '');
+    const [apiKey, setApiKey] = useState(initial.api_key ?? '');
     const [selectedToolRefs, setSelectedToolRefs] = useState(initial.selectedToolRefs ?? []);
     const [toolAdvanced, setToolAdvanced] = useState(initial.toolAdvanced ?? {});
     const [selectedMcpSlugs, setSelectedMcpSlugs] = useState(initial.selectedMcpSlugs ?? []);
@@ -123,6 +125,7 @@ export default function AgentForm({ config }) {
                 provider,
                 model,
                 instructions,
+                api_key: apiKey,
                 selectedToolRefs,
                 toolAdvanced,
                 selectedMcpSlugs,
@@ -208,6 +211,17 @@ export default function AgentForm({ config }) {
                                                 </SelectContent>
                                             </Select>
                                         </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label>API Key (optional override)</Label>
+                                        <VariableInput
+                                            value={apiKey}
+                                            onChange={setApiKey}
+                                            variables={config.variables ?? []}
+                                            sensitive
+                                            placeholder=""
+                                            hint="Bind a Credential variable (var:NAME) or leave empty for install-time config."
+                                        />
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Instructions (System Prompt)</Label>

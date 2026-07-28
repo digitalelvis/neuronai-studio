@@ -10,6 +10,17 @@ use NeuronAI\Workflow\WorkflowState;
 class StateTemplateInterpolator
 {
     /**
+     * Resolve only {{ var.NAME }} placeholders (no workflow state).
+     */
+    public static function interpolateVariablesOnly(string $template): string
+    {
+        return preg_replace_callback('/\{\{\s*var\.([A-Z][A-Z0-9_]*)\s*\}\}/', function (array $matches) {
+            return app(\DigitalElvis\NeuronAIStudio\Repositories\VariableRepository::class)
+                ->resolveValue($matches[1]);
+        }, $template) ?? $template;
+    }
+
+    /**
      * @param  list<array<string, mixed>>|null  $truncationEvents  Collected when budgets truncate.
      */
     public static function interpolate(
@@ -18,11 +29,19 @@ class StateTemplateInterpolator
         ?MemoryConfig $memory = null,
         ?array &$truncationEvents = null,
     ): string {
+        $template = self::interpolateVariablesOnly($template);
+
         $truncator = new TokenBudgetTruncator;
         $ragBudgeter = new RagContextBudgeter($truncator);
 
         return preg_replace_callback('/\{\{\s*([\w.]+)\s*\}\}/', function (array $matches) use ($state, $memory, $truncator, $ragBudgeter, &$truncationEvents) {
             $field = $matches[1];
+
+            if (str_starts_with($field, 'var.')) {
+                // Already handled by interpolateVariablesOnly; leave unresolved remnants alone.
+                return $matches[0];
+            }
+
             $value = WorkflowStateValue::get($state, $field);
             $string = self::stringify($value);
 

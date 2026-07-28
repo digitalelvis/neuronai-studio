@@ -5,8 +5,8 @@
 **Development line (features):** `v2.1.x`  
 **Patch line:** `v2.0.x`  
 **Latest published:** `v2.0.0` on Packagist / `main`  
-**Última atualização:** 2026-07-27  
-**Etapa atual:** M10 + table-prefix shipped (`v1.1.0` Tool Mode; `v2.0.0` prefixed tables). Next work on `v2.1.x`. TraceDetail bridge permanece deferred.
+**Última atualização:** 2026-07-28  
+**Etapa atual:** M11 Global Variables (Studio Variable Vault) on `v2.1.x`. TraceDetail bridge permanece deferred.
 
 ---
 
@@ -149,6 +149,20 @@ Langflow-like **Tool Mode**: nodes `toolable` flip between Step and Tool; v1 = A
 
 **Publicação:** `v1.1.0` = Tool Mode + catalog. `v2.0.0` = prefixed Studio tables (BREAKING). Feature line = `v2.1.x`; patch = `v2.0.x` (AD-027).
 
+### M11 — Global Variables / Studio Variable Vault (P1) `done`
+
+Studio-managed Credential + Generic vault, Settings CRUD, Variable Input binding, runtime `var:NAME` resolve, prompt `{{ var.NAME }}`. Complements `.env` (ADR-028).
+
+**Escopo:** [global-variables](../features/global-variables/spec.md) · [design](../features/global-variables/design.md) · [tasks](../features/global-variables/tasks.md) · [context](../features/global-variables/context.md) · [PRD](../prd/prd-global-variables.md)
+
+| Ordem | Feature | Status | Spec |
+|-------|---------|--------|------|
+| 29 | `global-variables` | **done** (GV-T1…T9 on `feat/global-variables`) | [spec](../features/global-variables/spec.md) |
+
+**Critério de conclusão M11:** Operator cria Credential, bind em Agent/MCP/KB sem editar `.env`; runtime resolve; export preserva `var:NAME`; zero plaintext Credential em list/traces.
+
+**Linha:** PRs → `v2.1.x`.
+
 ---
 
 ## Próximas tarefas (ordem de execução)
@@ -174,7 +188,8 @@ Langflow-like **Tool Mode**: nodes `toolable` flip between Step and Tool; v1 = A
 19. ~~Execute `canvas-tool-mode` (CTM-T1–T10) on `feat/canvas-tool-mode`~~ ✅ — [spec](../features/canvas-tool-mode/spec.md) · [tasks](../features/canvas-tool-mode/tasks.md)
 20. ~~Release `v1.1.0` (M10) + `v2.0.0` (table-prefix breaking)~~ ✅
 21. ~~Abrir `v2.0.x` (patch) + `v2.1.x` (features) + sync `v1.1.x` (AD-027)~~ ✅
-22. Próxima feature / milestone → PRs em `v2.1.x`
+22. ~~Abrir `v2.0.x` (patch) + `v2.1.x` (features) + sync `v1.1.x` (AD-027)~~ ✅
+23. ~~Specify + design + tasks `global-variables` (M11 / ADR-028) → Execute GV-T1…T9 on `feat/global-variables` → `v2.1.x`~~ ✅ (PR pending)
 
 ---
 
