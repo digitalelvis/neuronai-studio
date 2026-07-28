@@ -1,6 +1,6 @@
 # Tools Overview
 
-Tools extend agent capabilities beyond text generation. NeuronAI Studio supports two database-managed tool types plus built-in toolkits, scanned PHP classes, and MCP-exposed tools.
+Tools extend agent capabilities beyond text generation. NeuronAI Studio supports database-managed tool types plus built-in toolkits, scanned PHP classes, MCP-exposed tools, and workflow Tool Mode specialists (`NodeAsTool`).
 
 ## Tool sources
 
@@ -13,6 +13,7 @@ flowchart TD
     Registry --> MCP[MCP Server Tools]
     DB --> Builder[Builder Tools]
     DB --> Webhook[Webhook Tools]
+    DB --> RAG[RAG Tools]
 ```
 
 | Source | Type | Created in |
@@ -21,8 +22,15 @@ flowchart TD
 | Builder tools | PHP invoke body → export to class | Studio UI (local prototyping) |
 | Webhook tools | HTTP endpoint + JSON schema | Studio UI |
 | RAG tools | Knowledge base search (`KnowledgeBaseTool`) | Studio UI (`?kind=rag`) |
-| PHP classes | Neuron `Tool` subclasses | `app/Neuron/Tools/` or codegen |
+| PHP classes | Neuron `Tool` subclasses | `app/Neuron/Tools/`, codegen, or package demos |
 | MCP tools | Remote MCP server | MCP server config |
+| Tool Mode specialists | `NodeAsTool` via `node:{id}` refs | Workflow canvas toolset edges |
+
+Runtime resolves bindings through `ToolResolver` with prefixes such as `toolkit:`, `class:`, `tool:db:` / `db:`, `mcp:`, `provider:`, and `node:`.
+
+### Package demo class
+
+`IssueRefundTool` (`class:…\IssueRefundTool`) ships with the package for tool-approval demos — see the [refund-actions-agent template](../templates.md) and [Human-in-the-Loop](../workflows/human-in-the-loop.md#tool-approval). Prefer class-based tools when approval pauses must serialize across resume.
 
 ## When to use each type
 
@@ -34,6 +42,7 @@ flowchart TD
 | Reusable production class | [Make Tool CLI](make-tool-cli.md) + export |
 | Math, calendar, etc. | Built-in toolkit (`calculator`, `calendar`) |
 | Filesystem, Telescope, etc. | [MCP Server](../mcp-servers/overview.md) |
+| Supervisor calls a specialist agent | [Tool Mode](../workflows/node-types/ai-nodes.md#tool-mode-agent-as-tool) (`node:` / `NodeAsTool`) |
 
 ## RAG knowledge base tool
 
@@ -54,16 +63,18 @@ Full guide: [Knowledge Bases — Agent binding](../knowledge-bases/agent-binding
 | `/neuronai-studio/tools` | List database tools |
 | `/neuronai-studio/tools/create` | Create builder tool |
 | `/neuronai-studio/tools/create?kind=webhook` | Create webhook tool |
+| `/neuronai-studio/tools/create?kind=rag` | Create RAG tool |
 | `/neuronai-studio/tools/{id}/edit` | Edit tool |
 | `/neuronai-studio/tools/{id}` | View tool details |
 | `/neuronai-studio/tools/registry?ref=...` | Tool registry detail |
 
 ## Binding tools to agents
 
-Tools are bound to agents by `ref` in the agent editor. See [Creating Agents](../agents/creating-agents.md#tool-bindings).
+Tools are bound to agents by `ref` in the agent editor. Canvas toolset edges add `node:` bindings at workflow runtime. See [Creating Agents](../agents/creating-agents.md#tool-bindings) and [Canvas Editor](../workflows/canvas-editor.md#agent-tools-on-the-canvas).
 
 ## Next steps
 
 - [Builder Tools](builder-tools.md)
 - [Webhook Tools](webhook-tools.md)
 - [Registry & Codegen](registry-and-codegen.md)
+- [Tool Mode (AI nodes)](../workflows/node-types/ai-nodes.md#tool-mode-agent-as-tool)
