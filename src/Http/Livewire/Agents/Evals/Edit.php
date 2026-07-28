@@ -7,6 +7,7 @@ use DigitalElvis\NeuronAIStudio\Evaluation\SuiteEvaluator;
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use DigitalElvis\NeuronAIStudio\Models\EvalRun;
 use DigitalElvis\NeuronAIStudio\Models\EvalSuite;
+use DigitalElvis\NeuronAIStudio\Support\ResolvesOptionalRouteModel;
 use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
 use DigitalElvis\NeuronAIStudio\Support\StudioTables;
 use Illuminate\Support\Str;
@@ -16,6 +17,8 @@ use Throwable;
 
 class Edit extends Component
 {
+    use ResolvesOptionalRouteModel;
+
     public AgentDefinition $agent;
 
     public ?EvalSuite $suite = null;
@@ -28,10 +31,11 @@ class Edit extends Component
 
     public bool $useFakeProvider = false;
 
-    public function mount(AgentDefinition $agent, ?EvalSuite $suite = null): void
+    public function mount(AgentDefinition $agent, mixed $suite = null): void
     {
         $this->agent = $agent;
-        $this->suite = $suite;
+        $this->suite = $this->resolveOptionalRouteModel($suite, EvalSuite::class);
+        $suite = $this->suite;
 
         if ($suite?->exists) {
             abort_unless($suite->agent_definition_id === $agent->id, 404);

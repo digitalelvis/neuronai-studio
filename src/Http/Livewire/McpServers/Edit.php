@@ -4,12 +4,15 @@ namespace DigitalElvis\NeuronAIStudio\Http\Livewire\McpServers;
 
 use DigitalElvis\NeuronAIStudio\Models\McpServer;
 use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
+use DigitalElvis\NeuronAIStudio\Support\ResolvesOptionalRouteModel;
 use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
 use Illuminate\Support\Str;
 use Livewire\Component;
 
 class Edit extends Component
 {
+    use ResolvesOptionalRouteModel;
+
     public ?McpServer $server = null;
 
     public string $name = '';
@@ -45,9 +48,10 @@ class Edit extends Component
 
     public ?string $testError = null;
 
-    public function mount(?McpServer $server = null): void
+    public function mount(mixed $server = null): void
     {
-        $this->server = $server;
+        $this->server = $this->resolveOptionalRouteModel($server, McpServer::class);
+        $server = $this->server;
 
         if ($server?->exists) {
             $this->name = $server->name;

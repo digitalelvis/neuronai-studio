@@ -86,19 +86,19 @@ class AgentRunner
             'message' => $messageText,
         ]);
 
-        $agent = $this->makeAgent($definition, $config, $threadKey);
-        $agent->setPersistence(new InMemoryPersistence, $run->id);
-
-        $this->attachObservability($agent, $run, $trace, $config);
-
-        $message = $this->messages->userMessage(
-            $messageText,
-            is_array($payload['attachments'] ?? null) ? $payload['attachments'] : [],
-        );
-
-        $handler = $agent->stream($message);
-
         try {
+            $agent = $this->makeAgent($definition, $config, $threadKey);
+            $agent->setPersistence(new InMemoryPersistence, $run->id);
+
+            $this->attachObservability($agent, $run, $trace, $config);
+
+            $message = $this->messages->userMessage(
+                $messageText,
+                is_array($payload['attachments'] ?? null) ? $payload['attachments'] : [],
+            );
+
+            $handler = $agent->stream($message);
+
             foreach ($handler->events() as $event) {
                 if ($event instanceof StreamChunk) {
                     yield $event;
@@ -137,17 +137,22 @@ class AgentRunner
             'message' => $messageText,
         ]);
 
-        $agent = $this->makeAgent($definition, $config, $threadKey);
-        $agent->setPersistence(new InMemoryPersistence, $run->id);
+        try {
+            $agent = $this->makeAgent($definition, $config, $threadKey);
+            $agent->setPersistence(new InMemoryPersistence, $run->id);
 
-        $this->attachObservability($agent, $run, $trace, $config);
+            $this->attachObservability($agent, $run, $trace, $config);
 
-        $message = $this->messages->userMessage(
-            $messageText,
-            is_array($payload['attachments'] ?? null) ? $payload['attachments'] : [],
-        );
+            $message = $this->messages->userMessage(
+                $messageText,
+                is_array($payload['attachments'] ?? null) ? $payload['attachments'] : [],
+            );
 
-        return $agent->stream($message);
+            return $agent->stream($message);
+        } catch (\Throwable $exception) {
+            $this->markRunFailed($run, $exception);
+            throw $exception;
+        }
     }
 
     protected function createExecutionSession(
@@ -202,19 +207,19 @@ class AgentRunner
             'message' => $message instanceof UserMessage ? $message->getContent() : $message
         ], $parentRun);
 
-        $agent = $this->makeAgent(
-            $definition,
-            $this->withToolParentRun($config, $run),
-            $threadKey ?? $run->thread_id,
-            $fake,
-        );
-        $agent->setPersistence(new InMemoryPersistence, $run->id);
-
-        $this->attachObservability($agent, $run, $trace, $config, $parentRun);
-
-        $userMessage = $message instanceof UserMessage ? $message : new UserMessage($message);
-
         try {
+            $agent = $this->makeAgent(
+                $definition,
+                $this->withToolParentRun($config, $run),
+                $threadKey ?? $run->thread_id,
+                $fake,
+            );
+            $agent->setPersistence(new InMemoryPersistence, $run->id);
+
+            $this->attachObservability($agent, $run, $trace, $config, $parentRun);
+
+            $userMessage = $message instanceof UserMessage ? $message : new UserMessage($message);
+
             $handler = $agent->chat($userMessage);
             $content = $handler->getMessage()->getContent();
 
@@ -261,15 +266,15 @@ class AgentRunner
             'message' => $message instanceof UserMessage ? $message->getContent() : $message
         ], $parentRun);
 
-        $agent = $this->makeAgent($definition, $this->withToolParentRun($config, $run), $threadKey, $fake);
-        $agent->setPersistence(new InMemoryPersistence, $run->id);
-
-        $this->attachObservability($agent, $run, $trace, $config, $parentRun);
-
-        $userMessage = $message instanceof UserMessage ? $message : new UserMessage($message);
-        $handler = $agent->stream($userMessage);
-
         try {
+            $agent = $this->makeAgent($definition, $this->withToolParentRun($config, $run), $threadKey, $fake);
+            $agent->setPersistence(new InMemoryPersistence, $run->id);
+
+            $this->attachObservability($agent, $run, $trace, $config, $parentRun);
+
+            $userMessage = $message instanceof UserMessage ? $message : new UserMessage($message);
+            $handler = $agent->stream($userMessage);
+
             foreach ($handler->events() as $event) {
                 if ($event instanceof StreamChunk) {
                     yield $event;

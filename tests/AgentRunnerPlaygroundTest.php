@@ -167,4 +167,44 @@ class AgentRunnerPlaygroundTest extends TestCase
         $this->assertSame(2000, $span->prompt_tokens);
         $this->assertSame('0.000300', $span->estimated_cost);
     }
+
+    public function test_stream_marks_run_failed_when_provider_is_not_configured(): void
+    {
+        $agent = AgentDefinition::create([
+            'name' => 'Broken Provider Agent',
+            'slug' => 'broken-provider-agent',
+            'provider' => 'gemini',
+            'model' => 'gemini-2.5-flash',
+            'instructions' => 'You are helpful.',
+        ]);
+
+        $registry = $this->createMock(ProviderRegistry::class);
+        $registry->method('resolve')
+            ->willThrowException(new \InvalidArgumentException('AI provider [gemini] is not configured.'));
+
+        $toolResolver = $this->createMock(ToolResolver::class);
+        $toolResolver->method('resolveMany')->willReturn([]);
+
+        $runner = new AgentRunner(
+            $registry,
+            $toolResolver,
+            $this->createMock(McpToolResolver::class),
+            new ToolEventExtractor,
+            new MessageFactory,
+        );
+
+        try {
+            foreach ($runner->stream($agent, ['message' => 'hi']) as $chunk) {
+            }
+            $this->fail('Expected provider configuration exception.');
+        } catch (\InvalidArgumentException $exception) {
+            $this->assertStringContainsString('gemini', $exception->getMessage());
+        }
+
+        $run = StudioRun::query()->latest('started_at')->first();
+        $this->assertNotNull($run);
+        $this->assertSame('failed', $run->status);
+        $this->assertStringContainsString('gemini', (string) $run->error_message);
+        $this->assertNotNull($run->finished_at);
+    }
 }

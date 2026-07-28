@@ -17,6 +17,7 @@ use DigitalElvis\NeuronAIStudio\Models\ToolDefinition;
 use DigitalElvis\NeuronAIStudio\Registry\ToolRegistry;
 use DigitalElvis\NeuronAIStudio\Runtime\GraphValidator;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
+use DigitalElvis\NeuronAIStudio\Support\ResolvesOptionalRouteModel;
 use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
 use DigitalElvis\NeuronAIStudio\Support\ToolSchemaInspector;
 use Illuminate\Support\Str;
@@ -24,6 +25,8 @@ use Livewire\Component;
 
 class Editor extends Component
 {
+    use ResolvesOptionalRouteModel;
+
     public ?WorkflowDefinition $workflow = null;
 
     public string $name = '';
@@ -40,7 +43,7 @@ class Editor extends Component
 
     public ?string $linkedClassPath = null;
 
-    public function mount(?WorkflowDefinition $workflow = null): void
+    public function mount(mixed $workflow = null): void
     {
         $class = request('class');
         $jsonRef = request('json');
@@ -57,7 +60,8 @@ class Editor extends Component
             return;
         }
 
-        $this->workflow = $workflow;
+        $this->workflow = $this->resolveOptionalRouteModel($workflow, WorkflowDefinition::class);
+        $workflow = $this->workflow;
 
         if ($workflow?->exists) {
             $this->name = $workflow->name;

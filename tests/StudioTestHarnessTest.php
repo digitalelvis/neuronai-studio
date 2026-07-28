@@ -121,6 +121,28 @@ class StudioTestHarnessTest extends TestCase
             ->assertHeader('content-type', 'image/png');
     }
 
+    public function test_workflow_stream_rejects_non_uuid_thread_id_as_json(): void
+    {
+        $this->withoutMiddleware(EnsureNeuronAIStudioAuthorized::class);
+
+        $workflow = WorkflowDefinition::create([
+            'name' => 'Thread Validation Flow',
+            'slug' => 'thread-validation-flow',
+            'graph' => WorkflowDefinition::defaultGraph(),
+        ]);
+
+        $response = $this->postJson(route('neuronai-studio.workflows.trace.stream', $workflow), [
+            'message' => 'oi',
+            'thread_id' => 'thread-1785246573004-7a74b05b5a8298',
+        ], [
+            'Accept' => 'text/event-stream',
+            'X-Requested-With' => 'XMLHttpRequest',
+        ]);
+
+        $response->assertUnprocessable();
+        $response->assertJsonValidationErrors(['thread_id']);
+    }
+
     public function test_workflow_stream_accepts_post_payload(): void
     {
         $this->withoutMiddleware(EnsureNeuronAIStudioAuthorized::class);

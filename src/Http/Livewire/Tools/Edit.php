@@ -10,12 +10,15 @@ use DigitalElvis\NeuronAIStudio\Codegen\ToolExporter;
 use DigitalElvis\NeuronAIStudio\Models\KnowledgeBase;
 use DigitalElvis\NeuronAIStudio\Models\ToolDefinition;
 use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
+use DigitalElvis\NeuronAIStudio\Support\ResolvesOptionalRouteModel;
 use DigitalElvis\NeuronAIStudio\Support\StudioTables;
 use Illuminate\Support\Str;
 use Livewire\Component;
 
 class Edit extends Component
 {
+    use ResolvesOptionalRouteModel;
+
     public ?ToolDefinition $tool = null;
 
     public string $toolKind = 'builder';
@@ -43,9 +46,10 @@ class Edit extends Component
 
     public ?float $threshold = null;
 
-    public function mount(?ToolDefinition $tool = null): void
+    public function mount(mixed $tool = null): void
     {
-        $this->tool = $tool;
+        $this->tool = $this->resolveOptionalRouteModel($tool, ToolDefinition::class);
+        $tool = $this->tool;
 
         if ($tool?->exists) {
             $this->loadFromDefinition($tool);
