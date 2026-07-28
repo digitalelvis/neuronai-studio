@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.0.1](https://github.com/digitalelvis/neuronai-studio/compare/v2.0.0...v2.0.1) (2026-07-28)
+
+
+### Bug Fixes
+
+* **database:** shorten agent_mcp_server unique index name for MySQL ([2f9f656](https://github.com/digitalelvis/neuronai-studio/commit/2f9f65661af61d2e67ae42813a06ef36c5c33156))
+
 # [2.0.0](https://github.com/digitalelvis/neuronai-studio/compare/v1.1.0...v2.0.0) (2026-07-27)
 
 
