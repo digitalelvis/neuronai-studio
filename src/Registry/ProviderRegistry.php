@@ -3,6 +3,7 @@
 namespace DigitalElvis\NeuronAIStudio\Registry;
 
 use DigitalElvis\NeuronAIStudio\Support\ProviderParameters;
+use DigitalElvis\NeuronAIStudio\Support\StudioTranslator;
 use InvalidArgumentException;
 use NeuronAI\Providers\AIProviderInterface;
 use NeuronAI\Providers\Anthropic\Anthropic;
@@ -26,7 +27,12 @@ class ProviderRegistry
     public function labels(): array
     {
         return collect($this->all())
-            ->mapWithKeys(fn (array $config, string $key) => [$key => $config['label'] ?? $key])
+            ->mapWithKeys(fn (array $config, string $key) => [
+                $key => StudioTranslator::get(
+                    'registry.providers.'.$key,
+                    $config['label'] ?? $key
+                ),
+            ])
             ->all();
     }
 

@@ -2,6 +2,7 @@
 
 namespace DigitalElvis\NeuronAIStudio\Registry;
 
+use DigitalElvis\NeuronAIStudio\Support\StudioTranslator;
 use InvalidArgumentException;
 
 class NodeTypeRegistry
@@ -49,7 +50,20 @@ class NodeTypeRegistry
         $result = [];
 
         foreach ($this->types as $type => $config) {
-            $result[$type] = array_merge(['type' => $type], $config['meta']);
+            $meta = $config['meta'];
+            $meta['label'] = StudioTranslator::get(
+                'nodes.'.$type,
+                $meta['label'] ?? $type
+            );
+
+            if (isset($meta['tool_exposure']['default_description'])) {
+                $meta['tool_exposure']['default_description'] = StudioTranslator::get(
+                    'nodes.'.$type.'_tool_description',
+                    $meta['tool_exposure']['default_description']
+                );
+            }
+
+            $result[$type] = array_merge(['type' => $type], $meta);
         }
 
         return $result;

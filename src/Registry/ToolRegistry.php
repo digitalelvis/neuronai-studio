@@ -4,6 +4,7 @@ namespace DigitalElvis\NeuronAIStudio\Registry;
 
 use DigitalElvis\NeuronAIStudio\Models\McpServer;
 use DigitalElvis\NeuronAIStudio\Models\ToolDefinition;
+use DigitalElvis\NeuronAIStudio\Support\StudioTranslator;
 use Illuminate\Support\Str;
 use NeuronAI\Tools\Tool;
 use NeuronAI\Tools\ToolInterface;
@@ -42,7 +43,10 @@ class ToolRegistry
         foreach (config('neuronai-studio.tools', []) as $key => $tool) {
             $entries[] = [
                 'ref' => "toolkit:{$key}",
-                'label' => $tool['label'] ?? Str::headline($key),
+                'label' => StudioTranslator::get(
+                    'registry.tools.'.$key,
+                    $tool['label'] ?? Str::headline($key)
+                ),
                 'type' => $tool['type'] ?? 'toolkit',
                 'category' => $tool['category'] ?? 'builtin',
                 'description' => $tool['description'] ?? null,

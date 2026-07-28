@@ -4,6 +4,7 @@ namespace DigitalElvis\NeuronAIStudio\Registry;
 
 use DigitalElvis\NeuronAIStudio\MCP\McpStdioTransport;
 use DigitalElvis\NeuronAIStudio\Models\McpServer;
+use DigitalElvis\NeuronAIStudio\Support\StudioTranslator;
 use Illuminate\Support\Str;
 use NeuronAI\MCP\McpClient;
 
@@ -49,7 +50,12 @@ class McpRegistry
     {
         return collect($this->all($includeDisabled))
             ->filter(fn (array $entry) => $includeDisabled || ($entry['enabled'] ?? true))
-            ->mapWithKeys(fn (array $entry, string $slug) => [$slug => $entry['label'] ?? Str::headline($slug)])
+            ->mapWithKeys(fn (array $entry, string $slug) => [
+                $slug => StudioTranslator::get(
+                    'registry.mcp.'.$slug,
+                    $entry['label'] ?? Str::headline($slug)
+                ),
+            ])
             ->all();
     }
 
