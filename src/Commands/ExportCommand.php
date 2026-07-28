@@ -8,6 +8,7 @@ use DigitalElvis\NeuronAIStudio\Codegen\CodegenGuard;
 use DigitalElvis\NeuronAIStudio\Codegen\WorkflowExporter;
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
+use DigitalElvis\NeuronAIStudio\Support\StudioLocale;
 use Illuminate\Console\Command;
 
 class ExportCommand extends Command
@@ -18,6 +19,8 @@ class ExportCommand extends Command
 
     public function handle(AgentExporter $agentExporter, WorkflowExporter $workflowExporter): int
     {
+        StudioLocale::apply();
+
         try {
             CodegenGuard::ensureExport();
         } catch (CodegenDisabledException $e) {
@@ -42,7 +45,7 @@ class ExportCommand extends Command
         }
 
         foreach ($files as $file) {
-            $this->line("Exported: {$file}");
+            $this->line(__('neuronai-studio::commands.export_exported', ['path' => $file]));
         }
 
         return self::SUCCESS;
