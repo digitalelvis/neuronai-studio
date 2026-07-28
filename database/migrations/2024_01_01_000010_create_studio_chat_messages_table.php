@@ -11,7 +11,8 @@ return new class extends Migration
     {
         Schema::create(StudioTables::name('chat_messages'), function (Blueprint $table) {
             $table->id();
-            $table->uuid('thread_id')->index();
+            // Scoped keys: agent:{id}:{uuid} / workflow:{id}:{uuid} (not plain UUID).
+            $table->string('thread_id', 64)->index();
             $table->string('role');
             $table->json('content');
             $table->json('meta')->nullable();
