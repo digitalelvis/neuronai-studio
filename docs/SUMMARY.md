@@ -59,6 +59,7 @@
 * [Templates](guides/templates.md)
 * [Export & Production](guides/export-and-production.md)
 * [Security & Access](guides/security-and-access.md)
+* [Global Variables](guides/variables/README.md)
 
 ### Observability
 

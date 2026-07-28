@@ -6,8 +6,7 @@
 **Patch line:** `v2.0.x`  
 **Latest published:** `v2.0.0` on Packagist / `main`  
 **Última atualização:** 2026-07-28  
-**Etapa atual:** M12 Studio i18n on `feat/studio-i18n` → `v2.1.x`. TraceDetail bridge permanece deferred.
-
+**Etapa atual:** M12 Studio i18n on `feat/studio-i18n` → `v2.1.x` (M11 Global Variables merged). TraceDetail bridge permanece deferred.
 ---
 
 ## Milestones
@@ -149,6 +148,20 @@ Langflow-like **Tool Mode**: nodes `toolable` flip between Step and Tool; v1 = A
 
 **Publicação:** `v1.1.0` = Tool Mode + catalog. `v2.0.0` = prefixed Studio tables (BREAKING). Feature line = `v2.1.x`; patch = `v2.0.x` (AD-027).
 
+### M11 — Global Variables / Studio Variable Vault (P1) `done`
+
+Studio-managed Credential + Generic vault, Settings CRUD, Variable Input binding, runtime `var:NAME` resolve, prompt `{{ var.NAME }}`. Complements `.env` (ADR-028).
+
+**Escopo:** [global-variables](../features/global-variables/spec.md) · [design](../features/global-variables/design.md) · [tasks](../features/global-variables/tasks.md) · [context](../features/global-variables/context.md) · [PRD](../prd/prd-global-variables.md)
+
+| Ordem | Feature | Status | Spec |
+|-------|---------|--------|------|
+| 29 | `global-variables` | **done** (merged to `v2.1.x`) | [spec](../features/global-variables/spec.md) |
+
+**Critério de conclusão M11:** Operator cria Credential, bind em Agent/MCP/KB sem editar `.env`; runtime resolve; export preserva `var:NAME`; zero plaintext Credential em list/traces.
+
+**Linha:** PRs → `v2.1.x`.
+
 ### M12 — Studio i18n (P1) `done`
 
 Package localization: default EN, primary demand `pt_BR`. Locale follows host `App::getLocale` with optional `neuronai-studio.locale` override. Phased: Blade/PHP → JS bundles → Artisan.
@@ -189,8 +202,8 @@ Package localization: default EN, primary demand `pt_BR`. Locale follows host `A
 20. ~~Release `v1.1.0` (M10) + `v2.0.0` (table-prefix breaking)~~ ✅
 21. ~~Abrir `v2.0.x` (patch) + `v2.1.x` (features) + sync `v1.1.x` (AD-027)~~ ✅
 22. ~~Abrir `v2.0.x` (patch) + `v2.1.x` (features) + sync `v1.1.x` (AD-027)~~ ✅
-23. ~~Specify + design + tasks + Execute `studio-i18n` (M12 / AD-029) on `feat/studio-i18n` → `v2.1.x`~~ ✅ — [spec](../features/studio-i18n/spec.md)
-
+23. ~~Specify + design + tasks `global-variables` (M11 / ADR-028) → Execute GV-T1…T9 → `v2.1.x`~~ ✅
+24. ~~Specify + design + tasks + Execute `studio-i18n` (M12 / AD-029) on `feat/studio-i18n` → `v2.1.x`~~ ✅ — [spec](../features/studio-i18n/spec.md)
 ---
 
 ## Features concluídas

@@ -50,9 +50,13 @@
                         @error('url') <x-neuronai-studio::ui.form-error>{{ $message }}</x-neuronai-studio::ui.form-error> @enderror
                     </x-neuronai-studio::ui.form-group>
                     <x-neuronai-studio::ui.form-group>
-                        <x-neuronai-studio::ui.label>Token Env Variable</x-neuronai-studio::ui.label>
-                        <x-neuronai-studio::ui.input type="text" wire:model="tokenEnv" placeholder="TELESCOPE_MCP_TOKEN" />
-                        <p class="mt-1 text-xs text-muted-foreground">Reference an environment variable name. Raw tokens are never stored.</p>
+                        <x-neuronai-studio::ui.label>Token / Variable</x-neuronai-studio::ui.label>
+                        <x-neuronai-studio::variable-input
+                            wire-model="tokenEnv"
+                            :sensitive="true"
+                            placeholder="TELESCOPE_MCP_TOKEN or bind a variable"
+                            hint="Env variable name, or bind a Studio variable (var:NAME). Raw tokens are never stored as literals when using the globe picker."
+                        />
                         @error('tokenEnv') <x-neuronai-studio::ui.form-error>{{ $message }}</x-neuronai-studio::ui.form-error> @enderror
                     </x-neuronai-studio::ui.form-group>
                     <x-neuronai-studio::ui.form-group>

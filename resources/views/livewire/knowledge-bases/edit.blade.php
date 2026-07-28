@@ -82,11 +82,20 @@
                                                 <span class="text-destructive">*</span>
                                             @endif
                                         </x-neuronai-studio::ui.label>
-                                        <x-neuronai-studio::ui.input
-                                            type="{{ ($field['type'] ?? 'text') === 'number' ? 'number' : 'text' }}"
-                                            wire:model="vectorStoreConfig.{{ $fieldKey }}"
-                                            placeholder="{{ $field['placeholder'] ?? '' }}"
-                                        />
+                                        @if (str_ends_with($fieldKey, '_env') || in_array($fieldKey, ['key_env', 'api_key_env'], true))
+                                            <x-neuronai-studio::variable-input
+                                                wire-model="vectorStoreConfig.{{ $fieldKey }}"
+                                                :sensitive="true"
+                                                placeholder="{{ $field['placeholder'] ?? 'ENV_NAME or bind variable' }}"
+                                                hint="Env variable name or Studio variable (var:NAME)."
+                                            />
+                                        @else
+                                            <x-neuronai-studio::ui.input
+                                                type="{{ ($field['type'] ?? 'text') === 'number' ? 'number' : 'text' }}"
+                                                wire:model="vectorStoreConfig.{{ $fieldKey }}"
+                                                placeholder="{{ $field['placeholder'] ?? '' }}"
+                                            />
+                                        @endif
                                     </x-neuronai-studio::ui.form-group>
                                 @endif
                             @endforeach

@@ -4,6 +4,7 @@ namespace DigitalElvis\NeuronAIStudio\Runtime\Rag;
 
 use Closure;
 use DigitalElvis\NeuronAIStudio\Models\KnowledgeBase;
+use DigitalElvis\NeuronAIStudio\Runtime\ConfigValueResolver;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use NeuronAI\RAG\VectorStore\ChromaVectorStore;
@@ -319,8 +320,16 @@ class VectorStoreFactory
      */
     protected function resolveEnv(array $cfg, string $key, string $defaultEnv): string
     {
-        $envName = (string) ($cfg[$key] ?? $defaultEnv);
-        $value = (string) (env($envName) ?? '');
+        $stored = isset($cfg[$key]) ? (string) $cfg[$key] : $defaultEnv;
+        $resolver = app(ConfigValueResolver::class);
+
+        if (str_starts_with($stored, 'var:') || str_starts_with($stored, 'env:') || preg_match('/^\{\{\s*env\./', $stored)) {
+            $resolved = $resolver->resolve($stored);
+
+            return is_string($resolved) ? $resolved : '';
+        }
+
+        $value = (string) (env($stored) ?? '');
 
         if ($value === '' && isset($cfg['api_key'])) {
             $value = (string) $cfg['api_key'];
@@ -328,6 +337,10 @@ class VectorStoreFactory
 
         if ($value === '' && isset($cfg['key'])) {
             $value = (string) $cfg['key'];
+        }
+
+        if ($value === '' && $stored !== $defaultEnv) {
+            $value = (string) (env($defaultEnv) ?? '');
         }
 
         return $value;

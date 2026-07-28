@@ -4,7 +4,7 @@
 **Development line (features):** `v2.1.x`
 **Patch line:** `v2.0.x`
 **Latest published:** `v2.0.0` on Packagist / `main`
-**Current Work:** M12 `studio-i18n` Execute complete on `feat/studio-i18n` → `v2.1.x`. TraceDetail bridge + OBS-06/OTel stay deferred.
+**Current Work:** M12 `studio-i18n` on `feat/studio-i18n` → `v2.1.x` (M11 Global Variables merged). TraceDetail bridge + OBS-06/OTel stay deferred.
 
 ---
 
@@ -15,6 +15,12 @@
 **Decision:** Ship package i18n with default `en` catalogs and primary demand `pt_BR`. Locale follows `App::getLocale()` with optional `neuronai-studio.locale` override; no in-Studio switcher. Phased delivery: P1 Blade/Livewire/flash/registry labels → P2 React JSON → P3 Artisan. Namespace `neuronai-studio::`; publish tag `neuronai-studio-lang`.
 **Reason:** Brazilian hosts need Portuguese chrome without forking views; host locale is the right source of truth for Laravel apps.
 **Impact:** M12 on `v2.1.x`; [.specs/features/studio-i18n/](../features/studio-i18n/).
+
+### AD-028: Studio Variable Vault (2026-07-28)
+
+**Decision:** Ship Global Variables vault (Credential encrypted + Generic), Settings CRUD, Variable Input, wire format `var:NAME`, MVP surfaces Agent `api_key` + MCP token + KB keys, `{{ var.NAME }}` in prompts/state, export keeps refs, no `tenant_id`. Apply to Fields deferred. See ADR-028 + feature specs.
+**Reason:** Multi-account/auth without redeploy; Langflow-shaped product; complements env-first bootstrap.
+**Impact:** M11 on `v2.1.x`; [.specs/features/global-variables/](../features/global-variables/).
 
 ### AD-027: Keep `v2.0.0` + open `v2.0.x` / `v2.1.x` (2026-07-27)
 
