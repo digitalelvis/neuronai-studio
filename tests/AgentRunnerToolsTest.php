@@ -20,14 +20,11 @@ class AgentRunnerToolsTest extends TestCase
         $providerRegistry = $this->createMock(ProviderRegistry::class);
         $providerRegistry->expects($this->once())
             ->method('resolve')
-            ->with('openai', 'gpt-4o-mini')
+            ->with('openai', 'gpt-4o-mini', [])
             ->willReturn($provider);
 
         $toolResolver = $this->createMock(ToolResolver::class);
-        $toolResolver->expects($this->once())
-            ->method('resolveMany')
-            ->with([])
-            ->willReturn([]);
+        $toolResolver->expects($this->never())->method('resolve');
 
         $mcpToolResolver = $this->createMock(McpToolResolver::class);
 
@@ -63,8 +60,8 @@ class AgentRunnerToolsTest extends TestCase
 
         $toolResolver = $this->createMock(ToolResolver::class);
         $toolResolver->expects($this->once())
-            ->method('resolveMany')
-            ->with($bindings)
+            ->method('resolve')
+            ->with('toolkit:calculator', $bindings[0])
             ->willReturn([\NeuronAI\Tools\Toolkits\Calculator\CalculatorToolkit::make()]);
 
         $mcpToolResolver = $this->createMock(McpToolResolver::class);

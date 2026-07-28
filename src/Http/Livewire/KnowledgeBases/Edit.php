@@ -6,6 +6,7 @@ use DigitalElvis\NeuronAIStudio\Models\KnowledgeBase;
 use DigitalElvis\NeuronAIStudio\Models\KnowledgeDocument;
 use DigitalElvis\NeuronAIStudio\Runtime\Rag\DocumentIngestService;
 use DigitalElvis\NeuronAIStudio\Runtime\Rag\RagRetrievalService;
+use DigitalElvis\NeuronAIStudio\Support\ResolvesOptionalRouteModel;
 use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
 use Illuminate\Support\Str;
 use Livewire\Component;
@@ -13,6 +14,7 @@ use Livewire\WithFileUploads;
 
 class Edit extends Component
 {
+    use ResolvesOptionalRouteModel;
     use WithFileUploads;
 
     public ?KnowledgeBase $knowledgeBase = null;
@@ -49,9 +51,10 @@ class Edit extends Component
 
     public ?string $searchError = null;
 
-    public function mount(?KnowledgeBase $knowledgeBase = null): void
+    public function mount(mixed $knowledgeBase = null): void
     {
-        $this->knowledgeBase = $knowledgeBase;
+        $this->knowledgeBase = $this->resolveOptionalRouteModel($knowledgeBase, KnowledgeBase::class);
+        $knowledgeBase = $this->knowledgeBase;
         $this->embeddingsProvider = (string) config('neuronai-studio.rag.default_embeddings_provider', 'openai');
         $this->vectorStoreDriver = (string) config('neuronai-studio.rag.default_vector_store', 'file');
 
