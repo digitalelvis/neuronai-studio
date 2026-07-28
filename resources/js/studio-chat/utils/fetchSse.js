@@ -8,15 +8,30 @@
 export async function* fetchSse(url, options = {}) {
     const response = await fetch(url, {
         ...options,
+        redirect: 'error',
         headers: {
             Accept: 'text/event-stream',
+            'X-Requested-With': 'XMLHttpRequest',
             ...(options.headers || {}),
         },
     });
 
     if (!response.ok) {
         const text = await response.text();
-        throw new Error(text || `Request failed (${response.status})`);
+        let message = text || `Request failed (${response.status})`;
+
+        try {
+            const payload = JSON.parse(text);
+            if (payload?.message) {
+                message = payload.message;
+            } else if (payload?.errors && typeof payload.errors === 'object') {
+                message = Object.values(payload.errors).flat().filter(Boolean).join(' ') || message;
+            }
+        } catch {
+            // Keep raw text for non-JSON error bodies.
+        }
+
+        throw new Error(message);
     }
 
     const reader = response.body?.getReader();
@@ -89,6 +104,7 @@ export function jsonPostOptions(body) {
         headers: {
             'Content-Type': 'application/json',
             'X-CSRF-TOKEN': csrfToken(),
+            'X-Requested-With': 'XMLHttpRequest',
             Accept: 'text/event-stream',
         },
         body: JSON.stringify(body),

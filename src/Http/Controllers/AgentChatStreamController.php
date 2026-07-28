@@ -20,7 +20,7 @@ class AgentChatStreamController
 
     public function __invoke(Request $request, AgentDefinition $agent, AgentRunner $runner): StreamedResponse
     {
-        $validated = $request->validate([
+        $validated = $this->validateStreamRequest($request, [
             'thread_id' => 'nullable|uuid',
             'instructions' => 'nullable|string',
             'context' => 'nullable|array',

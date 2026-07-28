@@ -32,7 +32,7 @@ class WorkflowIntegrateStreamController
     ): StreamedResponse {
         abort_unless($registry->isEnabled($protocol), 404, "Unknown stream protocol [{$protocol}].");
 
-        $validated = $request->validate([
+        $validated = $this->validateStreamRequest($request, [
             'thread_id' => 'nullable|uuid',
             'state' => 'nullable|array',
             'context' => 'nullable|array',
