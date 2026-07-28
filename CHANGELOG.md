@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.2](https://github.com/digitalelvis/neuronai-studio/compare/v2.0.1...v2.0.2) (2026-07-28)
+
+
+### Bug Fixes
+
+* **runtime:** mark playground runs failed when setup throws ([b79d163](https://github.com/digitalelvis/neuronai-studio/commit/b79d163186aa240a2e1af5b6b58c6a63654ba2a1))
+* **studio:** stop Livewire create pages returning 404 ([dc5489d](https://github.com/digitalelvis/neuronai-studio/commit/dc5489d2eaf52b6bc3c3f8ee83025f715a8989e3))
+
 ## [2.0.1](https://github.com/digitalelvis/neuronai-studio/compare/v2.0.0...v2.0.1) (2026-07-28)
 
 
