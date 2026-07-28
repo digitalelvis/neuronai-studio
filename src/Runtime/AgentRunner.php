@@ -66,6 +66,7 @@ class AgentRunner
         return $this->makeAgent($definition, [
             'provider' => $definition->provider,
             'model' => $definition->model,
+            'api_key' => $definition->api_key,
             'instructions' => $definition->instructions,
             'tools' => $definition->tools ?? [],
             'require_tool_approval' => (bool) $definition->require_tool_approval,
@@ -745,6 +746,9 @@ class AgentRunner
         if ($fake) {
             $provider = new FakeAIProvider(new AssistantMessage('Eval fake response'));
         } else {
+            $keyOverride = $config['api_key'] ?? $definition?->api_key;
+            $keyOverride = is_string($keyOverride) && $keyOverride !== '' ? $keyOverride : null;
+
             $provider = $this->providers->resolve(
                 $config['provider'] ?? config('neuronai-studio.default_provider'),
                 $config['model'] ?? config('neuronai-studio.default_model'),
@@ -752,6 +756,7 @@ class AgentRunner
                     (string) ($config['provider'] ?? config('neuronai-studio.default_provider')),
                     is_array($config['parameters'] ?? null) ? $config['parameters'] : [],
                 ),
+                $keyOverride,
             );
         }
 
@@ -773,10 +778,13 @@ class AgentRunner
         }
         $memory = $this->resolveMemoryConfig($definition, $config);
 
+        $instructions = (string) ($config['instructions'] ?? 'You are a helpful AI assistant.');
+        $instructions = $this->interpolateVariablePlaceholders($instructions);
+
         $agent = new DynamicAgent(
             $provider,
             $definition,
-            (string) ($config['instructions'] ?? 'You are a helpful AI assistant.'),
+            $instructions,
             $tools,
             $this->mcpToolResolver,
             $threadKey,
@@ -791,6 +799,14 @@ class AgentRunner
         $this->applyToolControls($agent, $config, $definition);
 
         return $agent;
+    }
+
+    /**
+     * Interpolate {{ var.NAME }} in agent instructions (no workflow state).
+     */
+    protected function interpolateVariablePlaceholders(string $template): string
+    {
+        return StateTemplateInterpolator::interpolateVariablesOnly($template);
     }
 
     /**

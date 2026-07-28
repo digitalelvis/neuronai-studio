@@ -27,6 +27,7 @@ Configure with `NEURONAI_STUDIO_TABLE_PREFIX` (`config('neuronai-studio.table_pr
 | `eval_suites` | `neuronai_studio_eval_suites` | Agent evaluation datasets and judge config |
 | `eval_runs` | `neuronai_studio_eval_runs` | Evaluation execution records |
 | `eval_run_items` | `neuronai_studio_eval_run_items` | Per-case results (input, output, pass/fail) |
+| `variables` | `neuronai_studio_variables` | Studio Variable Vault (Credential / Generic) |
 | `knowledge_bases` | `neuronai_studio_knowledge_bases` | RAG knowledge base metadata |
 | `knowledge_documents` | `neuronai_studio_knowledge_documents` | Ingested documents per knowledge base |
 
@@ -60,11 +61,18 @@ Diagram nodes use logical names; physical tables always include the configured p
 
 - `slug` — unique identifier, used in templates and exports
 - `provider`, `model` — LLM configuration
+- `api_key` — optional Studio override (`var:NAME` or empty = host `neuron.php`)
 - `instructions` — system prompt
 - `tools` — JSON tool binding array
 - `require_tool_approval` — pause before tool execution when true
 - `memory_config` — JSON envelope: `context_window`, `driver` (`eloquent`|`in_memory`), `summarization_enabled`, `summarization_threshold`, plus reserved budget keys for context engineering. Null = inherit global defaults.
 - `tool_max_runs`, `parallel_tool_calls` — optional tool-loop knobs
+
+### variables
+
+- `name` — unique (`^[A-Z][A-Z0-9_]*$`)
+- `type` — `credential` | `generic`
+- `value` — encrypted when credential; plaintext when generic
 
 ### workflow_definitions
 

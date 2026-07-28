@@ -269,6 +269,8 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
         Livewire::component('neuronai-studio.agents.evals.run-detail', Http\Livewire\Agents\Evals\RunDetail::class);
         Livewire::component('neuronai-studio.templates.index', Http\Livewire\Templates\Index::class);
         Livewire::component('neuronai-studio.stream-adapters.index', Http\Livewire\StreamAdapters\Index::class);
+        Livewire::component('neuronai-studio.settings.variables', Http\Livewire\Settings\Variables\Index::class);
+        Livewire::component('neuronai-studio.settings.variables.quick-create', Http\Livewire\Settings\Variables\QuickCreate::class);
     }
 
     protected function registerCommands(): void

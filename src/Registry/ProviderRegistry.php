@@ -36,7 +36,7 @@ class ProviderRegistry
     }
 
     /** @param  array<string, mixed>  $parameters */
-    public function resolve(string $provider, ?string $model = null, array $parameters = []): AIProviderInterface
+    public function resolve(string $provider, ?string $model = null, array $parameters = [], ?string $keyOverride = null): AIProviderInterface
     {
         $config = config("neuron.provider.{$provider}");
 
@@ -53,6 +53,11 @@ class ProviderRegistry
         if ($parameters !== []) {
             $base = is_array($config['parameters'] ?? null) ? $config['parameters'] : [];
             $config['parameters'] = ProviderParameters::merge($provider, $base, $parameters);
+        }
+
+        if ($keyOverride !== null && $keyOverride !== '') {
+            $resolved = app(\DigitalElvis\NeuronAIStudio\Runtime\ConfigValueResolver::class)->resolve($keyOverride);
+            $config['key'] = is_string($resolved) ? $resolved : (string) $resolved;
         }
 
         $this->assertProviderConfigured($provider, $config);

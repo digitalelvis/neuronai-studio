@@ -1,14 +1,20 @@
 # State
 
-**Last Updated:** 2026-07-27
+**Last Updated:** 2026-07-28
 **Development line (features):** `v2.1.x`
 **Patch line:** `v2.0.x`
 **Latest published:** `v2.0.0` on Packagist / `main`
-**Current Work:** Post-`v2.0.0` sync complete (AD-027). M10 done (`v1.1.0`); table-prefix major published. Next features target `v2.1.x`. TraceDetail bridge + OBS-06/OTel stay deferred.
+**Current Work:** M11 `global-variables` Execute complete on `feat/global-variables` (PR → `v2.1.x`). TraceDetail bridge + OBS-06/OTel stay deferred.
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-028: Studio Variable Vault (2026-07-28)
+
+**Decision:** Ship Global Variables vault (Credential encrypted + Generic), Settings CRUD, Variable Input, wire format `var:NAME`, MVP surfaces Agent `api_key` + MCP token + KB keys, `{{ var.NAME }}` in prompts/state, export keeps refs, no `tenant_id`. Apply to Fields deferred. See ADR-028 + feature specs.
+**Reason:** Multi-account/auth without redeploy; Langflow-shaped product; complements env-first bootstrap.
+**Impact:** M11 on `v2.1.x`; [.specs/features/global-variables/](../features/global-variables/).
 
 ### AD-027: Keep `v2.0.0` + open `v2.0.x` / `v2.1.x` (2026-07-27)
 

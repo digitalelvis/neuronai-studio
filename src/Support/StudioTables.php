@@ -25,6 +25,7 @@ class StudioTables
         'eval_suites',
         'eval_runs',
         'eval_run_items',
+        'variables',
     ];
 
     public static function prefix(): string
