@@ -3,19 +3,20 @@ import { ChevronDown, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { NodeTypeIcon } from './nodes/nodeIcons';
+import { t } from '@/lib/i18n';
 
 const CATEGORY_ORDER = ['ai', 'logic', 'flow', 'utilities'];
-const CATEGORY_LABELS = {
-    ai: 'Models & Agents',
-    logic: 'Flow Control',
-    flow: 'Input & Output',
-    utilities: 'Utilities',
+const CATEGORY_LABEL_KEYS = {
+    ai: 'palette.category.ai',
+    logic: 'palette.category.logic',
+    flow: 'palette.category.flow',
+    utilities: 'palette.category.utilities',
 };
 
 const CATALOG_ORDER = ['tools', 'mcp'];
-const CATALOG_LABELS = {
-    tools: 'Tools',
-    mcp: 'MCP',
+const CATALOG_LABEL_KEYS = {
+    tools: 'palette.category.tools',
+    mcp: 'palette.category.mcp',
 };
 
 function matchesQuery(haystacks, query) {
@@ -60,7 +61,7 @@ export default function NodePalette({
 
         return CATEGORY_ORDER.filter((key) => groups[key]?.length).map((key) => ({
             key,
-            label: CATEGORY_LABELS[key] || key,
+            label: t(CATEGORY_LABEL_KEYS[key] || key),
             items: groups[key],
         }));
     }, [paletteTypes]);
@@ -92,25 +93,25 @@ export default function NodePalette({
             className={`ab-node-palette flex h-full min-h-0 flex-col overflow-hidden border-r border-border bg-card/40 ${readOnly ? 'opacity-60' : ''}`}
         >
             <div className="shrink-0 space-y-2 border-b border-border p-3">
-                <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Components</h3>
+                <h3 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{t('palette.components')}</h3>
                 <div className="relative">
                     <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
                     <Input
                         className="h-8 pl-8 text-xs"
-                        placeholder="Search nodes…"
+                        placeholder={t('palette.search')}
                         value={query}
                         onChange={(e) => setQuery(e.target.value)}
                         disabled={readOnly}
                     />
                 </div>
                 <p className="text-[11px] text-muted-foreground">
-                    {readOnly ? 'Read-only preview' : 'Drag onto the canvas'}
+                    {readOnly ? t('palette.readonly') : t('palette.drag_hint')}
                 </p>
             </div>
 
             <div className="min-h-0 flex-1 overflow-auto p-2">
                 {grouped.length === 0 && catalogTools.length === 0 && catalogMcp.length === 0 && (
-                    <p className="px-2 py-4 text-center text-xs text-muted-foreground">No matching nodes.</p>
+                    <p className="px-2 py-4 text-center text-xs text-muted-foreground">{t('palette.no_match')}</p>
                 )}
 
                 {grouped.map((group) => (
@@ -153,7 +154,7 @@ export default function NodePalette({
                         className="mb-1"
                     >
                         <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:bg-muted/40">
-                            {CATALOG_LABELS.tools}
+                            {t(CATALOG_LABEL_KEYS.tools)}
                             <ChevronDown
                                 className={`h-3.5 w-3.5 transition-transform ${openCategories.tools === false ? '-rotate-90' : ''}`}
                             />
@@ -187,7 +188,7 @@ export default function NodePalette({
                         className="mb-1"
                     >
                         <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground hover:bg-muted/40">
-                            {CATALOG_LABELS.mcp}
+                            {t(CATALOG_LABEL_KEYS.mcp)}
                             <ChevronDown
                                 className={`h-3.5 w-3.5 transition-transform ${openCategories.mcp === false ? '-rotate-90' : ''}`}
                             />

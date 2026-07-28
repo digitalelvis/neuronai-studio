@@ -10,6 +10,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
+import { t } from '@/lib/i18n';
 
 export default function ThreadSidebar({
     threads = [],
@@ -55,7 +56,7 @@ export default function ThreadSidebar({
                     size="icon"
                     className="h-8 w-8"
                     onClick={() => onCollapsedChange?.(false)}
-                    title="Expand sidebar"
+                    title={t('chat.expand_sidebar')}
                 >
                     <PanelLeft className="h-4 w-4" />
                 </Button>
@@ -66,7 +67,7 @@ export default function ThreadSidebar({
                     className="mt-2 h-8 w-8"
                     onClick={onNewThread}
                     disabled={disabled}
-                    title="New chat"
+                    title={t('chat.new')}
                 >
                     <Plus className="h-4 w-4" />
                 </Button>
@@ -89,7 +90,7 @@ export default function ThreadSidebar({
                     size="icon"
                     className="h-7 w-7 shrink-0"
                     onClick={() => onCollapsedChange?.(true)}
-                    title="Collapse sidebar"
+                    title={t('chat.collapse_sidebar')}
                 >
                     <PanelLeftClose className="h-4 w-4" />
                 </Button>
@@ -101,7 +102,7 @@ export default function ThreadSidebar({
                     <Input
                         value={query}
                         onChange={(event) => setQuery(event.target.value)}
-                        placeholder="Search sessions…"
+                        placeholder={t('chat.search_sessions')}
                         className="h-8 pl-8 text-xs"
                     />
                 </div>
@@ -114,7 +115,7 @@ export default function ThreadSidebar({
                         className="h-7 w-7"
                         onClick={onNewThread}
                         disabled={disabled}
-                        title="New chat"
+                        title={t('chat.new')}
                     >
                         <Plus className="h-4 w-4" />
                     </Button>
@@ -163,7 +164,7 @@ export default function ThreadSidebar({
                                                 'h-7 w-7 shrink-0 opacity-0 group-hover:opacity-100 data-[state=open]:opacity-100',
                                                 active && 'opacity-100',
                                             )}
-                                            title="Options"
+                                            title={t('chat.options')}
                                         >
                                             <MoreHorizontal className="h-3.5 w-3.5" />
                                         </Button>
