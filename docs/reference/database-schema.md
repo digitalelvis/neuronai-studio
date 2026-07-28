@@ -107,7 +107,7 @@ Indexes include `parent_run_id` and `started_at` for nested rollups and time-win
 
 ### chat_messages
 
-- `thread_id` — UUID thread key (no FK; matches playground / integrate ids)
+- `thread_id` — scoped thread key (`agent:{id}:{uuid}` / `workflow:{id}:{uuid}` or plain UUID; `string(64)`, no FK)
 - `role`, `content`, `meta` — summary/compaction messages use `role=system` with `meta.studio_kind=summary` and content prefixed `[Studio memory summary]`
 
 ### eval_suites
