@@ -7,12 +7,15 @@ use DigitalElvis\NeuronAIStudio\Models\AgentMcpServer;
 use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\ToolRegistry;
+use DigitalElvis\NeuronAIStudio\Support\ResolvesOptionalRouteModel;
 use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
 use Illuminate\Support\Str;
 use Livewire\Component;
 
 class Edit extends Component
 {
+    use ResolvesOptionalRouteModel;
+
     public ?AgentDefinition $agent = null;
 
     public string $name = '';
@@ -55,9 +58,10 @@ class Edit extends Component
 
     public ?int $memory_budget_state = null;
 
-    public function mount(?AgentDefinition $agent = null): void
+    public function mount(mixed $agent = null): void
     {
-        $this->agent = $agent;
+        $this->agent = $this->resolveOptionalRouteModel($agent, AgentDefinition::class);
+        $agent = $this->agent;
         $this->provider = config('neuronai-studio.default_provider', 'openai');
 
         if ($agent?->exists) {
