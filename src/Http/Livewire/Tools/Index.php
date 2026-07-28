@@ -14,7 +14,7 @@ class Index extends Component
     public function delete(int $id): void
     {
         ToolDefinition::findOrFail($id)->delete();
-        session()->flash('success', 'Tool deleted.');
+        session()->flash('success', __('neuronai-studio::flash.tool_deleted'));
     }
 
     public function render()
@@ -42,8 +42,8 @@ class Index extends Component
                 'mcp' => 'MCP',
             ],
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
-            breadcrumbs: [['label' => 'Tools']],
-            title: 'Tools',
+            breadcrumbs: [['label' => __('neuronai-studio::ui.breadcrumbs.tools')]],
+            title: __('neuronai-studio::ui.breadcrumbs.tools'),
             headerActions: view('neuronai-studio::partials.header-actions.new-tool')->render(),
         ));
     }

@@ -118,7 +118,7 @@ class Edit extends Component
         $imported = app(ToolClassImporter::class)->fromClass($class);
 
         if ($imported === null) {
-            session()->flash('success', 'Could not import class. Starting with empty builder.');
+            session()->flash('success', __('neuronai-studio::flash.tool_import_empty'));
             $this->invokeBody = "return 'Executed';";
 
             return;
@@ -268,9 +268,9 @@ class Edit extends Component
 
         if (CodegenGuard::canExport()) {
             $files = $exporter->export($this->tool->fresh());
-            session()->flash('success', 'Tool saved and exported to '.implode(', ', $files));
+            session()->flash('success', __('neuronai-studio::flash.tool_saved_exported', ['files' => implode(', ', $files)]));
         } else {
-            session()->flash('success', 'Tool saved. CodeGen export is disabled — PHP class was not written to disk.');
+            session()->flash('success', __('neuronai-studio::flash.tool_saved_codegen_disabled'));
         }
 
         $this->redirect(route('neuronai-studio.tools.show', $this->tool));
@@ -317,7 +317,7 @@ class Edit extends Component
             $this->tool = ToolDefinition::create($payload);
         }
 
-        session()->flash('success', 'Webhook tool saved successfully.');
+        session()->flash('success', __('neuronai-studio::flash.webhook_tool_saved'));
 
         $this->redirect(route('neuronai-studio.tools.show', $this->tool));
     }
@@ -368,7 +368,7 @@ class Edit extends Component
             $this->tool = ToolDefinition::create($payload);
         }
 
-        session()->flash('success', 'RAG knowledge base tool saved successfully.');
+        session()->flash('success', __('neuronai-studio::flash.rag_tool_saved'));
 
         $this->redirect(route('neuronai-studio.tools.show', $this->tool));
     }
@@ -390,7 +390,7 @@ class Edit extends Component
         }
 
         $files = $exporter->export($this->tool->fresh());
-        session()->flash('success', 'Exported: '.implode(', ', $files));
+        session()->flash('success', __('neuronai-studio::flash.tool_exported', ['files' => implode(', ', $files)]));
     }
 
     public function getGeneratedPreviewProperty(): string
@@ -424,8 +424,8 @@ class Edit extends Component
         ])
             ->layout('neuronai-studio::layouts.app', StudioLayout::params(
                 breadcrumbs: [
-                    ['label' => 'Tools', 'url' => route('neuronai-studio.tools.index')],
-                    ['label' => $this->tool?->exists ? $this->name : 'New Tool'],
+                    ['label' => __('neuronai-studio::ui.breadcrumbs.tools'), 'url' => route('neuronai-studio.tools.index')],
+                    ['label' => $this->tool?->exists ? $this->name : __('neuronai-studio::ui.actions.new_tool')],
                 ],
                 title: $this->tool?->exists ? 'Edit Tool' : 'Create Tool',
                 contentFlush: true,

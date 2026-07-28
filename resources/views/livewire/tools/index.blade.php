@@ -10,15 +10,15 @@
 
     <x-neuronai-studio::ui.card>
         @if ($tools->isEmpty())
-            <x-neuronai-studio::ui.empty-state title="No tools found" />
+            <x-neuronai-studio::ui.empty-state :title="__('neuronai-studio::ui.empty.tools_title')" />
         @else
             <x-neuronai-studio::ui.table>
                 <x-neuronai-studio::ui.table-head>
                     <tr>
-                        <x-neuronai-studio::ui.table-header>Name</x-neuronai-studio::ui.table-header>
+                        <x-neuronai-studio::ui.table-header>{{ __('neuronai-studio::ui.table.name') }}</x-neuronai-studio::ui.table-header>
                         <x-neuronai-studio::ui.table-header>Category</x-neuronai-studio::ui.table-header>
                         <x-neuronai-studio::ui.table-header>Reference</x-neuronai-studio::ui.table-header>
-                        <x-neuronai-studio::ui.table-header>Type</x-neuronai-studio::ui.table-header>
+                        <x-neuronai-studio::ui.table-header>{{ __('neuronai-studio::ui.table.type') }}</x-neuronai-studio::ui.table-header>
                         <x-neuronai-studio::ui.table-header></x-neuronai-studio::ui.table-header>
                     </tr>
                 </x-neuronai-studio::ui.table-head>
@@ -40,14 +40,14 @@
                                 <div class="studio-table-row-actions">
                                     @if (str_starts_with($tool['ref'], 'tool:db:'))
                                         @php($id = (int) \Illuminate\Support\Str::after($tool['ref'], 'tool:db:'))
-                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.tools.show', $id)">View</x-neuronai-studio::ui.button>
-                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.tools.edit', $id)">Edit</x-neuronai-studio::ui.button>
-                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" wire:click="delete({{ $id }})" wire:confirm="Delete this tool?" class="text-destructive">Delete</x-neuronai-studio::ui.button>
+                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.tools.show', $id)">{{ __('neuronai-studio::ui.actions.view') }}</x-neuronai-studio::ui.button>
+                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.tools.edit', $id)">{{ __('neuronai-studio::ui.actions.edit') }}</x-neuronai-studio::ui.button>
+                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" wire:click="delete({{ $id }})" wire:confirm="{{ __('neuronai-studio::ui.confirm.delete_tool') }}" class="text-destructive">{{ __('neuronai-studio::ui.actions.delete') }}</x-neuronai-studio::ui.button>
                                     @elseif (str_starts_with($tool['ref'], 'class:'))
-                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.tools.registry', ['ref' => $tool['ref']])">View</x-neuronai-studio::ui.button>
-                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.tools.create', ['import' => \Illuminate\Support\Str::after($tool['ref'], 'class:')])">Edit</x-neuronai-studio::ui.button>
+                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.tools.registry', ['ref' => $tool['ref']])">{{ __('neuronai-studio::ui.actions.view') }}</x-neuronai-studio::ui.button>
+                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.tools.create', ['import' => \Illuminate\Support\Str::after($tool['ref'], 'class:')])">{{ __('neuronai-studio::ui.actions.edit') }}</x-neuronai-studio::ui.button>
                                     @else
-                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.tools.registry', ['ref' => $tool['ref']])">View</x-neuronai-studio::ui.button>
+                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.tools.registry', ['ref' => $tool['ref']])">{{ __('neuronai-studio::ui.actions.view') }}</x-neuronai-studio::ui.button>
                                     @endif
                                 </div>
                             </x-neuronai-studio::ui.table-cell>

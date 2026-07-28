@@ -87,10 +87,10 @@ class Edit extends Component
 
         if ($this->suite?->exists) {
             $this->suite->update($payload);
-            session()->flash('success', 'Eval suite updated.');
+            session()->flash('success', __('neuronai-studio::flash.eval_suite_updated'));
         } else {
             $this->suite = EvalSuite::create($payload);
-            session()->flash('success', 'Eval suite created.');
+            session()->flash('success', __('neuronai-studio::flash.eval_suite_created'));
         }
 
         $this->redirectRoute('neuronai-studio.agents.evals.edit', [
@@ -112,7 +112,7 @@ class Edit extends Component
         $dataset = $this->suite->dataset ?? [];
 
         if (SuiteEvaluator::datasetRequiresJudge($dataset) && $this->suite->judge_agent_definition_id === null) {
-            session()->flash('error', 'Configure a judge agent before running AI judge assertions.');
+            session()->flash('error', __('neuronai-studio::flash.eval_judge_required'));
 
             return;
         }
@@ -138,7 +138,10 @@ class Edit extends Component
             ));
             (new EloquentEvaluationOutput($run))->output($summary);
 
-            session()->flash('success', "Eval run completed: {$summary->getPassedCount()}/{$summary->getTotalCount()} passed.");
+            session()->flash('success', __('neuronai-studio::flash.eval_run_completed', [
+                'passed' => $summary->getPassedCount(),
+                'total' => $summary->getTotalCount(),
+            ]));
         } catch (Throwable $e) {
             $run->update([
                 'status' => 'failed',
@@ -159,10 +162,10 @@ class Edit extends Component
             'agents' => AgentDefinition::query()->orderBy('name')->get(['id', 'name', 'slug']),
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
             breadcrumbs: [
-                ['label' => 'Agents', 'url' => route('neuronai-studio.agents.index')],
+                ['label' => __('neuronai-studio::ui.breadcrumbs.agents'), 'url' => route('neuronai-studio.agents.index')],
                 ['label' => $this->agent->name, 'url' => route('neuronai-studio.agents.edit', $this->agent)],
-                ['label' => 'Evals', 'url' => route('neuronai-studio.agents.evals.index', $this->agent)],
-                ['label' => $this->suite?->exists ? $this->name : 'New Suite'],
+                ['label' => __('neuronai-studio::ui.breadcrumbs.evals'), 'url' => route('neuronai-studio.agents.evals.index', $this->agent)],
+                ['label' => $this->suite?->exists ? $this->name : __('neuronai-studio::ui.actions.new_eval_suite')],
             ],
             title: ($this->suite?->exists ? 'Edit' : 'Create').' Eval Suite',
         ));

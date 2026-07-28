@@ -228,7 +228,7 @@ class Edit extends Component
 
         $this->syncMcpBindings($this->agent);
 
-        session()->flash('success', 'Agent saved successfully.');
+        session()->flash('success', __('neuronai-studio::flash.agent_saved'));
 
         $this->redirect(route('neuronai-studio.agents.index'));
     }
@@ -338,8 +338,8 @@ class Edit extends Component
             'mcpServers' => app(McpRegistry::class)->labels(includeDisabled: false),
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
             breadcrumbs: [
-                ['label' => 'Agents', 'url' => route('neuronai-studio.agents.index')],
-                ['label' => $this->agent?->exists ? $this->name : 'New Agent'],
+                ['label' => __('neuronai-studio::ui.breadcrumbs.agents'), 'url' => route('neuronai-studio.agents.index')],
+                ['label' => $this->agent?->exists ? $this->name : __('neuronai-studio::ui.actions.new_agent')],
             ],
             title: $this->agent?->exists ? 'Edit Agent' : 'Create Agent',
             contentFlush: true,

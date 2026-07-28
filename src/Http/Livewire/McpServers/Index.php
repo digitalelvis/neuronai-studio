@@ -14,7 +14,7 @@ class Index extends Component
     public function delete(int $id): void
     {
         McpServer::findOrFail($id)->delete();
-        session()->flash('success', 'MCP server deleted.');
+        session()->flash('success', __('neuronai-studio::flash.mcp_deleted'));
     }
 
     public function render()
@@ -35,8 +35,8 @@ class Index extends Component
         return view('neuronai-studio::livewire.mcp-servers.index', [
             'servers' => $servers->sortBy('label')->all(),
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
-            breadcrumbs: [['label' => 'MCP Servers']],
-            title: 'MCP Servers',
+            breadcrumbs: [['label' => __('neuronai-studio::ui.breadcrumbs.mcp_servers')]],
+            title: __('neuronai-studio::ui.breadcrumbs.mcp_servers'),
             headerActions: view('neuronai-studio::partials.header-actions.new-mcp')->render(),
         ));
     }

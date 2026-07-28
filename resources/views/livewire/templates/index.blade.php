@@ -25,7 +25,7 @@
 
     @if ($templates === [])
         <x-neuronai-studio::ui.card>
-            <x-neuronai-studio::ui.empty-state title="No templates" description="No templates match the current filters." />
+            <x-neuronai-studio::ui.empty-state :title="__('neuronai-studio::ui.empty.templates_title')" :description="__('neuronai-studio::ui.empty.templates_description')" />
         </x-neuronai-studio::ui.card>
     @else
         <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">

@@ -51,7 +51,7 @@ class Show extends Component
             'agentsUsing' => $agentsUsing,
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
             breadcrumbs: [
-                ['label' => 'Tools', 'url' => route('neuronai-studio.tools.index')],
+                ['label' => __('neuronai-studio::ui.breadcrumbs.tools'), 'url' => route('neuronai-studio.tools.index')],
                 ['label' => $this->tool->name],
             ],
             title: $this->tool->name,

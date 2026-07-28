@@ -1,14 +1,14 @@
 <x-neuronai-studio::ui.page>
     <x-neuronai-studio::ui.card>
         @if ($suites->isEmpty())
-            <x-neuronai-studio::ui.empty-state title="No eval suites yet" description="Create a suite to test your agent with datasets and assertions.">
-                <x-neuronai-studio::ui.button :href="route('neuronai-studio.agents.evals.create', $agent)">New Eval Suite</x-neuronai-studio::ui.button>
+            <x-neuronai-studio::ui.empty-state :title="__('neuronai-studio::ui.empty.evals_title')" :description="__('neuronai-studio::ui.empty.evals_description')">
+                <x-neuronai-studio::ui.button :href="route('neuronai-studio.agents.evals.create', $agent)">{{ __('neuronai-studio::ui.actions.new_eval_suite') }}</x-neuronai-studio::ui.button>
             </x-neuronai-studio::ui.empty-state>
         @else
             <x-neuronai-studio::ui.table>
                 <x-neuronai-studio::ui.table-head>
                     <tr>
-                        <x-neuronai-studio::ui.table-header>Name</x-neuronai-studio::ui.table-header>
+                        <x-neuronai-studio::ui.table-header>{{ __('neuronai-studio::ui.table.name') }}</x-neuronai-studio::ui.table-header>
                         <x-neuronai-studio::ui.table-header>Cases</x-neuronai-studio::ui.table-header>
                         <x-neuronai-studio::ui.table-header>Judge</x-neuronai-studio::ui.table-header>
                         <x-neuronai-studio::ui.table-header>Last Updated</x-neuronai-studio::ui.table-header>
@@ -33,9 +33,9 @@
                             <x-neuronai-studio::ui.table-cell>{{ $suite->updated_at?->diffForHumans() }}</x-neuronai-studio::ui.table-cell>
                             <x-neuronai-studio::ui.table-cell>
                                 <div class="studio-table-row-actions">
-                                    <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.agents.evals.edit', ['agent' => $agent, 'suite' => $suite])">Edit</x-neuronai-studio::ui.button>
-                                    <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.agents.evals.runs', ['agent' => $agent, 'suite' => $suite])">Runs</x-neuronai-studio::ui.button>
-                                    <x-neuronai-studio::ui.button variant="ghost" size="sm" wire:click="delete({{ $suite->id }})" wire:confirm="Delete this eval suite?" class="text-destructive">Delete</x-neuronai-studio::ui.button>
+                                    <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.agents.evals.edit', ['agent' => $agent, 'suite' => $suite])">{{ __('neuronai-studio::ui.actions.edit') }}</x-neuronai-studio::ui.button>
+                                    <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.agents.evals.runs', ['agent' => $agent, 'suite' => $suite])">{{ __('neuronai-studio::ui.breadcrumbs.runs') }}</x-neuronai-studio::ui.button>
+                                    <x-neuronai-studio::ui.button variant="ghost" size="sm" wire:click="delete({{ $suite->id }})" wire:confirm="{{ __('neuronai-studio::ui.confirm.delete_eval_suite') }}" class="text-destructive">{{ __('neuronai-studio::ui.actions.delete') }}</x-neuronai-studio::ui.button>
                                 </div>
                             </x-neuronai-studio::ui.table-cell>
                         </x-neuronai-studio::ui.table-row>

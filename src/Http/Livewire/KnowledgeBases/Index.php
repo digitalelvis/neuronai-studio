@@ -15,7 +15,7 @@ class Index extends Component
     {
         $knowledgeBase = KnowledgeBase::findOrFail($knowledgeBaseId);
         $ingest->removeKnowledgeBase($knowledgeBase);
-        session()->flash('success', 'Knowledge base deleted.');
+        session()->flash('success', __('neuronai-studio::flash.kb_deleted'));
     }
 
     public function render()
@@ -33,8 +33,8 @@ class Index extends Component
         return view('neuronai-studio::livewire.knowledge-bases.index', [
             'knowledgeBases' => $query->get(),
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
-            breadcrumbs: [['label' => 'Knowledge Bases']],
-            title: 'Knowledge Bases',
+            breadcrumbs: [['label' => __('neuronai-studio::ui.breadcrumbs.knowledge_bases')]],
+            title: __('neuronai-studio::ui.breadcrumbs.knowledge_bases'),
             headerActions: view('neuronai-studio::partials.header-actions.new-knowledge-base')->render(),
         ));
     }

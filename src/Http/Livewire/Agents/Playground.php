@@ -22,9 +22,9 @@ class Playground extends Component
             'mcpToolCount' => $this->estimateMcpToolCount(),
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
             breadcrumbs: [
-                ['label' => 'Agents', 'url' => route('neuronai-studio.agents.index')],
+                ['label' => __('neuronai-studio::ui.breadcrumbs.agents'), 'url' => route('neuronai-studio.agents.index')],
                 ['label' => $this->agent->name, 'url' => route('neuronai-studio.agents.edit', $this->agent)],
-                ['label' => 'Playground'],
+                ['label' => __('neuronai-studio::ui.breadcrumbs.playground')],
             ],
             title: 'Playground — '.$this->agent->name,
             contentFlush: true,

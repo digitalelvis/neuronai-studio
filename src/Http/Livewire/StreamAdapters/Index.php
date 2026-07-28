@@ -19,8 +19,8 @@ class Index extends Component
             'routePrefix' => config('neuronai-studio.stream_adapters.route_prefix', 'api/neuronai'),
             'middleware' => config('neuronai-studio.stream_adapters.middleware', ['api']),
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
-            breadcrumbs: [['label' => 'Stream Adapters']],
-            title: 'Stream Adapters',
+            breadcrumbs: [['label' => __('neuronai-studio::ui.breadcrumbs.stream_adapters')]],
+            title: __('neuronai-studio::ui.breadcrumbs.stream_adapters'),
         ));
     }
 }
