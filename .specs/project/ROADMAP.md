@@ -5,8 +5,8 @@
 **Development line (features):** `v2.1.x`  
 **Patch line:** `v2.0.x`  
 **Latest published:** `v2.0.0` on Packagist / `main`  
-**Última atualização:** 2026-07-27  
-**Etapa atual:** M10 + table-prefix shipped (`v1.1.0` Tool Mode; `v2.0.0` prefixed tables). Next work on `v2.1.x`. TraceDetail bridge permanece deferred.
+**Última atualização:** 2026-07-28  
+**Etapa atual:** M12 Studio i18n on `feat/studio-i18n` → `v2.1.x`. TraceDetail bridge permanece deferred.
 
 ---
 
@@ -149,6 +149,20 @@ Langflow-like **Tool Mode**: nodes `toolable` flip between Step and Tool; v1 = A
 
 **Publicação:** `v1.1.0` = Tool Mode + catalog. `v2.0.0` = prefixed Studio tables (BREAKING). Feature line = `v2.1.x`; patch = `v2.0.x` (AD-027).
 
+### M12 — Studio i18n (P1) `done`
+
+Package localization: default EN, primary demand `pt_BR`. Locale follows host `App::getLocale` with optional `neuronai-studio.locale` override. Phased: Blade/PHP → JS bundles → Artisan.
+
+**Escopo (AD-029):** [studio-i18n](../features/studio-i18n/spec.md) · [design](../features/studio-i18n/design.md) · [tasks](../features/studio-i18n/tasks.md) · [context](../features/studio-i18n/context.md)
+
+| Ordem | Feature | Status | Spec |
+|-------|---------|--------|------|
+| 30 | `studio-i18n` | **done** (`feat/studio-i18n`) | [spec](../features/studio-i18n/spec.md) |
+
+**Critério de conclusão M12:** Com `APP_LOCALE=pt_BR` (ou override de config), chrome Blade/Livewire + labels de registry em português; JS e CLI cobertos nas fases P2/P3; publish tag `neuronai-studio-lang` documentada.
+
+**Linha:** PRs → `v2.1.x`.
+
 ---
 
 ## Próximas tarefas (ordem de execução)
@@ -174,7 +188,8 @@ Langflow-like **Tool Mode**: nodes `toolable` flip between Step and Tool; v1 = A
 19. ~~Execute `canvas-tool-mode` (CTM-T1–T10) on `feat/canvas-tool-mode`~~ ✅ — [spec](../features/canvas-tool-mode/spec.md) · [tasks](../features/canvas-tool-mode/tasks.md)
 20. ~~Release `v1.1.0` (M10) + `v2.0.0` (table-prefix breaking)~~ ✅
 21. ~~Abrir `v2.0.x` (patch) + `v2.1.x` (features) + sync `v1.1.x` (AD-027)~~ ✅
-22. Próxima feature / milestone → PRs em `v2.1.x`
+22. ~~Abrir `v2.0.x` (patch) + `v2.1.x` (features) + sync `v1.1.x` (AD-027)~~ ✅
+23. ~~Specify + design + tasks + Execute `studio-i18n` (M12 / AD-029) on `feat/studio-i18n` → `v2.1.x`~~ ✅ — [spec](../features/studio-i18n/spec.md)
 
 ---
 
