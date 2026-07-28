@@ -60,10 +60,23 @@
 * [Export & Production](guides/export-and-production.md)
 * [Security & Access](guides/security-and-access.md)
 
+### Observability
+
+* [Native Tracing](guides/observability/native-tracing.md)
+* [Inspector](guides/observability/inspector.md)
+* [Langfuse](guides/observability/langfuse.md)
+
+### Integration
+
+* [Stream Adapters](guides/integration/stream-adapters.md)
+* [Vercel AI SDK](guides/integration/vercel-ai-sdk.md)
+* [AG-UI](guides/integration/ag-ui.md)
+
 ### Analytics
 
 * [Cost Estimation](guides/analytics/costs.md)
 * [Usage Analytics](guides/analytics/usage.md)
+* [Usage Export API](guides/analytics/export-api.md)
 
 ## Reference
 

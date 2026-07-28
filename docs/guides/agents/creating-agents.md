@@ -2,6 +2,8 @@
 
 The agent editor lets you configure provider, model, instructions, and tool bindings through a React form embedded in Livewire.
 
+Studio is definition-driven: the package ships no domain Agent subclasses. Runtime uses `DynamicAgent` from each `AgentDefinition` (or JSON template); production PHP classes come from [export](../export-and-production.md).
+
 ## Create a new agent
 
 1. Navigate to **Agents** → **Create Agent**
@@ -49,6 +51,10 @@ Each binding references a tool by `ref`:
 | `toolkit:{key}` | Built-in Neuron toolkit | `toolkit:calculator` |
 | `class:{fqn}` | Scanned PHP Tool class | `class:App\\Neuron\\Tools\\WeatherTool` |
 | `mcp:{server}:{tool}` | MCP-exposed tool | `mcp:filesystem:read_file` |
+| `provider:{name}` | Provider-native tool (e.g. web search) | `provider:web_search` |
+| `node:{id}` | Tool Mode specialist (`NodeAsTool`) | `node:agent-specialist-1` |
+
+`node:{id}` is not chosen in the agent form picker — the workflow canvas creates it when a specialist’s **toolset** handle connects to a supervisor’s **tools** handle. See [Tool Mode](../workflows/node-types/ai-nodes.md#tool-mode-agent-as-tool).
 
 ### Filter tools
 

@@ -18,7 +18,7 @@ flowchart TB
     DB --> Runner[WorkflowRunner]
     Runner --> Loop[GraphExecutionLoop]
     Loop --> Executors[Node Executors]
-    Loop --> Trace[(workflow_traces)]
+    Loop --> Trace[(runs / traces / spans)]
     DB --> Export[WorkflowExporter]
     Export --> PHP[app/Neuron/Workflows]
 ```
@@ -29,7 +29,7 @@ flowchart TB
 |----------|-------|
 | Flow | start, stop, delay, human |
 | AI | agent, llm, tool, mcp, rag |
-| Logic | condition, set_state, loop, fork, join |
+| Logic | condition, set_state, loop, fork, join, invoke |
 
 See the [node type guides](node-types/flow-nodes.md) for configuration details.
 

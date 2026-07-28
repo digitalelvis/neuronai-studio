@@ -18,7 +18,11 @@ return new class extends Migration
             $table->json('exclude_tools')->nullable();
             $table->timestamps();
 
-            $table->unique(['agent_definition_id', 'mcp_server_slug']);
+            // Explicit name: MySQL identifiers max 64 chars; auto-generated name is 75.
+            $table->unique(
+                ['agent_definition_id', 'mcp_server_slug'],
+                'ns_agent_mcp_server_unique'
+            );
         });
     }
 

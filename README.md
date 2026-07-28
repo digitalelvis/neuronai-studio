@@ -38,7 +38,7 @@ Open `/neuronai-studio` (configurable via `NEURONAI_STUDIO_ROUTE_PREFIX`).
 - **Agents** — CRUD with provider, model, system prompt, tools, and MCP bindings
 - **Playground** — Streaming chat with threads and attachments
 - **Knowledge Bases** — Document ingest, embeddings, and Neuron vector stores for RAG
-- **Workflows** — Visual graph editor with 12 node types
+- **Workflows** — Visual graph editor with 15 node types
 - **Tools** — Builder, webhook, RAG, registry, and CLI codegen
 - **MCP Servers** — Stdio and HTTP connectors
 - **Runtime** — Execute workflows with traces and human-in-the-loop

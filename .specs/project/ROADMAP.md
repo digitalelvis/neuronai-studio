@@ -2,11 +2,11 @@
 
 **North star:** Agentes multimodais autônomos com grafos de workflow cíclicos.
 
-**Development line (features):** `v1.1.x` (M10)  
-**Patch line:** `v1.0.x`  
-**Latest published:** `v1.0.0` on Packagist / `main`  
-**Última atualização:** 2026-07-25  
-**Etapa atual:** M10 `canvas-tool-mode` Execute complete on `feat/canvas-tool-mode` (CTM-T1–T10). Next: UAT / PR → `v1.1.x`. TraceDetail bridge permanece deferred.
+**Development line (features):** `v2.1.x`  
+**Patch line:** `v2.0.x`  
+**Latest published:** `v2.0.0` on Packagist / `main`  
+**Última atualização:** 2026-07-27  
+**Etapa atual:** M10 + table-prefix shipped (`v1.1.0` Tool Mode; `v2.0.0` prefixed tables). Next work on `v2.1.x`. TraceDetail bridge permanece deferred.
 
 ---
 
@@ -133,7 +133,7 @@ Authoring UX perto de Langflow, knowledge bases production-ready, codegen fail-c
 
 **Publicação:** `v1.0.0` (major — `BREAKING CHANGE` neuron-laravel → neuron-ai). Ver AD-025.
 
-### M10 — Canvas Tool Mode / agent-as-tool (P1) `in progress`
+### M10 — Canvas Tool Mode / agent-as-tool (P1) `done`
 
 Langflow-like **Tool Mode**: nodes `toolable` flip between Step and Tool; v1 = Agent as specialist toolset for a supervisor. Neuron composition via Studio `NodeAsTool` (no SubAgent API).
 
@@ -141,11 +141,13 @@ Langflow-like **Tool Mode**: nodes `toolable` flip between Step and Tool; v1 = A
 
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
-| 28 | `canvas-tool-mode` | **execute done** (CTM-T1–T10 ✅) — UAT/PR | [spec](../features/canvas-tool-mode/spec.md) |
+| 28 | `canvas-tool-mode` | **done** (`v1.1.0`) | [spec](../features/canvas-tool-mode/spec.md) |
+| 28b | `canvas-tools-catalog` | **done** (shipped with M10 wave) | [spec](../features/canvas-tools-catalog/spec.md) |
+| 28c | `table-prefix` | **done** (`v2.0.0` major — AD-027) | commit `feat(database)!` |
 
 **Critério de conclusão M10:** Demo start→supervisor←toolset←specialist(Tool Mode)→stop; runtime tool-call; codegen snapshot; docs + template.
 
-**Linha Execute:** `v1.1.x` (AD-025). Patch line = `v1.0.x`.
+**Publicação:** `v1.1.0` = Tool Mode + catalog. `v2.0.0` = prefixed Studio tables (BREAKING). Feature line = `v2.1.x`; patch = `v2.0.x` (AD-027).
 
 ---
 
@@ -169,7 +171,10 @@ Langflow-like **Tool Mode**: nodes `toolable` flip between Step and Tool; v1 = A
 16. ~~Merge M9 `feat/knowledge-base-rag` → `v0.10.x` → `main`~~ ✅ (PR #47 / #48)
 17. ~~Release `v1.0.0` (M9 + breaking neuron-ai; conventional major)~~ ✅
 18. ~~Abrir `v1.0.x` (patch) + `v1.1.x` (M10) + back-merge `main` → `v0.10.x` (AD-025)~~ ✅
-19. ~~Execute `canvas-tool-mode` (CTM-T1–T10) on `feat/canvas-tool-mode`~~ ✅ — UAT / PR → `v1.1.x` — [spec](../features/canvas-tool-mode/spec.md) · [tasks](../features/canvas-tool-mode/tasks.md)
+19. ~~Execute `canvas-tool-mode` (CTM-T1–T10) on `feat/canvas-tool-mode`~~ ✅ — [spec](../features/canvas-tool-mode/spec.md) · [tasks](../features/canvas-tool-mode/tasks.md)
+20. ~~Release `v1.1.0` (M10) + `v2.0.0` (table-prefix breaking)~~ ✅
+21. ~~Abrir `v2.0.x` (patch) + `v2.1.x` (features) + sync `v1.1.x` (AD-027)~~ ✅
+22. Próxima feature / milestone → PRs em `v2.1.x`
 
 ---
 
@@ -205,6 +210,8 @@ Langflow-like **Tool Mode**: nodes `toolable` flip between Step and Tool; v1 = A
 | `parallel-tool-approval` | ✅ done | 0.9.x |
 | `canvas-invoke-node` | ✅ done | 0.9.x → 0.10.0 |
 | M9 (RAG / Studio UX / neuron-ai) | ✅ done | 1.0.0 |
+| `canvas-tool-mode` + tools catalog | ✅ done | 1.1.0 |
+| `table-prefix` (StudioTables) | ✅ done | 2.0.0 |
 
 ---
 
@@ -323,4 +330,5 @@ Mapeamento feature → arquivos `docs/` a criar/atualizar na implementação.
 - ~~Pós-`v0.10.0` next wave~~ → **resolvido (AD-023):** M9 single PR on `v0.10.x`
 - ~~M9 publish / next minor~~ → **resolvido (AD-025):** `v1.0.0` (breaking major); feature line `v1.1.x`; patch `v1.0.x`
 - ~~Delegação subagente / agent-as-tool no canvas~~ → **resolvido (AD-024):** feature `canvas-tool-mode` (Tool Mode Langflow-like; v1 Agent)
+- ~~Post-M10 / table-prefix major~~ → **resolvido (AD-027):** `v2.0.0` correct (not `v1.2.0`); lines `v2.0.x` / `v2.1.x`
 - TraceDetail ↔ Inspector/Langfuse URL bridge (P2 deferred)
