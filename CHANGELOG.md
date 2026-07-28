@@ -1,5 +1,13 @@
 # Changelog
 
+## [2.0.3](https://github.com/digitalelvis/neuronai-studio/compare/v2.0.2...v2.0.3) (2026-07-28)
+
+
+### Bug Fixes
+
+* **database:** widen chat_messages.thread_id for scoped agent keys ([1f875ed](https://github.com/digitalelvis/neuronai-studio/commit/1f875eded58533200b97a7c7902b3e8b902af3f1))
+* **playground:** generate UUID threads on HTTP and surface stream errors ([4822546](https://github.com/digitalelvis/neuronai-studio/commit/4822546b2f98132e4e3a9da5db56e11aec3b6a72))
+
 ## [2.0.2](https://github.com/digitalelvis/neuronai-studio/compare/v2.0.1...v2.0.2) (2026-07-28)
 
 
