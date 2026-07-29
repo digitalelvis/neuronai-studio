@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { ExpandableTextField } from '@/components/ui/expandable-text-field';
 import {
     defaultToolExposure,
     isValidToolExposureSlug,
@@ -120,13 +120,14 @@ export default function ToolExposureModal({
 
                     <div className="space-y-2">
                         <Label htmlFor="tool-exposure-description">Description</Label>
-                        <Textarea
+                        <ExpandableTextField
                             id="tool-exposure-description"
                             rows={4}
                             value={description}
                             onChange={(e) => setDescription(e.target.value)}
                             placeholder="When should the supervisor use this agent?"
                             disabled={readOnly}
+                            label="Edit text content"
                         />
                     </div>
 

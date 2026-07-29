@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { ExpandableTextField } from '@/components/ui/expandable-text-field';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -200,7 +200,12 @@ export default function ToolBuilder({ config }) {
                             )}
                             <div className="space-y-2">
                                 <Label>Description</Label>
-                                <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={3} />
+                                <ExpandableTextField
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                    rows={3}
+                                    label="Edit text content"
+                                />
                                 {fieldError(fieldErrors, 'description') && (
                                     <p className="text-xs text-destructive">{fieldError(fieldErrors, 'description')}</p>
                                 )}
@@ -234,7 +239,13 @@ export default function ToolBuilder({ config }) {
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Headers (JSON)</Label>
-                                        <Textarea value={headersJson} onChange={(e) => setHeadersJson(e.target.value)} rows={4} className="font-mono text-xs" />
+                                        <ExpandableTextField
+                                            value={headersJson}
+                                            onChange={(e) => setHeadersJson(e.target.value)}
+                                            rows={4}
+                                            className="font-mono text-xs"
+                                            label="Edit text content"
+                                        />
                                         {fieldError(fieldErrors, 'headersJson') && (
                                             <p className="text-xs text-destructive">{fieldError(fieldErrors, 'headersJson')}</p>
                                         )}
@@ -370,12 +381,13 @@ export default function ToolBuilder({ config }) {
                             {toolKind === 'builder' && (
                                 <div className="space-y-2">
                                     <Label>Invoke body</Label>
-                                    <Textarea
+                                    <ExpandableTextField
                                         value={invokeBody}
                                         onChange={(e) => setInvokeBody(e.target.value)}
                                         rows={10}
                                         className="font-mono text-xs"
                                         spellCheck={false}
+                                        label="Edit text content"
                                     />
                                     {fieldError(fieldErrors, 'invokeBody') && (
                                         <p className="text-xs text-destructive">{fieldError(fieldErrors, 'invokeBody')}</p>

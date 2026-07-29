@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { ExpandableTextField } from '@/components/ui/expandable-text-field';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -172,7 +172,12 @@ export default function AgentForm({ config }) {
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Description</Label>
-                                        <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+                                        <ExpandableTextField
+                                            value={description}
+                                            onChange={(e) => setDescription(e.target.value)}
+                                            rows={2}
+                                            label="Edit text content"
+                                        />
                                     </div>
                                     <div className="grid gap-4 md:grid-cols-2">
                                         <div className="space-y-2">
@@ -226,12 +231,13 @@ export default function AgentForm({ config }) {
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Instructions (System Prompt)</Label>
-                                        <Textarea
+                                        <ExpandableTextField
                                             value={instructions}
                                             onChange={(e) => setInstructions(e.target.value)}
                                             rows={10}
                                             placeholder={t('form.instructions_placeholder')}
                                             className="font-mono text-sm"
+                                            label="Edit text content"
                                         />
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
