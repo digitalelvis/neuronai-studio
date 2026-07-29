@@ -132,6 +132,14 @@
     @apply font-medium text-foreground;
 }
 
+.studio-breadcrumb-edit {
+    @apply inline-flex items-center gap-1.5 rounded-md px-1.5 py-0.5 font-medium text-foreground transition-colors hover:bg-muted;
+}
+
+.studio-breadcrumb-edit-label {
+    @apply max-w-[240px] truncate;
+}
+
 .studio-page {
     @apply mx-auto max-w-7xl space-y-4;
 }
