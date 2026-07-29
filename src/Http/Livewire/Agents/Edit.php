@@ -28,6 +28,8 @@ class Edit extends Component
 
     public string $instructions = '';
 
+    public string $api_key = '';
+
     /** @var array<int, string> */
     public array $selectedToolRefs = [];
 
@@ -70,6 +72,7 @@ class Edit extends Component
             $this->provider = $agent->provider;
             $this->model = $agent->model;
             $this->instructions = (string) $agent->instructions;
+            $this->api_key = (string) ($agent->api_key ?? '');
             $this->tool_max_runs = $agent->tool_max_runs;
             $this->parallel_tool_calls = $agent->parallel_tool_calls;
             $this->hydrateMemoryFromConfig($agent->memory_config);
@@ -146,6 +149,7 @@ class Edit extends Component
         $this->provider = (string) ($payload['provider'] ?? $this->provider);
         $this->model = (string) ($payload['model'] ?? $this->model);
         $this->instructions = (string) ($payload['instructions'] ?? '');
+        $this->api_key = (string) ($payload['api_key'] ?? '');
         $this->selectedToolRefs = $payload['selectedToolRefs'] ?? [];
         $this->toolAdvanced = $payload['toolAdvanced'] ?? [];
         $this->selectedMcpSlugs = $payload['selectedMcpSlugs'] ?? [];
@@ -190,6 +194,7 @@ class Edit extends Component
             'provider' => 'required|string',
             'model' => 'required|string',
             'instructions' => 'nullable|string',
+            'api_key' => 'nullable|string|max:255',
             'tool_max_runs' => 'nullable|integer|min:1',
             'parallel_tool_calls' => 'nullable|boolean',
             'memory_context_window' => 'nullable|integer|min:1',
@@ -212,6 +217,7 @@ class Edit extends Component
             'description' => $validated['description'] ?? null,
             'provider' => $validated['provider'],
             'model' => $validated['model'],
+            'api_key' => ($this->api_key !== '' ? $this->api_key : null),
             'instructions' => $validated['instructions'] ?? null,
             'slug' => Str::slug($this->name),
             'tools' => $this->buildToolsPayload(),
@@ -228,7 +234,7 @@ class Edit extends Component
 
         $this->syncMcpBindings($this->agent);
 
-        session()->flash('success', 'Agent saved successfully.');
+        session()->flash('success', __('neuronai-studio::flash.agent_saved'));
 
         $this->redirect(route('neuronai-studio.agents.index'));
     }
@@ -336,10 +342,16 @@ class Edit extends Component
             'models' => config('neuronai-studio.providers.'.$this->provider.'.models', []),
             'toolList' => $toolList,
             'mcpServers' => app(McpRegistry::class)->labels(includeDisabled: false),
+            'variables' => \DigitalElvis\NeuronAIStudio\Models\Variable::query()
+                ->orderBy('name')
+                ->get(['name', 'type'])
+                ->map(fn ($v) => ['name' => $v->name, 'type' => $v->type])
+                ->values()
+                ->all(),
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
             breadcrumbs: [
-                ['label' => 'Agents', 'url' => route('neuronai-studio.agents.index')],
-                ['label' => $this->agent?->exists ? $this->name : 'New Agent'],
+                ['label' => __('neuronai-studio::ui.breadcrumbs.agents'), 'url' => route('neuronai-studio.agents.index')],
+                ['label' => $this->agent?->exists ? $this->name : __('neuronai-studio::ui.actions.new_agent')],
             ],
             title: $this->agent?->exists ? 'Edit Agent' : 'Create Agent',
             contentFlush: true,

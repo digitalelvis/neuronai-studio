@@ -105,6 +105,10 @@ Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
         Route::get('/templates', TemplatesIndex::class)->name('templates.index');
         Route::get('/stream-adapters', StreamAdaptersIndex::class)->name('stream-adapters.index');
 
+        Route::prefix('settings')->name('settings.')->group(function () {
+            Route::get('/variables', \DigitalElvis\NeuronAIStudio\Http\Livewire\Settings\Variables\Index::class)->name('variables');
+        });
+
         Route::post('/studio/attachments', [AttachmentController::class, 'store'])->name('attachments.store');
         Route::get('/studio/attachments/file', [AttachmentController::class, 'show'])->name('attachments.show');
     });

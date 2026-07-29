@@ -65,6 +65,20 @@ http://localhost:8000/neuronai-studio
 
 Configure the prefix with `NEURONAI_STUDIO_ROUTE_PREFIX` in `.env`.
 
+## Optional — Locale / language
+
+Studio UI follows the host app locale (`APP_LOCALE`). Ship catalogs for `en` (default) and `pt_BR`. Override with:
+
+```env
+NEURONAI_STUDIO_LOCALE=pt_BR
+```
+
+Or publish and customize translations:
+
+```bash
+php artisan vendor:publish --tag=neuronai-studio-lang
+```
+
 ## Optional — External observability
 
 Studio Debugger traces are on by default. To also export to Inspector or Langfuse:

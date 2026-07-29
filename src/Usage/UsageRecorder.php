@@ -5,6 +5,7 @@ namespace DigitalElvis\NeuronAIStudio\Usage;
 use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Models\StudioTrace;
 use DigitalElvis\NeuronAIStudio\Models\StudioTraceSpan;
+use DigitalElvis\NeuronAIStudio\Support\SecretScrubber;
 
 class UsageRecorder
 {
@@ -47,8 +48,8 @@ class UsageRecorder
             'status' => 'completed',
             'provider' => $provider,
             'model' => $model,
-            'input' => $input,
-            'output' => $output,
+            'input' => is_array($input) ? SecretScrubber::scrub($input) : $input,
+            'output' => is_array($output) ? SecretScrubber::scrub($output) : $output,
             'prompt_tokens' => $promptTokens,
             'completion_tokens' => $completionTokens,
             'total_tokens' => $totalTokens,

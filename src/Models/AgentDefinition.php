@@ -19,6 +19,7 @@ class AgentDefinition extends Model
         'description',
         'provider',
         'model',
+        'api_key',
         'instructions',
         'tools',
         'require_tool_approval',

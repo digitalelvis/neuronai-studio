@@ -10,6 +10,7 @@ Laravel publish tags for vendor assets, config, and migrations.
 | `neuronai-studio-config` | `config/neuronai-studio.php` | Customize studio configuration |
 | `neuronai-studio-migrations` | `database/migrations/` | Modify migrations (optional — auto-loaded from package) |
 | `neuronai-studio-views` | `resources/views/vendor/neuronai-studio/` | Override Blade templates |
+| `neuronai-studio-lang` | `lang/vendor/neuronai-studio/` | Override Studio UI translations (`en`, `pt_BR`) |
 | `neuronai-studio-assets` | `public/vendor/neuronai-studio/` | Publish JS/CSS bundles |
 | `neuronai-studio-evaluation` | `evaluation.php` | Evaluation config stub |
 | `neuronai-studio-evaluator` | `app/Evaluators/ExampleAgentEvaluator.php` | Example evaluator stub |
@@ -29,6 +30,9 @@ php artisan vendor:publish --tag=neuronai-studio-migrations
 # Views (only when customizing)
 php artisan vendor:publish --tag=neuronai-studio-views
 
+# Translations (optional — override en / pt_BR catalogs)
+php artisan vendor:publish --tag=neuronai-studio-lang
+
 # Assets (required for UI)
 php artisan vendor:publish --tag=neuronai-studio-assets --force
 ```
@@ -40,6 +44,7 @@ These load from the package automatically:
 - Migrations via `loadMigrationsFrom()`
 - Routes via `loadRoutesFrom()`
 - Default views via `loadViewsFrom()`
+- Translations via `loadTranslationsFrom()` (namespace `neuronai-studio`; locale follows the host app, or `NEURONAI_STUDIO_LOCALE` / `neuronai-studio.locale` when set)
 
 ## Asset rebuild workflow
 

@@ -26,6 +26,7 @@
             defaultProvider: @json(config('neuronai-studio.default_provider')),
             toolList: @json($toolList),
             mcpServers: @json($mcpServers),
+            variables: @json($variables),
             enabledProtocols: @json($enabledProtocols),
             streamUrls: @json($agentStreamUrls),
             initial: {
@@ -33,6 +34,7 @@
                 description: @json($description),
                 provider: @json($provider),
                 model: @json($model),
+                api_key: @json($api_key),
                 instructions: @json($instructions),
                 selectedToolRefs: @json($selectedToolRefs),
                 toolAdvanced: @json($toolAdvanced),

@@ -21,9 +21,9 @@ class Traces extends Component
             'traces' => $this->workflow->traces()->latest()->get(),
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
             breadcrumbs: [
-                ['label' => 'Workflows', 'url' => route('neuronai-studio.workflows.index')],
+                ['label' => __('neuronai-studio::ui.breadcrumbs.workflows'), 'url' => route('neuronai-studio.workflows.index')],
                 ['label' => $this->workflow->name, 'url' => route('neuronai-studio.workflows.edit', $this->workflow)],
-                ['label' => 'Traces'],
+                ['label' => __('neuronai-studio::ui.breadcrumbs.traces')],
             ],
             title: 'Traces — '.$this->workflow->name,
         ));

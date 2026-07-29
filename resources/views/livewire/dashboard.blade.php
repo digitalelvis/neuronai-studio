@@ -1,9 +1,9 @@
 <x-neuronai-studio::ui.page>
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <x-neuronai-studio::ui.stat-card label="Agents" :value="$agentCount" />
-        <x-neuronai-studio::ui.stat-card label="Tools" :value="$toolCount" />
-        <x-neuronai-studio::ui.stat-card label="MCP Servers" :value="$mcpServerCount" />
-        <x-neuronai-studio::ui.stat-card label="Workflows" :value="$workflowCount" />
+        <x-neuronai-studio::ui.stat-card :label="__('neuronai-studio::ui.nav.agents')" :value="$agentCount" />
+        <x-neuronai-studio::ui.stat-card :label="__('neuronai-studio::ui.nav.tools')" :value="$toolCount" />
+        <x-neuronai-studio::ui.stat-card :label="__('neuronai-studio::ui.nav.mcp_servers')" :value="$mcpServerCount" />
+        <x-neuronai-studio::ui.stat-card :label="__('neuronai-studio::ui.nav.workflows')" :value="$workflowCount" />
         <x-neuronai-studio::ui.stat-card label="Tokens ({{ $usageWindowLabel }})" :value="number_format($usageTotals['total_tokens'])" />
         <x-neuronai-studio::ui.stat-card
             label="Est. cost ({{ $usageWindowLabel }})"
@@ -17,14 +17,14 @@
         </x-neuronai-studio::ui.card-header>
         <x-neuronai-studio::ui.card-content>
             @if ($recentTraces->isEmpty())
-                <x-neuronai-studio::ui.empty-state title="No workflow traces yet" description="Test a workflow from the editor to see activity here." />
+                <x-neuronai-studio::ui.empty-state :title="__('neuronai-studio::ui.empty.dashboard_traces_title')" :description="__('neuronai-studio::ui.empty.dashboard_traces_description')" />
             @else
                 <x-neuronai-studio::ui.table>
                     <x-neuronai-studio::ui.table-head>
                         <tr>
                             <x-neuronai-studio::ui.table-header>ID</x-neuronai-studio::ui.table-header>
                             <x-neuronai-studio::ui.table-header>Workflow</x-neuronai-studio::ui.table-header>
-                            <x-neuronai-studio::ui.table-header>Status</x-neuronai-studio::ui.table-header>
+                            <x-neuronai-studio::ui.table-header>{{ __('neuronai-studio::ui.table.status') }}</x-neuronai-studio::ui.table-header>
                             <x-neuronai-studio::ui.table-header>Tokens</x-neuronai-studio::ui.table-header>
                             <x-neuronai-studio::ui.table-header>Est. cost</x-neuronai-studio::ui.table-header>
                             <x-neuronai-studio::ui.table-header>Started</x-neuronai-studio::ui.table-header>
@@ -43,7 +43,7 @@
                                 <x-neuronai-studio::ui.table-cell>{{ $usageTotals['currency'] }} {{ number_format((float) ($trace->estimated_cost ?? 0), 2) }}</x-neuronai-studio::ui.table-cell>
                                 <x-neuronai-studio::ui.table-cell class="text-muted-foreground">{{ $trace->started_at?->diffForHumans() }}</x-neuronai-studio::ui.table-cell>
                                 <x-neuronai-studio::ui.table-cell>
-                                    <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.workflows.traces.show', $trace)">View</x-neuronai-studio::ui.button>
+                                    <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.workflows.traces.show', $trace)">{{ __('neuronai-studio::ui.actions.view') }}</x-neuronai-studio::ui.button>
                                 </x-neuronai-studio::ui.table-cell>
                             </x-neuronai-studio::ui.table-row>
                         @endforeach

@@ -15,23 +15,41 @@ class CodegenContext
         return "preg_replace_callback('/\\{\\{(\\w+)\\}\\}/', fn (array \$m) => is_array(\$state->get(\$m[1])) ? json_encode(\$state->get(\$m[1]), JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '' : (string) (\$state->get(\$m[1]) ?? ''), {$templateVar}) ?? {$templateVar}";
     }
 
-    public function providerExpression(string $provider, string $model): string
+    public function providerExpression(string $provider, string $model, ?string $apiKeyOverride = null): string
     {
-        $keyConfig = var_export("neuron.provider.{$provider}.key", true);
+        $keyExpr = $this->providerKeyExpression($provider, $apiKeyOverride);
         $urlConfig = var_export("neuron.provider.{$provider}.url", true);
 
         return match ($provider) {
-            'anthropic' => "(new \\NeuronAI\\Providers\\Anthropic\\Anthropic((string) config({$keyConfig}), ".var_export($model, true)."))",
-            'openai' => "(new \\NeuronAI\\Providers\\OpenAI\\OpenAI((string) config({$keyConfig}), ".var_export($model, true)."))",
-            'openai-responses' => "(new \\NeuronAI\\Providers\\OpenAI\\Responses\\OpenAIResponses((string) config({$keyConfig}), ".var_export($model, true)."))",
-            'gemini' => "(new \\NeuronAI\\Providers\\Gemini\\Gemini((string) config({$keyConfig}), ".var_export($model, true)."))",
+            'anthropic' => "(new \\NeuronAI\\Providers\\Anthropic\\Anthropic({$keyExpr}, ".var_export($model, true)."))",
+            'openai' => "(new \\NeuronAI\\Providers\\OpenAI\\OpenAI({$keyExpr}, ".var_export($model, true)."))",
+            'openai-responses' => "(new \\NeuronAI\\Providers\\OpenAI\\Responses\\OpenAIResponses({$keyExpr}, ".var_export($model, true)."))",
+            'gemini' => "(new \\NeuronAI\\Providers\\Gemini\\Gemini({$keyExpr}, ".var_export($model, true)."))",
             'ollama' => "(new \\NeuronAI\\Providers\\Ollama\\Ollama((string) config({$urlConfig}, 'http://127.0.0.1:11434'), ".var_export($model, true)."))",
-            'mistral' => "(new \\NeuronAI\\Providers\\Mistral\\Mistral((string) config({$keyConfig}), ".var_export($model, true)."))",
-            'deepseek' => "(new \\NeuronAI\\Providers\\Deepseek\\Deepseek((string) config({$keyConfig}), ".var_export($model, true)."))",
-            'huggingface' => "(new \\NeuronAI\\Providers\\HuggingFace\\HuggingFace((string) config({$keyConfig}), ".var_export($model, true)."))",
-            'cohere' => "(new \\NeuronAI\\Providers\\Cohere\\Cohere((string) config({$keyConfig}), ".var_export($model, true)."))",
+            'mistral' => "(new \\NeuronAI\\Providers\\Mistral\\Mistral({$keyExpr}, ".var_export($model, true)."))",
+            'deepseek' => "(new \\NeuronAI\\Providers\\Deepseek\\Deepseek({$keyExpr}, ".var_export($model, true)."))",
+            'huggingface' => "(new \\NeuronAI\\Providers\\HuggingFace\\HuggingFace({$keyExpr}, ".var_export($model, true)."))",
+            'cohere' => "(new \\NeuronAI\\Providers\\Cohere\\Cohere({$keyExpr}, ".var_export($model, true)."))",
             default => throw new \InvalidArgumentException("Unsupported AI provider [{$provider}] for codegen."),
         };
+    }
+
+    protected function providerKeyExpression(string $provider, ?string $apiKeyOverride = null): string
+    {
+        if (is_string($apiKeyOverride) && $apiKeyOverride !== '') {
+            if (str_starts_with($apiKeyOverride, 'var:')) {
+                return '(string) app(\\DigitalElvis\\NeuronAIStudio\\Runtime\\ConfigValueResolver::class)->resolve('.var_export($apiKeyOverride, true).')';
+            }
+
+            // Literal override kept as resolve path only if env:/var:; otherwise avoid embedding secrets — fall back to config.
+            if (str_starts_with($apiKeyOverride, 'env:') || preg_match('/^\{\{\s*env\./', $apiKeyOverride)) {
+                return '(string) app(\\DigitalElvis\\NeuronAIStudio\\Runtime\\ConfigValueResolver::class)->resolve('.var_export($apiKeyOverride, true).')';
+            }
+        }
+
+        $keyConfig = var_export("neuron.provider.{$provider}.key", true);
+
+        return "(string) config({$keyConfig})";
     }
 
     public function providerUseStatement(string $provider): string

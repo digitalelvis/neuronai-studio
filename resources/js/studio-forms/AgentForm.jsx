@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
+import { ExpandableTextField } from '@/components/ui/expandable-text-field';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -12,12 +12,14 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { collectLivewireErrors, formatLivewireErrorSummary } from '@/lib/livewireErrors';
 import ConnectPanel from '@/components/ConnectPanel';
+import { t } from '@/lib/i18n';
+import VariableInput from './VariableInput';
 
 const categoryLabels = {
-    builtin: 'Built-in Toolkits',
-    app: 'App Classes',
-    studio: 'Studio Tools',
-    mcp: 'MCP Servers',
+    builtin: 'form.tools_builtin',
+    app: 'form.tools_app',
+    studio: 'form.tools_studio',
+    mcp: 'form.tools_mcp',
 };
 
 export default function AgentForm({ config }) {
@@ -27,6 +29,7 @@ export default function AgentForm({ config }) {
     const [provider, setProvider] = useState(initial.provider ?? config.defaultProvider ?? '');
     const [model, setModel] = useState(initial.model ?? '');
     const [instructions, setInstructions] = useState(initial.instructions ?? '');
+    const [apiKey, setApiKey] = useState(initial.api_key ?? '');
     const [selectedToolRefs, setSelectedToolRefs] = useState(initial.selectedToolRefs ?? []);
     const [toolAdvanced, setToolAdvanced] = useState(initial.toolAdvanced ?? {});
     const [selectedMcpSlugs, setSelectedMcpSlugs] = useState(initial.selectedMcpSlugs ?? []);
@@ -123,6 +126,7 @@ export default function AgentForm({ config }) {
                 provider,
                 model,
                 instructions,
+                api_key: apiKey,
                 selectedToolRefs,
                 toolAdvanced,
                 selectedMcpSlugs,
@@ -168,7 +172,12 @@ export default function AgentForm({ config }) {
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Description</Label>
-                                        <Textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={2} />
+                                        <ExpandableTextField
+                                            value={description}
+                                            onChange={(e) => setDescription(e.target.value)}
+                                            rows={2}
+                                            label="Edit text content"
+                                        />
                                     </div>
                                     <div className="grid gap-4 md:grid-cols-2">
                                         <div className="space-y-2">
@@ -210,13 +219,25 @@ export default function AgentForm({ config }) {
                                         </div>
                                     </div>
                                     <div className="space-y-2">
+                                        <Label>API Key (optional override)</Label>
+                                        <VariableInput
+                                            value={apiKey}
+                                            onChange={setApiKey}
+                                            variables={config.variables ?? []}
+                                            sensitive
+                                            placeholder=""
+                                            hint="Bind a Credential variable (var:NAME) or leave empty for install-time config."
+                                        />
+                                    </div>
+                                    <div className="space-y-2">
                                         <Label>Instructions (System Prompt)</Label>
-                                        <Textarea
+                                        <ExpandableTextField
                                             value={instructions}
                                             onChange={(e) => setInstructions(e.target.value)}
                                             rows={10}
-                                            placeholder="You are a helpful assistant..."
+                                            placeholder={t('form.instructions_placeholder')}
                                             className="font-mono text-sm"
+                                            label="Edit text content"
                                         />
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
@@ -369,7 +390,7 @@ export default function AgentForm({ config }) {
                                         Object.entries(toolsByCategory).map(([category, tools]) => (
                                             <div key={category} className="mb-4">
                                                 <p className="mb-2 text-xs font-medium uppercase text-muted-foreground">
-                                                    {categoryLabels[category] ?? category}
+                                                    {t(categoryLabels[category] ?? category)}
                                                 </p>
                                                 <div className="space-y-2">
                                                     {tools.map((tool) => (

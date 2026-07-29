@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Combobox } from '@/components/ui/combobox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { ExpandableTextField } from '@/components/ui/expandable-text-field';
 import {
     Select,
     SelectContent,
@@ -190,8 +190,17 @@ export default function NodeConfigForm({
                                             disabled={readOnly}
                                         />
                                     </div>
+                                    <div className="space-y-1" data-ab-handle-anchor="tools">
+                                        <Label>Tools</Label>
+                                        <p className="ab-flow-agent-tools-hint">
+                                            Connect Tool or MCP nodes to the cyan tools handle.
+                                            {toolMode
+                                                ? ' Connect the amber toolset handle to a supervisor tools pin.'
+                                                : ''}
+                                        </p>
+                                    </div>
                                     {!toolMode && (
-                                        <div className="space-y-2">
+                                        <div className="space-y-2" data-ab-handle-anchor="input">
                                             <Label>Message override</Label>
                                             <Input
                                                 value={data.message ?? ''}
@@ -216,15 +225,16 @@ export default function NodeConfigForm({
                                     />
                                     <div className="space-y-2">
                                         <Label>Agent Instructions</Label>
-                                        <Textarea
+                                        <ExpandableTextField
                                             rows={compact ? 3 : 5}
                                             value={data.instructions ?? ''}
                                             onChange={(e) => updateField('instructions', e.target.value)}
                                             placeholder="You are a helpful assistant…"
                                             disabled={readOnly}
+                                            label="Edit text content"
                                         />
                                     </div>
-                                    <div className="space-y-1">
+                                    <div className="space-y-1" data-ab-handle-anchor="tools">
                                         <Label>Tools</Label>
                                         <p className="ab-flow-agent-tools-hint">
                                             Connect Tool or MCP nodes to the cyan tools handle.
@@ -234,7 +244,7 @@ export default function NodeConfigForm({
                                         </p>
                                     </div>
                                     {!toolMode && (
-                                        <div className="space-y-2">
+                                        <div className="space-y-2" data-ab-handle-anchor="input">
                                             <Label>Input</Label>
                                             <Input
                                                 value={data.message ?? ''}
@@ -248,7 +258,7 @@ export default function NodeConfigForm({
                             )}
 
                             {toolMode && (
-                                <div className="space-y-1">
+                                <div className="space-y-1" data-ab-handle-anchor="toolset">
                                     <Label>Actions</Label>
                                     <Button
                                         type="button"
@@ -289,12 +299,14 @@ export default function NodeConfigForm({
                                     </div>
                                 </>
                             )}
-                            <StreamToggleField
-                                stream={Boolean(data.stream)}
-                                structured={Boolean(data.structured)}
-                                readOnly={readOnly}
-                                onChange={(patch) => onUpdate?.({ ...data, ...patch })}
-                            />
+                            <div data-ab-handle-anchor="response">
+                                <StreamToggleField
+                                    stream={Boolean(data.stream)}
+                                    structured={Boolean(data.structured)}
+                                    readOnly={readOnly}
+                                    onChange={(patch) => onUpdate?.({ ...data, ...patch })}
+                                />
+                            </div>
                         </>
                     )}
                     {showAdvanced && (
@@ -437,11 +449,12 @@ export default function NodeConfigForm({
                             />
                             <div className="space-y-2">
                                 <Label>Prompt</Label>
-                                <Textarea
+                                <ExpandableTextField
                                     rows={compact ? 3 : 4}
                                     value={data.prompt ?? ''}
                                     onChange={(e) => updateField('prompt', e.target.value)}
                                     disabled={readOnly}
+                                    label="Edit text content"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -476,12 +489,13 @@ export default function NodeConfigForm({
                 <>
                     <div className="space-y-2">
                         <Label>Prompt</Label>
-                        <Textarea
+                        <ExpandableTextField
                             rows={3}
                             value={data.prompt ?? ''}
                             onChange={(e) => updateField('prompt', e.target.value)}
                             placeholder="Ask the user for input…"
                             disabled={readOnly}
+                            label="Edit text content"
                         />
                     </div>
                     <div className="space-y-2">
@@ -718,13 +732,14 @@ export default function NodeConfigForm({
                     {showAdvanced && (
                         <div className="space-y-2">
                             <Label>Parameters JSON</Label>
-                            <Textarea
+                            <ExpandableTextField
                                 rows={3}
                                 value={data.parameters_json ?? (data.parameters ? JSON.stringify(data.parameters, null, 2) : '')}
                                 onChange={(e) => updateParametersJson(e.target.value)}
                                 placeholder='{"query": "$input"}'
                                 disabled={readOnly}
                                 className="font-mono text-xs"
+                                label="Edit text content"
                             />
                         </div>
                     )}
@@ -767,13 +782,14 @@ export default function NodeConfigForm({
                     {showAdvanced && (
                         <div className="space-y-2">
                             <Label>Parameters JSON</Label>
-                            <Textarea
+                            <ExpandableTextField
                                 rows={3}
                                 value={data.parameters_json ?? (data.parameters ? JSON.stringify(data.parameters, null, 2) : '')}
                                 onChange={(e) => updateParametersJson(e.target.value)}
                                 placeholder='{"query": "$input"}'
                                 disabled={readOnly}
                                 className="font-mono text-xs"
+                                label="Edit text content"
                             />
                         </div>
                     )}

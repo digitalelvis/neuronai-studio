@@ -4,6 +4,7 @@ namespace DigitalElvis\NeuronAIStudio\Runtime;
 
 use DigitalElvis\NeuronAIStudio\Models\ToolDefinition;
 use DigitalElvis\NeuronAIStudio\Registry\ToolRegistry;
+use DigitalElvis\NeuronAIStudio\Runtime\ConfigValueResolver;
 use DigitalElvis\NeuronAIStudio\Runtime\Tools\NodeAsTool;
 use DigitalElvis\NeuronAIStudio\Tools\KnowledgeBaseTool;
 use DigitalElvis\NeuronAIStudio\Tools\WebhookTool;
@@ -258,25 +259,11 @@ class ToolResolver
      */
     protected function resolveConfigValues(array $values): array
     {
-        return array_map(fn ($value) => $this->resolveConfigValue($value), $values);
+        return app(ConfigValueResolver::class)->resolveMany($values);
     }
 
     protected function resolveConfigValue(mixed $value): mixed
     {
-        if (! is_string($value)) {
-            return is_array($value)
-                ? array_map(fn ($item) => $this->resolveConfigValue($item), $value)
-                : $value;
-        }
-
-        if (str_starts_with($value, 'env:')) {
-            return env(Str::after($value, 'env:'), '');
-        }
-
-        if (preg_match('/^\{\{\s*env\.([A-Z0-9_]+)\s*\}\}$/', $value, $matches)) {
-            return env($matches[1], '');
-        }
-
-        return $value;
+        return app(ConfigValueResolver::class)->resolve($value);
     }
 }

@@ -36,7 +36,7 @@ class Index extends Component
     public function useTemplate(string $type, string $id): void
     {
         if (! config('neuronai-studio.templates_enabled', true)) {
-            session()->flash('error', 'Templates are disabled.');
+            session()->flash('error', __('neuronai-studio::flash.templates_disabled'));
 
             return;
         }
@@ -46,7 +46,7 @@ class Index extends Component
 
             if ($type === 'agent') {
                 $agent = $installer->installAgent($id);
-                session()->flash('success', 'Agent created from template.');
+                session()->flash('success', __('neuronai-studio::flash.agent_from_template'));
                 $this->redirect(route('neuronai-studio.agents.edit', $agent));
 
                 return;
@@ -54,13 +54,13 @@ class Index extends Component
 
             if ($type === 'workflow') {
                 $workflow = $installer->installWorkflow($id);
-                session()->flash('success', 'Workflow created from template.');
+                session()->flash('success', __('neuronai-studio::flash.workflow_from_template'));
                 $this->redirect(route('neuronai-studio.workflows.edit', $workflow));
 
                 return;
             }
 
-            session()->flash('error', 'Unknown template type.');
+            session()->flash('error', __('neuronai-studio::flash.unknown_template_type'));
         } catch (Throwable $exception) {
             session()->flash('error', $exception->getMessage());
         }
@@ -87,8 +87,8 @@ class Index extends Component
         return view('neuronai-studio::livewire.templates.index', [
             'templates' => $templates,
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
-            breadcrumbs: [['label' => 'Templates']],
-            title: 'Templates',
+            breadcrumbs: [['label' => __('neuronai-studio::ui.breadcrumbs.templates')]],
+            title: __('neuronai-studio::ui.breadcrumbs.templates'),
         ));
     }
 }

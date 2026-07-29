@@ -2,6 +2,7 @@
 
 namespace DigitalElvis\NeuronAIStudio\Commands;
 
+use DigitalElvis\NeuronAIStudio\Support\StudioLocale;
 use Illuminate\Console\Command;
 
 class InstallCommand extends Command
@@ -12,7 +13,9 @@ class InstallCommand extends Command
 
     public function handle(): int
     {
-        $this->components->info('Installing NeuronAI Studio...');
+        StudioLocale::apply();
+
+        $this->components->info(__('neuronai-studio::commands.install_start'));
 
         $this->call('vendor:publish', [
             '--tag' => 'neuron-config',
@@ -41,20 +44,22 @@ class InstallCommand extends Command
             '--force' => true,
         ]);
 
-        if ($this->confirm('Run migrations now?', true)) {
+        if ($this->confirm(__('neuronai-studio::commands.install_run_migrations'), true)) {
             $this->call('migrate');
         }
 
         $this->newLine();
-        $this->components->info('NeuronAI Studio installed successfully!');
-        $this->line('Set provider credentials in .env (for example OPENAI_KEY) — see config/neuron.php.');
-        $this->line('Visit /'.config('neuronai-studio.route_prefix', 'neuronai-studio').' to open the dashboard.');
-        $this->line('JS assets are pre-built. To rebuild after editing resources/js/, run: npm install && npm run build && php artisan vendor:publish --tag=neuronai-studio-assets --force');
-        $this->line('Views load from the package by default. Use --with-views on install (or vendor:publish --tag=neuronai-studio-views) only when customizing Blade templates.');
+        $this->components->info(__('neuronai-studio::commands.install_success'));
+        $this->line(__('neuronai-studio::commands.install_set_credentials'));
+        $this->line(__('neuronai-studio::commands.install_visit', [
+            'prefix' => config('neuronai-studio.route_prefix', 'neuronai-studio'),
+        ]));
+        $this->line(__('neuronai-studio::commands.install_assets_rebuild'));
+        $this->line(__('neuronai-studio::commands.install_views_note'));
         $this->newLine();
-        $this->line('AI coding assistants: Agent Skill at vendor/digitalelvis/neuronai-studio/skills/neuronai-studio/');
-        $this->line('  npx skills add ./vendor/digitalelvis/neuronai-studio/skills');
-        $this->line('  Docs: vendor/digitalelvis/neuronai-studio/docs/guides/ai-assisted-development.md');
+        $this->line(__('neuronai-studio::commands.install_skills'));
+        $this->line(__('neuronai-studio::commands.install_skills_npx'));
+        $this->line(__('neuronai-studio::commands.install_skills_docs'));
 
         return self::SUCCESS;
     }

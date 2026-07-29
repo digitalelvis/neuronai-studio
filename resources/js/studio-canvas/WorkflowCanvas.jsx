@@ -68,6 +68,7 @@ function WorkflowCanvasInner({
     graph,
     nodeTypesMeta,
     onGraphChange,
+    onValidate,
     readOnly = false,
     defaultProvider = '',
     defaultModel = '',
@@ -807,6 +808,17 @@ function WorkflowCanvasInner({
                                     Layout
                                 </button>
                             </>
+                        )}
+                        {typeof onValidate === 'function' && (
+                            <button
+                                type="button"
+                                className="ab-flow-toolbar-btn"
+                                onClick={onValidate}
+                                disabled={isTestRunning}
+                                title="Validate graph"
+                            >
+                                Validate
+                            </button>
                         )}
                         {readOnly && <span className="ab-flow-toolbar-readonly">Read-only</span>}
                         {runStatus && (

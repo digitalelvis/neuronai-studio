@@ -100,7 +100,7 @@ class Edit extends Component
 
             if ($result['success'] ?? false) {
                 $this->testTools = $result['tools'] ?? [];
-                session()->flash('success', 'Connection successful. Found '.count($this->testTools).' tool(s).');
+                session()->flash('success', __('neuronai-studio::flash.mcp_connection_ok', ['count' => count($this->testTools)]));
 
                 return;
             }
@@ -155,7 +155,7 @@ class Edit extends Component
             $this->server = McpServer::create($payload);
         }
 
-        session()->flash('success', 'MCP server saved successfully.');
+        session()->flash('success', __('neuronai-studio::flash.mcp_saved'));
 
         $this->redirect(route('neuronai-studio.mcp-servers.index'));
     }
@@ -208,8 +208,8 @@ class Edit extends Component
         return view('neuronai-studio::livewire.mcp-servers.edit')
             ->layout('neuronai-studio::layouts.app', StudioLayout::params(
                 breadcrumbs: [
-                    ['label' => 'MCP Servers', 'url' => route('neuronai-studio.mcp-servers.index')],
-                    ['label' => $this->server?->exists ? $this->name : 'New Server'],
+                    ['label' => __('neuronai-studio::ui.breadcrumbs.mcp_servers'), 'url' => route('neuronai-studio.mcp-servers.index')],
+                    ['label' => $this->server?->exists ? $this->name : __('neuronai-studio::ui.actions.new_mcp_server')],
                 ],
                 title: $this->server?->exists ? 'Edit MCP Server' : 'Create MCP Server',
             ));

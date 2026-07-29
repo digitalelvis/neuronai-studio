@@ -71,6 +71,7 @@ class Editor extends Component
             $this->readOnly = (bool) $workflow->locked;
             $this->linkedClassPath = $workflow->class_path;
         } else {
+            $this->name = __('neuronai-studio::ui.actions.new_workflow');
             $this->graph = WorkflowDefinition::defaultGraph();
         }
     }
@@ -209,7 +210,7 @@ class Editor extends Component
             $this->redirect(route('neuronai-studio.workflows.edit', $this->workflow));
         }
 
-        session()->flash('success', 'Workflow saved.');
+        session()->flash('success', __('neuronai-studio::flash.workflow_saved'));
     }
 
     protected function resolveSlug(?WorkflowDefinition $existing = null): string
@@ -270,7 +271,7 @@ class Editor extends Component
         $result = $exporter->exportWithMeta($this->workflow);
         $this->workflow->update(['class_path' => $result['fqcn']]);
         $this->linkedClassPath = $result['fqcn'];
-        session()->flash('success', 'Exported '.count($result['files']).' native PHP file(s).');
+        session()->flash('success', __('neuronai-studio::flash.workflow_exported', ['count' => count($result['files'])]));
     }
 
     /** @return array{code: string, className: string, namespace: string, fqcn: string, fileCount: int} */
@@ -299,7 +300,7 @@ class Editor extends Component
         $imported = app(WorkflowClassImporter::class)->fromClass($class);
 
         if ($imported === null || app(WorkflowClassImporter::class)->hasError($imported)) {
-            session()->flash('error', $imported['error'] ?? 'Could not import workflow class.');
+            session()->flash('error', $imported['error'] ?? __('neuronai-studio::flash.workflow_import_failed'));
             $this->redirect(route('neuronai-studio.workflows.index'));
 
             return;
@@ -313,7 +314,7 @@ class Editor extends Component
         $imported = app(WorkflowClassImporter::class)->fromJsonFile($jsonPath);
 
         if ($imported === null || app(WorkflowClassImporter::class)->hasError($imported)) {
-            session()->flash('error', $imported['error'] ?? 'Could not import workflow JSON file.');
+            session()->flash('error', $imported['error'] ?? __('neuronai-studio::flash.workflow_import_json_failed'));
             $this->redirect(route('neuronai-studio.workflows.index'));
 
             return;
@@ -403,8 +404,11 @@ class Editor extends Component
                 ->all(),
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
             breadcrumbs: [
-                ['label' => 'Workflows', 'url' => route('neuronai-studio.workflows.index')],
-                ['label' => $this->name ?: ($this->workflow?->exists ? 'Edit' : 'New Workflow')],
+                ['label' => __('neuronai-studio::ui.breadcrumbs.workflows'), 'url' => route('neuronai-studio.workflows.index')],
+                [
+                    'label' => $this->name ?: ($this->workflow?->exists ? __('neuronai-studio::ui.breadcrumbs.edit') : __('neuronai-studio::ui.actions.new_workflow')),
+                    'editable' => ! $this->readOnly,
+                ],
             ],
             title: $title,
             contentFlush: true,

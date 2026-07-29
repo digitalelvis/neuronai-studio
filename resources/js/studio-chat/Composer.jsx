@@ -3,6 +3,7 @@ import { Braces, ImagePlus, Send } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+import { t } from '@/lib/i18n';
 
 const ACCEPT_MAP = {
     image: 'image/*',
@@ -127,7 +128,7 @@ export default function Composer({
             <div className="rounded-xl border border-border bg-card shadow-sm focus-within:ring-1 focus-within:ring-ring">
                 <Textarea
                     rows={3}
-                    placeholder="Send a message..."
+                    placeholder={t('chat.send_placeholder')}
                     value={text}
                     disabled={disabled}
                     onChange={(event) => setText(event.target.value)}
@@ -144,7 +145,7 @@ export default function Composer({
                                 disabled={disabled}
                                 onClick={() => setInputOpen((open) => !open)}
                                 className={cn('h-8 w-8', hasCustomInput && !inputOpen && 'text-primary')}
-                                title="Initial state JSON"
+                                title={t('chat.initial_state')}
                             >
                                 <Braces className="h-4 w-4" />
                             </Button>
@@ -171,7 +172,7 @@ export default function Composer({
                                     disabled={disabled}
                                     onClick={() => fileRef.current?.click()}
                                     className="h-8 w-8"
-                                    title="Attach file"
+                                    title={t('chat.attach_file')}
                                 >
                                     <ImagePlus className="h-4 w-4" />
                                 </Button>
@@ -180,11 +181,11 @@ export default function Composer({
                     </div>
                     <Button type="submit" size="sm" disabled={!canSubmit} className="min-w-[72px]">
                         {disabled ? (
-                            'Sending…'
+                            t('chat.sending')
                         ) : (
                             <>
                                 <Send className="h-3.5 w-3.5" />
-                                Send
+                                {t('chat.send')}
                             </>
                         )}
                     </Button>

@@ -22,7 +22,7 @@ class AgentExporter
         $context = new CodegenContext(new PhpArrayExporter);
         $providerClass = $this->providerShortClass($provider);
         $providerExpression = $this->simplifyProviderExpression(
-            $context->providerExpression($provider, $model)
+            $context->providerExpression($provider, $model, $agent->api_key)
         );
         // Prefer imported short class name in exported agent files.
         $providerExpression = preg_replace(

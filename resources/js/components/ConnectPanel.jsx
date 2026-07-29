@@ -4,6 +4,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Check, Copy } from 'lucide-react';
 import CodeViewer from '@/components/code/CodeViewer';
+import { t } from '@/lib/i18n';
 
 export default function ConnectPanel({
     protocols = ['vercel', 'agui'],
@@ -25,9 +26,9 @@ export default function ConnectPanel({
     if (activeProtocols.length === 0) {
         return (
             <div className="rounded-lg border border-border bg-card p-4">
-                <p className="text-sm font-medium text-foreground">Connect to External Clients</p>
+                <p className="text-sm font-medium text-foreground">{t('connect.empty_title')}</p>
                 <p className="mt-1.5 text-xs text-muted-foreground">
-                    Save this {type} first to generate streaming integration endpoints.
+                    {t('connect.empty_hint', { type })}
                 </p>
             </div>
         );
@@ -107,9 +108,9 @@ ${resumeUrl ? `\n// Resume when awaiting input:\n// POST ${resumeUrl}` : ''}`;
         <div className="flex flex-col gap-4 py-1">
             <div className="flex items-center justify-between gap-3">
                 <div>
-                    <p className="text-sm font-medium text-foreground">External Integration Endpoints</p>
+                    <p className="text-sm font-medium text-foreground">{t('connect.title')}</p>
                     <p className="mt-0.5 text-xs text-muted-foreground">
-                        Use these URLs to stream from your own client.
+                        {t('connect.hint')}
                     </p>
                 </div>
                 <Badge variant="outline" className="shrink-0 text-[10px]">

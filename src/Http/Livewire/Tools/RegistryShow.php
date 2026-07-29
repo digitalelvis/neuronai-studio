@@ -42,7 +42,7 @@ class RegistryShow extends Component
             'categoryLabel' => $categoryLabels[$this->entry['category'] ?? ''] ?? ($this->entry['category'] ?? ''),
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
             breadcrumbs: [
-                ['label' => 'Tools', 'url' => route('neuronai-studio.tools.index')],
+                ['label' => __('neuronai-studio::ui.breadcrumbs.tools'), 'url' => route('neuronai-studio.tools.index')],
                 ['label' => $this->entry['label'] ?? 'Tool Details'],
             ],
             title: $this->entry['label'] ?? 'Tool Details',

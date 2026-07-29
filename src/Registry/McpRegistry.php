@@ -4,6 +4,8 @@ namespace DigitalElvis\NeuronAIStudio\Registry;
 
 use DigitalElvis\NeuronAIStudio\MCP\McpStdioTransport;
 use DigitalElvis\NeuronAIStudio\Models\McpServer;
+use DigitalElvis\NeuronAIStudio\Runtime\ConfigValueResolver;
+use DigitalElvis\NeuronAIStudio\Support\StudioTranslator;
 use Illuminate\Support\Str;
 use NeuronAI\MCP\McpClient;
 
@@ -49,7 +51,12 @@ class McpRegistry
     {
         return collect($this->all($includeDisabled))
             ->filter(fn (array $entry) => $includeDisabled || ($entry['enabled'] ?? true))
-            ->mapWithKeys(fn (array $entry, string $slug) => [$slug => $entry['label'] ?? Str::headline($slug)])
+            ->mapWithKeys(fn (array $entry, string $slug) => [
+                $slug => StudioTranslator::get(
+                    'registry.mcp.'.$slug,
+                    $entry['label'] ?? Str::headline($slug)
+                ),
+            ])
             ->all();
     }
 
@@ -93,13 +100,7 @@ class McpRegistry
 
     public function resolveToken(?string $tokenEnv): ?string
     {
-        if ($tokenEnv === null || $tokenEnv === '') {
-            return null;
-        }
-
-        $value = env($tokenEnv);
-
-        return is_string($value) && $value !== '' ? $value : null;
+        return app(ConfigValueResolver::class)->resolveEnvNameOrVar($tokenEnv);
     }
 
     /** @return array{success: bool, tools?: array<int, string>, error?: string} */
@@ -295,14 +296,6 @@ class McpRegistry
 
     protected function resolveEnvValue(string $value): string
     {
-        if (str_starts_with($value, 'env:')) {
-            return (string) env(Str::after($value, 'env:'), '');
-        }
-
-        if (preg_match('/^\{\{\s*env\.([A-Z0-9_]+)\s*\}\}$/', $value, $matches)) {
-            return (string) env($matches[1], '');
-        }
-
-        return $value;
+        return (string) app(ConfigValueResolver::class)->resolve($value);
     }
 }

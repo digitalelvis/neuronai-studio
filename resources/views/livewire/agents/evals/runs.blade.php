@@ -1,13 +1,13 @@
 <x-neuronai-studio::ui.page>
     <x-neuronai-studio::ui.card>
         @if ($runs->isEmpty())
-            <x-neuronai-studio::ui.empty-state title="No runs yet" description="Run this suite from the editor to see results here." />
+            <x-neuronai-studio::ui.empty-state :title="__('neuronai-studio::ui.empty.eval_runs_title')" :description="__('neuronai-studio::ui.empty.eval_runs_description')" />
         @else
             <x-neuronai-studio::ui.table>
                 <x-neuronai-studio::ui.table-head>
                     <tr>
                         <x-neuronai-studio::ui.table-header>Run</x-neuronai-studio::ui.table-header>
-                        <x-neuronai-studio::ui.table-header>Status</x-neuronai-studio::ui.table-header>
+                        <x-neuronai-studio::ui.table-header>{{ __('neuronai-studio::ui.table.status') }}</x-neuronai-studio::ui.table-header>
                         <x-neuronai-studio::ui.table-header>Passed</x-neuronai-studio::ui.table-header>
                         <x-neuronai-studio::ui.table-header>Success Rate</x-neuronai-studio::ui.table-header>
                         <x-neuronai-studio::ui.table-header>Duration</x-neuronai-studio::ui.table-header>

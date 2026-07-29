@@ -10,18 +10,18 @@
 
     <x-neuronai-studio::ui.card>
         @if ($servers === [])
-            <x-neuronai-studio::ui.empty-state title="No MCP servers configured">
-                <x-neuronai-studio::ui.button :href="route('neuronai-studio.mcp-servers.create')">New MCP Server</x-neuronai-studio::ui.button>
+            <x-neuronai-studio::ui.empty-state :title="__('neuronai-studio::ui.empty.mcp_servers_title')">
+                <x-neuronai-studio::ui.button :href="route('neuronai-studio.mcp-servers.create')">{{ __('neuronai-studio::ui.actions.new_mcp_server') }}</x-neuronai-studio::ui.button>
             </x-neuronai-studio::ui.empty-state>
         @else
             <x-neuronai-studio::ui.table>
                 <x-neuronai-studio::ui.table-head>
                     <tr>
-                        <x-neuronai-studio::ui.table-header>Name</x-neuronai-studio::ui.table-header>
+                        <x-neuronai-studio::ui.table-header>{{ __('neuronai-studio::ui.table.name') }}</x-neuronai-studio::ui.table-header>
                         <x-neuronai-studio::ui.table-header>Slug</x-neuronai-studio::ui.table-header>
-                        <x-neuronai-studio::ui.table-header>Transport</x-neuronai-studio::ui.table-header>
-                        <x-neuronai-studio::ui.table-header>Source</x-neuronai-studio::ui.table-header>
-                        <x-neuronai-studio::ui.table-header>Status</x-neuronai-studio::ui.table-header>
+                        <x-neuronai-studio::ui.table-header>{{ __('neuronai-studio::ui.table.transport') }}</x-neuronai-studio::ui.table-header>
+                        <x-neuronai-studio::ui.table-header>{{ __('neuronai-studio::ui.table.source') }}</x-neuronai-studio::ui.table-header>
+                        <x-neuronai-studio::ui.table-header>{{ __('neuronai-studio::ui.table.status') }}</x-neuronai-studio::ui.table-header>
                         <x-neuronai-studio::ui.table-header></x-neuronai-studio::ui.table-header>
                     </tr>
                 </x-neuronai-studio::ui.table-head>
@@ -49,8 +49,8 @@
                             <x-neuronai-studio::ui.table-cell>
                                 <div class="studio-table-row-actions">
                                     @if (($server['source'] ?? '') === 'database' && ! empty($server['id']))
-                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.mcp-servers.edit', $server['id'])">Edit</x-neuronai-studio::ui.button>
-                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" wire:click="delete({{ $server['id'] }})" wire:confirm="Delete this MCP server?" class="text-destructive">Delete</x-neuronai-studio::ui.button>
+                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.mcp-servers.edit', $server['id'])">{{ __('neuronai-studio::ui.actions.edit') }}</x-neuronai-studio::ui.button>
+                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" wire:click="delete({{ $server['id'] }})" wire:confirm="{{ __('neuronai-studio::ui.confirm.delete_mcp_server') }}" class="text-destructive">{{ __('neuronai-studio::ui.actions.delete') }}</x-neuronai-studio::ui.button>
                                     @else
                                         <span class="text-sm text-muted-foreground">Read-only</span>
                                     @endif
