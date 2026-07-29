@@ -6,8 +6,7 @@
 **Patch line:** `v2.0.x`  
 **Latest published:** `v2.0.0` on Packagist / `main`  
 **Última atualização:** 2026-07-28  
-**Etapa atual:** M11 Global Variables (Studio Variable Vault) on `v2.1.x`. TraceDetail bridge permanece deferred.
-
+**Etapa atual:** M12 Studio i18n on `feat/studio-i18n` → `v2.1.x` (M11 Global Variables merged). TraceDetail bridge permanece deferred.
 ---
 
 ## Milestones
@@ -157,9 +156,23 @@ Studio-managed Credential + Generic vault, Settings CRUD, Variable Input binding
 
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
-| 29 | `global-variables` | **done** (GV-T1…T9 on `feat/global-variables`) | [spec](../features/global-variables/spec.md) |
+| 29 | `global-variables` | **done** (merged to `v2.1.x`) | [spec](../features/global-variables/spec.md) |
 
 **Critério de conclusão M11:** Operator cria Credential, bind em Agent/MCP/KB sem editar `.env`; runtime resolve; export preserva `var:NAME`; zero plaintext Credential em list/traces.
+
+**Linha:** PRs → `v2.1.x`.
+
+### M12 — Studio i18n (P1) `done`
+
+Package localization: default EN, primary demand `pt_BR`. Locale follows host `App::getLocale` with optional `neuronai-studio.locale` override. Phased: Blade/PHP → JS bundles → Artisan.
+
+**Escopo (AD-029):** [studio-i18n](../features/studio-i18n/spec.md) · [design](../features/studio-i18n/design.md) · [tasks](../features/studio-i18n/tasks.md) · [context](../features/studio-i18n/context.md)
+
+| Ordem | Feature | Status | Spec |
+|-------|---------|--------|------|
+| 30 | `studio-i18n` | **done** (`feat/studio-i18n`) | [spec](../features/studio-i18n/spec.md) |
+
+**Critério de conclusão M12:** Com `APP_LOCALE=pt_BR` (ou override de config), chrome Blade/Livewire + labels de registry em português; JS e CLI cobertos nas fases P2/P3; publish tag `neuronai-studio-lang` documentada.
 
 **Linha:** PRs → `v2.1.x`.
 
@@ -189,8 +202,8 @@ Studio-managed Credential + Generic vault, Settings CRUD, Variable Input binding
 20. ~~Release `v1.1.0` (M10) + `v2.0.0` (table-prefix breaking)~~ ✅
 21. ~~Abrir `v2.0.x` (patch) + `v2.1.x` (features) + sync `v1.1.x` (AD-027)~~ ✅
 22. ~~Abrir `v2.0.x` (patch) + `v2.1.x` (features) + sync `v1.1.x` (AD-027)~~ ✅
-23. ~~Specify + design + tasks `global-variables` (M11 / ADR-028) → Execute GV-T1…T9 on `feat/global-variables` → `v2.1.x`~~ ✅ (PR pending)
-
+23. ~~Specify + design + tasks `global-variables` (M11 / ADR-028) → Execute GV-T1…T9 → `v2.1.x`~~ ✅
+24. ~~Specify + design + tasks + Execute `studio-i18n` (M12 / AD-029) on `feat/studio-i18n` → `v2.1.x`~~ ✅ — [spec](../features/studio-i18n/spec.md)
 ---
 
 ## Features concluídas

@@ -43,7 +43,7 @@ class Index extends Component
         };
 
         if ($imported === null || $importer->hasError($imported)) {
-            session()->flash('error', $imported['error'] ?? 'Could not import workflow.');
+            session()->flash('error', $imported['error'] ?? __('neuronai-studio::flash.workflow_import_failed'));
 
             return;
         }
@@ -69,7 +69,7 @@ class Index extends Component
             'class_path' => null,
         ]);
 
-        session()->flash('success', 'Workflow imported to studio.');
+        session()->flash('success', __('neuronai-studio::flash.workflow_imported'));
         $this->redirect(route('neuronai-studio.workflows.edit', $workflow));
     }
 
@@ -79,8 +79,8 @@ class Index extends Component
             'workflows' => WorkflowDefinition::studio()->latest()->get(),
             'codeWorkflows' => app(WorkflowRegistry::class)->codeEntries(),
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
-            breadcrumbs: [['label' => 'Workflows']],
-            title: 'Workflows',
+            breadcrumbs: [['label' => __('neuronai-studio::ui.breadcrumbs.workflows')]],
+            title: __('neuronai-studio::ui.breadcrumbs.workflows'),
             headerActions: view('neuronai-studio::partials.header-actions.new-workflow')->render(),
         ));
     }

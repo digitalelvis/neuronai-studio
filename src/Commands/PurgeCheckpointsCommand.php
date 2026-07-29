@@ -3,6 +3,7 @@
 namespace DigitalElvis\NeuronAIStudio\Commands;
 
 use DigitalElvis\NeuronAIStudio\Runtime\Checkpoint\CheckpointService;
+use DigitalElvis\NeuronAIStudio\Support\StudioLocale;
 use Illuminate\Console\Command;
 
 class PurgeCheckpointsCommand extends Command
@@ -13,9 +14,11 @@ class PurgeCheckpointsCommand extends Command
 
     public function handle(CheckpointService $checkpoints): int
     {
+        StudioLocale::apply();
+
         $deleted = $checkpoints->purgeExpired();
 
-        $this->info("Purged {$deleted} expired workflow checkpoint(s).");
+        $this->info(__('neuronai-studio::commands.purge_checkpoints', ['count' => $deleted]));
 
         return self::SUCCESS;
     }

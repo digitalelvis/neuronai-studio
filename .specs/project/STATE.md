@@ -4,11 +4,17 @@
 **Development line (features):** `v2.1.x`
 **Patch line:** `v2.0.x`
 **Latest published:** `v2.0.0` on Packagist / `main`
-**Current Work:** M11 `global-variables` Execute complete on `feat/global-variables` (PR → `v2.1.x`). TraceDetail bridge + OBS-06/OTel stay deferred.
+**Current Work:** M12 `studio-i18n` on `feat/studio-i18n` → `v2.1.x` (M11 Global Variables merged). TraceDetail bridge + OBS-06/OTel stay deferred.
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-029: Studio i18n EN + pt_BR (2026-07-28)
+
+**Decision:** Ship package i18n with default `en` catalogs and primary demand `pt_BR`. Locale follows `App::getLocale()` with optional `neuronai-studio.locale` override; no in-Studio switcher. Phased delivery: P1 Blade/Livewire/flash/registry labels → P2 React JSON → P3 Artisan. Namespace `neuronai-studio::`; publish tag `neuronai-studio-lang`.
+**Reason:** Brazilian hosts need Portuguese chrome without forking views; host locale is the right source of truth for Laravel apps.
+**Impact:** M12 on `v2.1.x`; [.specs/features/studio-i18n/](../features/studio-i18n/).
 
 ### AD-028: Studio Variable Vault (2026-07-28)
 

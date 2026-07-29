@@ -12,13 +12,14 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { collectLivewireErrors, formatLivewireErrorSummary } from '@/lib/livewireErrors';
 import ConnectPanel from '@/components/ConnectPanel';
+import { t } from '@/lib/i18n';
 import VariableInput from './VariableInput';
 
 const categoryLabels = {
-    builtin: 'Built-in Toolkits',
-    app: 'App Classes',
-    studio: 'Studio Tools',
-    mcp: 'MCP Servers',
+    builtin: 'form.tools_builtin',
+    app: 'form.tools_app',
+    studio: 'form.tools_studio',
+    mcp: 'form.tools_mcp',
 };
 
 export default function AgentForm({ config }) {
@@ -229,7 +230,7 @@ export default function AgentForm({ config }) {
                                             value={instructions}
                                             onChange={(e) => setInstructions(e.target.value)}
                                             rows={10}
-                                            placeholder="You are a helpful assistant..."
+                                            placeholder={t('form.instructions_placeholder')}
                                             className="font-mono text-sm"
                                         />
                                     </div>
@@ -383,7 +384,7 @@ export default function AgentForm({ config }) {
                                         Object.entries(toolsByCategory).map(([category, tools]) => (
                                             <div key={category} className="mb-4">
                                                 <p className="mb-2 text-xs font-medium uppercase text-muted-foreground">
-                                                    {categoryLabels[category] ?? category}
+                                                    {t(categoryLabels[category] ?? category)}
                                                 </p>
                                                 <div className="space-y-2">
                                                     {tools.map((tool) => (

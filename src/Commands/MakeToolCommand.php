@@ -4,6 +4,7 @@ namespace DigitalElvis\NeuronAIStudio\Commands;
 
 use DigitalElvis\NeuronAIStudio\Codegen\CodegenDisabledException;
 use DigitalElvis\NeuronAIStudio\Codegen\CodegenGuard;
+use DigitalElvis\NeuronAIStudio\Support\StudioLocale;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
@@ -16,6 +17,8 @@ class MakeToolCommand extends Command
 
     public function handle(): int
     {
+        StudioLocale::apply();
+
         try {
             CodegenGuard::ensureExport();
         } catch (CodegenDisabledException $e) {
@@ -63,7 +66,7 @@ class MakeToolCommand extends Command
 
         File::put($file, $stub);
 
-        $this->info("Tool created: {$file}");
+        $this->info(__('neuronai-studio::commands.make_tool_created', ['path' => $file]));
 
         return self::SUCCESS;
     }

@@ -8,6 +8,7 @@ use DigitalElvis\NeuronAIStudio\Runtime\Rag\DocumentIngestService;
 use DigitalElvis\NeuronAIStudio\Runtime\Rag\RagRetrievalService;
 use DigitalElvis\NeuronAIStudio\Support\ResolvesOptionalRouteModel;
 use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
+use DigitalElvis\NeuronAIStudio\Support\StudioTranslator;
 use Illuminate\Support\Str;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -141,13 +142,13 @@ class Edit extends Component
 
         if ($this->knowledgeBase?->exists) {
             $this->knowledgeBase->update($payload);
-            session()->flash('success', 'Knowledge base updated.');
+            session()->flash('success', __('neuronai-studio::flash.kb_updated'));
 
             return;
         }
 
         $this->knowledgeBase = KnowledgeBase::create($payload);
-        session()->flash('success', 'Knowledge base created.');
+        session()->flash('success', __('neuronai-studio::flash.kb_created'));
 
         $this->redirect(route('neuronai-studio.knowledge-bases.edit', $this->knowledgeBase));
     }
@@ -200,14 +201,14 @@ class Edit extends Component
 
         if ($this->asyncIngest()) {
             $ingest->queueUpload($this->knowledgeBase, $this->upload);
-            session()->flash('success', 'Document queued for ingest.');
+            session()->flash('success', __('neuronai-studio::flash.document_queued'));
         } else {
             $ingest->ingestFile(
                 $this->knowledgeBase,
                 $this->upload->getRealPath(),
                 $this->upload->getClientOriginalName(),
             );
-            session()->flash('success', 'Document ingested.');
+            session()->flash('success', __('neuronai-studio::flash.document_ingested'));
         }
 
         $this->reset('upload');
@@ -226,10 +227,10 @@ class Edit extends Component
 
         if ($this->asyncIngest()) {
             $ingest->queueText($this->knowledgeBase, $this->ingestText, $name);
-            session()->flash('success', 'Text queued for ingest.');
+            session()->flash('success', __('neuronai-studio::flash.text_queued'));
         } else {
             $ingest->ingestText($this->knowledgeBase, $this->ingestText, $name);
-            session()->flash('success', 'Text ingested.');
+            session()->flash('success', __('neuronai-studio::flash.text_ingested'));
         }
 
         $this->reset('ingestText', 'ingestTextName');
@@ -245,7 +246,7 @@ class Edit extends Component
             $ingest->removeDocument($document);
         }
 
-        session()->flash('success', 'Document removed.');
+        session()->flash('success', __('neuronai-studio::flash.document_removed'));
     }
 
     public function reindexDocument(int $documentId, DocumentIngestService $ingest): void
@@ -260,10 +261,10 @@ class Edit extends Component
 
         if ($this->asyncIngest()) {
             $ingest->queueReindex($document);
-            session()->flash('success', 'Document queued for reindex.');
+            session()->flash('success', __('neuronai-studio::flash.document_reindex_queued'));
         } else {
             $ingest->reindex($document);
-            session()->flash('success', 'Document reindexed.');
+            session()->flash('success', __('neuronai-studio::flash.document_reindexed'));
         }
     }
 
@@ -315,10 +316,10 @@ class Edit extends Component
 
         return view('neuronai-studio::livewire.knowledge-bases.edit', [
             'documents' => $documents,
-            'providers' => (array) config('neuronai-studio.rag.embeddings', []),
+            'providers' => $this->translatedEmbeddings(),
             'models' => (array) config("neuronai-studio.rag.embeddings.{$this->embeddingsProvider}.models", []),
-            'vectorStores' => (array) config('neuronai-studio.rag.vector_stores', []),
-            'vectorStoreFields' => (array) ($driverMeta['fields'] ?? []),
+            'vectorStores' => $this->translatedVectorStores(),
+            'vectorStoreFields' => $this->translatedVectorStoreFields((array) ($driverMeta['fields'] ?? [])),
             'vectorStoreDescription' => (string) ($driverMeta['description'] ?? ''),
             'toolsCreateUrl' => route('neuronai-studio.tools.create'),
             'statuses' => [
@@ -329,10 +330,63 @@ class Edit extends Component
             ],
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
             breadcrumbs: [
-                ['label' => 'Knowledge Bases', 'url' => route('neuronai-studio.knowledge-bases.index')],
-                ['label' => $this->knowledgeBase?->exists ? $this->name : 'New Knowledge Base'],
+                ['label' => __('neuronai-studio::ui.breadcrumbs.knowledge_bases'), 'url' => route('neuronai-studio.knowledge-bases.index')],
+                ['label' => $this->knowledgeBase?->exists ? $this->name : __('neuronai-studio::ui.actions.new_knowledge_base')],
             ],
             title: $this->knowledgeBase?->exists ? 'Edit Knowledge Base' : 'Create Knowledge Base',
         ));
+    }
+
+    /** @return array<string, array<string, mixed>> */
+    protected function translatedEmbeddings(): array
+    {
+        $providers = (array) config('neuronai-studio.rag.embeddings', []);
+
+        foreach ($providers as $key => &$provider) {
+            if (isset($provider['label'])) {
+                $provider['label'] = StudioTranslator::get(
+                    'registry.embeddings.'.$key,
+                    $provider['label']
+                );
+            }
+        }
+
+        return $providers;
+    }
+
+    /** @return array<string, array<string, mixed>> */
+    protected function translatedVectorStores(): array
+    {
+        $stores = (array) config('neuronai-studio.rag.vector_stores', []);
+
+        foreach ($stores as $key => &$store) {
+            if (isset($store['label'])) {
+                $store['label'] = StudioTranslator::get(
+                    'registry.vector_stores.'.$key,
+                    $store['label']
+                );
+            }
+        }
+
+        return $stores;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $fields
+     * @return array<int, array<string, mixed>>
+     */
+    protected function translatedVectorStoreFields(array $fields): array
+    {
+        return array_map(function (array $field) {
+            $key = $field['key'] ?? null;
+            if (is_string($key) && isset($field['label'])) {
+                $field['label'] = StudioTranslator::get(
+                    'registry.fields.'.$key,
+                    $field['label']
+                );
+            }
+
+            return $field;
+        }, $fields);
     }
 }

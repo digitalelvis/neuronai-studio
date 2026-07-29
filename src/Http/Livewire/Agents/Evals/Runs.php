@@ -27,11 +27,11 @@ class Runs extends Component
             'runs' => $this->suite->runs()->latest()->get(),
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
             breadcrumbs: [
-                ['label' => 'Agents', 'url' => route('neuronai-studio.agents.index')],
+                ['label' => __('neuronai-studio::ui.breadcrumbs.agents'), 'url' => route('neuronai-studio.agents.index')],
                 ['label' => $this->agent->name, 'url' => route('neuronai-studio.agents.edit', $this->agent)],
-                ['label' => 'Evals', 'url' => route('neuronai-studio.agents.evals.index', $this->agent)],
+                ['label' => __('neuronai-studio::ui.breadcrumbs.evals'), 'url' => route('neuronai-studio.agents.evals.index', $this->agent)],
                 ['label' => $this->suite->name, 'url' => route('neuronai-studio.agents.evals.edit', ['agent' => $this->agent, 'suite' => $this->suite])],
-                ['label' => 'Runs'],
+                ['label' => __('neuronai-studio::ui.breadcrumbs.runs')],
             ],
             title: 'Runs — '.$this->suite->name,
         ));

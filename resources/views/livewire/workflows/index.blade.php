@@ -5,15 +5,15 @@
         </x-neuronai-studio::ui.card-header>
         <x-neuronai-studio::ui.card-content>
             @if ($workflows->isEmpty())
-                <x-neuronai-studio::ui.empty-state title="No studio workflows yet" />
+                <x-neuronai-studio::ui.empty-state :title="__('neuronai-studio::ui.empty.workflows_studio_title')" />
             @else
                 <x-neuronai-studio::ui.table>
                     <x-neuronai-studio::ui.table-head>
                         <tr>
-                            <x-neuronai-studio::ui.table-header>Name</x-neuronai-studio::ui.table-header>
-                            <x-neuronai-studio::ui.table-header>Source</x-neuronai-studio::ui.table-header>
-                            <x-neuronai-studio::ui.table-header>Status</x-neuronai-studio::ui.table-header>
-                            <x-neuronai-studio::ui.table-header>Updated</x-neuronai-studio::ui.table-header>
+                            <x-neuronai-studio::ui.table-header>{{ __('neuronai-studio::ui.table.name') }}</x-neuronai-studio::ui.table-header>
+                            <x-neuronai-studio::ui.table-header>{{ __('neuronai-studio::ui.table.source') }}</x-neuronai-studio::ui.table-header>
+                            <x-neuronai-studio::ui.table-header>{{ __('neuronai-studio::ui.table.status') }}</x-neuronai-studio::ui.table-header>
+                            <x-neuronai-studio::ui.table-header>{{ __('neuronai-studio::ui.table.updated') }}</x-neuronai-studio::ui.table-header>
                             <x-neuronai-studio::ui.table-header></x-neuronai-studio::ui.table-header>
                         </tr>
                     </x-neuronai-studio::ui.table-head>
@@ -26,9 +26,9 @@
                                 <x-neuronai-studio::ui.table-cell class="text-muted-foreground">{{ $workflow->updated_at->diffForHumans() }}</x-neuronai-studio::ui.table-cell>
                                 <x-neuronai-studio::ui.table-cell>
                                     <div class="studio-table-row-actions">
-                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.workflows.edit', $workflow)">Edit</x-neuronai-studio::ui.button>
-                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.workflows.traces', $workflow)">Traces</x-neuronai-studio::ui.button>
-                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" wire:click="delete({{ $workflow->id }})" wire:confirm="Delete this workflow?" class="text-destructive">Delete</x-neuronai-studio::ui.button>
+                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.workflows.edit', $workflow)">{{ __('neuronai-studio::ui.actions.edit') }}</x-neuronai-studio::ui.button>
+                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.workflows.traces', $workflow)">{{ __('neuronai-studio::ui.breadcrumbs.traces') }}</x-neuronai-studio::ui.button>
+                                        <x-neuronai-studio::ui.button variant="ghost" size="sm" wire:click="delete({{ $workflow->id }})" wire:confirm="{{ __('neuronai-studio::ui.confirm.delete_workflow') }}" class="text-destructive">{{ __('neuronai-studio::ui.actions.delete') }}</x-neuronai-studio::ui.button>
                                     </div>
                                 </x-neuronai-studio::ui.table-cell>
                             </x-neuronai-studio::ui.table-row>
@@ -45,13 +45,13 @@
         </x-neuronai-studio::ui.card-header>
         <x-neuronai-studio::ui.card-content>
             @if ($codeWorkflows === [])
-                <x-neuronai-studio::ui.empty-state title="No code or JSON workflows discovered" description="Export a workflow as PHP or add files to configured scan paths." />
+                <x-neuronai-studio::ui.empty-state :title="__('neuronai-studio::ui.empty.workflows_code_title')" :description="__('neuronai-studio::ui.empty.workflows_code_description')" />
             @else
                 <x-neuronai-studio::ui.table>
                     <x-neuronai-studio::ui.table-head>
                         <tr>
-                            <x-neuronai-studio::ui.table-header>Name</x-neuronai-studio::ui.table-header>
-                            <x-neuronai-studio::ui.table-header>Source</x-neuronai-studio::ui.table-header>
+                            <x-neuronai-studio::ui.table-header>{{ __('neuronai-studio::ui.table.name') }}</x-neuronai-studio::ui.table-header>
+                            <x-neuronai-studio::ui.table-header>{{ __('neuronai-studio::ui.table.source') }}</x-neuronai-studio::ui.table-header>
                             <x-neuronai-studio::ui.table-header>Reference</x-neuronai-studio::ui.table-header>
                             <x-neuronai-studio::ui.table-header></x-neuronai-studio::ui.table-header>
                         </tr>

@@ -27,8 +27,8 @@ class Dashboard extends Component
             'usageWindowLabel' => '30d',
             'usageTotals' => $usageTotals,
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
-            breadcrumbs: [['label' => 'Dashboard']],
-            title: 'Dashboard',
+            breadcrumbs: [['label' => __('neuronai-studio::ui.breadcrumbs.dashboard')]],
+            title: __('neuronai-studio::ui.breadcrumbs.dashboard'),
         ));
     }
 }

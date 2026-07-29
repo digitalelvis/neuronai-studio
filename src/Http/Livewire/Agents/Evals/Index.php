@@ -18,7 +18,7 @@ class Index extends Component
     public function delete(int $suiteId): void
     {
         $this->agent->evalSuites()->whereKey($suiteId)->delete();
-        session()->flash('success', 'Eval suite deleted.');
+        session()->flash('success', __('neuronai-studio::flash.eval_suite_deleted'));
     }
 
     public function render()
@@ -27,9 +27,9 @@ class Index extends Component
             'suites' => $this->agent->evalSuites()->with('judgeAgent')->latest()->get(),
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
             breadcrumbs: [
-                ['label' => 'Agents', 'url' => route('neuronai-studio.agents.index')],
+                ['label' => __('neuronai-studio::ui.breadcrumbs.agents'), 'url' => route('neuronai-studio.agents.index')],
                 ['label' => $this->agent->name, 'url' => route('neuronai-studio.agents.edit', $this->agent)],
-                ['label' => 'Evals'],
+                ['label' => __('neuronai-studio::ui.breadcrumbs.evals')],
             ],
             title: 'Evals — '.$this->agent->name,
             headerActions: view('neuronai-studio::partials.header-actions.new-eval-suite', ['agent' => $this->agent])->render(),

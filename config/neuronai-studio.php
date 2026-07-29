@@ -14,9 +14,22 @@ return [
 
     'table_prefix' => env('NEURONAI_STUDIO_TABLE_PREFIX', 'neuronai_studio_'),
 
-    'middleware' => ['web', 'neuronai-studio.auth'],
+    'middleware' => ['web', 'neuronai-studio.locale', 'neuronai-studio.auth'],
 
     'gate' => 'viewNeuronAIStudio',
+
+    /*
+    |--------------------------------------------------------------------------
+    | Locale
+    |--------------------------------------------------------------------------
+    |
+    | Optional override for Studio UI locale. When null/empty, Studio follows
+    | the host app locale (App::getLocale). Fallback catalog is always `en`.
+    | Supported package catalogs: en, pt_BR.
+    |
+    */
+
+    'locale' => env('NEURONAI_STUDIO_LOCALE'),
 
     /*
     |--------------------------------------------------------------------------

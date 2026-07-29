@@ -10,6 +10,7 @@ use DigitalElvis\NeuronAIStudio\Commands\InstallObservabilityCommand;
 use DigitalElvis\NeuronAIStudio\Commands\MakeToolCommand;
 use DigitalElvis\NeuronAIStudio\Commands\PurgeCheckpointsCommand;
 use DigitalElvis\NeuronAIStudio\Http\Middleware\EnsureNeuronAIStudioAuthorized;
+use DigitalElvis\NeuronAIStudio\Http\Middleware\SetStudioLocale;
 use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\NodeTypeRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\OutputClassRegistry;
@@ -131,6 +132,7 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
         $this->registerLivewireComponents();
         $this->registerCommands();
         $this->registerViews();
+        $this->registerTranslations();
     }
 
     protected function registerPublishing(): void
@@ -151,6 +153,10 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
             $this->publishes([
                 __DIR__.'/../resources/views' => resource_path('views/vendor/neuronai-studio'),
             ], 'neuronai-studio-views');
+
+            $this->publishes([
+                __DIR__.'/../lang' => lang_path('vendor/neuronai-studio'),
+            ], 'neuronai-studio-lang');
 
             $this->publishes([
                 __DIR__.'/../stubs/evaluation.php.stub' => base_path('evaluation.php'),
@@ -187,6 +193,7 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
     {
         $router = $this->app->make(Router::class);
         $router->aliasMiddleware('neuronai-studio.auth', EnsureNeuronAIStudioAuthorized::class);
+        $router->aliasMiddleware('neuronai-studio.locale', SetStudioLocale::class);
     }
 
     protected function registerGate(): void
@@ -295,5 +302,10 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
         Blade::directive('neuronAIStudioStyles', function () {
             return "<?php echo '<link rel=\"stylesheet\" href=\"'.asset('vendor/neuronai-studio/css/neuronai-studio.css').'\">'; ?>";
         });
+    }
+
+    protected function registerTranslations(): void
+    {
+        $this->loadTranslationsFrom(__DIR__.'/../lang', 'neuronai-studio');
     }
 }

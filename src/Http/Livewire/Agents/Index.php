@@ -18,8 +18,8 @@ class Index extends Component
         return view('neuronai-studio::livewire.agents.index', [
             'agents' => AgentDefinition::latest()->get(),
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
-            breadcrumbs: [['label' => 'Agents']],
-            title: 'Agents',
+            breadcrumbs: [['label' => __('neuronai-studio::ui.breadcrumbs.agents')]],
+            title: __('neuronai-studio::ui.breadcrumbs.agents'),
             headerActions: view('neuronai-studio::partials.header-actions.new-agent')->render(),
         ));
     }

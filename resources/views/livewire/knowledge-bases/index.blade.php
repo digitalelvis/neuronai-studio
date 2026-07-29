@@ -10,17 +10,17 @@
 
     <x-neuronai-studio::ui.card>
         @if ($knowledgeBases->isEmpty())
-            <x-neuronai-studio::ui.empty-state title="No knowledge bases yet" description="Create a knowledge base and ingest documents to power RAG nodes.">
-                <x-neuronai-studio::ui.button :href="route('neuronai-studio.knowledge-bases.create')">New Knowledge Base</x-neuronai-studio::ui.button>
+            <x-neuronai-studio::ui.empty-state :title="__('neuronai-studio::ui.empty.knowledge_bases_title')" :description="__('neuronai-studio::ui.empty.knowledge_bases_description')">
+                <x-neuronai-studio::ui.button :href="route('neuronai-studio.knowledge-bases.create')">{{ __('neuronai-studio::ui.actions.new_knowledge_base') }}</x-neuronai-studio::ui.button>
             </x-neuronai-studio::ui.empty-state>
         @else
             <x-neuronai-studio::ui.table>
                 <x-neuronai-studio::ui.table-head>
                     <tr>
-                        <x-neuronai-studio::ui.table-header>Name</x-neuronai-studio::ui.table-header>
+                        <x-neuronai-studio::ui.table-header>{{ __('neuronai-studio::ui.table.name') }}</x-neuronai-studio::ui.table-header>
                         <x-neuronai-studio::ui.table-header>Embeddings</x-neuronai-studio::ui.table-header>
                         <x-neuronai-studio::ui.table-header>Vector Store</x-neuronai-studio::ui.table-header>
-                        <x-neuronai-studio::ui.table-header>Documents</x-neuronai-studio::ui.table-header>
+                        <x-neuronai-studio::ui.table-header>{{ __('neuronai-studio::ui.table.documents') }}</x-neuronai-studio::ui.table-header>
                         <x-neuronai-studio::ui.table-header></x-neuronai-studio::ui.table-header>
                     </tr>
                 </x-neuronai-studio::ui.table-head>
@@ -44,8 +44,8 @@
                             </x-neuronai-studio::ui.table-cell>
                             <x-neuronai-studio::ui.table-cell>
                                 <div class="studio-table-row-actions">
-                                    <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.knowledge-bases.edit', $knowledgeBase)">Edit</x-neuronai-studio::ui.button>
-                                    <x-neuronai-studio::ui.button variant="ghost" size="sm" wire:click="delete({{ $knowledgeBase->id }})" wire:confirm="Delete this knowledge base and its documents?" class="text-destructive hover:text-destructive">Delete</x-neuronai-studio::ui.button>
+                                    <x-neuronai-studio::ui.button variant="ghost" size="sm" :href="route('neuronai-studio.knowledge-bases.edit', $knowledgeBase)">{{ __('neuronai-studio::ui.actions.edit') }}</x-neuronai-studio::ui.button>
+                                    <x-neuronai-studio::ui.button variant="ghost" size="sm" wire:click="delete({{ $knowledgeBase->id }})" wire:confirm="{{ __('neuronai-studio::ui.confirm.delete_knowledge_base') }}" class="text-destructive hover:text-destructive">{{ __('neuronai-studio::ui.actions.delete') }}</x-neuronai-studio::ui.button>
                                 </div>
                             </x-neuronai-studio::ui.table-cell>
                         </x-neuronai-studio::ui.table-row>

@@ -1,13 +1,13 @@
 <x-neuronai-studio::ui.page>
     <x-neuronai-studio::ui.card>
         @if ($traces->isEmpty())
-            <x-neuronai-studio::ui.empty-state title="No traces yet" description="Test the workflow from the editor to create a trace." />
+            <x-neuronai-studio::ui.empty-state :title="__('neuronai-studio::ui.empty.traces_title')" :description="__('neuronai-studio::ui.empty.traces_description')" />
         @else
             <x-neuronai-studio::ui.table>
                 <x-neuronai-studio::ui.table-head>
                     <tr>
                         <x-neuronai-studio::ui.table-header>ID</x-neuronai-studio::ui.table-header>
-                        <x-neuronai-studio::ui.table-header>Status</x-neuronai-studio::ui.table-header>
+                        <x-neuronai-studio::ui.table-header>{{ __('neuronai-studio::ui.table.status') }}</x-neuronai-studio::ui.table-header>
                         <x-neuronai-studio::ui.table-header>Started</x-neuronai-studio::ui.table-header>
                         <x-neuronai-studio::ui.table-header></x-neuronai-studio::ui.table-header>
                     </tr>
