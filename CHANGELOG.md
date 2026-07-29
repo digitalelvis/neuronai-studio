@@ -1,5 +1,20 @@
 # Changelog
 
+# [2.1.0](https://github.com/digitalelvis/neuronai-studio/compare/v2.0.3...v2.1.0) (2026-07-29)
+
+
+### Features
+
+* **i18n:** add locale middleware and translation catalogs ([b8463e9](https://github.com/digitalelvis/neuronai-studio/commit/b8463e90681ce84972c6a419abf2d1b8b05d3e37))
+* **i18n:** localize artisan command output ([2657e8a](https://github.com/digitalelvis/neuronai-studio/commit/2657e8ae38fdf4d410cf16fa962799f913f7abe9))
+* **i18n:** localize studio canvas chat and forms bundles ([af0e5c8](https://github.com/digitalelvis/neuronai-studio/commit/af0e5c805f845ff1930bb0f856ac8721d2f81d7a))
+* **i18n:** translate registry and node display labels ([32bce75](https://github.com/digitalelvis/neuronai-studio/commit/32bce75145490510070c87682920a0fed1bdbcd0))
+* **i18n:** wire Blade and Livewire chrome translations ([6ffacf0](https://github.com/digitalelvis/neuronai-studio/commit/6ffacf0422637a4f49dab0eba60a5a3bde30a77c))
+* **studio:** add fullscreen expandable editor for long text fields ([9953d4e](https://github.com/digitalelvis/neuronai-studio/commit/9953d4e82333aa3d24ec54ecc25a7c27fa3fbc5d))
+* **studio:** align agent node handles to inspector anchors ([f99f6f6](https://github.com/digitalelvis/neuronai-studio/commit/f99f6f6b507de837f9e9d683efbec1fcd7e52b02))
+* **studio:** reposition workflow canvas chrome and meta editor ([cd474a5](https://github.com/digitalelvis/neuronai-studio/commit/cd474a575d5308abb6fd3e4eb6028865ced66178))
+* **variables:** add Studio Variable Vault with field binding ([167b6ae](https://github.com/digitalelvis/neuronai-studio/commit/167b6aeb262fbce73cbfe88e8e8969afd08b8b74))
+
 ## [2.0.3](https://github.com/digitalelvis/neuronai-studio/compare/v2.0.2...v2.0.3) (2026-07-28)
 
 
