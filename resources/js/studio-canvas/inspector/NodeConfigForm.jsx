@@ -190,8 +190,17 @@ export default function NodeConfigForm({
                                             disabled={readOnly}
                                         />
                                     </div>
+                                    <div className="space-y-1" data-ab-handle-anchor="tools">
+                                        <Label>Tools</Label>
+                                        <p className="ab-flow-agent-tools-hint">
+                                            Connect Tool or MCP nodes to the cyan tools handle.
+                                            {toolMode
+                                                ? ' Connect the amber toolset handle to a supervisor tools pin.'
+                                                : ''}
+                                        </p>
+                                    </div>
                                     {!toolMode && (
-                                        <div className="space-y-2">
+                                        <div className="space-y-2" data-ab-handle-anchor="input">
                                             <Label>Message override</Label>
                                             <Input
                                                 value={data.message ?? ''}
@@ -225,7 +234,7 @@ export default function NodeConfigForm({
                                             label="Edit text content"
                                         />
                                     </div>
-                                    <div className="space-y-1">
+                                    <div className="space-y-1" data-ab-handle-anchor="tools">
                                         <Label>Tools</Label>
                                         <p className="ab-flow-agent-tools-hint">
                                             Connect Tool or MCP nodes to the cyan tools handle.
@@ -235,7 +244,7 @@ export default function NodeConfigForm({
                                         </p>
                                     </div>
                                     {!toolMode && (
-                                        <div className="space-y-2">
+                                        <div className="space-y-2" data-ab-handle-anchor="input">
                                             <Label>Input</Label>
                                             <Input
                                                 value={data.message ?? ''}
@@ -249,7 +258,7 @@ export default function NodeConfigForm({
                             )}
 
                             {toolMode && (
-                                <div className="space-y-1">
+                                <div className="space-y-1" data-ab-handle-anchor="toolset">
                                     <Label>Actions</Label>
                                     <Button
                                         type="button"
@@ -290,12 +299,14 @@ export default function NodeConfigForm({
                                     </div>
                                 </>
                             )}
-                            <StreamToggleField
-                                stream={Boolean(data.stream)}
-                                structured={Boolean(data.structured)}
-                                readOnly={readOnly}
-                                onChange={(patch) => onUpdate?.({ ...data, ...patch })}
-                            />
+                            <div data-ab-handle-anchor="response">
+                                <StreamToggleField
+                                    stream={Boolean(data.stream)}
+                                    structured={Boolean(data.structured)}
+                                    readOnly={readOnly}
+                                    onChange={(patch) => onUpdate?.({ ...data, ...patch })}
+                                />
+                            </div>
                         </>
                     )}
                     {showAdvanced && (
