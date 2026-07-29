@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { ExpandableTextField } from '@/components/ui/expandable-text-field';
 import {
     Select,
     SelectContent,
@@ -102,12 +102,13 @@ export default function RagFields({
 
             <div className="space-y-2">
                 <Label>Query template</Label>
-                <Textarea
+                <ExpandableTextField
                     rows={2}
                     value={data.query ?? ''}
                     onChange={(e) => onChange?.({ query: e.target.value })}
                     placeholder="{{ input }}"
                     disabled={readOnly}
+                    label="Edit text content"
                 />
                 <p className="text-xs text-muted-foreground">
                     Interpolated against workflow state. Falls back to {'{{ input }}'} when empty.

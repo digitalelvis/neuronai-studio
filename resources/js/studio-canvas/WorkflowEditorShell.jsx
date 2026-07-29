@@ -1,31 +1,31 @@
 import { useEffect, useState } from 'react';
 import { Save, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import WorkflowCanvas from './WorkflowCanvas';
 import NodePalette from './NodePalette';
 import NodeEditSheet from './inspector/NodeEditSheet';
 import ImportJsonDialog from './ImportJsonDialog';
+import WorkflowMetaDialog from './WorkflowMetaDialog';
 import ToolExposureModal from './ToolExposureModal';
 import ToolActionsModal from './ToolActionsModal';
 import PlaygroundOverlay from './chrome/PlaygroundOverlay';
 import ShareMenu from './chrome/ShareMenu';
 import LogsDrawer from './chrome/LogsDrawer';
 
+function syncBreadcrumbName(name) {
+    const label = document.querySelector('#workflow-breadcrumb-name .studio-breadcrumb-edit-label');
+    if (label) {
+        label.textContent = name || 'Untitled';
+    }
+}
+
 export default function WorkflowEditorShell({ config }) {
     const [name, setName] = useState(config.workflowName ?? '');
     const [description, setDescription] = useState(config.workflowDescription ?? '');
     const [status, setStatus] = useState(config.workflowStatus ?? 'draft');
+    const [metaOpen, setMetaOpen] = useState(false);
     const [validationMessage, setValidationMessage] = useState('');
     const [importOpen, setImportOpen] = useState(false);
     const [toolExposureEdit, setToolExposureEdit] = useState(null);
@@ -86,15 +86,25 @@ export default function WorkflowEditorShell({ config }) {
     }, []);
 
     useEffect(() => {
-        const syncMeta = () => {
-            if (window.__NEURONAI_CANVAS_CONFIG) {
-                window.__NEURONAI_CANVAS_CONFIG.workflowName = name;
-                window.__NEURONAI_CANVAS_CONFIG.workflowDescription = description;
-                window.__NEURONAI_CANVAS_CONFIG.workflowStatus = status;
+        const onMetaEditOpen = () => {
+            if (readOnly) {
+                return;
             }
-            window.dispatchEvent(new CustomEvent('workflow-meta-changed'));
+            setMetaOpen(true);
         };
-        syncMeta();
+
+        window.addEventListener('workflow-meta-edit-open', onMetaEditOpen);
+        return () => window.removeEventListener('workflow-meta-edit-open', onMetaEditOpen);
+    }, [readOnly]);
+
+    useEffect(() => {
+        if (window.__NEURONAI_CANVAS_CONFIG) {
+            window.__NEURONAI_CANVAS_CONFIG.workflowName = name;
+            window.__NEURONAI_CANVAS_CONFIG.workflowDescription = description;
+            window.__NEURONAI_CANVAS_CONFIG.workflowStatus = status;
+        }
+        syncBreadcrumbName(name);
+        window.dispatchEvent(new CustomEvent('workflow-meta-changed'));
     }, [name, description, status]);
 
     const handleValidate = async () => {
@@ -114,51 +124,6 @@ export default function WorkflowEditorShell({ config }) {
                         {config.readOnlyBanner}
                     </div>
                 )}
-
-                <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-border px-4 py-2.5">
-                    <Input
-                        className="h-8 w-48"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        placeholder="Workflow name"
-                        disabled={readOnly}
-                    />
-                    <Select value={status} onValueChange={setStatus} disabled={readOnly}>
-                        <SelectTrigger className="h-8 w-32">
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="draft">Draft</SelectItem>
-                            <SelectItem value="published">Published</SelectItem>
-                        </SelectContent>
-                    </Select>
-                    <Textarea
-                        className="min-h-8 max-h-8 w-64 resize-none py-1.5 text-xs"
-                        rows={1}
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        placeholder="Description"
-                        disabled={readOnly}
-                    />
-
-                    <div className="ml-auto flex flex-wrap items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={handleValidate}>
-                            Validate
-                        </Button>
-                        {!readOnly && (
-                            <>
-                                <Button variant="outline" size="sm" onClick={() => setImportOpen(true)}>
-                                    <Upload className="h-3.5 w-3.5" />
-                                    Import
-                                </Button>
-                                <Button size="sm" onClick={handleSave}>
-                                    <Save className="h-3.5 w-3.5" />
-                                    Save
-                                </Button>
-                            </>
-                        )}
-                    </div>
-                </div>
 
                 <ResizablePanelGroup direction="horizontal" className="min-h-0 flex-1">
                     <ResizablePanel defaultSize={20} minSize={14} maxSize={28}>
@@ -186,6 +151,7 @@ export default function WorkflowEditorShell({ config }) {
                                 outputClasses={config.outputClasses || []}
                                 providers={config.providers || {}}
                                 providerModels={config.providerModels || {}}
+                                onValidate={handleValidate}
                                 onGraphChange={(graph) => {
                                     window.__workflowGraph = graph;
                                     const saved = window.__NEURONAI_CANVAS_CONFIG?.savedGraph;
@@ -203,6 +169,27 @@ export default function WorkflowEditorShell({ config }) {
                                         onBeforeRun={window.saveGraphBeforeRun}
                                     />
                                     <ShareMenu workflowConfig={workflowPanelConfig} />
+                                    {!readOnly && (
+                                        <>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="ab-fab gap-1.5 shadow-lg"
+                                                onClick={() => setImportOpen(true)}
+                                            >
+                                                <Upload className="h-3.5 w-3.5" />
+                                                Import
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                className="ab-fab gap-1.5 shadow-lg"
+                                                onClick={handleSave}
+                                            >
+                                                <Save className="h-3.5 w-3.5" />
+                                                Save
+                                            </Button>
+                                        </>
+                                    )}
                                 </div>
                             </div>
 
@@ -217,6 +204,20 @@ export default function WorkflowEditorShell({ config }) {
                         </div>
                     </ResizablePanel>
                 </ResizablePanelGroup>
+
+                <WorkflowMetaDialog
+                    open={metaOpen}
+                    onOpenChange={setMetaOpen}
+                    name={name}
+                    description={description}
+                    status={status}
+                    readOnly={readOnly}
+                    onSave={({ name: nextName, description: nextDescription, status: nextStatus }) => {
+                        setName(nextName);
+                        setDescription(nextDescription);
+                        setStatus(nextStatus);
+                    }}
+                />
 
                 <ImportJsonDialog open={importOpen} onOpenChange={setImportOpen} />
 

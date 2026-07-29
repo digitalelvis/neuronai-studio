@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useState } from 'react';
-import { Handle, NodeToolbar, Position } from '@xyflow/react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { Handle, NodeToolbar, Position, useUpdateNodeInternals } from '@xyflow/react';
 import {
     ChevronDown,
     ChevronUp,
@@ -16,6 +16,13 @@ import { NodeTypeIcon } from './nodeIcons';
 
 const DENSE_TYPES = new Set(['agent', 'llm', 'rag', 'mcp', 'tool']);
 
+const AGENT_HANDLE_FALLBACKS = {
+    tools: 'calc(100% - 18.5rem)',
+    input: 'calc(100% - 14.75rem)',
+    response: 'calc(100% - 5.25rem)',
+    toolset: 'calc(100% - 8.5rem)',
+};
+
 function forkBranches(config) {
     if (!config || !Array.isArray(config.branches)) {
         return [];
@@ -26,7 +33,74 @@ function forkBranches(config) {
         .filter((id) => typeof id === 'string' && id !== '');
 }
 
-function NodeHandles({ nodeType, config, expanded = false }) {
+function measureHandleAnchor(nodeEl, name) {
+    const anchor = nodeEl.querySelector(`[data-ab-handle-anchor="${name}"]`);
+    if (!anchor) {
+        return null;
+    }
+
+    const nodeRect = nodeEl.getBoundingClientRect();
+    if (nodeRect.height <= 0) {
+        return null;
+    }
+
+    const anchorRect = anchor.getBoundingClientRect();
+    const centerY = anchorRect.top + anchorRect.height / 2 - nodeRect.top;
+    const percent = (centerY / nodeRect.height) * 100;
+    return `${Math.round(percent * 100) / 100}%`;
+}
+
+function useAgentHandleTops(nodeId, nodeRef, enabled, revision) {
+    const updateNodeInternals = useUpdateNodeInternals();
+    const [tops, setTops] = useState(null);
+    const topsRef = useRef(null);
+
+    useLayoutEffect(() => {
+        if (!enabled) {
+            topsRef.current = null;
+            setTops(null);
+            return undefined;
+        }
+
+        const nodeEl = nodeRef.current;
+        if (!nodeEl) {
+            return undefined;
+        }
+
+        const sync = () => {
+            const next = {
+                tools: measureHandleAnchor(nodeEl, 'tools'),
+                input: measureHandleAnchor(nodeEl, 'input'),
+                response: measureHandleAnchor(nodeEl, 'response'),
+                toolset: measureHandleAnchor(nodeEl, 'toolset'),
+            };
+            const prev = topsRef.current;
+            const changed =
+                !prev ||
+                prev.tools !== next.tools ||
+                prev.input !== next.input ||
+                prev.response !== next.response ||
+                prev.toolset !== next.toolset;
+
+            if (!changed) {
+                return;
+            }
+
+            topsRef.current = next;
+            setTops(next);
+            updateNodeInternals(nodeId);
+        };
+
+        sync();
+        const observer = new ResizeObserver(sync);
+        observer.observe(nodeEl);
+        return () => observer.disconnect();
+    }, [enabled, nodeId, nodeRef, revision, updateNodeInternals]);
+
+    return tops;
+}
+
+function NodeHandles({ nodeType, config, expanded = false, handleTops = null }) {
     if (nodeType === 'start') {
         return <Handle type="source" position={Position.Right} id="default" className="ab-flow-handle" />;
     }
@@ -112,6 +186,7 @@ function NodeHandles({ nodeType, config, expanded = false }) {
         // D8: tools target visible for inline and existing supervisors.
         // v1: specialists in Tool Mode keep tools target so they can bind tool/mcp too.
         const showToolsTarget = true;
+        const topFor = (name) => handleTops?.[name] || AGENT_HANDLE_FALLBACKS[name];
 
         if (toolMode) {
             if (!expanded) {
@@ -144,7 +219,7 @@ function NodeHandles({ nodeType, config, expanded = false }) {
                             position={Position.Left}
                             id="tools"
                             className="ab-flow-handle ab-flow-handle-tools"
-                            style={{ top: 'calc(100% - 15.25rem)' }}
+                            style={{ top: topFor('tools') }}
                         />
                     )}
                     <Handle
@@ -152,7 +227,7 @@ function NodeHandles({ nodeType, config, expanded = false }) {
                         position={Position.Right}
                         id="toolset"
                         className="ab-flow-handle ab-flow-handle-toolset"
-                        style={{ top: 'calc(100% - 5.25rem)' }}
+                        style={{ top: topFor('toolset') }}
                     />
                 </>
             );
@@ -176,8 +251,7 @@ function NodeHandles({ nodeType, config, expanded = false }) {
             );
         }
 
-        // Align pins to field labels from the bottom (Output Key / Response / Stream / footer
-        // sit below Input; Tools sits just above Input in inline mode).
+        // Align pins to Tools / Input / Response field anchors measured from the form.
         return (
             <>
                 {showToolsTarget && (
@@ -186,7 +260,7 @@ function NodeHandles({ nodeType, config, expanded = false }) {
                         position={Position.Left}
                         id="tools"
                         className="ab-flow-handle ab-flow-handle-tools"
-                        style={{ top: 'calc(100% - 15.25rem)' }}
+                        style={{ top: topFor('tools') }}
                     />
                 )}
                 <Handle
@@ -194,14 +268,14 @@ function NodeHandles({ nodeType, config, expanded = false }) {
                     position={Position.Left}
                     id="default"
                     className="ab-flow-handle"
-                    style={{ top: 'calc(100% - 12rem)' }}
+                    style={{ top: topFor('input') }}
                 />
                 <Handle
                     type="source"
                     position={Position.Right}
                     id="default"
                     className="ab-flow-handle"
-                    style={{ top: 'calc(100% - 5.25rem)' }}
+                    style={{ top: topFor('response') }}
                 />
             </>
         );
@@ -238,6 +312,7 @@ export default function WorkflowNode({ id, data, selected }) {
     const [formSection, setFormSection] = useState('controls');
     // Forms stay open by default; user can collapse via toolbar.
     const expanded = !collapsed && data.nodeType !== 'start' && data.nodeType !== 'stop';
+    const nodeRef = useRef(null);
 
     const agentMode = data.nodeType === 'agent' ? resolveAgentConfigMode(data.config || {}) : null;
     const agentToolMode = data.nodeType === 'agent' ? isToolModeEnabled(data.config || {}) : false;
@@ -249,6 +324,35 @@ export default function WorkflowNode({ id, data, selected }) {
         data.nodeType === 'agent' && agentMode === 'inline'
             ? [data.config?.provider, data.config?.model].filter(Boolean).join(' / ') || null
             : null;
+
+    const handleTopsRevision = useMemo(
+        () =>
+            [
+                data.nodeType,
+                expanded,
+                formSection,
+                agentMode,
+                agentToolMode,
+                data.config?.structured ? '1' : '0',
+                data.config?.instructions?.length || 0,
+            ].join(':'),
+        [
+            data.nodeType,
+            expanded,
+            formSection,
+            agentMode,
+            agentToolMode,
+            data.config?.structured,
+            data.config?.instructions?.length,
+        ],
+    );
+
+    const agentHandleTops = useAgentHandleTops(
+        id,
+        nodeRef,
+        data.nodeType === 'agent' && expanded,
+        handleTopsRevision,
+    );
 
     const editNode = useMemo(
         () =>
@@ -296,6 +400,7 @@ export default function WorkflowNode({ id, data, selected }) {
 
     return (
         <div
+            ref={nodeRef}
             className={`ab-flow-node${selected ? ' selected' : ''}${expanded ? ' ab-flow-node--expanded' : ''}${executionClass}`}
             style={{ '--node-accent': accent }}
         >
@@ -366,7 +471,12 @@ export default function WorkflowNode({ id, data, selected }) {
                 </NodeToolbar>
             )}
 
-            <NodeHandles nodeType={data.nodeType} config={data.config} expanded={expanded} />
+            <NodeHandles
+                nodeType={data.nodeType}
+                config={data.config}
+                expanded={expanded}
+                handleTops={agentHandleTops}
+            />
 
             <div className="ab-flow-node-accent" />
             <div className="ab-flow-node-header">

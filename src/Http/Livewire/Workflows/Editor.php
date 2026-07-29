@@ -71,6 +71,7 @@ class Editor extends Component
             $this->readOnly = (bool) $workflow->locked;
             $this->linkedClassPath = $workflow->class_path;
         } else {
+            $this->name = __('neuronai-studio::ui.actions.new_workflow');
             $this->graph = WorkflowDefinition::defaultGraph();
         }
     }
@@ -404,7 +405,10 @@ class Editor extends Component
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
             breadcrumbs: [
                 ['label' => __('neuronai-studio::ui.breadcrumbs.workflows'), 'url' => route('neuronai-studio.workflows.index')],
-                ['label' => $this->name ?: ($this->workflow?->exists ? __('neuronai-studio::ui.breadcrumbs.edit') : __('neuronai-studio::ui.actions.new_workflow'))],
+                [
+                    'label' => $this->name ?: ($this->workflow?->exists ? __('neuronai-studio::ui.breadcrumbs.edit') : __('neuronai-studio::ui.actions.new_workflow')),
+                    'editable' => ! $this->readOnly,
+                ],
             ],
             title: $title,
             contentFlush: true,

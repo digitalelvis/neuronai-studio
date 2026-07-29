@@ -10,7 +10,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { ExpandableTextField } from '@/components/ui/expandable-text-field';
 import { Checkbox } from '@/components/ui/checkbox';
 import {
     Select,
@@ -198,12 +198,13 @@ export default function ToolActionsModal({
 
                                 <div className="space-y-2">
                                     <Label htmlFor="tool-action-description">Description</Label>
-                                    <Textarea
+                                    <ExpandableTextField
                                         id="tool-action-description"
                                         rows={3}
                                         value={selected.description}
                                         onChange={(e) => updateSelected({ description: e.target.value })}
                                         disabled={!editable || isToolkit}
+                                        label="Edit text content"
                                     />
                                 </div>
 
