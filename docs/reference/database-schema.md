@@ -17,8 +17,10 @@ Configure with `NEURONAI_STUDIO_TABLE_PREFIX` (`config('neuronai-studio.table_pr
 | `agent_definitions` | `neuronai_studio_agent_definitions` | Agent name, provider, model, instructions, tool bindings |
 | `workflow_definitions` | `neuronai_studio_workflow_definitions` | Workflow name, graph JSON, code source metadata |
 | `tool_definitions` | `neuronai_studio_tool_definitions` | Builder and webhook tool configs |
-| `mcp_servers` | `neuronai_studio_mcp_servers` | MCP server transport configuration |
+| `mcp_servers` | `neuronai_studio_mcp_servers` | MCP server transport configuration (inbound) |
 | `agent_mcp_server` | `neuronai_studio_agent_mcp_server` | Agent ↔ MCP server pivot with filters |
+| `mcp_endpoints` | `neuronai_studio_mcp_endpoints` | Outbound MCP endpoint (Studio → MCP server) |
+| `mcp_endpoint_bindings` | `neuronai_studio_mcp_endpoint_bindings` | Tools / toolkits / agents / workflows exposed per endpoint |
 | `threads` | `neuronai_studio_threads` | Conversation / execution threads (polymorphic entity) |
 | `runs` | `neuronai_studio_runs` | Unified execution records (agent or workflow) |
 | `traces` | `neuronai_studio_traces` | Observability root per run |
@@ -39,8 +41,10 @@ Configure with `NEURONAI_STUDIO_TABLE_PREFIX` (`config('neuronai-studio.table_pr
 erDiagram
     agent_definitions ||--o{ agent_mcp_server : binds
     mcp_servers ||--o{ agent_mcp_server : exposes
+    mcp_endpoints ||--o{ mcp_endpoint_bindings : publishes
     agent_definitions ||--o{ threads : entity
     workflow_definitions ||--o{ threads : entity
+    mcp_endpoints ||--o{ threads : entity
     threads ||--o{ runs : contains
     threads ||--o{ chat_messages : stores
     runs ||--o{ runs : parent_child

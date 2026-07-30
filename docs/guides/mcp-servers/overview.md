@@ -71,3 +71,4 @@ See [Stdio & HTTP](stdio-and-http.md) and [Security & Access](../security-and-ac
 
 - [Stdio & HTTP](stdio-and-http.md)
 - [Agent Binding](agent-binding.md)
+- [MCP Endpoints (publish Studio as MCP)](../mcp-endpoints/overview.md)

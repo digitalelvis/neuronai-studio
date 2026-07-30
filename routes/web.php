@@ -19,6 +19,8 @@ use DigitalElvis\NeuronAIStudio\Http\Livewire\Agents\Playground;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\Dashboard;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\KnowledgeBases\Edit as KnowledgeBasesEdit;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\KnowledgeBases\Index as KnowledgeBasesIndex;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\McpEndpoints\Edit as McpEndpointsEdit;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\McpEndpoints\Index as McpEndpointsIndex;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\McpServers\Edit as McpServersEdit;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\McpServers\Index as McpServersIndex;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\StreamAdapters\Index as StreamAdaptersIndex;
@@ -75,6 +77,12 @@ Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
             Route::get('/', McpServersIndex::class)->name('index');
             Route::get('/create', McpServersEdit::class)->name('create');
             Route::get('/{server}/edit', McpServersEdit::class)->name('edit');
+        });
+
+        Route::prefix('mcp-endpoints')->name('mcp-endpoints.')->group(function () {
+            Route::get('/', McpEndpointsIndex::class)->name('index');
+            Route::get('/create', McpEndpointsEdit::class)->name('create');
+            Route::get('/{endpoint}/edit', McpEndpointsEdit::class)->name('edit');
         });
 
         Route::prefix('workflows')->name('workflows.')->group(function () {
