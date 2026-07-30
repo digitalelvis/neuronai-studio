@@ -48,6 +48,9 @@
                 <a href="{{ route('neuronai-studio.mcp-servers.index') }}" class="studio-icon-rail-link {{ request()->routeIs('neuronai-studio.mcp-servers.*') ? 'active' : '' }}" title="{{ __('neuronai-studio::ui.nav.mcp_servers') }}">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5V19A9 3 0 0 0 21 19V5"/><path d="M3 12A9 3 0 0 0 21 12"/></svg>
                 </a>
+                <a href="{{ route('neuronai-studio.mcp-endpoints.index') }}" class="studio-icon-rail-link {{ request()->routeIs('neuronai-studio.mcp-endpoints.*') ? 'active' : '' }}" title="{{ __('neuronai-studio::ui.nav.mcp_endpoints') }}">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v8"/><path d="m16 6-4 4-4-4"/><rect width="20" height="8" x="2" y="14" rx="2"/><path d="M6 18h.01"/><path d="M10 18h.01"/></svg>
+                </a>
                 <a href="{{ route('neuronai-studio.knowledge-bases.index') }}" class="studio-icon-rail-link {{ request()->routeIs('neuronai-studio.knowledge-bases.*') ? 'active' : '' }}" title="{{ __('neuronai-studio::ui.nav.knowledge_bases') }}">
                     <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1 0-5H20"/></svg>
                 </a>

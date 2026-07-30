@@ -56,6 +56,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | MCP Endpoints (Studio → MCP server)
+    |--------------------------------------------------------------------------
+    |
+    | Expose curated tools, toolkits, agents, and workflows as an outbound
+    | MCP server over Streamable HTTP. Disabled by default — enable explicitly
+    | and create endpoints in Studio before connecting external clients.
+    |
+    */
+
+    'mcp_endpoints' => [
+        'enabled' => env('NEURONAI_STUDIO_MCP_ENDPOINTS_ENABLED', false),
+        'route_prefix' => env('NEURONAI_STUDIO_MCP_ENDPOINTS_PREFIX', 'api/neuronai/mcp'),
+        'middleware' => ['api'],
+        'protocol_version' => '2024-11-05',
+        'default_timeout_seconds' => (int) env('NEURONAI_STUDIO_MCP_TOOL_TIMEOUT', 180),
+        'session_ttl_seconds' => (int) env('NEURONAI_STUDIO_MCP_SESSION_TTL', 3600),
+        'server_name' => env('NEURONAI_STUDIO_MCP_SERVER_NAME', 'NeuronAI Studio'),
+        'server_version' => env('NEURONAI_STUDIO_MCP_SERVER_VERSION', '1.0.0'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Export Configuration
     |--------------------------------------------------------------------------
     */

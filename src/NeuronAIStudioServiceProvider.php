@@ -9,8 +9,13 @@ use DigitalElvis\NeuronAIStudio\Commands\InstallCommand;
 use DigitalElvis\NeuronAIStudio\Commands\InstallObservabilityCommand;
 use DigitalElvis\NeuronAIStudio\Commands\MakeToolCommand;
 use DigitalElvis\NeuronAIStudio\Commands\PurgeCheckpointsCommand;
+use DigitalElvis\NeuronAIStudio\Http\Middleware\AuthenticateMcpEndpoint;
 use DigitalElvis\NeuronAIStudio\Http\Middleware\EnsureNeuronAIStudioAuthorized;
 use DigitalElvis\NeuronAIStudio\Http\Middleware\SetStudioLocale;
+use DigitalElvis\NeuronAIStudio\McpServer\McpInvocationRecorder;
+use DigitalElvis\NeuronAIStudio\McpServer\McpToolCatalog;
+use DigitalElvis\NeuronAIStudio\McpServer\McpToolInvoker;
+use DigitalElvis\NeuronAIStudio\McpServer\StreamableHttpHandler;
 use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\NodeTypeRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\OutputClassRegistry;
@@ -74,6 +79,27 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
 
         $this->app->singleton(McpToolResolver::class, function ($app) {
             return new McpToolResolver($app->make(McpRegistry::class));
+        });
+
+        $this->app->singleton(McpToolCatalog::class, function ($app) {
+            return new McpToolCatalog($app->make(Support\ToolSchemaInspector::class));
+        });
+
+        $this->app->singleton(McpToolInvoker::class, function ($app) {
+            return new McpToolInvoker(
+                $app->make(McpToolCatalog::class),
+                $app->make(Runtime\ToolResolver::class),
+                $app->make(Runtime\AgentRunner::class),
+                $app->make(Runtime\WorkflowRunner::class),
+                $app->make(McpInvocationRecorder::class),
+            );
+        });
+
+        $this->app->singleton(StreamableHttpHandler::class, function ($app) {
+            return new StreamableHttpHandler(
+                $app->make(McpToolCatalog::class),
+                $app->make(McpToolInvoker::class),
+            );
         });
 
         $this->app->singleton(NodeExecutorRegistry::class, function ($app) {
@@ -184,6 +210,10 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
             $this->loadRoutesFrom(__DIR__.'/../routes/integration.php');
         }
 
+        if (config('neuronai-studio.mcp_endpoints.enabled', false)) {
+            $this->loadRoutesFrom(__DIR__.'/../routes/mcp.php');
+        }
+
         if (config('neuronai-studio.usage.export.enabled', true)) {
             $this->loadRoutesFrom(__DIR__.'/../routes/usage.php');
         }
@@ -194,6 +224,7 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
         $router = $this->app->make(Router::class);
         $router->aliasMiddleware('neuronai-studio.auth', EnsureNeuronAIStudioAuthorized::class);
         $router->aliasMiddleware('neuronai-studio.locale', SetStudioLocale::class);
+        $router->aliasMiddleware('neuronai-studio.mcp-endpoint', AuthenticateMcpEndpoint::class);
     }
 
     protected function registerGate(): void
@@ -266,6 +297,8 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
         Livewire::component('neuronai-studio.knowledge-bases.edit', Http\Livewire\KnowledgeBases\Edit::class);
         Livewire::component('neuronai-studio.mcp-servers.index', Http\Livewire\McpServers\Index::class);
         Livewire::component('neuronai-studio.mcp-servers.edit', Http\Livewire\McpServers\Edit::class);
+        Livewire::component('neuronai-studio.mcp-endpoints.index', Http\Livewire\McpEndpoints\Index::class);
+        Livewire::component('neuronai-studio.mcp-endpoints.edit', Http\Livewire\McpEndpoints\Edit::class);
         Livewire::component('neuronai-studio.workflows.index', Http\Livewire\Workflows\Index::class);
         Livewire::component('neuronai-studio.workflows.editor', Http\Livewire\Workflows\Editor::class);
         Livewire::component('neuronai-studio.workflows.traces', Http\Livewire\Workflows\Traces::class);

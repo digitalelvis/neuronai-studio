@@ -15,6 +15,8 @@ class StudioTables
         'tool_definitions',
         'mcp_servers',
         'agent_mcp_server',
+        'mcp_endpoints',
+        'mcp_endpoint_bindings',
         'knowledge_bases',
         'knowledge_documents',
         'threads',
