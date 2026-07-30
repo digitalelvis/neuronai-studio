@@ -1,5 +1,12 @@
 # Changelog
 
+# [2.2.0](https://github.com/digitalelvis/neuronai-studio/compare/v2.1.0...v2.2.0) (2026-07-30)
+
+
+### Features
+
+* **mcp:** expose Studio as curated MCP endpoints ([a656784](https://github.com/digitalelvis/neuronai-studio/commit/a656784dcfcc8cc2d3ca202e5925cee9f8f0b9b0))
+
 # [2.1.0](https://github.com/digitalelvis/neuronai-studio/compare/v2.0.3...v2.1.0) (2026-07-29)
 
 
