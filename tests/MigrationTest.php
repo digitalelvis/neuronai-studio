@@ -23,10 +23,18 @@ class MigrationTest extends TestCase
         $this->assertTrue(\Schema::hasTable(StudioTables::name('trace_spans')));
         $this->assertTrue(\Schema::hasTable(StudioTables::name('mcp_servers')));
         $this->assertTrue(\Schema::hasTable(StudioTables::name('agent_mcp_server')));
+        $this->assertTrue(\Schema::hasTable(StudioTables::name('mcp_endpoints')));
+        $this->assertTrue(\Schema::hasTable(StudioTables::name('mcp_endpoint_bindings')));
 
-        // MySQL identifier limit is 64 chars; keep this name short explicitly.
+        // MySQL identifier limit is 64 chars; keep these names short explicitly.
         $this->assertTrue(
             \Schema::hasIndex(StudioTables::name('agent_mcp_server'), 'ns_agent_mcp_server_unique')
+        );
+        $this->assertTrue(
+            \Schema::hasIndex(StudioTables::name('mcp_endpoint_bindings'), 'ns_mcp_ep_bindings_enabled_idx')
+        );
+        $this->assertTrue(
+            \Schema::hasIndex(StudioTables::name('mcp_endpoint_bindings'), 'ns_mcp_ep_bindings_kind_ref_uq')
         );
     }
 
