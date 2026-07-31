@@ -24,8 +24,15 @@ return new class extends Migration
             $table->unsignedInteger('sort_order')->default(0);
             $table->timestamps();
 
-            $table->index(['mcp_endpoint_id', 'enabled']);
-            $table->unique(['mcp_endpoint_id', 'kind', 'ref']);
+            // Explicit names: MySQL identifiers max 64 chars; auto-generated names are 67/69.
+            $table->index(
+                ['mcp_endpoint_id', 'enabled'],
+                'ns_mcp_ep_bindings_enabled_idx'
+            );
+            $table->unique(
+                ['mcp_endpoint_id', 'kind', 'ref'],
+                'ns_mcp_ep_bindings_kind_ref_uq'
+            );
         });
     }
 
