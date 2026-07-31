@@ -1,5 +1,12 @@
 # Changelog
 
+## [2.2.1](https://github.com/digitalelvis/neuronai-studio/compare/v2.2.0...v2.2.1) (2026-07-31)
+
+
+### Bug Fixes
+
+* **database:** shorten mcp_endpoint_bindings index names for MySQL ([78c78ed](https://github.com/digitalelvis/neuronai-studio/commit/78c78ed39f6a6ccd9af8c9a6fb642cc825aae034))
+
 # [2.2.0](https://github.com/digitalelvis/neuronai-studio/compare/v2.1.0...v2.2.0) (2026-07-30)
 
 
