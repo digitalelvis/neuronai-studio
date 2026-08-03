@@ -4,7 +4,7 @@
 **Development line (features):** `v2.1.x`
 **Patch line:** `v2.0.x`
 **Latest published:** `v2.0.0` on Packagist / `main`
-**Current Work:** M13 `execute-workflow` Execute — **EW-T1 done** (meta + registry + i18n). Next: EW-T2 (GraphValidator), EW-T3 (workflowsForCanvas), EW-T4 (canvas UI) in parallel after T1. TraceDetail bridge + OBS-06/OTel stay deferred.
+**Current Work:** M13 `execute-workflow` Execute — **EW-T1…T4 done**. Next: EW-T5 (`WorkflowRunner` nesting). TraceDetail bridge + OBS-06/OTel stay deferred.
 
 ---
 
@@ -475,4 +475,4 @@ Themes turned into specified features (AD-022 — shipped on `v0.9.x` / `v0.10.0
 - [x] Table-prefix `feat(database)!` → release `v2.0.0` (AD-027)
 - [x] Open `v2.0.x` (patch) + `v2.1.x` (features); sync `v1.1.x` metadata
 - [x] Specify M13 `execute-workflow` (AD-030) — spec/design/tasks
-- [ ] Execute M13 `execute-workflow` (EW-T1 done; EW-T2…T10 pending) on `feat/execute-workflow` → `v2.1.x`
+- [ ] Execute M13 `execute-workflow` (EW-T1…T4 done; EW-T5…T10 pending) on `feat/execute-workflow` → `v2.1.x`

@@ -3,7 +3,7 @@
 **Spec**: [spec.md](./spec.md)  
 **Design**: [design.md](./design.md)  
 **Context**: [context.md](./context.md)  
-**Status**: In Progress — EW-T1 done; next EW-T2 / EW-T3 / EW-T4  
+**Status**: In Progress — EW-T1…T4 done; next EW-T5  
 **Linha sugerida:** `v2.1.x` · milestone **M13**
 
 ---
@@ -48,11 +48,11 @@ EW-T8 → EW-T10
 **Reuses**: Agent Tool Mode validation  
 **Done when**:
 
-- [ ] Self-ref and missing target produce clear errors
-- [ ] Valid Step and Tool Mode graphs pass
+- [x] Self-ref and missing target produce clear errors
+- [x] Valid Step and Tool Mode graphs pass
 
 **Tests**: `GraphValidator` feature/unit cases  
-**Status**: Pending
+**Status**: Done
 
 ---
 
@@ -64,11 +64,11 @@ EW-T8 → EW-T10
 **Reuses**: agents-for-canvas payload pattern  
 **Done when**:
 
-- [ ] React shell receives `workflows` (or `workflowsForCanvas`) array
-- [ ] Current workflow id absent from list
+- [x] React shell receives `workflows` (or `workflowsForCanvas`) array
+- [x] Current workflow id absent from list
 
 **Tests**: Livewire/unit if pattern exists; else manual  
-**Status**: Pending
+**Status**: Done
 
 ---
 
@@ -80,11 +80,11 @@ EW-T8 → EW-T10
 **Reuses**: Agent combobox + Tool Mode chrome  
 **Done when**:
 
-- [ ] Selecting a workflow + state row persists in graph JSON
-- [ ] Tool Mode flips handles and strips CF edges
+- [x] Selecting a workflow + state row persists in graph JSON
+- [x] Tool Mode flips handles and strips CF edges
 
 **Tests**: none required (JS); manual checklist  
-**Status**: Pending
+**Status**: Done
 
 ---
 

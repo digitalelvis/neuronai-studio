@@ -184,7 +184,7 @@ Nó canvas `run_workflow` para executar outro workflow Studio como step ou como 
 
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
-| 31 | `execute-workflow` | **in progress** (EW-T1 done; EW-T2…T10) | [spec](../features/execute-workflow/spec.md) |
+| 31 | `execute-workflow` | **in progress** (EW-T1…T4 done; EW-T5…T10) | [spec](../features/execute-workflow/spec.md) |
 
 **Critério de conclusão M13:** Demo parent→`run_workflow`→stop com child nested; demo supervisor←toolset←`run_workflow` Tool Mode; self-call rejeitado; depth > 3 falha; docs + template (P2).
 
