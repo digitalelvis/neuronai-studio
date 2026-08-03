@@ -179,6 +179,17 @@ PHP;
                 continue;
             }
 
+            if ($ref === 'workflow_as_tool') {
+                $imports[] = 'DigitalElvis\\NeuronAIStudio\\Runtime\\Tools\\WorkflowAsTool';
+                $slug = var_export((string) ($binding['slug'] ?? 'run_workflow'), true);
+                $description = var_export((string) ($binding['description'] ?? ''), true);
+                $inputDescription = var_export((string) ($binding['input_description'] ?? 'Message / task for the child workflow'), true);
+                $nodeData = var_export(is_array($binding['node_data'] ?? null) ? $binding['node_data'] : [], true);
+                $lines[] = "new WorkflowAsTool({$slug}, {$description}, {$nodeData}, null, {$inputDescription})";
+
+                continue;
+            }
+
             if (str_starts_with($ref, 'toolkit:')) {
                 $slug = substr($ref, strlen('toolkit:'));
                 $class = config("neuronai-studio.tools.{$slug}.class");

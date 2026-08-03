@@ -3,7 +3,7 @@
 **Spec**: [spec.md](./spec.md)  
 **Design**: [design.md](./design.md)  
 **Context**: [context.md](./context.md)  
-**Status**: In Progress — EW-T1…T8 done; next EW-T9  
+**Status**: In Progress — EW-T1…T9 done; next EW-T10  
 **Linha sugerida:** `v2.1.x` · milestone **M13**
 
 ---
@@ -158,10 +158,10 @@ EW-T8 → EW-T10
 **Depends on**: EW-T8  
 **Done when**:
 
-- [ ] Exported PHP includes nested run or tool binding without dropping the node silently
+- [x] Exported PHP includes nested run or tool binding without dropping the node silently
 
 **Tests**: codegen snapshot/unit if existing  
-**Status**: Pending
+**Status**: Done
 
 ---
 
