@@ -3,7 +3,7 @@
 **Spec**: [spec.md](./spec.md)  
 **Design**: [design.md](./design.md)  
 **Context**: [context.md](./context.md)  
-**Status**: In Progress — EW-T1…T7 done; next EW-T8  
+**Status**: In Progress — EW-T1…T8 done; next EW-T9  
 **Linha sugerida:** `v2.1.x` · milestone **M13**
 
 ---
@@ -143,11 +143,11 @@ EW-T8 → EW-T10
 **Depends on**: EW-T6, EW-T7  
 **Done when**:
 
-- [ ] Both demos green in CI
-- [ ] Self-call validate covered
+- [x] Both demos green in CI
+- [x] Self-call validate covered
 
 **Tests**: feature tests  
-**Status**: Pending
+**Status**: Done
 
 ---
 
