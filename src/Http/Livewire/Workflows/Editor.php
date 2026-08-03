@@ -166,7 +166,7 @@ class Editor extends Component
     /** @return array{valid: bool, errors: array<int, string>} */
     public function validateGraphPayload(array $graph): array
     {
-        return app(GraphValidator::class)->validate($graph);
+        return app(GraphValidator::class)->validate($graph, $this->workflow?->id);
     }
 
     public function applyImportedGraph(array $graph): void
@@ -175,7 +175,7 @@ class Editor extends Component
             return;
         }
 
-        $result = app(GraphValidator::class)->validate($graph);
+        $result = app(GraphValidator::class)->validate($graph, $this->workflow?->id);
 
         if (! $result['valid']) {
             return;
@@ -237,7 +237,7 @@ class Editor extends Component
 
     public function validateGraph(GraphValidator $validator): void
     {
-        $result = $validator->validate($this->graph);
+        $result = $validator->validate($this->graph, $this->workflow?->id);
         $this->validationMessage = $result['valid']
             ? 'Graph is valid.'
             : implode(' ', $result['errors']);
@@ -380,6 +380,12 @@ class Editor extends Component
             'providers' => app(ProviderRegistry::class)->labels(),
             'agents' => AgentDefinition::orderBy('name')->get(),
             'agentsForCanvas' => AgentDefinition::orderBy('name')->get(['id', 'name'])->values()->all(),
+            'workflowsForCanvas' => WorkflowDefinition::studio()
+                ->orderBy('name')
+                ->when($this->workflow?->exists, fn ($query) => $query->where('id', '!=', $this->workflow->id))
+                ->get(['id', 'name', 'slug'])
+                ->values()
+                ->all(),
             'knowledgeBasesForCanvas' => KnowledgeBase::orderBy('name')->get(['id', 'name'])->values()->all(),
             'toolsForCanvas' => collect(app(ToolRegistry::class)->all())
                 ->map(fn (array $tool) => app(ToolSchemaInspector::class)->enrich($tool))

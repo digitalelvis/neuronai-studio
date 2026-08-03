@@ -73,6 +73,7 @@ function WorkflowCanvasInner({
     defaultProvider = '',
     defaultModel = '',
     agents = [],
+    workflows = [],
     tools = [],
     mcpServers = [],
     knowledgeBases = [],
@@ -277,7 +278,10 @@ function WorkflowCanvasInner({
                 }
 
                 if (sourceHandle === 'toolset') {
-                    return source.data?.nodeType === 'agent' && sourceToolMode;
+                    return (
+                        (source.data?.nodeType === 'agent' || source.data?.nodeType === 'run_workflow') &&
+                        sourceToolMode
+                    );
                 }
 
                 return source.data?.nodeType === 'tool' || source.data?.nodeType === 'mcp';
@@ -383,13 +387,21 @@ function WorkflowCanvasInner({
                         }
                       : type === 'invoke'
                         ? { output_key: 'invoke_result' }
-                        : type === 'tool'
-                          ? { output_key: 'tool_result' }
-                          : type === 'mcp'
-                            ? { output_key: 'mcp_result' }
-                            : type === 'note'
-                              ? { text: '' }
-                              : {};
+                        : type === 'run_workflow'
+                          ? {
+                                workflow_id: '',
+                                message: '{{input}}',
+                                state_map: [],
+                                output_key: 'child_output',
+                                tool_mode: false,
+                            }
+                          : type === 'tool'
+                            ? { output_key: 'tool_result' }
+                            : type === 'mcp'
+                              ? { output_key: 'mcp_result' }
+                              : type === 'note'
+                                ? { text: '' }
+                                : {};
 
             const node = buildFlowNode(type, nodePosition, nodeTypesMeta, {
                 ...defaultConfig,
@@ -706,6 +718,7 @@ function WorkflowCanvasInner({
         <CanvasUiProvider
             readOnly={readOnly}
             agents={agents}
+            workflows={workflows}
             tools={tools}
             mcpServers={mcpServers}
             knowledgeBases={knowledgeBases}

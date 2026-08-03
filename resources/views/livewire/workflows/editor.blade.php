@@ -49,6 +49,7 @@
             traceShowJsonUrlTemplate: @json(route('neuronai-studio.workflows.traces.show.json', ['run' => '__TRACE__'])),
             uploadUrl: @json(route('neuronai-studio.attachments.store')),
             agents: @json($agentsForCanvas),
+            workflows: @json($workflowsForCanvas),
             knowledgeBases: @json($knowledgeBasesForCanvas),
             ragSearchUrlTemplate: @json(route('neuronai-studio.knowledge-bases.search', ['knowledgeBase' => '__KB__'])),
             tools: @json($toolsForCanvas),
