@@ -114,6 +114,32 @@ flowchart LR
     Invoke --> Cond{Condition}
 ```
 
+## Run Workflow
+
+**Purpose:** Execute another Studio workflow as a control-flow **Step** or as an agent **Tool** (Tool Mode). Palette: **Run Workflow** / **Executar Workflow**.
+
+| Config | Description |
+|--------|-------------|
+| `workflow_id` | Target Studio workflow (searchable Combobox; current workflow excluded) |
+| `message` | Template forwarded as child `input` / `message` (`{{stateKey}}` supported) |
+| `state_map` | Free `{ key, value }` rows merged into child initial state |
+| `output_key` | Parent state key for serialized child result (default: `child_output`) |
+| `tool_mode` | When true, expose via **toolset** instead of a control-flow step |
+
+### Step Mode
+
+```text
+Start → Run Workflow → Stop
+```
+
+Runtime calls `WorkflowRunner` on the target, nests metering with `parent_run_id`, stamps `__workflow_nesting_depth` (max **3**), and writes the child output (JSON string when structured) to `output_key`. Nested Human/HITL interrupts fail the step in v1. Self-invocation is rejected at validate.
+
+### Tool Mode
+
+Same `toolable` contract as Agent Tool Mode: **toolset** → supervisor **tools**, Actions for slug/description. `WorkflowAsTool` runs the child; non-empty caller `input` wins over the node default message.
+
+See [Canvas editor](../canvas-editor.md#tool-mode--toolset) and [Run Workflow Parent](../../templates.md#run-workflow-parent).
+
 ## Fork
 
 **Purpose:** Run several branch subgraphs in parallel, then converge into a Join node.
@@ -173,12 +199,15 @@ See [Runtime & Traces](../runtime-and-traces.md#parallel-execution) for branch s
 | Loop | 1 | 2 (continue, exit) |
 | Condition | 1 | 2 (true, false) |
 | Set State | 1 | 1 |
+| Invoke | 1 | 1 |
+| Run Workflow | 1 (Step) / toolset (Tool Mode) | 1 (Step) / tools binding (Tool Mode) |
 | Fork | 1 | 1 (default) + 1 per branch |
 | Join | N (branches) | 1 |
 
 ## Related code
 
-- `LoopNodeExecutor`, `ConditionNodeExecutor`, `SetStateNodeExecutor`
+- `LoopNodeExecutor`, `ConditionNodeExecutor`, `SetStateNodeExecutor`, `InvokeNodeExecutor`
+- `RunWorkflowNodeExecutor`, `WorkflowAsTool`
 - `ForkNodeExecutor`, `JoinNodeExecutor`, `ParallelBranchRunner`
 - `StateTemplateInterpolator` — for `{{key}}` in other nodes, not Condition evaluation
 

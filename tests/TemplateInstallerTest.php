@@ -75,6 +75,28 @@ class TemplateInstallerTest extends TestCase
         $this->assertNotNull($toolset);
     }
 
+    public function test_install_run_workflow_parent_remaps_child_ref(): void
+    {
+        $parent = app(TemplateInstaller::class)->installWorkflow('run-workflow-parent');
+
+        $result = app(GraphValidator::class)->validate($parent->graph, $parent->id);
+        $this->assertTrue($result['valid'], implode(' ', $result['errors']));
+
+        $child = WorkflowDefinition::where('slug', 'run-workflow-child')->first();
+        $this->assertNotNull($child);
+
+        $runNode = collect($parent->graph['nodes'] ?? [])
+            ->first(fn (array $node) => ($node['type'] ?? '') === 'run_workflow');
+
+        $this->assertNotNull($runNode);
+        $this->assertSame((string) $child->id, $runNode['data']['workflow_id'] ?? null);
+        $this->assertArrayNotHasKey('workflow_ref', $runNode['data'] ?? []);
+        $this->assertSame('child_output', $runNode['data']['output_key'] ?? null);
+
+        $again = app(TemplateInstaller::class)->installWorkflowDependency('run-workflow-child');
+        $this->assertSame($child->id, $again->id);
+    }
+
     public function test_installed_workflow_graph_is_valid(): void
     {
         $workflow = app(TemplateInstaller::class)->installWorkflow('support-rag-hitl');

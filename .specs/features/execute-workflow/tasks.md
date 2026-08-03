@@ -3,7 +3,7 @@
 **Spec**: [spec.md](./spec.md)  
 **Design**: [design.md](./design.md)  
 **Context**: [context.md](./context.md)  
-**Status**: In Progress — EW-T1…T9 done; next EW-T10  
+**Status**: Done — EW-T1…T10 
 **Linha sugerida:** `v2.1.x` · milestone **M13**
 
 ---
@@ -172,11 +172,11 @@ EW-T8 → EW-T10
 **Depends on**: EW-T8  
 **Done when**:
 
-- [ ] Docs describe Step + Tool Mode + message/state map
-- [ ] Template loads in Studio
+- [x] Docs describe Step + Tool Mode + message/state map
+- [x] Template loads in Studio
 
 **Tests**: none  
-**Status**: Pending
+**Status**: Done
 
 ---
 

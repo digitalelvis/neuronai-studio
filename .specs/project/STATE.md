@@ -4,7 +4,7 @@
 **Development line (features):** `v2.1.x`
 **Patch line:** `v2.0.x`
 **Latest published:** `v2.0.0` on Packagist / `main`
-**Current Work:** M13 `execute-workflow` Execute — **EW-T1…T9 done**. Next: EW-T10 (docs + template). TraceDetail bridge + OBS-06/OTel stay deferred.
+**Current Work:** M13 `execute-workflow` **done** (EW-T1…T10). Next: PR `feat/execute-workflow` → `v2.1.x`. TraceDetail bridge + OBS-06/OTel stay deferred.
 
 ---
 
@@ -397,7 +397,7 @@ Themes turned into specified features (AD-022 — shipped on `v0.9.x` / `v0.10.0
 
 - [x] **Canvas `invoke` / allowlisted hook node** — done: [`canvas-invoke-node`](../features/canvas-invoke-node/spec.md) shipped `v0.10.0`
 - [x] **Agent-as-tool / Tool Mode** — specified as [`canvas-tool-mode`](../features/canvas-tool-mode/spec.md) (M10 / AD-024); shipped `v1.1.0`
-- [x] **Nested workflow / Run Flow** — specified as [`execute-workflow`](../features/execute-workflow/spec.md) (M13 / AD-030); Execute pending
+- [x] **Nested workflow / Run Flow** — done as [`execute-workflow`](../features/execute-workflow/spec.md) (M13 / AD-030); PR → `v2.1.x` pending
 - [ ] Dedicated Usage page / advanced charts / filters (beyond M5 minimal Dashboard)
 - [ ] Multi-tenant / user attribution in usage
 - [ ] Embeddings / RAG cost as a separate line item
@@ -475,4 +475,5 @@ Themes turned into specified features (AD-022 — shipped on `v0.9.x` / `v0.10.0
 - [x] Table-prefix `feat(database)!` → release `v2.0.0` (AD-027)
 - [x] Open `v2.0.x` (patch) + `v2.1.x` (features); sync `v1.1.x` metadata
 - [x] Specify M13 `execute-workflow` (AD-030) — spec/design/tasks
-- [ ] Execute M13 `execute-workflow` (EW-T1…T9 done; EW-T10 pending) on `feat/execute-workflow` → `v2.1.x`
+- [x] Execute M13 `execute-workflow` (EW-T1…T10) on `feat/execute-workflow` → `v2.1.x`
+- [ ] Merge `feat/execute-workflow` → `v2.1.x` (PR)

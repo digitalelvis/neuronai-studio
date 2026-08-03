@@ -6,7 +6,7 @@
 **Patch line:** `v2.0.x`  
 **Latest published:** `v2.0.0` on Packagist / `main`  
 **Última atualização:** 2026-08-03  
-**Etapa atual:** M13 `execute-workflow` Execute in progress (EW-T1…T9 done; next EW-T10 docs+template) on `feat/execute-workflow` → `v2.1.x`. M12 Studio i18n done. TraceDetail bridge permanece deferred.
+**Etapa atual:** M13 `execute-workflow` **done** (EW-T1…T10) on `feat/execute-workflow` → merge to `v2.1.x`. TraceDetail bridge permanece deferred.
 ---
 
 ## Milestones
@@ -176,7 +176,7 @@ Package localization: default EN, primary demand `pt_BR`. Locale follows host `A
 
 **Linha:** PRs → `v2.1.x`.
 
-### M13 — Executar Workflow / Run Flow (P1) `in progress`
+### M13 — Executar Workflow / Run Flow (P1) `done`
 
 Nó canvas `run_workflow` para executar outro workflow Studio como step ou como tool (Tool Mode), com Combobox pesquisável, message + mapa livre de state, nesting via `parent_run_id`.
 
@@ -184,11 +184,11 @@ Nó canvas `run_workflow` para executar outro workflow Studio como step ou como 
 
 | Ordem | Feature | Status | Spec |
 |-------|---------|--------|------|
-| 31 | `execute-workflow` | **in progress** (EW-T1…T9 done; EW-T10) | [spec](../features/execute-workflow/spec.md) |
+| 31 | `execute-workflow` | **done** (EW-T1…T10) | [spec](../features/execute-workflow/spec.md) |
 
 **Critério de conclusão M13:** Demo parent→`run_workflow`→stop com child nested; demo supervisor←toolset←`run_workflow` Tool Mode; self-call rejeitado; depth > 3 falha; docs + template (P2).
 
-**Linha:** Execute → `v2.1.x` (branch sugerida `feat/execute-workflow`).
+**Linha:** Execute → `v2.1.x` (branch `feat/execute-workflow`).
 
 ---
 
@@ -219,7 +219,8 @@ Nó canvas `run_workflow` para executar outro workflow Studio como step ou como 
 23. ~~Specify + design + tasks `global-variables` (M11 / ADR-028) → Execute GV-T1…T9 → `v2.1.x`~~ ✅
 24. ~~Specify + design + tasks + Execute `studio-i18n` (M12 / AD-029) on `feat/studio-i18n` → `v2.1.x`~~ ✅ — [spec](../features/studio-i18n/spec.md)
 25. Specify + design + tasks `execute-workflow` (M13 / AD-030) → **done (artifacts)** — [spec](../features/execute-workflow/spec.md)
-26. Execute `execute-workflow` (EW-T1…T10) on `feat/execute-workflow` → `v2.1.x`
+26. ~~Execute `execute-workflow` (EW-T1…T10) on `feat/execute-workflow` → `v2.1.x`~~ ✅
+27. Merge `feat/execute-workflow` → `v2.1.x` (PR)
 ---
 
 ## Features concluídas

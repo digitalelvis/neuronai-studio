@@ -1,0 +1,65 @@
+{
+  "meta": {
+    "id": "run-workflow-parent",
+    "name": "Run Workflow Parent",
+    "description": "Parent Start → Run Workflow → Stop. Installs the Run Workflow Child dependency and nests the child run under parent_run_id.",
+    "complexity": "intermediate",
+    "category": "composition",
+    "tags": [
+      "run-workflow",
+      "nested",
+      "parent",
+      "composition"
+    ],
+    "agents": [],
+    "workflows": [
+      "run-workflow-child"
+    ]
+  },
+  "graph": {
+    "version": 1,
+    "nodes": [
+      {
+        "id": "start_1",
+        "type": "start",
+        "position": { "x": 40, "y": 120 },
+        "data": {}
+      },
+      {
+        "id": "run_1",
+        "type": "run_workflow",
+        "position": { "x": 280, "y": 120 },
+        "data": {
+          "workflow_ref": "run-workflow-child",
+          "message": "{{input}}",
+          "state_map": [],
+          "output_key": "child_output",
+          "tool_mode": false
+        }
+      },
+      {
+        "id": "stop_1",
+        "type": "stop",
+        "position": { "x": 560, "y": 120 },
+        "data": {}
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "source": "start_1",
+        "target": "run_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "e2",
+        "source": "run_1",
+        "target": "stop_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      }
+    ],
+    "viewport": { "x": 0, "y": 0, "zoom": 1 }
+  }
+}
