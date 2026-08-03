@@ -3,7 +3,7 @@
 **Spec**: [spec.md](./spec.md)  
 **Design**: [design.md](./design.md)  
 **Context**: [context.md](./context.md)  
-**Status**: In Progress — EW-T1…T5 done; next EW-T6  
+**Status**: In Progress — EW-T1…T6 done; next EW-T7  
 **Linha sugerida:** `v2.1.x` · milestone **M13**
 
 ---
@@ -112,11 +112,11 @@ EW-T8 → EW-T10
 **Reuses**: Template helpers, WorkflowRunner  
 **Done when**:
 
-- [ ] Parent step writes child output to state
-- [ ] Depth > 3 and HITL fail with clear errors
+- [x] Parent step writes child output to state
+- [x] Depth > 3 and HITL fail with clear errors
 
 **Tests**: executor unit/integration with faked runner or lightweight definitions  
-**Status**: Pending
+**Status**: Done
 
 ---
 
