@@ -22,7 +22,7 @@
 
 - LLM / RAG / Invoke as toolable
 - Irreversible handoff protocol
-- Nested workflow-as-tool
+- ~~Nested workflow-as-tool~~ → **promoted:** feature [`execute-workflow`](../execute-workflow/spec.md) (M13 / AD-030) — Step + Tool Mode `run_workflow`
 - Fancy memory isolation (default: in-memory or child thread per call)
 - Parallel fan-out of multiple tool-mode agents from one tool-call batch (Neuron parallel tools if already on)
 

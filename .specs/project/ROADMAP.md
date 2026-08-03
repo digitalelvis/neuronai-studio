@@ -5,8 +5,8 @@
 **Development line (features):** `v2.1.x`  
 **Patch line:** `v2.0.x`  
 **Latest published:** `v2.0.0` on Packagist / `main`  
-**Última atualização:** 2026-07-28  
-**Etapa atual:** M12 Studio i18n on `feat/studio-i18n` → `v2.1.x` (M11 Global Variables merged). TraceDetail bridge permanece deferred.
+**Última atualização:** 2026-08-02  
+**Etapa atual:** M13 `execute-workflow` specified (ready for Execute) on `v2.1.x`. M12 Studio i18n done. TraceDetail bridge permanece deferred.
 ---
 
 ## Milestones
@@ -176,6 +176,20 @@ Package localization: default EN, primary demand `pt_BR`. Locale follows host `A
 
 **Linha:** PRs → `v2.1.x`.
 
+### M13 — Executar Workflow / Run Flow (P1) `specified`
+
+Nó canvas `run_workflow` para executar outro workflow Studio como step ou como tool (Tool Mode), com Combobox pesquisável, message + mapa livre de state, nesting via `parent_run_id`.
+
+**Escopo (AD-030):** [execute-workflow](../features/execute-workflow/spec.md) · [design](../features/execute-workflow/design.md) · [tasks](../features/execute-workflow/tasks.md) · [context](../features/execute-workflow/context.md)
+
+| Ordem | Feature | Status | Spec |
+|-------|---------|--------|------|
+| 31 | `execute-workflow` | **specified** (EW-T1…T10) | [spec](../features/execute-workflow/spec.md) |
+
+**Critério de conclusão M13:** Demo parent→`run_workflow`→stop com child nested; demo supervisor←toolset←`run_workflow` Tool Mode; self-call rejeitado; depth > 3 falha; docs + template (P2).
+
+**Linha:** Execute → `v2.1.x` (branch sugerida `feat/execute-workflow`).
+
 ---
 
 ## Próximas tarefas (ordem de execução)
@@ -204,6 +218,8 @@ Package localization: default EN, primary demand `pt_BR`. Locale follows host `A
 22. ~~Abrir `v2.0.x` (patch) + `v2.1.x` (features) + sync `v1.1.x` (AD-027)~~ ✅
 23. ~~Specify + design + tasks `global-variables` (M11 / ADR-028) → Execute GV-T1…T9 → `v2.1.x`~~ ✅
 24. ~~Specify + design + tasks + Execute `studio-i18n` (M12 / AD-029) on `feat/studio-i18n` → `v2.1.x`~~ ✅ — [spec](../features/studio-i18n/spec.md)
+25. Specify + design + tasks `execute-workflow` (M13 / AD-030) → **done (artifacts)** — [spec](../features/execute-workflow/spec.md)
+26. Execute `execute-workflow` (EW-T1…T10) on `feat/execute-workflow` → `v2.1.x`
 ---
 
 ## Features concluídas
@@ -343,6 +359,12 @@ Mapeamento feature → arquivos `docs/` a criar/atualizar na implementação.
 |---------|------------------------|
 | `canvas-tool-mode` | `guides/workflows/node-types/ai-nodes.md`, `guides/workflows/canvas-editor.md`, `docs/extending/custom-node-types.md`, `guides/templates.md` |
 
+### M13
+
+| Feature | Documentos (expected) |
+|---------|------------------------|
+| `execute-workflow` | `guides/workflows/canvas-editor.md`, `guides/workflows/node-types/logic-nodes.md` (or ai-nodes), `guides/workflows/runtime-and-traces.md`, `extending/custom-node-types.md`, `guides/templates.md` |
+
 ---
 
 ## Decisões em aberto (ver [STATE.md](STATE.md))
@@ -359,4 +381,5 @@ Mapeamento feature → arquivos `docs/` a criar/atualizar na implementação.
 - ~~M9 publish / next minor~~ → **resolvido (AD-025):** `v1.0.0` (breaking major); feature line `v1.1.x`; patch `v1.0.x`
 - ~~Delegação subagente / agent-as-tool no canvas~~ → **resolvido (AD-024):** feature `canvas-tool-mode` (Tool Mode Langflow-like; v1 Agent)
 - ~~Post-M10 / table-prefix major~~ → **resolvido (AD-027):** `v2.0.0` correct (not `v1.2.0`); lines `v2.0.x` / `v2.1.x`
+- ~~Nested workflow-as-tool / Run Flow~~ → **specified (AD-030):** feature [`execute-workflow`](../features/execute-workflow/spec.md) (M13)
 - TraceDetail ↔ Inspector/Langfuse URL bridge (P2 deferred)
