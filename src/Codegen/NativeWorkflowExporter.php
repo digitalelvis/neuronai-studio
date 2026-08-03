@@ -65,7 +65,7 @@ class NativeWorkflowExporter
             'status' => $workflow->status,
         ];
 
-        $this->validator->assertValid($graph);
+        $this->validator->assertValid($graph, $workflow->id);
         $plan = $this->transpiler->transpile($graph);
         $this->transpiler->assertPlan($plan);
 

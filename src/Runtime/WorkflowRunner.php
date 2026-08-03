@@ -164,7 +164,7 @@ class WorkflowRunner
     /** @param  array<string, mixed>  $input */
     protected function runInterpreted(WorkflowDefinition $workflow, array $input = [], ?callable $emitter = null, ?StudioRun $existingRun = null): StudioRun
     {
-        $this->validator->assertValid($workflow->graph);
+        $this->validator->assertValid($workflow->graph, $workflow->id);
 
         if ($existingRun !== null) {
             $run = $existingRun;
