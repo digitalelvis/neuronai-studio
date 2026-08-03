@@ -3,7 +3,7 @@
 **Spec**: [spec.md](./spec.md)  
 **Design**: [design.md](./design.md)  
 **Context**: [context.md](./context.md)  
-**Status**: Specified — ready for Execute  
+**Status**: In Progress — EW-T1 done; next EW-T2 / EW-T3 / EW-T4  
 **Linha sugerida:** `v2.1.x` · milestone **M13**
 
 ---
@@ -31,12 +31,12 @@ EW-T8 → EW-T10
 **Reuses**: Agent `toolable` meta pattern  
 **Done when**:
 
-- [ ] Canvas `nodeTypes` includes `run_workflow` with `toolable: true`
-- [ ] Label resolves in `en` and `pt_BR`
+- [x] Canvas `nodeTypes` includes `run_workflow` with `toolable: true`
+- [x] Label resolves in `en` and `pt_BR`
 
 **Tests**: unit/config assert if existing registry tests  
 **Gate**: package unit subset if touched  
-**Status**: Pending
+**Status**: Done
 
 ---
 

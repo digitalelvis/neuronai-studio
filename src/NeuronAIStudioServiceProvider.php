@@ -40,6 +40,7 @@ use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\LlmNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorRegistry;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\McpNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\RagNodeExecutor;
+use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\RunWorkflowNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\SetStateNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\StartNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\StopNodeExecutor;
@@ -255,6 +256,7 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
             'condition' => ConditionNodeExecutor::class,
             'set_state' => SetStateNodeExecutor::class,
             'invoke' => InvokeNodeExecutor::class,
+            'run_workflow' => RunWorkflowNodeExecutor::class,
             'tool' => ToolNodeExecutor::class,
             'rag' => RagNodeExecutor::class,
             'delay' => DelayNodeExecutor::class,
