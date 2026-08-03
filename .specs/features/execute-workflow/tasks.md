@@ -3,7 +3,7 @@
 **Spec**: [spec.md](./spec.md)  
 **Design**: [design.md](./design.md)  
 **Context**: [context.md](./context.md)  
-**Status**: In Progress — EW-T1…T6 done; next EW-T7  
+**Status**: In Progress — EW-T1…T7 done; next EW-T8  
 **Linha sugerida:** `v2.1.x` · milestone **M13**
 
 ---
@@ -128,11 +128,11 @@ EW-T8 → EW-T10
 **Reuses**: `NodeAsTool` / ToolResolver `node:` path  
 **Done when**:
 
-- [ ] Tool-call invokes child workflow and returns string
-- [ ] Metering nests via `parent_run_id`
+- [x] Tool-call invokes child workflow and returns string
+- [x] Metering nests via `parent_run_id`
 
 **Tests**: unit/integration ToolResolver + WorkflowAsTool  
-**Status**: Pending
+**Status**: Done
 
 ---
 
