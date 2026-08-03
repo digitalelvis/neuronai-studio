@@ -29,13 +29,19 @@ use Throwable;
 
 class WorkflowRunner
 {
+    /** Input key for nesting a child workflow run under a parent StudioRun. */
+    public const PARENT_RUN_ID_INPUT_KEY = '__parent_run_id';
+
+    /** Input/state key for workflow nesting depth (top-level = 0; stamped by run_workflow). */
+    public const NESTING_DEPTH_INPUT_KEY = '__workflow_nesting_depth';
+
     public function __construct(
         protected GraphValidator $validator,
         protected GraphExecutionLoop $executionLoop,
         protected WorkflowClassImporter $classImporter,
     ) {}
 
-    protected function createExecutionSession(WorkflowDefinition $workflow, array $input = []): array
+    protected function createExecutionSession(WorkflowDefinition $workflow, array $input = [], ?StudioRun $parentRun = null): array
     {
         $threadId = null;
         if (isset($input['thread_id']) && is_string($input['thread_id']) && $input['thread_id'] !== '') {
@@ -54,9 +60,12 @@ class WorkflowRunner
             'entity_id' => $workflow->id,
         ]);
 
+        $parentRun = $this->resolveParentRun($parentRun, $input);
+
         $run = StudioRun::create([
             'id' => (string) Str::uuid(),
             'thread_id' => $thread->id,
+            'parent_run_id' => $parentRun?->id,
             'status' => 'running',
             'input' => $input,
             'started_at' => now(),
@@ -70,13 +79,13 @@ class WorkflowRunner
     }
 
     /** @param  array<string, mixed>  $input */
-    public function run(WorkflowDefinition $workflow, array $input = [], ?callable $emitter = null): StudioRun
+    public function run(WorkflowDefinition $workflow, array $input = [], ?callable $emitter = null, ?StudioRun $parentRun = null): StudioRun
     {
         if ($this->shouldRunNative($workflow)) {
-            return $this->runNative($workflow, $input, $emitter);
+            return $this->runNative($workflow, $input, $emitter, parentRun: $parentRun);
         }
 
-        return $this->runInterpreted($workflow, $input, $emitter);
+        return $this->runInterpreted($workflow, $input, $emitter, parentRun: $parentRun);
     }
 
     /** @param  array<string, mixed>  $input */
@@ -112,7 +121,7 @@ class WorkflowRunner
     }
 
     /** @param  array<string, mixed>  $input */
-    public function dispatch(WorkflowDefinition $workflow, array $input = []): StudioRun
+    public function dispatch(WorkflowDefinition $workflow, array $input = [], ?StudioRun $parentRun = null): StudioRun
     {
         if (! config('neuronai-studio.async_runs_enabled')) {
             throw new RuntimeException(
@@ -120,7 +129,7 @@ class WorkflowRunner
             );
         }
 
-        [$run, $trace] = $this->createExecutionSession($workflow, $input);
+        [$run, $trace] = $this->createExecutionSession($workflow, $input, $parentRun);
 
         $run->update([
             'status' => 'queued',
@@ -162,7 +171,7 @@ class WorkflowRunner
     }
 
     /** @param  array<string, mixed>  $input */
-    protected function runInterpreted(WorkflowDefinition $workflow, array $input = [], ?callable $emitter = null, ?StudioRun $existingRun = null): StudioRun
+    protected function runInterpreted(WorkflowDefinition $workflow, array $input = [], ?callable $emitter = null, ?StudioRun $existingRun = null, ?StudioRun $parentRun = null): StudioRun
     {
         $this->validator->assertValid($workflow->graph, $workflow->id);
 
@@ -170,7 +179,7 @@ class WorkflowRunner
             $run = $existingRun;
             $trace = $run->traces()->latest()->first() ?? StudioTrace::create(['run_id' => $run->id]);
         } else {
-            [$run, $trace] = $this->createExecutionSession($workflow, $input);
+            [$run, $trace] = $this->createExecutionSession($workflow, $input, $parentRun);
         }
 
         $state = null;
@@ -210,7 +219,7 @@ class WorkflowRunner
     }
 
     /** @param  array<string, mixed>  $input */
-    protected function runNative(WorkflowDefinition $workflow, array $input = [], ?callable $emitter = null, ?StudioRun $existingRun = null): StudioRun
+    protected function runNative(WorkflowDefinition $workflow, array $input = [], ?callable $emitter = null, ?StudioRun $existingRun = null, ?StudioRun $parentRun = null): StudioRun
     {
         $class = (string) $workflow->class_path;
 
@@ -218,7 +227,7 @@ class WorkflowRunner
             $run = $existingRun;
             $trace = $run->traces()->latest()->first() ?? StudioTrace::create(['run_id' => $run->id]);
         } else {
-            [$run, $trace] = $this->createExecutionSession($workflow, $input);
+            [$run, $trace] = $this->createExecutionSession($workflow, $input, $parentRun);
         }
 
         try {
@@ -709,6 +718,8 @@ class WorkflowRunner
             $stateData['attachments'] = $input['attachments'];
         }
 
+        $this->applyNestingDepthStamp($stateData, $input);
+
         return $stateData;
     }
 
@@ -730,6 +741,8 @@ class WorkflowRunner
             $stateData['attachments'] = $input['attachments'];
         }
 
+        $this->applyNestingDepthStamp($stateData, $input);
+
         $state = new BuilderWorkflowState($graphContext, null, $stateData);
 
         if ($emitter !== null) {
@@ -739,6 +752,34 @@ class WorkflowRunner
         }
 
         return $state;
+    }
+
+    /**
+     * @param  array<string, mixed>  $stateData
+     * @param  array<string, mixed>  $input
+     */
+    protected function applyNestingDepthStamp(array &$stateData, array $input): void
+    {
+        if (! array_key_exists(self::NESTING_DEPTH_INPUT_KEY, $input)) {
+            return;
+        }
+
+        $stateData[self::NESTING_DEPTH_INPUT_KEY] = (int) $input[self::NESTING_DEPTH_INPUT_KEY];
+    }
+
+    /** @param  array<string, mixed>  $input */
+    protected function resolveParentRun(?StudioRun $parentRun, array $input): ?StudioRun
+    {
+        if ($parentRun !== null) {
+            return $parentRun;
+        }
+
+        $parentId = $input[self::PARENT_RUN_ID_INPUT_KEY] ?? null;
+        if (! is_string($parentId) || $parentId === '') {
+            return null;
+        }
+
+        return StudioRun::query()->find($parentId);
     }
 
     protected function finalizeRun(StudioRun $run, StudioTrace $trace, BuilderWorkflowState $finalState): StudioRun

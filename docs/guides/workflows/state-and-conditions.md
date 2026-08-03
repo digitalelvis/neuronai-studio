@@ -14,7 +14,12 @@ Workflows share a mutable key-value **state** (`WorkflowState`) for the duration
 | **Human** node | `output_key` (default: `human_response`) | User reply when the run resumes |
 | **Set State** node | `key` from node config | Static `value` or copy from `from_key` |
 
-Internal keys such as `__workflow_run_id`, `__current_node_id`, `__steps`, `__studio_thread_id`, and `__loop_iterations` are reserved for runtime bookkeeping.
+Internal keys such as `__workflow_run_id`, `__current_node_id`, `__steps`, `__studio_thread_id`, `__studio_run_id`, `__loop_iterations`, `__parent_run_id` (run input only), and `__workflow_nesting_depth` are reserved for runtime bookkeeping.
+
+| Key | Where | Description |
+|-----|--------|-------------|
+| `__parent_run_id` | Child run **input** | Parent `StudioRun` id for nested metering (also accepted as `WorkflowRunner::run(..., parentRun:)`). Not copied into workflow state. |
+| `__workflow_nesting_depth` | Child run **input** → state | Nesting depth stamp (`0` = top-level). `run_workflow` increments this; depth `> 3` is rejected by the executor. |
 
 ## Loop iterations
 

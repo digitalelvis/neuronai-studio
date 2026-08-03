@@ -3,7 +3,7 @@
 **Spec**: [spec.md](./spec.md)  
 **Design**: [design.md](./design.md)  
 **Context**: [context.md](./context.md)  
-**Status**: In Progress — EW-T1…T4 done; next EW-T5  
+**Status**: In Progress — EW-T1…T5 done; next EW-T6  
 **Linha sugerida:** `v2.1.x` · milestone **M13**
 
 ---
@@ -96,11 +96,11 @@ EW-T8 → EW-T10
 **Reuses**: AgentRunner nesting  
 **Done when**:
 
-- [ ] Child run persists `parent_run_id` when provided
-- [ ] Depth stamp readable by executor
+- [x] Child run persists `parent_run_id` when provided
+- [x] Depth stamp readable by executor
 
 **Tests**: unit/feature on runner create  
-**Status**: Pending
+**Status**: Done
 
 ---
 
