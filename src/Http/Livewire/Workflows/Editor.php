@@ -8,6 +8,7 @@ use DigitalElvis\NeuronAIStudio\Codegen\WorkflowClassImporter;
 use DigitalElvis\NeuronAIStudio\Codegen\WorkflowExporter;
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use DigitalElvis\NeuronAIStudio\Models\KnowledgeBase;
+use DigitalElvis\NeuronAIStudio\Models\Variable;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
 use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\NodeTypeRegistry;
@@ -405,6 +406,15 @@ class Editor extends Component
                     'class' => $outputClass['class'],
                     'label' => $outputClass['label'],
                     'properties' => $outputClass['properties'] ?? [],
+                ])
+                ->values()
+                ->all(),
+            'variablesForCanvas' => Variable::query()
+                ->orderBy('name')
+                ->get(['name', 'type'])
+                ->map(fn (Variable $variable) => [
+                    'name' => $variable->name,
+                    'type' => $variable->type,
                 ])
                 ->values()
                 ->all(),

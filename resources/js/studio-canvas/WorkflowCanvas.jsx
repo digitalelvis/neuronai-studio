@@ -81,6 +81,7 @@ function WorkflowCanvasInner({
     outputClasses = [],
     providers = {},
     providerModels = {},
+    variables = [],
 }) {
     const initialEdges = useMemo(() => toFlowEdges(graph?.edges), []);
     const initialNodes = useMemo(() => {
@@ -726,6 +727,7 @@ function WorkflowCanvasInner({
             outputClasses={outputClasses}
             providers={providers}
             providerModels={providerModels}
+            variables={variables}
             defaultProvider={defaultProvider}
             defaultModel={defaultModel}
             nodeTypesMeta={nodeTypesMeta}

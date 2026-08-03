@@ -57,6 +57,7 @@
             outputClasses: @json($outputClassesForCanvas),
             providers: @json($providers),
             providerModels: @json($providerModels),
+            variables: @json($variablesForCanvas),
             enabledProtocols: @json($enabledProtocols),
             integrateStreamUrls: @json($integrateStreamUrls),
             integrateResumeUrls: @json($integrateResumeUrls),

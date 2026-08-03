@@ -18,6 +18,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { resolveAgentConfigMode, isToolModeEnabled, isNodeTypeToolable, defaultToolExposure } from './nodeUtils';
 import { useCanvasUi } from '../CanvasUiContext';
+import VariableInput from '@/studio-forms/VariableInput';
 
 export default function NodeConfigForm({
     node,
@@ -44,6 +45,7 @@ export default function NodeConfigForm({
     const canvasUi = useCanvasUi();
     const nodeTypesMeta = nodeTypesMetaProp || canvasUi.nodeTypesMeta || {};
     const workflowOptions = workflows.length > 0 ? workflows : canvasUi.workflows || [];
+    const variables = canvasUi.variables || [];
 
     if (!node) {
         return <p className="text-sm text-muted-foreground">Select a node to configure it.</p>;
@@ -151,6 +153,7 @@ export default function NodeConfigForm({
                                             provider: undefined,
                                             model: undefined,
                                             instructions: undefined,
+                                            api_key: undefined,
                                         })
                                     }
                                 >
@@ -225,6 +228,18 @@ export default function NodeConfigForm({
                                         readOnly={readOnly}
                                         onChange={(patch) => onUpdate?.({ ...data, ...patch })}
                                     />
+                                    <div className="space-y-2">
+                                        <Label>API Key (optional override)</Label>
+                                        <VariableInput
+                                            value={data.api_key ?? ''}
+                                            onChange={(value) => updateField('api_key', value)}
+                                            variables={variables}
+                                            sensitive
+                                            disabled={readOnly}
+                                            placeholder=""
+                                            hint="Bind a Credential variable (var:NAME) or leave empty for install-time config."
+                                        />
+                                    </div>
                                     <div className="space-y-2">
                                         <Label>Agent Instructions</Label>
                                         <ExpandableTextField

@@ -153,6 +153,7 @@ export default function WorkflowEditorShell({ config }) {
                                 outputClasses={config.outputClasses || []}
                                 providers={config.providers || {}}
                                 providerModels={config.providerModels || {}}
+                                variables={config.variables || []}
                                 onValidate={handleValidate}
                                 onGraphChange={(graph) => {
                                     window.__workflowGraph = graph;
