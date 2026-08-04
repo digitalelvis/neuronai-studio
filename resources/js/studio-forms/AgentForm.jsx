@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Check, ChevronDown, Copy } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { ExpandableTextField } from '@/components/ui/expandable-text-field';
@@ -10,10 +11,13 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/componen
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { collectLivewireErrors, formatLivewireErrorSummary } from '@/lib/livewireErrors';
 import ConnectPanel from '@/components/ConnectPanel';
 import { t } from '@/lib/i18n';
 import VariableInput from './VariableInput';
+
+const DESCRIPTION_MAX = 120;
 
 const categoryLabels = {
     builtin: 'form.tools_builtin',
@@ -21,6 +25,53 @@ const categoryLabels = {
     studio: 'form.tools_studio',
     mcp: 'form.tools_mcp',
 };
+
+function truncateText(text, max = DESCRIPTION_MAX) {
+    if (!text) return '';
+    if (text.length <= max) return text;
+    return `${text.slice(0, max)}…`;
+}
+
+function matchesQuery(haystacks, query) {
+    if (!query) return true;
+    const q = query.toLowerCase();
+    return haystacks.some((value) => String(value ?? '').toLowerCase().includes(q));
+}
+
+function groupByCategory(tools) {
+    const grouped = {};
+    tools.forEach((tool) => {
+        const cat = tool.category || 'other';
+        if (!grouped[cat]) grouped[cat] = [];
+        grouped[cat].push(tool);
+    });
+    return grouped;
+}
+
+function CopySlugButton({ value, copyKey, copiedKey, onCopy }) {
+    if (!value) return null;
+
+    return (
+        <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6 shrink-0"
+            aria-label={t('form.copy_slug')}
+            onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onCopy(value, copyKey);
+            }}
+        >
+            {copiedKey === copyKey ? (
+                <Check className="h-3 w-3 text-green-500" />
+            ) : (
+                <Copy className="h-3 w-3" />
+            )}
+        </Button>
+    );
+}
 
 export default function AgentForm({ config }) {
     const initial = config.initial ?? {};
@@ -71,18 +122,48 @@ export default function AgentForm({ config }) {
     );
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
+    const [toolsSearch, setToolsSearch] = useState('');
+    const [toolkitsSearch, setToolkitsSearch] = useState('');
+    const [mcpSearch, setMcpSearch] = useState('');
+    const [copiedKey, setCopiedKey] = useState(null);
+    const [expandedKits, setExpandedKits] = useState({});
 
     const models = config.providerModels?.[provider] ?? config.models ?? [];
 
-    const toolsByCategory = useMemo(() => {
-        const grouped = {};
-        (config.toolList ?? []).forEach((tool) => {
-            const cat = tool.category || 'other';
-            if (!grouped[cat]) grouped[cat] = [];
-            grouped[cat].push(tool);
-        });
-        return grouped;
+    const { tools, toolkits } = useMemo(() => {
+        const all = config.toolList ?? [];
+        return {
+            tools: all.filter((tool) => tool.type !== 'toolkit'),
+            toolkits: all.filter((tool) => tool.type === 'toolkit'),
+        };
     }, [config.toolList]);
+
+    const filteredToolsByCategory = useMemo(() => {
+        const filtered = tools.filter((tool) =>
+            matchesQuery([tool.label, tool.ref, tool.slug, tool.description], toolsSearch),
+        );
+        return groupByCategory(filtered);
+    }, [tools, toolsSearch]);
+
+    const filteredToolkits = useMemo(() => {
+        return toolkits.filter((kit) => {
+            const childNames = (kit.tools ?? []).flatMap((child) => [child.name, child.description]);
+            return matchesQuery([kit.label, kit.ref, kit.description, ...childNames], toolkitsSearch);
+        });
+    }, [toolkits, toolkitsSearch]);
+
+    const filteredMcpServers = useMemo(() => {
+        return Object.entries(config.mcpServers ?? {}).filter(([slug, label]) =>
+            matchesQuery([slug, label], mcpSearch),
+        );
+    }, [config.mcpServers, mcpSearch]);
+
+    const handleCopy = (text, key) => {
+        if (!text) return;
+        navigator.clipboard.writeText(text);
+        setCopiedKey(key);
+        setTimeout(() => setCopiedKey(null), 2000);
+    };
 
     const toggleTool = (ref) => {
         setSelectedToolRefs((current) =>
@@ -153,6 +234,161 @@ export default function AgentForm({ config }) {
         } finally {
             setSaving(false);
         }
+    };
+
+    const renderToolCard = (tool) => {
+        const truncatedDescription = truncateText(tool.description);
+
+        return (
+            <div key={tool.ref} className="rounded-md border border-border p-3">
+                <label className="flex cursor-pointer items-start gap-3">
+                    <Checkbox
+                        checked={selectedToolRefs.includes(tool.ref)}
+                        onCheckedChange={() => toggleTool(tool.ref)}
+                        className="mt-0.5"
+                    />
+                    <span className="min-w-0 flex-1">
+                        <span className="font-medium">{tool.label}</span>
+                        {tool.slug && (
+                            <span className="mt-1 flex items-center gap-1">
+                                <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[11px] text-foreground">
+                                    {tool.slug}
+                                </code>
+                                <CopySlugButton
+                                    value={tool.slug}
+                                    copyKey={`tool-slug-${tool.ref}`}
+                                    copiedKey={copiedKey}
+                                    onCopy={handleCopy}
+                                />
+                            </span>
+                        )}
+                        {tool.description && (
+                            <span
+                                className="mt-1 block text-xs text-muted-foreground"
+                                title={tool.description.length > DESCRIPTION_MAX ? tool.description : undefined}
+                            >
+                                {truncatedDescription}
+                            </span>
+                        )}
+                        <Badge variant="outline" className="mt-1 text-[10px]">
+                            {tool.ref}
+                        </Badge>
+                    </span>
+                </label>
+                {selectedToolRefs.includes(tool.ref) && tool.type === 'mcp' && (
+                    <div className="mt-3 grid gap-2 md:grid-cols-2">
+                        <Input
+                            placeholder={t('form.only_placeholder')}
+                            value={toolAdvanced[tool.ref]?.only ?? ''}
+                            onChange={(e) => updateToolAdvanced(tool.ref, 'only', e.target.value)}
+                        />
+                        <Input
+                            placeholder={t('form.exclude_placeholder')}
+                            value={toolAdvanced[tool.ref]?.exclude ?? ''}
+                            onChange={(e) => updateToolAdvanced(tool.ref, 'exclude', e.target.value)}
+                        />
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    const renderToolkitCard = (kit) => {
+        const truncatedDescription = truncateText(kit.description);
+        const childTools = kit.tools ?? [];
+        const kitExpanded = Boolean(expandedKits[kit.ref]);
+
+        return (
+            <div key={kit.ref} className="rounded-md border border-border p-3">
+                <label className="flex cursor-pointer items-start gap-3">
+                    <Checkbox
+                        checked={selectedToolRefs.includes(kit.ref)}
+                        onCheckedChange={() => toggleTool(kit.ref)}
+                        className="mt-0.5"
+                    />
+                    <span className="min-w-0 flex-1">
+                        <span className="font-medium">{kit.label}</span>
+                        {kit.description && (
+                            <span
+                                className="mt-1 block text-xs text-muted-foreground"
+                                title={kit.description.length > DESCRIPTION_MAX ? kit.description : undefined}
+                            >
+                                {truncatedDescription}
+                            </span>
+                        )}
+                        <Badge variant="outline" className="mt-1 text-[10px]">
+                            {kit.ref}
+                        </Badge>
+                    </span>
+                </label>
+
+                {childTools.length > 0 && (
+                    <Collapsible
+                        open={kitExpanded}
+                        onOpenChange={(open) =>
+                            setExpandedKits((current) => ({ ...current, [kit.ref]: open }))
+                        }
+                        className="mt-3 border-t border-border pt-2"
+                    >
+                        <CollapsibleTrigger className="flex w-full items-center justify-between rounded-md px-1 py-1 text-left text-[11px] font-medium uppercase tracking-wide text-muted-foreground hover:bg-muted/40">
+                            <span>
+                                {t('form.kit_tools')}
+                                <span className="ml-1 font-normal normal-case text-muted-foreground/80">
+                                    ({childTools.length})
+                                </span>
+                            </span>
+                            <ChevronDown
+                                className={`h-3.5 w-3.5 shrink-0 transition-transform ${kitExpanded ? '' : '-rotate-90'}`}
+                            />
+                        </CollapsibleTrigger>
+                        <CollapsibleContent className="space-y-1.5 pt-2">
+                            <ul className="space-y-1.5">
+                                {childTools.map((child) => (
+                                    <li key={`${kit.ref}-${child.name}`} className="rounded bg-muted/40 px-2 py-1.5">
+                                        <div className="flex items-center gap-1">
+                                            <code className="font-mono text-[11px] text-foreground">{child.name}</code>
+                                            <CopySlugButton
+                                                value={child.name}
+                                                copyKey={`kit-tool-${kit.ref}-${child.name}`}
+                                                copiedKey={copiedKey}
+                                                onCopy={handleCopy}
+                                            />
+                                        </div>
+                                        {child.description && (
+                                            <p
+                                                className="mt-0.5 text-[11px] text-muted-foreground"
+                                                title={
+                                                    child.description.length > DESCRIPTION_MAX
+                                                        ? child.description
+                                                        : undefined
+                                                }
+                                            >
+                                                {truncateText(child.description)}
+                                            </p>
+                                        )}
+                                    </li>
+                                ))}
+                            </ul>
+                        </CollapsibleContent>
+                    </Collapsible>
+                )}
+
+                {selectedToolRefs.includes(kit.ref) && (
+                    <div className="mt-3 grid gap-2 md:grid-cols-2">
+                        <Input
+                            placeholder={t('form.only_placeholder')}
+                            value={toolAdvanced[kit.ref]?.only ?? ''}
+                            onChange={(e) => updateToolAdvanced(kit.ref, 'only', e.target.value)}
+                        />
+                        <Input
+                            placeholder={t('form.exclude_placeholder')}
+                            value={toolAdvanced[kit.ref]?.exclude ?? ''}
+                            onChange={(e) => updateToolAdvanced(kit.ref, 'exclude', e.target.value)}
+                        />
+                    </div>
+                )}
+            </div>
+        );
     };
 
     return (
@@ -377,68 +613,74 @@ export default function AgentForm({ config }) {
                 <ResizablePanel defaultSize={45} minSize={30}>
                     <div className="flex h-full flex-col p-4">
                         <Tabs defaultValue="tools" className="flex h-full flex-col">
-                            <TabsList className="grid w-full grid-cols-3">
-                                <TabsTrigger value="tools">Tools</TabsTrigger>
-                                <TabsTrigger value="mcp">MCP Servers</TabsTrigger>
-                                <TabsTrigger value="connect">Connect</TabsTrigger>
+                            <TabsList className="grid w-full grid-cols-4">
+                                <TabsTrigger value="tools">{t('form.tab_tools')}</TabsTrigger>
+                                <TabsTrigger value="toolkits">{t('form.tab_toolkits')}</TabsTrigger>
+                                <TabsTrigger value="mcp">{t('form.tab_mcp')}</TabsTrigger>
+                                <TabsTrigger value="connect">{t('form.tab_connect')}</TabsTrigger>
                             </TabsList>
-                            <TabsContent value="tools" className="mt-3 flex-1 overflow-hidden">
-                                <ScrollArea className="h-full pr-2">
-                                    {Object.keys(toolsByCategory).length === 0 ? (
-                                        <p className="text-sm text-muted-foreground">No tools registered.</p>
+
+                            <TabsContent value="tools" className="mt-3 flex flex-1 flex-col overflow-hidden">
+                                <Input
+                                    value={toolsSearch}
+                                    onChange={(e) => setToolsSearch(e.target.value)}
+                                    placeholder={t('form.search_placeholder')}
+                                    className="mb-2 shrink-0"
+                                />
+                                <ScrollArea className="h-full flex-1 pr-2">
+                                    {tools.length === 0 ? (
+                                        <p className="text-sm text-muted-foreground">{t('form.tools_empty')}</p>
+                                    ) : Object.keys(filteredToolsByCategory).length === 0 ? (
+                                        <p className="text-sm text-muted-foreground">{t('form.search_no_matches')}</p>
                                     ) : (
-                                        Object.entries(toolsByCategory).map(([category, tools]) => (
+                                        Object.entries(filteredToolsByCategory).map(([category, categoryTools]) => (
                                             <div key={category} className="mb-4">
                                                 <p className="mb-2 text-xs font-medium uppercase text-muted-foreground">
                                                     {t(categoryLabels[category] ?? category)}
                                                 </p>
                                                 <div className="space-y-2">
-                                                    {tools.map((tool) => (
-                                                        <div key={tool.ref} className="rounded-md border border-border p-3">
-                                                            <label className="flex cursor-pointer items-start gap-3">
-                                                                <Checkbox
-                                                                    checked={selectedToolRefs.includes(tool.ref)}
-                                                                    onCheckedChange={() => toggleTool(tool.ref)}
-                                                                    className="mt-0.5"
-                                                                />
-                                                                <span className="flex-1">
-                                                                    <span className="font-medium">{tool.label}</span>
-                                                                    {tool.description && (
-                                                                        <span className="block text-xs text-muted-foreground">{tool.description}</span>
-                                                                    )}
-                                                                    <Badge variant="outline" className="mt-1 text-[10px]">
-                                                                        {tool.ref}
-                                                                    </Badge>
-                                                                </span>
-                                                            </label>
-                                                            {selectedToolRefs.includes(tool.ref) && ['toolkit', 'mcp'].includes(tool.type) && (
-                                                                <div className="mt-3 grid gap-2 md:grid-cols-2">
-                                                                    <Input
-                                                                        placeholder="Only (comma-separated)"
-                                                                        value={toolAdvanced[tool.ref]?.only ?? ''}
-                                                                        onChange={(e) => updateToolAdvanced(tool.ref, 'only', e.target.value)}
-                                                                    />
-                                                                    <Input
-                                                                        placeholder="Exclude (comma-separated)"
-                                                                        value={toolAdvanced[tool.ref]?.exclude ?? ''}
-                                                                        onChange={(e) => updateToolAdvanced(tool.ref, 'exclude', e.target.value)}
-                                                                    />
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    ))}
+                                                    {categoryTools.map((tool) => renderToolCard(tool))}
                                                 </div>
                                             </div>
                                         ))
                                     )}
                                 </ScrollArea>
                             </TabsContent>
-                            <TabsContent value="mcp" className="mt-3 flex-1 overflow-hidden">
-                                <ScrollArea className="h-full pr-2">
-                                    {Object.keys(config.mcpServers ?? {}).length === 0 ? (
-                                        <p className="text-sm text-muted-foreground">No MCP servers available.</p>
+
+                            <TabsContent value="toolkits" className="mt-3 flex flex-1 flex-col overflow-hidden">
+                                <Input
+                                    value={toolkitsSearch}
+                                    onChange={(e) => setToolkitsSearch(e.target.value)}
+                                    placeholder={t('form.search_placeholder')}
+                                    className="mb-2 shrink-0"
+                                />
+                                <ScrollArea className="h-full flex-1 pr-2">
+                                    {toolkits.length === 0 ? (
+                                        <p className="text-sm text-muted-foreground">{t('form.toolkits_empty')}</p>
+                                    ) : filteredToolkits.length === 0 ? (
+                                        <p className="text-sm text-muted-foreground">{t('form.search_no_matches')}</p>
                                     ) : (
-                                        Object.entries(config.mcpServers).map(([slug, label]) => (
+                                        <div className="space-y-2">
+                                            {filteredToolkits.map((kit) => renderToolkitCard(kit))}
+                                        </div>
+                                    )}
+                                </ScrollArea>
+                            </TabsContent>
+
+                            <TabsContent value="mcp" className="mt-3 flex flex-1 flex-col overflow-hidden">
+                                <Input
+                                    value={mcpSearch}
+                                    onChange={(e) => setMcpSearch(e.target.value)}
+                                    placeholder={t('form.search_placeholder')}
+                                    className="mb-2 shrink-0"
+                                />
+                                <ScrollArea className="h-full flex-1 pr-2">
+                                    {Object.keys(config.mcpServers ?? {}).length === 0 ? (
+                                        <p className="text-sm text-muted-foreground">{t('form.mcp_empty')}</p>
+                                    ) : filteredMcpServers.length === 0 ? (
+                                        <p className="text-sm text-muted-foreground">{t('form.search_no_matches')}</p>
+                                    ) : (
+                                        filteredMcpServers.map(([slug, label]) => (
                                             <div key={slug} className="mb-2 rounded-md border border-border p-3">
                                                 <label className="flex cursor-pointer items-start gap-3">
                                                     <Checkbox
@@ -456,14 +698,16 @@ export default function AgentForm({ config }) {
                                                 {selectedMcpSlugs.includes(slug) && (
                                                     <div className="mt-3 grid gap-2 md:grid-cols-2">
                                                         <Input
-                                                            placeholder="Only (comma-separated)"
+                                                            placeholder={t('form.only_placeholder')}
                                                             value={mcpAdvanced[slug]?.only ?? ''}
                                                             onChange={(e) => updateMcpAdvanced(slug, 'only', e.target.value)}
                                                         />
                                                         <Input
-                                                            placeholder="Exclude (comma-separated)"
+                                                            placeholder={t('form.exclude_placeholder')}
                                                             value={mcpAdvanced[slug]?.exclude ?? ''}
-                                                            onChange={(e) => updateMcpAdvanced(slug, 'exclude', e.target.value)}
+                                                            onChange={(e) =>
+                                                                updateMcpAdvanced(slug, 'exclude', e.target.value)
+                                                            }
                                                         />
                                                     </div>
                                                 )}
@@ -472,6 +716,7 @@ export default function AgentForm({ config }) {
                                     )}
                                 </ScrollArea>
                             </TabsContent>
+
                             <TabsContent value="connect" className="mt-3 flex-1 overflow-hidden">
                                 <ConnectPanel
                                     protocols={config.enabledProtocols ?? ['vercel', 'agui']}
