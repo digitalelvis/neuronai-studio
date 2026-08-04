@@ -24,7 +24,7 @@
       {
         "id": "set_1",
         "type": "set_state",
-        "position": { "x": 280, "y": 120 },
+        "position": { "x": 440, "y": 120 },
         "data": {
           "key": "greeting",
           "value": "Hello from child workflow"
@@ -33,7 +33,7 @@
       {
         "id": "stop_1",
         "type": "stop",
-        "position": { "x": 520, "y": 120 },
+        "position": { "x": 840, "y": 120 },
         "data": {}
       }
     ],
