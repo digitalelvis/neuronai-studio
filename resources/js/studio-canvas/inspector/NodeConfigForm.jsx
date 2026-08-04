@@ -18,10 +18,12 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
 import { resolveAgentConfigMode, isToolModeEnabled, isNodeTypeToolable, defaultToolExposure } from './nodeUtils';
 import { useCanvasUi } from '../CanvasUiContext';
+import VariableInput from '@/studio-forms/VariableInput';
 
 export default function NodeConfigForm({
     node,
     agents,
+    workflows = [],
     tools,
     mcpServers,
     knowledgeBases = [],
@@ -42,6 +44,8 @@ export default function NodeConfigForm({
 }) {
     const canvasUi = useCanvasUi();
     const nodeTypesMeta = nodeTypesMetaProp || canvasUi.nodeTypesMeta || {};
+    const workflowOptions = workflows.length > 0 ? workflows : canvasUi.workflows || [];
+    const variables = canvasUi.variables || [];
 
     if (!node) {
         return <p className="text-sm text-muted-foreground">Select a node to configure it.</p>;
@@ -73,7 +77,7 @@ export default function NodeConfigForm({
     const openActions = () => {
         window.dispatchEvent(
             new CustomEvent('canvas-tool-exposure-edit', {
-                detail: { id: node.id, data },
+                detail: { id: node.id, data, nodeType: node.type },
             }),
         );
     };
@@ -149,6 +153,7 @@ export default function NodeConfigForm({
                                             provider: undefined,
                                             model: undefined,
                                             instructions: undefined,
+                                            api_key: undefined,
                                         })
                                     }
                                 >
@@ -223,6 +228,18 @@ export default function NodeConfigForm({
                                         readOnly={readOnly}
                                         onChange={(patch) => onUpdate?.({ ...data, ...patch })}
                                     />
+                                    <div className="space-y-2">
+                                        <Label>API Key (optional override)</Label>
+                                        <VariableInput
+                                            value={data.api_key ?? ''}
+                                            onChange={(value) => updateField('api_key', value)}
+                                            variables={variables}
+                                            sensitive
+                                            disabled={readOnly}
+                                            placeholder=""
+                                            hint="Bind a Credential variable (var:NAME) or leave empty for install-time config."
+                                        />
+                                    </div>
                                     <div className="space-y-2">
                                         <Label>Agent Instructions</Label>
                                         <ExpandableTextField
@@ -506,6 +523,110 @@ export default function NodeConfigForm({
                             disabled={readOnly}
                         />
                     </div>
+                </>
+            )}
+
+            {showControls && node.type === 'run_workflow' && (
+                <>
+                    {toolable && (
+                        <div className="flex items-center justify-between gap-2 rounded-md border border-border px-2 py-1.5">
+                            <div className="min-w-0">
+                                <Label htmlFor={`tool-mode-${node.id}`} className="text-[11px]">
+                                    Tool Mode
+                                </Label>
+                                <p className="text-[10px] text-muted-foreground leading-tight">
+                                    {toolMode
+                                        ? 'Acts as a toolset for a supervisor agent.'
+                                        : 'Acts as a workflow step.'}
+                                </p>
+                            </div>
+                            <Switch
+                                id={`tool-mode-${node.id}`}
+                                checked={toolMode}
+                                onCheckedChange={(checked) => setToolMode(Boolean(checked))}
+                                disabled={readOnly}
+                            />
+                        </div>
+                    )}
+
+                    <div className="space-y-2">
+                        <Label>Workflow</Label>
+                        <Combobox
+                            options={workflowOptions.map((workflow) => ({
+                                value: String(workflow.id),
+                                label: workflow.slug
+                                    ? `${workflow.name} (${workflow.slug})`
+                                    : workflow.name,
+                            }))}
+                            value={data.workflow_id ? String(data.workflow_id) : ''}
+                            onValueChange={(value) => updateField('workflow_id', value)}
+                            placeholder="Select workflow"
+                            searchPlaceholder="Search workflows…"
+                            disabled={readOnly}
+                        />
+                    </div>
+
+                    <div className="space-y-2">
+                        <Label>{toolMode ? 'Default message' : 'Message'}</Label>
+                        <ExpandableTextField
+                            rows={compact ? 2 : 3}
+                            value={data.message ?? ''}
+                            onChange={(e) => updateField('message', e.target.value)}
+                            placeholder="{{input}}"
+                            disabled={readOnly}
+                            label="Edit message"
+                        />
+                        {toolMode && !compact && (
+                            <p className="text-xs text-muted-foreground">
+                                Used when the supervisor does not pass input. Caller input wins.
+                            </p>
+                        )}
+                    </div>
+
+                    <StateMapEditor
+                        data={data}
+                        readOnly={readOnly}
+                        onUpdate={onUpdate}
+                        compact={compact}
+                    />
+
+                    {toolMode && (
+                        <div className="space-y-1" data-ab-handle-anchor="toolset">
+                            <Label>Actions</Label>
+                            <Button
+                                type="button"
+                                size="sm"
+                                variant="outline"
+                                className="h-8 w-full justify-between text-[11px]"
+                                disabled={readOnly}
+                                onClick={openActions}
+                            >
+                                <span>
+                                    {(data.tool_exposure?.slug || typeMeta?.tool_exposure?.slug_prefix || 'run_workflow')}
+                                </span>
+                                <span className="text-muted-foreground">Edit</span>
+                            </Button>
+                            <p className="text-[10px] text-muted-foreground">
+                                Slug and description for the supervisor tool call.
+                            </p>
+                        </div>
+                    )}
+
+                    {!toolMode && (
+                        <div className="space-y-2">
+                            <Label>Output Key</Label>
+                            <Input
+                                value={data.output_key ?? 'child_output'}
+                                onChange={(e) => updateField('output_key', e.target.value)}
+                                disabled={readOnly}
+                            />
+                            {!compact && (
+                                <p className="text-xs text-muted-foreground">
+                                    Parent state key where the child workflow output is stored.
+                                </p>
+                            )}
+                        </div>
+                    )}
                 </>
             )}
 
@@ -811,6 +932,87 @@ export default function NodeConfigForm({
                     Remove Node
                 </Button>
             )}
+        </div>
+    );
+}
+
+function normalizeStateMap(stateMap) {
+    if (!Array.isArray(stateMap)) {
+        return [];
+    }
+
+    return stateMap.map((row) => ({
+        key: typeof row?.key === 'string' ? row.key : '',
+        value: typeof row?.value === 'string' ? row.value : String(row?.value ?? ''),
+    }));
+}
+
+function StateMapEditor({ data, readOnly, onUpdate, compact = false }) {
+    const rows = normalizeStateMap(data.state_map);
+
+    const commit = (next) => {
+        onUpdate?.({ ...data, state_map: next });
+    };
+
+    const addRow = () => {
+        commit([...rows, { key: '', value: '' }]);
+    };
+
+    const updateRow = (index, patch) => {
+        commit(rows.map((row, i) => (i === index ? { ...row, ...patch } : row)));
+    };
+
+    const removeRow = (index) => {
+        commit(rows.filter((_, i) => i !== index));
+    };
+
+    return (
+        <div className="space-y-2">
+            <div className="flex items-center justify-between gap-2">
+                <Label>State map</Label>
+                {!readOnly && (
+                    <Button type="button" size="sm" variant="outline" className="h-7 px-2 text-[11px]" onClick={addRow}>
+                        Add
+                    </Button>
+                )}
+            </div>
+            {!compact && (
+                <p className="text-xs text-muted-foreground">
+                    Extra keys passed into the child workflow state. Values support {'{{templates}}'}.
+                </p>
+            )}
+            {rows.length === 0 && (
+                <p className="text-xs text-muted-foreground">No state rows yet.</p>
+            )}
+            {rows.map((row, index) => (
+                <div key={`state-map-${index}`} className="flex items-start gap-1.5">
+                    <Input
+                        className="h-8"
+                        value={row.key}
+                        onChange={(e) => updateRow(index, { key: e.target.value })}
+                        placeholder="key"
+                        disabled={readOnly}
+                    />
+                    <Input
+                        className="h-8"
+                        value={row.value}
+                        onChange={(e) => updateRow(index, { value: e.target.value })}
+                        placeholder="{{value}}"
+                        disabled={readOnly}
+                    />
+                    {!readOnly && (
+                        <Button
+                            type="button"
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 px-2 text-muted-foreground"
+                            onClick={() => removeRow(index)}
+                        >
+                            ×
+                        </Button>
+                    )}
+                </div>
+            ))}
         </div>
     );
 }

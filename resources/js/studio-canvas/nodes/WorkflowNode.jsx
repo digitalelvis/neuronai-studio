@@ -281,6 +281,28 @@ function NodeHandles({ nodeType, config, expanded = false, handleTops = null }) 
         );
     }
 
+    if (nodeType === 'run_workflow') {
+        const toolMode = isToolModeEnabled(config || {});
+
+        if (toolMode) {
+            return (
+                <Handle
+                    type="source"
+                    position={Position.Right}
+                    id="toolset"
+                    className="ab-flow-handle ab-flow-handle-toolset"
+                />
+            );
+        }
+
+        return (
+            <>
+                <Handle type="target" position={Position.Left} id="default" className="ab-flow-handle" />
+                <Handle type="source" position={Position.Right} id="default" className="ab-flow-handle" />
+            </>
+        );
+    }
+
     return (
         <>
             <Handle type="target" position={Position.Left} id="default" className="ab-flow-handle" />
@@ -294,6 +316,7 @@ export default function WorkflowNode({ id, data, selected }) {
     const {
         readOnly,
         agents = [],
+        workflows = [],
         tools = [],
         mcpServers = [],
         knowledgeBases = [],
@@ -316,9 +339,15 @@ export default function WorkflowNode({ id, data, selected }) {
 
     const agentMode = data.nodeType === 'agent' ? resolveAgentConfigMode(data.config || {}) : null;
     const agentToolMode = data.nodeType === 'agent' ? isToolModeEnabled(data.config || {}) : false;
+    const runWorkflowToolMode =
+        data.nodeType === 'run_workflow' ? isToolModeEnabled(data.config || {}) : false;
     const agentName =
         data.nodeType === 'agent' && agentMode === 'existing' && data.config?.agent_id
             ? agents.find((agent) => String(agent.id) === String(data.config.agent_id))?.name
+            : null;
+    const workflowName =
+        data.nodeType === 'run_workflow' && data.config?.workflow_id
+            ? workflows.find((workflow) => String(workflow.id) === String(data.config.workflow_id))?.name
             : null;
     const agentInlineMeta =
         data.nodeType === 'agent' && agentMode === 'inline'
@@ -495,6 +524,7 @@ export default function WorkflowNode({ id, data, selected }) {
                         <div className="ab-flow-node-meta">{data.config.model}</div>
                     )}
                     {agentName && <div className="ab-flow-node-meta">{agentName}</div>}
+                    {workflowName && <div className="ab-flow-node-meta">{workflowName}</div>}
                     {agentInlineMeta && <div className="ab-flow-node-meta">{agentInlineMeta}</div>}
                     {data.nodeType === 'agent' && agentToolMode && (
                         <div className="ab-flow-node-handles-labels">
@@ -505,6 +535,11 @@ export default function WorkflowNode({ id, data, selected }) {
                     {data.nodeType === 'agent' && !agentToolMode && (
                         <div className="ab-flow-node-handles-labels">
                             <span className="ab-flow-handle-label ab-flow-handle-label-tools">tools</span>
+                        </div>
+                    )}
+                    {data.nodeType === 'run_workflow' && runWorkflowToolMode && (
+                        <div className="ab-flow-node-handles-labels">
+                            <span className="ab-flow-handle-label ab-flow-handle-label-toolset">toolset</span>
                         </div>
                     )}
                     {data.nodeType === 'condition' && (
@@ -536,6 +571,7 @@ export default function WorkflowNode({ id, data, selected }) {
                     <NodeConfigForm
                         node={editNode}
                         agents={agents}
+                        workflows={workflows}
                         tools={tools}
                         mcpServers={mcpServers}
                         knowledgeBases={knowledgeBases}

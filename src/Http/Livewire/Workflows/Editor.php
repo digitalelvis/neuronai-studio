@@ -8,6 +8,7 @@ use DigitalElvis\NeuronAIStudio\Codegen\WorkflowClassImporter;
 use DigitalElvis\NeuronAIStudio\Codegen\WorkflowExporter;
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use DigitalElvis\NeuronAIStudio\Models\KnowledgeBase;
+use DigitalElvis\NeuronAIStudio\Models\Variable;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
 use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\NodeTypeRegistry;
@@ -166,7 +167,7 @@ class Editor extends Component
     /** @return array{valid: bool, errors: array<int, string>} */
     public function validateGraphPayload(array $graph): array
     {
-        return app(GraphValidator::class)->validate($graph);
+        return app(GraphValidator::class)->validate($graph, $this->workflow?->id);
     }
 
     public function applyImportedGraph(array $graph): void
@@ -175,7 +176,7 @@ class Editor extends Component
             return;
         }
 
-        $result = app(GraphValidator::class)->validate($graph);
+        $result = app(GraphValidator::class)->validate($graph, $this->workflow?->id);
 
         if (! $result['valid']) {
             return;
@@ -237,7 +238,7 @@ class Editor extends Component
 
     public function validateGraph(GraphValidator $validator): void
     {
-        $result = $validator->validate($this->graph);
+        $result = $validator->validate($this->graph, $this->workflow?->id);
         $this->validationMessage = $result['valid']
             ? 'Graph is valid.'
             : implode(' ', $result['errors']);
@@ -380,6 +381,12 @@ class Editor extends Component
             'providers' => app(ProviderRegistry::class)->labels(),
             'agents' => AgentDefinition::orderBy('name')->get(),
             'agentsForCanvas' => AgentDefinition::orderBy('name')->get(['id', 'name'])->values()->all(),
+            'workflowsForCanvas' => WorkflowDefinition::studio()
+                ->orderBy('name')
+                ->when($this->workflow?->exists, fn ($query) => $query->where('id', '!=', $this->workflow->id))
+                ->get(['id', 'name', 'slug'])
+                ->values()
+                ->all(),
             'knowledgeBasesForCanvas' => KnowledgeBase::orderBy('name')->get(['id', 'name'])->values()->all(),
             'toolsForCanvas' => collect(app(ToolRegistry::class)->all())
                 ->map(fn (array $tool) => app(ToolSchemaInspector::class)->enrich($tool))
@@ -399,6 +406,15 @@ class Editor extends Component
                     'class' => $outputClass['class'],
                     'label' => $outputClass['label'],
                     'properties' => $outputClass['properties'] ?? [],
+                ])
+                ->values()
+                ->all(),
+            'variablesForCanvas' => Variable::query()
+                ->orderBy('name')
+                ->get(['name', 'type'])
+                ->map(fn (Variable $variable) => [
+                    'name' => $variable->name,
+                    'type' => $variable->type,
                 ])
                 ->values()
                 ->all(),

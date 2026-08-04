@@ -1,0 +1,58 @@
+{
+  "meta": {
+    "id": "run-workflow-child",
+    "name": "Run Workflow Child",
+    "description": "Minimal child workflow used by the Run Workflow Parent template. Sets greeting from input.",
+    "complexity": "basic",
+    "category": "composition",
+    "tags": [
+      "run-workflow",
+      "nested",
+      "child"
+    ],
+    "agents": []
+  },
+  "graph": {
+    "version": 1,
+    "nodes": [
+      {
+        "id": "start_1",
+        "type": "start",
+        "position": { "x": 40, "y": 120 },
+        "data": {}
+      },
+      {
+        "id": "set_1",
+        "type": "set_state",
+        "position": { "x": 280, "y": 120 },
+        "data": {
+          "key": "greeting",
+          "value": "Hello from child workflow"
+        }
+      },
+      {
+        "id": "stop_1",
+        "type": "stop",
+        "position": { "x": 520, "y": 120 },
+        "data": {}
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "source": "start_1",
+        "target": "set_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "e2",
+        "source": "set_1",
+        "target": "stop_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      }
+    ],
+    "viewport": { "x": 0, "y": 0, "zoom": 1 }
+  }
+}

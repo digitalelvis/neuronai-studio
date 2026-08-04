@@ -11,6 +11,7 @@ use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
 use DigitalElvis\NeuronAIStudio\Runtime\MessageFactory;
 use DigitalElvis\NeuronAIStudio\Runtime\StateTemplateInterpolator;
 use DigitalElvis\NeuronAIStudio\Runtime\StructuredOutput\StructuredOutputResolver;
+use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
 use NeuronAI\Chat\Messages\Stream\Chunks\TextChunk;
 use NeuronAI\Chat\Messages\Stream\Chunks\ToolCallChunk;
 use NeuronAI\Chat\Messages\Stream\Chunks\ToolResultChunk;
@@ -65,7 +66,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
 
         if ($data['structured'] ?? false) {
             $outputClass = $this->outputResolver->resolve((string) ($data['output_class'] ?? ''));
-            $config = $this->buildAgentConfig($data, $definition, $context, $nodeId);
+            $config = $this->buildAgentConfig($data, $definition, $context, $nodeId, $state);
 
             $response = $this->agentRunner->structuredInline(
                 $config,
@@ -87,7 +88,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
         }
 
         try {
-            $config = $this->buildAgentConfig($data, $definition, $context, $nodeId, [
+            $config = $this->buildAgentConfig($data, $definition, $context, $nodeId, $state, [
                 'require_tool_approval' => $requireApproval,
             ]);
             $response = $this->agentRunner->runInline(
@@ -130,7 +131,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
         $serialized = (string) ($resume['interrupt'] ?? '');
         $feedback = is_string($resume['feedback'] ?? null) && $resume['feedback'] !== '' ? $resume['feedback'] : null;
 
-        $config = $this->buildAgentConfig($data, $definition, $context, $nodeId, [
+        $config = $this->buildAgentConfig($data, $definition, $context, $nodeId, $state, [
             'require_tool_approval' => true,
         ]);
 
@@ -191,7 +192,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
         GraphContext $context,
         ?StudioRun $parentRun = null,
     ): string {
-        $config = $this->buildAgentConfig($data, $definition, $context, $nodeId);
+        $config = $this->buildAgentConfig($data, $definition, $context, $nodeId, $state);
 
         $generator = $this->agentRunner->streamInline(
             $config,
@@ -323,9 +324,13 @@ class AgentNodeExecutor implements NodeExecutorInterface
         ?AgentDefinition $definition,
         GraphContext $context,
         string $nodeId,
+        WorkflowState $state,
         array $extra = [],
     ): array {
-        $canvasBindings = $context->toolBindingsFor($nodeId);
+        $canvasBindings = $this->enrichNodeToolBindings(
+            $context->toolBindingsFor($nodeId),
+            $state,
+        );
         $definitionTools = $definition !== null && is_array($definition->tools) ? $definition->tools : [];
         $tools = array_values(array_merge($definitionTools, $canvasBindings));
 
@@ -347,6 +352,31 @@ class AgentNodeExecutor implements NodeExecutorInterface
             ...$this->memoryOverrideConfig($data, null),
             ...$extra,
         ]);
+    }
+
+    /**
+     * Attach parent workflow state/depth so Tool Mode run_workflow can resolve templates and nest.
+     *
+     * @param  array<int, array<string, mixed>>  $bindings
+     * @return array<int, array<string, mixed>>
+     */
+    protected function enrichNodeToolBindings(array $bindings, WorkflowState $state): array
+    {
+        return array_map(static function ($binding) use ($state) {
+            if (! is_array($binding)) {
+                return $binding;
+            }
+
+            $type = (string) (($binding['node']['type'] ?? ''));
+            if ($type !== 'run_workflow') {
+                return $binding;
+            }
+
+            $binding['parent_state'] = $state->all();
+            $binding['nesting_depth'] = (int) ($state->get(WorkflowRunner::NESTING_DEPTH_INPUT_KEY, 0) ?? 0);
+
+            return $binding;
+        }, $bindings);
     }
 
     protected function resolveParentRun(WorkflowState $state): ?StudioRun

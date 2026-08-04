@@ -9,6 +9,8 @@ return [
     'condition' => 'Condition',
     'set_state' => 'Set State',
     'invoke' => 'Invoke',
+    'run_workflow' => 'Run Workflow',
+    'run_workflow_tool_description' => 'Execute another workflow in this project.',
     'tool' => 'Tool',
     'rag' => 'RAG',
     'delay' => 'Delay',

@@ -23,13 +23,13 @@ flowchart TB
     Export --> PHP[app/Neuron/Workflows]
 ```
 
-## Node types (15)
+## Node types (16)
 
 | Category | Types |
 |----------|-------|
 | Flow | start, stop, delay, human |
 | AI | agent, llm, tool, mcp, rag |
-| Logic | condition, set_state, loop, fork, join, invoke |
+| Logic | condition, set_state, loop, fork, join, invoke, run_workflow |
 
 See the [node type guides](node-types/flow-nodes.md) for configuration details.
 

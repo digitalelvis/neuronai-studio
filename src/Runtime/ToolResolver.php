@@ -6,6 +6,7 @@ use DigitalElvis\NeuronAIStudio\Models\ToolDefinition;
 use DigitalElvis\NeuronAIStudio\Registry\ToolRegistry;
 use DigitalElvis\NeuronAIStudio\Runtime\ConfigValueResolver;
 use DigitalElvis\NeuronAIStudio\Runtime\Tools\NodeAsTool;
+use DigitalElvis\NeuronAIStudio\Runtime\Tools\WorkflowAsTool;
 use DigitalElvis\NeuronAIStudio\Tools\KnowledgeBaseTool;
 use DigitalElvis\NeuronAIStudio\Tools\WebhookTool;
 use Illuminate\Support\Str;
@@ -89,8 +90,27 @@ class ToolResolver
         $nodeId = Str::after($ref, 'node:');
         $node = is_array($binding['node'] ?? null) ? $binding['node'] : [];
         $data = is_array($node['data'] ?? null) ? $node['data'] : [];
+        $nodeType = (string) ($node['type'] ?? 'agent');
         $exposure = is_array($binding['exposure'] ?? null) ? $binding['exposure'] : [];
 
+        if ($data === []) {
+            throw new \InvalidArgumentException("Node tool binding for [{$nodeId}] is missing node data.");
+        }
+
+        if ($nodeType === 'run_workflow') {
+            return $this->resolveWorkflowAsTool($exposure, $data, $binding);
+        }
+
+        return $this->resolveAgentNodeAsTool($exposure, $data, $binding);
+    }
+
+    /**
+     * @param  array<string, mixed>  $exposure
+     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>  $binding
+     */
+    protected function resolveAgentNodeAsTool(array $exposure, array $data, array $binding): NodeAsTool
+    {
         $slug = trim((string) ($exposure['slug'] ?? ''));
         if ($slug === '') {
             $slug = (string) (
@@ -114,21 +134,67 @@ class ToolResolver
             $inputDescription = trim((string) $input['description']);
         }
 
-        $parentRunId = isset($binding['parent_run_id']) && $binding['parent_run_id'] !== '' && $binding['parent_run_id'] !== null
-            ? (string) $binding['parent_run_id']
-            : null;
-
-        if ($data === []) {
-            throw new \InvalidArgumentException("Node tool binding for [{$nodeId}] is missing node data.");
-        }
-
         return new NodeAsTool(
             $slug,
             $description,
             $data,
-            $parentRunId,
+            $this->bindingParentRunId($binding),
             $inputDescription,
         );
+    }
+
+    /**
+     * @param  array<string, mixed>  $exposure
+     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>  $binding
+     */
+    protected function resolveWorkflowAsTool(array $exposure, array $data, array $binding): WorkflowAsTool
+    {
+        $slug = trim((string) ($exposure['slug'] ?? ''));
+        if ($slug === '') {
+            $slug = (string) (
+                config('neuronai-studio.node_types.run_workflow.tool_exposure.slug_prefix')
+                ?: 'run_workflow'
+            );
+        }
+
+        $description = trim((string) ($exposure['description'] ?? ''));
+        if ($description === '') {
+            $description = (string) (
+                config('neuronai-studio.node_types.run_workflow.tool_exposure.default_description')
+                ?: 'Execute another workflow in this project.'
+            );
+        }
+
+        $inputDescription = 'Message / task for the child workflow';
+        $parameters = is_array($exposure['parameters'] ?? null) ? $exposure['parameters'] : [];
+        $input = is_array($parameters['input'] ?? null) ? $parameters['input'] : [];
+        if (is_string($input['description'] ?? null) && trim((string) $input['description']) !== '') {
+            $inputDescription = trim((string) $input['description']);
+        }
+
+        $parentState = is_array($binding['parent_state'] ?? null) ? $binding['parent_state'] : [];
+        $nestingDepth = (int) ($binding['nesting_depth'] ?? 0);
+
+        return new WorkflowAsTool(
+            $slug,
+            $description,
+            $data,
+            $this->bindingParentRunId($binding),
+            $inputDescription,
+            $parentState,
+            $nestingDepth,
+        );
+    }
+
+    /** @param  array<string, mixed>  $binding */
+    protected function bindingParentRunId(array $binding): ?string
+    {
+        if (! isset($binding['parent_run_id']) || $binding['parent_run_id'] === '' || $binding['parent_run_id'] === null) {
+            return null;
+        }
+
+        return (string) $binding['parent_run_id'];
     }
 
     /**

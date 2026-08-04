@@ -58,8 +58,8 @@ class GraphTranspiler
                 continue;
             }
 
-            // Tool Mode agents are binding-only specialists — not linear workflow Nodes.
-            if ($type === 'agent' && $this->isToolModeEnabled($data)) {
+            // Tool Mode agents / run_workflow nodes are binding-only — not linear workflow Nodes.
+            if (in_array($type, ['agent', 'run_workflow'], true) && $this->isToolModeEnabled($data)) {
                 continue;
             }
 
@@ -221,7 +221,14 @@ class GraphTranspiler
             $nodeId = substr($ref, strlen('node:'));
             $node = is_array($binding['node'] ?? null) ? $binding['node'] : [];
             $data = is_array($node['data'] ?? null) ? $node['data'] : [];
+            $nodeType = (string) ($node['type'] ?? 'agent');
             $exposure = is_array($binding['exposure'] ?? null) ? $binding['exposure'] : [];
+
+            if ($nodeType === 'run_workflow') {
+                $snapshotted[] = $this->snapshotWorkflowAsTool($exposure, $data);
+
+                continue;
+            }
 
             $agentConfig = $this->snapshotSpecialistConfig($data, $nodeId, $context);
             $slug = trim((string) ($exposure['slug'] ?? ''));
@@ -257,6 +264,66 @@ class GraphTranspiler
         }
 
         return $snapshotted;
+    }
+
+    /**
+     * @param  array<string, mixed>  $exposure
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function snapshotWorkflowAsTool(array $exposure, array $data): array
+    {
+        $slug = trim((string) ($exposure['slug'] ?? ''));
+        if ($slug === '') {
+            $slug = (string) (
+                config('neuronai-studio.node_types.run_workflow.tool_exposure.slug_prefix')
+                ?: 'run_workflow'
+            );
+        }
+
+        $description = trim((string) ($exposure['description'] ?? ''));
+        if ($description === '') {
+            $description = (string) (
+                config('neuronai-studio.node_types.run_workflow.tool_exposure.default_description')
+                ?: 'Execute another workflow in this project.'
+            );
+        }
+
+        $inputDescription = 'Message / task for the child workflow';
+        $parameters = is_array($exposure['parameters'] ?? null) ? $exposure['parameters'] : [];
+        $input = is_array($parameters['input'] ?? null) ? $parameters['input'] : [];
+        if (is_string($input['description'] ?? null) && trim((string) $input['description']) !== '') {
+            $inputDescription = trim((string) $input['description']);
+        }
+
+        $stateMap = [];
+        if (is_array($data['state_map'] ?? null)) {
+            foreach ($data['state_map'] as $row) {
+                if (! is_array($row)) {
+                    continue;
+                }
+                $key = isset($row['key']) && is_string($row['key']) ? trim($row['key']) : '';
+                if ($key === '') {
+                    continue;
+                }
+                $stateMap[] = [
+                    'key' => $key,
+                    'value' => $row['value'] ?? null,
+                ];
+            }
+        }
+
+        return [
+            'ref' => 'workflow_as_tool',
+            'slug' => $slug,
+            'description' => $description,
+            'input_description' => $inputDescription,
+            'node_data' => [
+                'workflow_id' => (string) ($data['workflow_id'] ?? ''),
+                'message' => (string) ($data['message'] ?? ''),
+                'state_map' => $stateMap,
+            ],
+        ];
     }
 
     /**

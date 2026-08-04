@@ -14,6 +14,7 @@ export default function VariableInput({
     sensitive = false,
     placeholder = '',
     hint = '',
+    disabled = false,
 }) {
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
@@ -26,6 +27,7 @@ export default function VariableInput({
 
     useEffect(() => {
         const onCreated = (event) => {
+            if (disabled) return;
             const detail = event.detail || {};
             const name = detail.name;
             const type = detail.type || 'credential';
@@ -39,7 +41,7 @@ export default function VariableInput({
         };
         window.addEventListener('studio-variable-created', onCreated);
         return () => window.removeEventListener('studio-variable-created', onCreated);
-    }, [onChange]);
+    }, [onChange, disabled]);
 
     const boundName = value?.startsWith('var:') ? value.slice(4) : null;
     const filtered = useMemo(() => {
@@ -49,16 +51,19 @@ export default function VariableInput({
     }, [variables, query]);
 
     const bind = (name) => {
+        if (disabled) return;
         onChange(`var:${name}`);
         setOpen(false);
         setQuery('');
     };
 
     const clearBind = () => {
+        if (disabled) return;
         if (boundName) onChange('');
     };
 
     const openCreate = () => {
+        if (disabled) return;
         setOpen(false);
         if (window.Livewire?.dispatch) {
             window.Livewire.dispatch('studio-open-create-variable');
@@ -72,9 +77,11 @@ export default function VariableInput({
                     {boundName ? (
                         <div className="flex h-9 items-center justify-between rounded-md border border-border bg-muted/40 px-3 text-sm">
                             <code className="truncate">var:{boundName}</code>
-                            <button type="button" className="text-muted-foreground hover:text-foreground" onClick={clearBind} title="Clear binding">
-                                <X className="h-3.5 w-3.5" />
-                            </button>
+                            {!disabled && (
+                                <button type="button" className="text-muted-foreground hover:text-foreground" onClick={clearBind} title="Clear binding">
+                                    <X className="h-3.5 w-3.5" />
+                                </button>
+                            )}
                         </div>
                     ) : (
                         <div className="relative">
@@ -83,8 +90,9 @@ export default function VariableInput({
                                 value={value}
                                 onChange={(e) => onChange(e.target.value)}
                                 placeholder={placeholder}
+                                disabled={disabled}
                             />
-                            {sensitive && (
+                            {sensitive && !disabled && (
                                 <button
                                     type="button"
                                     className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] uppercase text-muted-foreground"
@@ -96,11 +104,19 @@ export default function VariableInput({
                         </div>
                     )}
                 </div>
-                <Button type="button" variant="outline" size="icon" className="shrink-0" onClick={() => setOpen((v) => !v)} title="Bind Studio variable">
+                <Button
+                    type="button"
+                    variant="outline"
+                    size="icon"
+                    className="shrink-0"
+                    onClick={() => setOpen((v) => !v)}
+                    title="Bind Studio variable"
+                    disabled={disabled}
+                >
                     <Globe className="h-4 w-4" />
                 </Button>
             </div>
-            {open && (
+            {open && !disabled && (
                 <div className="rounded-md border border-border bg-background shadow-md">
                     <div className="border-b border-border p-2">
                         <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search variables..." />

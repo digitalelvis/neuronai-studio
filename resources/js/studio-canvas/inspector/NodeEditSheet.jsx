@@ -11,6 +11,7 @@ import { useNodeEditor } from './useNodeEditor';
 
 export default function NodeEditSheet({
     agents = [],
+    workflows = [],
     tools = [],
     mcpServers = [],
     knowledgeBases = [],
@@ -47,6 +48,7 @@ export default function NodeEditSheet({
                     <NodeConfigForm
                         node={editingNode}
                         agents={agents}
+                        workflows={workflows}
                         tools={tools}
                         mcpServers={mcpServers}
                         knowledgeBases={knowledgeBases}

@@ -2,6 +2,7 @@
 
 namespace DigitalElvis\NeuronAIStudio\Tests;
 
+use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
 use DigitalElvis\NeuronAIStudio\Runtime\GraphValidator;
 use DigitalElvis\NeuronAIStudio\Tests\Fixtures\InvokeTestHook;
 
@@ -379,6 +380,94 @@ class GraphValidatorTest extends TestCase
         $this->assertStringContainsString('invalid tool_exposure.slug', strtolower(implode(' ', $result['errors'])));
     }
 
+    public function test_accepts_run_workflow_step_mode_graph(): void
+    {
+        $child = WorkflowDefinition::create([
+            'name' => 'Child Flow',
+            'slug' => 'child-flow-'.uniqid(),
+            'status' => 'draft',
+            'source' => 'studio',
+        ]);
+
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate($this->runWorkflowStepGraph($child->id));
+
+        $this->assertTrue($result['valid'], implode(' ', $result['errors']));
+    }
+
+    public function test_accepts_run_workflow_tool_mode_graph(): void
+    {
+        $child = WorkflowDefinition::create([
+            'name' => 'Pricing Flow',
+            'slug' => 'pricing-flow-'.uniqid(),
+            'status' => 'draft',
+            'source' => 'studio',
+        ]);
+
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate($this->runWorkflowToolModeGraph($child->id));
+
+        $this->assertTrue($result['valid'], implode(' ', $result['errors']));
+    }
+
+    public function test_rejects_run_workflow_missing_workflow_id(): void
+    {
+        $graph = $this->runWorkflowStepGraph(1);
+        $graph['nodes'][1]['data']['workflow_id'] = '';
+
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate($graph);
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('workflow_id', strtolower(implode(' ', $result['errors'])));
+    }
+
+    public function test_rejects_run_workflow_unknown_target(): void
+    {
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate($this->runWorkflowStepGraph(999999));
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('unknown workflow_id', strtolower(implode(' ', $result['errors'])));
+    }
+
+    public function test_rejects_run_workflow_self_reference(): void
+    {
+        $parent = WorkflowDefinition::create([
+            'name' => 'Parent Flow',
+            'slug' => 'parent-flow-'.uniqid(),
+            'status' => 'draft',
+            'source' => 'studio',
+        ]);
+
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate($this->runWorkflowStepGraph($parent->id), $parent->id);
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('self-reference', strtolower(implode(' ', $result['errors'])));
+    }
+
+    public function test_rejects_run_workflow_empty_state_map_key(): void
+    {
+        $child = WorkflowDefinition::create([
+            'name' => 'Child Flow',
+            'slug' => 'child-map-'.uniqid(),
+            'status' => 'draft',
+            'source' => 'studio',
+        ]);
+
+        $graph = $this->runWorkflowStepGraph($child->id);
+        $graph['nodes'][1]['data']['state_map'] = [
+            ['key' => '', 'value' => '{{x}}'],
+        ];
+
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate($graph);
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('empty state_map key', strtolower(implode(' ', $result['errors'])));
+    }
+
     /**
      * @return array{nodes: array<int, array<string, mixed>>, edges: array<int, array<string, mixed>>}
      */
@@ -418,6 +507,81 @@ class GraphValidatorTest extends TestCase
                 ['id' => 'e1', 'source' => 'start_1', 'target' => 'supervisor_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
                 ['id' => 'e2', 'source' => 'supervisor_1', 'target' => 'stop_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
                 ['id' => 'e3', 'source' => 'specialist_1', 'target' => 'supervisor_1', 'sourceHandle' => 'toolset', 'targetHandle' => 'tools'],
+            ],
+        ];
+    }
+
+    /**
+     * @return array{nodes: array<int, array<string, mixed>>, edges: array<int, array<string, mixed>>}
+     */
+    protected function runWorkflowStepGraph(int $workflowId): array
+    {
+        return [
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                [
+                    'id' => 'run_1',
+                    'type' => 'run_workflow',
+                    'position' => ['x' => 100, 'y' => 0],
+                    'data' => [
+                        'workflow_id' => (string) $workflowId,
+                        'message' => '{{input}}',
+                        'state_map' => [
+                            ['key' => 'lead_id', 'value' => '{{lead_id}}'],
+                        ],
+                        'output_key' => 'child_output',
+                        'tool_mode' => false,
+                    ],
+                ],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'run_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'run_1', 'target' => 'stop_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+            ],
+        ];
+    }
+
+    /**
+     * @return array{nodes: array<int, array<string, mixed>>, edges: array<int, array<string, mixed>>}
+     */
+    protected function runWorkflowToolModeGraph(int $workflowId): array
+    {
+        return [
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                [
+                    'id' => 'supervisor_1',
+                    'type' => 'agent',
+                    'position' => ['x' => 100, 'y' => 0],
+                    'data' => [
+                        'config_mode' => 'inline',
+                        'provider' => 'openai',
+                        'model' => 'gpt-4o-mini',
+                    ],
+                ],
+                [
+                    'id' => 'run_tool_1',
+                    'type' => 'run_workflow',
+                    'position' => ['x' => 100, 'y' => 120],
+                    'data' => [
+                        'workflow_id' => (string) $workflowId,
+                        'message' => '{{input}}',
+                        'state_map' => [],
+                        'output_key' => 'child_output',
+                        'tool_mode' => true,
+                        'tool_exposure' => [
+                            'slug' => 'run_pricing_flow',
+                            'description' => 'Run the pricing workflow.',
+                        ],
+                    ],
+                ],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'supervisor_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'supervisor_1', 'target' => 'stop_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ['id' => 'e3', 'source' => 'run_tool_1', 'target' => 'supervisor_1', 'sourceHandle' => 'toolset', 'targetHandle' => 'tools'],
             ],
         ];
     }

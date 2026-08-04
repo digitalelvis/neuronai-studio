@@ -78,13 +78,14 @@ Canvas bindings merge with tools already defined on the agent definition. A Tool
 
 ### Tool Mode / Toolset
 
-Enable **Tool Mode** on a toolable Agent to turn it into a specialist. The node shows an amber **toolset** source handle instead of control-flow Response. Use the **Actions** modal to set `tool_exposure` (slug, description, caller-controlled `input`). Wire:
+Enable **Tool Mode** on a toolable **Agent** or **Run Workflow** node to turn it into a specialist/tool. The node shows an amber **toolset** source handle instead of control-flow Response. Use the **Actions** modal to set `tool_exposure` (slug, description, caller-controlled `input`). Wire:
 
 ```text
 specialist (toolset) → supervisor (tools)
+run_workflow Tool Mode (toolset) → supervisor (tools)
 ```
 
-Control-flow stays `Start → supervisor → Stop`. The specialist is invoked only when the supervisor’s model calls the Actions slug (`node:{id}` → `NodeAsTool`). See [AI nodes → Tool Mode](node-types/ai-nodes.md#tool-mode-agent-as-tool).
+Control-flow stays `Start → supervisor → Stop`. Agents resolve via `NodeAsTool`; Run Workflow Tool Mode resolves via `WorkflowAsTool`. See [AI nodes → Tool Mode](node-types/ai-nodes.md#tool-mode-agent-as-tool) and [Logic nodes → Run Workflow](node-types/logic-nodes.md#run-workflow).
 
 ## JSON graph format
 

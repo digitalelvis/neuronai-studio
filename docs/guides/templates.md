@@ -41,6 +41,8 @@ Repeating the same workflow template creates a new workflow. Agents referenced b
 |----|------------|-------------|
 | `basic-agent-chat` | Basic | Single agent chat flow |
 | `supervisor-specialist-tool-mode` | Intermediate | Supervisor delegates to a Tool Mode specialist via toolset→tools |
+| `run-workflow-child` | Basic | Minimal child workflow for Run Workflow Parent (sets `greeting`) |
+| `run-workflow-parent` | Intermediate | Parent Start → Run Workflow → Stop; installs child dependency |
 | `rag-knowledge-qna` | Basic | RAG node → knowledge agent with `{{ rag_context.context }}` |
 | `lead-qualification` | Intermediate | LLM extraction + condition branching |
 | `lead-qualification-loop` | Intermediate | LLM extraction in a cyclic loop until email found |
@@ -50,6 +52,16 @@ Repeating the same workflow template creates a new workflow. Agents referenced b
 | `parallel-triage-hitl` | Advanced | Parallel analysis + human review branch + checkpoint resume |
 | `parallel-refund-approval` | Advanced | Parallel eligibility + approval-gated refund tool |
 | `dev-support-memory-loop` | Advanced | Tech-support loop with memory, RAG, HITL, tools, attachments |
+
+## Run Workflow Parent
+
+Templates `run-workflow-parent` + `run-workflow-child` demonstrate nested workflow composition (M13).
+
+1. Install **Run Workflow Parent** — Studio also creates **Run Workflow Child** (stable slug `run-workflow-child`) and remaps `workflow_ref` → `workflow_id`.
+2. Open the parent Test harness, send a message — the Run Workflow step nests a child run (`parent_run_id`) and writes JSON to `child_output`.
+3. Pretty Chat expands the nested child chain (e.g. child state keys / steps) instead of a raw escaped blob.
+
+Use **Tool Mode** on a Run Workflow node the same way as Agent Tool Mode when a supervisor should call another workflow via tool-calling — see [Logic nodes → Run Workflow](workflows/node-types/logic-nodes.md#run-workflow).
 
 ## RAG Knowledge Q&A
 

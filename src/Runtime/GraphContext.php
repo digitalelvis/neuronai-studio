@@ -86,7 +86,7 @@ class GraphContext
             $data = is_array($source['data'] ?? null) ? $source['data'] : [];
             $sourceHandle = (string) ($edge['sourceHandle'] ?? 'default');
 
-            if ($type === 'agent' && $sourceHandle === 'toolset') {
+            if (in_array($type, ['agent', 'run_workflow'], true) && $sourceHandle === 'toolset') {
                 $exposure = is_array($data['tool_exposure'] ?? null) ? $data['tool_exposure'] : [];
                 $bindings[] = [
                     'ref' => "node:{$sourceId}",

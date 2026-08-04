@@ -511,6 +511,16 @@ return [
             'icon' => 'code',
             'category' => 'logic',
         ],
+        'run_workflow' => [
+            'label' => 'Run Workflow',
+            'icon' => 'workflow',
+            'category' => 'logic',
+            'toolable' => true,
+            'tool_exposure' => [
+                'slug_prefix' => 'run_workflow',
+                'default_description' => 'Execute another workflow in this project.',
+            ],
+        ],
         'tool' => [
             'label' => 'Tool',
             'icon' => 'wrench',
