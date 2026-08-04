@@ -9,6 +9,7 @@ use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\ToolRegistry;
 use DigitalElvis\NeuronAIStudio\Support\ResolvesOptionalRouteModel;
 use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
+use DigitalElvis\NeuronAIStudio\Support\ToolSchemaInspector;
 use Illuminate\Support\Str;
 use Livewire\Component;
 
@@ -327,15 +328,44 @@ class Edit extends Component
     public function render()
     {
         $registry = app(ToolRegistry::class);
+        $inspector = app(ToolSchemaInspector::class);
         $catalog = collect($registry->all())->groupBy('category');
 
-        $toolList = $catalog->flatten(1)->map(fn (array $tool) => [
-            'ref' => $tool['ref'],
-            'label' => $tool['label'],
-            'description' => $tool['description'] ?? '',
-            'type' => $tool['type'] ?? '',
-            'category' => $tool['category'] ?? '',
-        ])->values()->all();
+        $toolList = $catalog->flatten(1)->map(function (array $tool) use ($inspector) {
+            $enriched = $inspector->enrich($tool);
+            $actions = $enriched['actions'] ?? [];
+            $type = $tool['type'] ?? '';
+            $ref = (string) ($tool['ref'] ?? '');
+
+            $slug = null;
+            $description = $tool['description'] ?? '';
+            $childTools = [];
+
+            if ($type === 'toolkit') {
+                $childTools = array_values(array_map(
+                    fn (array $action) => [
+                        'name' => $action['name'] ?? '',
+                        'description' => $action['description'] ?? null,
+                    ],
+                    $actions,
+                ));
+            } elseif ($actions !== []) {
+                $slug = $actions[0]['name'] ?? null;
+                $description = $actions[0]['description'] ?? $description;
+            } elseif (str_starts_with($ref, 'mcp:')) {
+                $slug = Str::after($ref, 'mcp:');
+            }
+
+            return [
+                'ref' => $ref,
+                'label' => $tool['label'],
+                'description' => $description ?? '',
+                'type' => $type,
+                'category' => $tool['category'] ?? '',
+                'slug' => $slug,
+                'tools' => $childTools,
+            ];
+        })->values()->all();
 
         return view('neuronai-studio::livewire.agents.edit', [
             'providers' => app(ProviderRegistry::class)->labels(),
