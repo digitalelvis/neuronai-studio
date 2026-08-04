@@ -1,5 +1,12 @@
 # Changelog
 
+# [2.4.0](https://github.com/digitalelvis/neuronai-studio/compare/v2.3.0...v2.4.0) (2026-08-04)
+
+
+### Features
+
+* **agents:** improve Agent Form tools panel UX ([4abb2d6](https://github.com/digitalelvis/neuronai-studio/commit/4abb2d6701feaf90b5a9441dbdf1838dac958a12))
+
 # [2.3.0](https://github.com/digitalelvis/neuronai-studio/compare/v2.2.1...v2.3.0) (2026-08-04)
 
 
