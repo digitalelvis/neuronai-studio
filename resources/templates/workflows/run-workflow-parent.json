@@ -28,7 +28,7 @@
       {
         "id": "run_1",
         "type": "run_workflow",
-        "position": { "x": 280, "y": 120 },
+        "position": { "x": 440, "y": 120 },
         "data": {
           "workflow_ref": "run-workflow-child",
           "message": "{{input}}",
@@ -40,7 +40,7 @@
       {
         "id": "stop_1",
         "type": "stop",
-        "position": { "x": 560, "y": 120 },
+        "position": { "x": 840, "y": 120 },
         "data": {}
       }
     ],
