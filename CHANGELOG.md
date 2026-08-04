@@ -1,5 +1,25 @@
 # Changelog
 
+# [2.3.0](https://github.com/digitalelvis/neuronai-studio/compare/v2.2.1...v2.3.0) (2026-08-04)
+
+
+### Bug Fixes
+
+* allow binding credential variable on canvas inline agents ([ce99419](https://github.com/digitalelvis/neuronai-studio/commit/ce994196207c3cfc1290652eb03ec42089b5f7f6))
+* **studio-chat:** expand nested run_workflow output in Pretty thread ([e538900](https://github.com/digitalelvis/neuronai-studio/commit/e538900389f7449dbd00f31d152fe6a906d5c45f))
+
+
+### Features
+
+* **codegen:** export run_workflow Step and Tool Mode bindings ([3716242](https://github.com/digitalelvis/neuronai-studio/commit/371624280e6c846c9aedec2cacd11577b4709578))
+* **runtime:** add WorkflowAsTool for run_workflow Tool Mode ([3b9ddfe](https://github.com/digitalelvis/neuronai-studio/commit/3b9ddfe686eb967fa3c0d5423012633fdb8f1157))
+* **runtime:** implement run_workflow Step Mode executor ([a2906e1](https://github.com/digitalelvis/neuronai-studio/commit/a2906e1730fc62fc9fe6871ba3296bacd6bf0c82))
+* **runtime:** nest workflow runs with parent_run_id and depth stamp ([35f3c61](https://github.com/digitalelvis/neuronai-studio/commit/35f3c618e78ce1525a472d1dfb8b57a91567fe9f))
+* **studio:** add run_workflow canvas inspector and Tool Mode UI ([22d726c](https://github.com/digitalelvis/neuronai-studio/commit/22d726c8fa38e08f35b0368e814ea9e385c9daf6))
+* **studio:** pass workflowsForCanvas into editor config ([ea412a6](https://github.com/digitalelvis/neuronai-studio/commit/ea412a6dd0bec96accad5b7919fa5591c3520761))
+* **studio:** register run_workflow node type meta and i18n ([b0a99be](https://github.com/digitalelvis/neuronai-studio/commit/b0a99be80eeb5d6647264264abc9d5cb6344b606))
+* **studio:** validate run_workflow graphs in GraphValidator ([6c1f970](https://github.com/digitalelvis/neuronai-studio/commit/6c1f9705bdf6c62c4d4f9c4c67393d0528949668))
+
 ## [2.2.1](https://github.com/digitalelvis/neuronai-studio/compare/v2.2.0...v2.2.1) (2026-07-31)
 
 
