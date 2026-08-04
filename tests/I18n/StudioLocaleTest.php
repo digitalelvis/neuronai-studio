@@ -70,6 +70,7 @@ class StudioLocaleTest extends TestCase
 
         $this->assertSame('Agente', $canvas['agent']['label'] ?? null);
         $this->assertSame('Início', $canvas['start']['label'] ?? null);
+        $this->assertSame('Executar Workflow', $canvas['run_workflow']['label'] ?? null);
     }
 
     public function test_studio_translator_falls_back_when_key_missing(): void

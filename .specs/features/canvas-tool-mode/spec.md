@@ -18,7 +18,7 @@ Neuron AI has no SubAgent API; the idiomatic path is a custom `Tool` that invoke
 | ------- | ------ |
 | Tool Mode for `llm` / `rag` / `invoke` / custom | v1 = Agent only; meta stays extensible |
 | Handoff / irreversible turn transfer | Different protocol |
-| Nested workflow-as-tool | Separate feature |
+| Nested workflow-as-tool | Separate feature → [`execute-workflow`](../execute-workflow/spec.md) (M13) |
 | Advanced memory isolation for specialists | Default in-memory / child thread |
 | Changing Neuron core | Composition via Studio Tool wrapper |
 

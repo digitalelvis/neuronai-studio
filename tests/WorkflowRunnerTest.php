@@ -136,4 +136,79 @@ class WorkflowRunnerTest extends TestCase
         $this->assertSame('Hello', $result->output['greeting'] ?? null);
         $this->assertSame(1, StudioRun::count());
     }
+
+    public function test_run_persists_parent_run_id_when_parent_provided(): void
+    {
+        $workflow = WorkflowDefinition::create([
+            'name' => 'Nested Parent Param Flow',
+            'slug' => 'nested-parent-param-flow',
+            'graph' => WorkflowDefinition::defaultGraph(),
+        ]);
+
+        $parent = StudioRun::create([
+            'id' => (string) Str::uuid(),
+            'thread_id' => StudioThread::create(['id' => (string) Str::uuid()])->id,
+            'status' => 'running',
+        ]);
+
+        $child = app(WorkflowRunner::class)->run(
+            $workflow,
+            ['input' => 'nested'],
+            parentRun: $parent,
+        );
+
+        $this->assertSame('completed', $child->status);
+        $this->assertSame($parent->id, $child->parent_run_id);
+    }
+
+    public function test_run_persists_parent_run_id_from_input_key(): void
+    {
+        $workflow = WorkflowDefinition::create([
+            'name' => 'Nested Parent Input Flow',
+            'slug' => 'nested-parent-input-flow',
+            'graph' => WorkflowDefinition::defaultGraph(),
+        ]);
+
+        $parent = StudioRun::create([
+            'id' => (string) Str::uuid(),
+            'thread_id' => StudioThread::create(['id' => (string) Str::uuid()])->id,
+            'status' => 'running',
+        ]);
+
+        $child = app(WorkflowRunner::class)->run($workflow, [
+            'input' => 'nested',
+            WorkflowRunner::PARENT_RUN_ID_INPUT_KEY => $parent->id,
+        ]);
+
+        $this->assertSame($parent->id, $child->parent_run_id);
+    }
+
+    public function test_run_promotes_workflow_nesting_depth_into_state(): void
+    {
+        $workflow = WorkflowDefinition::create([
+            'name' => 'Nesting Depth Flow',
+            'slug' => 'nesting-depth-flow',
+            'graph' => [
+                'version' => 1,
+                'nodes' => [
+                    ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                    ['id' => 'set_1', 'type' => 'set_state', 'position' => ['x' => 200, 'y' => 0], 'data' => ['key' => 'greeting', 'value' => 'ok']],
+                    ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 400, 'y' => 0], 'data' => []],
+                ],
+                'edges' => [
+                    ['id' => 'e1', 'source' => 'start_1', 'target' => 'set_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                    ['id' => 'e2', 'source' => 'set_1', 'target' => 'stop_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ],
+            ],
+        ]);
+
+        $run = app(WorkflowRunner::class)->run($workflow, [
+            'input' => 'nested',
+            WorkflowRunner::NESTING_DEPTH_INPUT_KEY => 2,
+        ]);
+
+        $this->assertSame('completed', $run->status);
+        $this->assertSame(2, $run->output[WorkflowRunner::NESTING_DEPTH_INPUT_KEY] ?? null);
+        $this->assertSame(2, $run->input[WorkflowRunner::NESTING_DEPTH_INPUT_KEY] ?? null);
+    }
 }

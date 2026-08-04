@@ -49,7 +49,7 @@ NeuronAIStudio::registerNode('my_specialist', MySpecialistExecutor::class, [
 ]);
 ```
 
-`NodeTypeRegistry::forCanvas()` surfaces these fields to the editor. v1 runtime Tool Mode execution is implemented for **Agent** nodes; other toolable types can opt in later.
+`NodeTypeRegistry::forCanvas()` surfaces these fields to the editor. Runtime Tool Mode execution is implemented for **Agent** (`NodeAsTool`) and **Run Workflow** (`WorkflowAsTool`) nodes.
 
 Also register the executor in `NodeExecutorRegistry` if not auto-wired:
 
@@ -112,7 +112,7 @@ Custom node fields appear in the inspector when you extend the React inspector c
 
 See the registered types in `NeuronAIStudioServiceProvider::registerNodeTypes()`:
 
-- start, stop, agent, llm, condition, set_state, invoke, loop, tool, rag, delay, mcp, human, fork, join
+- start, stop, agent, llm, condition, set_state, invoke, run_workflow, loop, tool, rag, delay, mcp, human, fork, join
 
 Use these as reference implementations in `src/Runtime/NodeExecutors/`.
 

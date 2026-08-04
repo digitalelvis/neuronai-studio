@@ -58,4 +58,38 @@ class WorkflowEditorSaveTest extends TestCase
 
         $this->assertSame('parallel-support-triage-with-human-review-1', $workflow->slug);
     }
+
+    public function test_render_excludes_current_workflow_from_workflows_for_canvas(): void
+    {
+        $current = WorkflowDefinition::create([
+            'name' => 'Current Parent',
+            'slug' => 'current-parent-'.uniqid(),
+            'status' => 'draft',
+            'source' => 'studio',
+            'graph' => WorkflowDefinition::defaultGraph(),
+        ]);
+
+        $other = WorkflowDefinition::create([
+            'name' => 'Other Child',
+            'slug' => 'other-child-'.uniqid(),
+            'status' => 'draft',
+            'source' => 'studio',
+            'graph' => WorkflowDefinition::defaultGraph(),
+        ]);
+
+        $html = Livewire::test(Editor::class, ['workflow' => $current])
+            ->assertOk()
+            ->html();
+
+        $this->assertStringContainsString('workflows:', $html);
+        $this->assertStringContainsString('"id":'.$other->id, $html);
+        $this->assertStringContainsString('"name":"Other Child"', $html);
+        $this->assertStringNotContainsString('"name":"Current Parent"', preg_replace('/workflowName:.*?,/s', '', $html) ?? $html);
+
+        // Current workflow must not appear in the workflows picker payload.
+        $this->assertDoesNotMatchRegularExpression(
+            '/workflows:\s*\[[^\]]*"id":'.$current->id.'/',
+            $html,
+        );
+    }
 }

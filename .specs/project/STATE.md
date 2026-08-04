@@ -1,14 +1,20 @@
 # State
 
-**Last Updated:** 2026-07-28
+**Last Updated:** 2026-08-03
 **Development line (features):** `v2.1.x`
 **Patch line:** `v2.0.x`
 **Latest published:** `v2.0.0` on Packagist / `main`
-**Current Work:** M12 `studio-i18n` on `feat/studio-i18n` → `v2.1.x` (M11 Global Variables merged). TraceDetail bridge + OBS-06/OTel stay deferred.
+**Current Work:** M13 `execute-workflow` **done** (EW-T1…T10). Next: PR `feat/execute-workflow` → `v2.1.x`. TraceDetail bridge + OBS-06/OTel stay deferred.
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-030: Execute Workflow / Run Flow on canvas (2026-08-02)
+
+**Decision:** Open milestone **M13** with feature **`execute-workflow`**. New node type `run_workflow` supports **Step Mode** and **Tool Mode** in v1. Inputs = message + free state map (no `state_schema` UI). Child runs use `parent_run_id`; self-call forbidden; max nesting depth 3; nested HITL fails the node/tool (no parent resume). Reuses `toolable` / Actions / `toolset` from canvas-tool-mode; runtime via `WorkflowRunner` + `WorkflowAsTool`.
+**Reason:** Authors need Langflow Run Flow parity and the deferred nested workflow-as-tool gap after M10.
+**Impact:** Specs in [.specs/features/execute-workflow/](../features/execute-workflow/). ROADMAP M13. Execute on `v2.1.x`.
 
 ### AD-029: Studio i18n EN + pt_BR (2026-07-28)
 
@@ -391,6 +397,7 @@ Themes turned into specified features (AD-022 — shipped on `v0.9.x` / `v0.10.0
 
 - [x] **Canvas `invoke` / allowlisted hook node** — done: [`canvas-invoke-node`](../features/canvas-invoke-node/spec.md) shipped `v0.10.0`
 - [x] **Agent-as-tool / Tool Mode** — specified as [`canvas-tool-mode`](../features/canvas-tool-mode/spec.md) (M10 / AD-024); shipped `v1.1.0`
+- [x] **Nested workflow / Run Flow** — done as [`execute-workflow`](../features/execute-workflow/spec.md) (M13 / AD-030); PR → `v2.1.x` pending
 - [ ] Dedicated Usage page / advanced charts / filters (beyond M5 minimal Dashboard)
 - [ ] Multi-tenant / user attribution in usage
 - [ ] Embeddings / RAG cost as a separate line item
@@ -467,4 +474,6 @@ Themes turned into specified features (AD-022 — shipped on `v0.9.x` / `v0.10.0
 - [x] Execute M10 `canvas-tool-mode` (CTM-T1…T10) → release `v1.1.0`
 - [x] Table-prefix `feat(database)!` → release `v2.0.0` (AD-027)
 - [x] Open `v2.0.x` (patch) + `v2.1.x` (features); sync `v1.1.x` metadata
-- [ ] Next feature / milestone on `v2.1.x`
+- [x] Specify M13 `execute-workflow` (AD-030) — spec/design/tasks
+- [x] Execute M13 `execute-workflow` (EW-T1…T10) on `feat/execute-workflow` → `v2.1.x`
+- [ ] Merge `feat/execute-workflow` → `v2.1.x` (PR)

@@ -70,8 +70,24 @@ class TemplateInstaller
             $agentMap[$agentRef] = $this->installAgent($agentRef)->id;
         }
 
+        $workflowRefs = is_array($meta['workflows'] ?? null) ? $meta['workflows'] : [];
+        $workflowMap = [];
+
+        foreach ($workflowRefs as $workflowRef) {
+            $workflowRef = (string) $workflowRef;
+
+            if ($workflowRef === '') {
+                continue;
+            }
+
+            $workflowMap[$workflowRef] = $this->installWorkflowDependency($workflowRef)->id;
+        }
+
         $graph = $this->remapProviderDefaults(
-            $this->remapAgentRefs($template['graph'], $agentMap),
+            $this->remapWorkflowRefs(
+                $this->remapAgentRefs($template['graph'], $agentMap),
+                $workflowMap,
+            ),
         );
         $this->validator->assertValid($graph);
 
@@ -121,6 +137,103 @@ class TemplateInstaller
 
             $data['agent_id'] = $agentMap[$ref];
             unset($data['agent_ref']);
+            $nodes[$index]['data'] = $data;
+        }
+
+        $graph['nodes'] = $nodes;
+
+        return $graph;
+    }
+
+    /**
+     * Install a workflow template as a reusable dependency (stable slug = meta.id).
+     * Used when a parent template lists `meta.workflows` and `run_workflow` nodes use `workflow_ref`.
+     */
+    public function installWorkflowDependency(string $id): WorkflowDefinition
+    {
+        $template = $this->registry->load('workflow', $id);
+
+        if ($template === null) {
+            throw new InvalidArgumentException("Workflow template not found: {$id}");
+        }
+
+        $meta = $template['meta'];
+        $slug = (string) ($meta['id'] ?? $id);
+
+        $existing = WorkflowDefinition::where('slug', $slug)->first();
+        if ($existing !== null) {
+            return $existing;
+        }
+
+        $agentRefs = is_array($meta['agents'] ?? null) ? $meta['agents'] : [];
+        $agentMap = [];
+
+        foreach ($agentRefs as $agentRef) {
+            $agentRef = (string) $agentRef;
+            if ($agentRef === '') {
+                continue;
+            }
+            $agentMap[$agentRef] = $this->installAgent($agentRef)->id;
+        }
+
+        $nestedWorkflowRefs = is_array($meta['workflows'] ?? null) ? $meta['workflows'] : [];
+        $workflowMap = [];
+
+        foreach ($nestedWorkflowRefs as $workflowRef) {
+            $workflowRef = (string) $workflowRef;
+            if ($workflowRef === '') {
+                continue;
+            }
+            $workflowMap[$workflowRef] = $this->installWorkflowDependency($workflowRef)->id;
+        }
+
+        $graph = $this->remapProviderDefaults(
+            $this->remapWorkflowRefs(
+                $this->remapAgentRefs($template['graph'], $agentMap),
+                $workflowMap,
+            ),
+        );
+        $this->validator->assertValid($graph);
+
+        return WorkflowDefinition::create([
+            'name' => (string) ($meta['name'] ?? Str::headline($slug)),
+            'slug' => $slug,
+            'description' => (string) ($meta['description'] ?? ''),
+            'graph' => $graph,
+            'status' => 'draft',
+            'source' => 'studio',
+            'locked' => false,
+            'class_path' => null,
+        ]);
+    }
+
+    /** @param  array<string, int>  $workflowMap */
+    protected function remapWorkflowRefs(array $graph, array $workflowMap): array
+    {
+        if ($workflowMap === []) {
+            return $graph;
+        }
+
+        $nodes = $graph['nodes'] ?? [];
+
+        foreach ($nodes as $index => $node) {
+            if (($node['type'] ?? '') !== 'run_workflow') {
+                continue;
+            }
+
+            $data = $node['data'] ?? [];
+            $ref = (string) ($data['workflow_ref'] ?? '');
+
+            if ($ref === '') {
+                continue;
+            }
+
+            if (! isset($workflowMap[$ref])) {
+                throw new InvalidArgumentException("Workflow template references unknown workflow: {$ref}");
+            }
+
+            $data['workflow_id'] = (string) $workflowMap[$ref];
+            unset($data['workflow_ref']);
             $nodes[$index]['data'] = $data;
         }
 

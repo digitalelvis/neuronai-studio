@@ -2,6 +2,7 @@
 
 namespace DigitalElvis\NeuronAIStudio\Runtime;
 
+use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
 use DigitalElvis\NeuronAIStudio\Registry\NodeTypeRegistry;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\InvokeNodeExecutor;
 use InvalidArgumentException;
@@ -14,7 +15,7 @@ class GraphValidator
     ) {}
 
     /** @return array{valid: bool, errors: array<string>} */
-    public function validate(array $graph): array
+    public function validate(array $graph, ?int $currentWorkflowId = null): array
     {
         $errors = [];
         $nodes = array_values(array_filter(
@@ -86,6 +87,7 @@ class GraphValidator
         $errors = array_merge($errors, $this->validateParallel($nodes, $controlEdges));
         $errors = array_merge($errors, $this->validateInvokeNodes($nodes));
         $errors = array_merge($errors, $this->validateAgentNodes($nodes));
+        $errors = array_merge($errors, $this->validateRunWorkflowNodes($nodes, $currentWorkflowId));
         $errors = array_merge($errors, $this->validateToolModeNodes($nodes));
         $errors = array_merge($errors, $this->validateToolModeControlFlow($nodes, $edges));
         $errors = array_merge($errors, $this->validateToolBindingEdges($nodes, $edges));
@@ -192,7 +194,7 @@ class GraphValidator
                 $errors[] = "Node type '{$type}' is not toolable (node {$id}).";
             }
 
-            $slug = $this->resolveToolExposureSlug($data);
+            $slug = $this->resolveToolExposureSlug($data, $type);
             if (! preg_match('/^[A-Za-z_][A-Za-z0-9_]*$/', $slug)) {
                 $errors[] = "Tool Mode node {$id} has invalid tool_exposure.slug '{$slug}'.";
             }
@@ -249,6 +251,7 @@ class GraphValidator
     {
         $errors = [];
         $dataById = [];
+        $typeById = [];
 
         foreach ($nodes as $node) {
             $id = (string) ($node['id'] ?? '');
@@ -257,6 +260,7 @@ class GraphValidator
             }
 
             $dataById[$id] = is_array($node['data'] ?? null) ? $node['data'] : [];
+            $typeById[$id] = (string) ($node['type'] ?? '');
         }
 
         /** @var array<string, array<string, string>> $slugsBySupervisor */
@@ -277,7 +281,8 @@ class GraphValidator
                 continue;
             }
 
-            $slug = $this->resolveToolExposureSlug($dataById[$source] ?? []);
+            $sourceType = (string) ($typeById[$source] ?? 'agent');
+            $slug = $this->resolveToolExposureSlug($dataById[$source] ?? [], $sourceType);
             $existing = $slugsBySupervisor[$target][$slug] ?? null;
 
             if ($existing !== null && $existing !== $source) {
@@ -295,7 +300,7 @@ class GraphValidator
     /**
      * @param  array<string, mixed>  $data
      */
-    protected function resolveToolExposureSlug(array $data): string
+    protected function resolveToolExposureSlug(array $data, string $type = 'agent'): string
     {
         $exposure = is_array($data['tool_exposure'] ?? null) ? $data['tool_exposure'] : [];
         $slug = trim((string) ($exposure['slug'] ?? ''));
@@ -304,10 +309,64 @@ class GraphValidator
             return $slug;
         }
 
-        return (string) (
-            config('neuronai-studio.node_types.agent.tool_exposure.slug_prefix')
-            ?: 'call_agent'
-        );
+        $prefix = config("neuronai-studio.node_types.{$type}.tool_exposure.slug_prefix");
+
+        if (is_string($prefix) && $prefix !== '') {
+            return $prefix;
+        }
+
+        return $type === 'run_workflow' ? 'run_workflow' : 'call_agent';
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $nodes
+     * @return array<int, string>
+     */
+    protected function validateRunWorkflowNodes(array $nodes, ?int $currentWorkflowId = null): array
+    {
+        $errors = [];
+
+        foreach ($nodes as $node) {
+            if (($node['type'] ?? '') !== 'run_workflow') {
+                continue;
+            }
+
+            $id = (string) ($node['id'] ?? 'unknown');
+            $data = is_array($node['data'] ?? null) ? $node['data'] : [];
+            $workflowId = $data['workflow_id'] ?? null;
+
+            if ($workflowId === null || $workflowId === '') {
+                $errors[] = "Run Workflow node {$id} requires data.workflow_id.";
+
+                continue;
+            }
+
+            $targetId = (int) $workflowId;
+
+            if ($currentWorkflowId !== null && $targetId === $currentWorkflowId) {
+                $errors[] = "Run Workflow node {$id} cannot target the current workflow (self-reference).";
+
+                continue;
+            }
+
+            if (! WorkflowDefinition::studio()->whereKey($targetId)->exists()) {
+                $errors[] = "Run Workflow node {$id} targets unknown workflow_id {$targetId}.";
+            }
+
+            $stateMap = is_array($data['state_map'] ?? null) ? $data['state_map'] : [];
+            foreach ($stateMap as $index => $row) {
+                if (! is_array($row)) {
+                    continue;
+                }
+
+                $key = trim((string) ($row['key'] ?? ''));
+                if ($key === '') {
+                    $errors[] = "Run Workflow node {$id} has an empty state_map key at index {$index}.";
+                }
+            }
+        }
+
+        return $errors;
     }
 
     /**
@@ -384,7 +443,7 @@ class GraphValidator
                 continue;
             }
 
-            if ($sourceType === 'agent' && $sourceHandle === 'toolset') {
+            if (in_array($sourceType, ['agent', 'run_workflow'], true) && $sourceHandle === 'toolset') {
                 if (! $this->isToolModeEnabled($dataById[$source] ?? [])) {
                     $errors[] = "Toolset edge source must have tool_mode enabled ({$source}).";
                 }
@@ -393,7 +452,7 @@ class GraphValidator
             }
 
             if (! in_array($sourceType, ['tool', 'mcp'], true)) {
-                $errors[] = "Tools edge source must be a tool or mcp node (got {$sourceType} on {$source}).";
+                $errors[] = "Tools edge source must be a tool or mcp node, or a Tool Mode agent/run_workflow (got {$sourceType} on {$source}).";
             }
         }
 
@@ -656,9 +715,9 @@ class GraphValidator
         return $limits;
     }
 
-    public function assertValid(array $graph): void
+    public function assertValid(array $graph, ?int $currentWorkflowId = null): void
     {
-        $result = $this->validate($graph);
+        $result = $this->validate($graph, $currentWorkflowId);
 
         if (! $result['valid']) {
             throw new InvalidArgumentException(implode(' ', $result['errors']));

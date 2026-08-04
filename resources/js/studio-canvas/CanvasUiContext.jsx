@@ -3,6 +3,7 @@ import { createContext, useContext } from 'react';
 const CanvasUiContext = createContext({
     readOnly: false,
     agents: [],
+    workflows: [],
     tools: [],
     mcpServers: [],
     knowledgeBases: [],
@@ -10,6 +11,7 @@ const CanvasUiContext = createContext({
     outputClasses: [],
     providers: {},
     providerModels: {},
+    variables: [],
     defaultProvider: '',
     defaultModel: '',
     nodeTypesMeta: {},
@@ -18,6 +20,7 @@ const CanvasUiContext = createContext({
 export function CanvasUiProvider({
     readOnly = false,
     agents = [],
+    workflows = [],
     tools = [],
     mcpServers = [],
     knowledgeBases = [],
@@ -25,6 +28,7 @@ export function CanvasUiProvider({
     outputClasses = [],
     providers = {},
     providerModels = {},
+    variables = [],
     defaultProvider = '',
     defaultModel = '',
     nodeTypesMeta = {},
@@ -35,6 +39,7 @@ export function CanvasUiProvider({
             value={{
                 readOnly,
                 agents,
+                workflows,
                 tools,
                 mcpServers,
                 knowledgeBases,
@@ -42,6 +47,7 @@ export function CanvasUiProvider({
                 outputClasses,
                 providers,
                 providerModels,
+                variables,
                 defaultProvider,
                 defaultModel,
                 nodeTypesMeta,

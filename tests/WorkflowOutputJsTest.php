@@ -67,4 +67,112 @@ JS;
 
         $this->assertSame(0, $exitCode, implode("\n", $output));
     }
+
+    public function test_pretty_thread_expands_run_workflow_child_output_json(): void
+    {
+        $projectRoot = dirname(__DIR__);
+        $script = <<<'JS'
+import { buildWorkflowPrettyThread } from './resources/js/studio-chat/utils/workflowOutput.js';
+
+const childOutput = JSON.stringify({
+    input: 'oi',
+    agent_response: 'Tudo bem?',
+    __steps: [
+        {
+            node_id: 'start_1',
+            node_type: 'start',
+            state_snapshot: { input: 'oi' },
+        },
+        {
+            node_id: 'agent_1',
+            node_type: 'agent',
+            state_snapshot: { input: 'oi', agent_response: 'Tudo bem?' },
+            duration_ms: 120,
+            total_tokens: 20,
+            estimated_cost: '0.000100',
+            currency: 'USD',
+        },
+        {
+            node_id: 'stop_1',
+            node_type: 'stop',
+            state_snapshot: { input: 'oi', agent_response: 'Tudo bem?' },
+        },
+    ],
+});
+
+const output = {
+    input: 'oi',
+    child_output: childOutput,
+    __steps: [
+        {
+            node_id: 'start_1',
+            node_type: 'start',
+            state_snapshot: { input: 'oi' },
+        },
+        {
+            node_id: 'run_wf_1',
+            node_type: 'run_workflow',
+            state_snapshot: { input: 'oi', child_output: childOutput },
+            duration_ms: 200,
+        },
+        {
+            node_id: 'stop_1',
+            node_type: 'stop',
+            state_snapshot: { input: 'oi', child_output: childOutput },
+        },
+    ],
+};
+
+const thread = buildWorkflowPrettyThread(output, 'oi');
+const agentEntry = thread.find((entry) => entry.nodeType === 'agent');
+const blobEntry = thread.find((entry) => entry.nodeId === 'child_output' || entry.label === 'child_output');
+
+const ok = thread[0]?.nodeType === 'start'
+    && agentEntry?.content === 'Tudo bem?'
+    && agentEntry?.label === 'run_wf_1 › agent_1'
+    && agentEntry?.usage?.totalTokens === 20
+    && !blobEntry;
+
+process.exit(ok ? 0 : 1);
+JS;
+
+        $command = 'cd '.escapeshellarg($projectRoot).' && node --input-type=module -e '.escapeshellarg($script);
+        $output = [];
+        $exitCode = 0;
+        exec($command.' 2>&1', $output, $exitCode);
+
+        $this->assertSame(0, $exitCode, implode("\n", $output));
+    }
+
+    public function test_pretty_thread_expands_child_output_in_fallback_without_parent_steps(): void
+    {
+        $projectRoot = dirname(__DIR__);
+        $script = <<<'JS'
+import { buildWorkflowPrettyThread } from './resources/js/studio-chat/utils/workflowOutput.js';
+
+const childOutput = JSON.stringify({
+    input: 'oi',
+    agent_response: 'Tudo bem?',
+});
+
+const thread = buildWorkflowPrettyThread({
+    input: 'oi',
+    child_output: childOutput,
+}, 'oi');
+
+const agentOrOutput = thread.find((entry) => entry.content === 'Tudo bem?');
+const ok = thread[0]?.nodeType === 'start'
+    && agentOrOutput != null
+    && !thread.some((entry) => entry.label === 'child_output' && String(entry.content).includes('"agent_response"'));
+
+process.exit(ok ? 0 : 1);
+JS;
+
+        $command = 'cd '.escapeshellarg($projectRoot).' && node --input-type=module -e '.escapeshellarg($script);
+        $output = [];
+        $exitCode = 0;
+        exec($command.' 2>&1', $output, $exitCode);
+
+        $this->assertSame(0, $exitCode, implode("\n", $output));
+    }
 }

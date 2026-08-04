@@ -28,6 +28,10 @@ Open a workflow editor and use the **Test** panel (workflow chat harness). Each 
 
 ![Workflow test harness](../../assets/screenshots/workflows-test-harness.png)
 
+## Nested workflows (`run_workflow`)
+
+A **Run Workflow** Step creates a child `StudioRun` with `parent_run_id` pointing at the parent run and stamps `__workflow_nesting_depth` on the child (max depth **3**). Child output is stored on the parent state at `output_key` (default `child_output`) as a string (JSON when structured). Pretty Chat expands that nested payload into the step chain when possible. Tool Mode uses the same runner/`WorkflowAsTool` rules. See [Logic nodes → Run Workflow](node-types/logic-nodes.md#run-workflow).
+
 ## Streaming architecture
 
 ```mermaid

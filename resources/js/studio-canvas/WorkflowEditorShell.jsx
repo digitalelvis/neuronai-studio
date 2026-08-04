@@ -62,6 +62,7 @@ export default function WorkflowEditorShell({ config }) {
             setToolExposureEdit({
                 id: event.detail.id,
                 data: event.detail.data || {},
+                nodeType: event.detail.nodeType || 'agent',
             });
         };
 
@@ -144,6 +145,7 @@ export default function WorkflowEditorShell({ config }) {
                                 defaultProvider={config.defaultProvider ?? ''}
                                 defaultModel={config.defaultModel ?? ''}
                                 agents={config.agents || []}
+                                workflows={config.workflows || []}
                                 tools={toolsCatalog}
                                 mcpServers={config.mcpServers || []}
                                 knowledgeBases={config.knowledgeBases || []}
@@ -151,6 +153,7 @@ export default function WorkflowEditorShell({ config }) {
                                 outputClasses={config.outputClasses || []}
                                 providers={config.providers || {}}
                                 providerModels={config.providerModels || {}}
+                                variables={config.variables || []}
                                 onValidate={handleValidate}
                                 onGraphChange={(graph) => {
                                     window.__workflowGraph = graph;
@@ -230,7 +233,7 @@ export default function WorkflowEditorShell({ config }) {
                     }}
                     nodeId={toolExposureEdit?.id}
                     nodeData={toolExposureEdit?.data || {}}
-                    typeMeta={nodeTypesMeta.agent || {}}
+                    typeMeta={nodeTypesMeta[toolExposureEdit?.nodeType] || nodeTypesMeta.agent || {}}
                     readOnly={readOnly}
                     onSave={(nextData) => {
                         if (!toolExposureEdit?.id) {
@@ -279,6 +282,7 @@ export default function WorkflowEditorShell({ config }) {
 
                 <NodeEditSheet
                     agents={config.agents || []}
+                    workflows={config.workflows || []}
                     tools={toolsCatalog}
                     mcpServers={config.mcpServers || []}
                     knowledgeBases={config.knowledgeBases || []}

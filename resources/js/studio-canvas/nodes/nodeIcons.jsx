@@ -13,6 +13,7 @@ import {
     Search,
     Square,
     StickyNote,
+    Workflow,
     Wrench,
     Play,
 } from 'lucide-react';
@@ -33,6 +34,7 @@ const ICON_MAP = {
     repeat: Repeat,
     plug: Plug,
     sticky: StickyNote,
+    workflow: Workflow,
     circle: Circle,
 };
 
