@@ -36,6 +36,7 @@ export default function NodeConfigForm({
     outputClasses = [],
     providers = {},
     providerModels = {},
+    variables: variablesProp,
     defaultProvider = '',
     defaultModel = '',
     nodeTypesMeta: nodeTypesMetaProp,
@@ -50,7 +51,8 @@ export default function NodeConfigForm({
     const canvasUi = useCanvasUi();
     const nodeTypesMeta = nodeTypesMetaProp || canvasUi.nodeTypesMeta || {};
     const workflowOptions = workflows.length > 0 ? workflows : canvasUi.workflows || [];
-    const variables = canvasUi.variables || [];
+    // Prefer explicit prop: sidebar inspector lives outside CanvasUiProvider.
+    const variables = Array.isArray(variablesProp) ? variablesProp : canvasUi.variables || [];
 
     if (!node) {
         return <p className="text-sm text-muted-foreground">Select a node to configure it.</p>;

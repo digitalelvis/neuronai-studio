@@ -19,6 +19,7 @@ export default function NodeInspectorSidebar({
     outputClasses = [],
     providers = {},
     providerModels = {},
+    variables = [],
     defaultProvider = '',
     defaultModel = '',
     nodeTypesMeta = {},
@@ -81,6 +82,7 @@ export default function NodeInspectorSidebar({
                             outputClasses={outputClasses}
                             providers={providers}
                             providerModels={providerModels}
+                            variables={variables}
                             defaultProvider={defaultProvider}
                             defaultModel={defaultModel}
                             nodeTypesMeta={nodeTypesMeta}

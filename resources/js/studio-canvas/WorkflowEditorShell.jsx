@@ -13,7 +13,7 @@ import ToolExposureModal from './ToolExposureModal';
 import ToolActionsModal from './ToolActionsModal';
 import PlaygroundOverlay from './chrome/PlaygroundOverlay';
 import ShareMenu from './chrome/ShareMenu';
-import LogsDrawer from './chrome/LogsDrawer';
+import BottomDock from './chrome/BottomDock';
 
 function syncBreadcrumbName(name) {
     const label = document.querySelector('#workflow-breadcrumb-name .studio-breadcrumb-edit-label');
@@ -145,73 +145,72 @@ export default function WorkflowEditorShell({ config }) {
                     </ResizablePanel>
                     <ResizableHandle withHandle />
                     <ResizablePanel defaultSize={showInspector ? 54 : 82} minSize={40}>
-                        <div className="relative h-full min-h-0 overflow-hidden">
-                            <WorkflowCanvas
-                                graph={config.graph}
-                                nodeTypesMeta={config.nodeTypes || {}}
-                                readOnly={readOnly}
-                                defaultProvider={config.defaultProvider ?? ''}
-                                defaultModel={config.defaultModel ?? ''}
-                                agents={config.agents || []}
-                                workflows={config.workflows || []}
-                                tools={toolsCatalog}
-                                mcpServers={config.mcpServers || []}
-                                knowledgeBases={config.knowledgeBases || []}
-                                ragSearchUrlTemplate={config.ragSearchUrlTemplate ?? ''}
-                                outputClasses={config.outputClasses || []}
-                                providers={config.providers || {}}
-                                providerModels={config.providerModels || {}}
-                                variables={config.variables || []}
-                                onValidate={handleValidate}
-                                onGraphChange={(graph) => {
-                                    window.__workflowGraph = graph;
-                                    const saved = window.__NEURONAI_CANVAS_CONFIG?.savedGraph;
-                                    window.__workflowGraphDirty = saved
-                                        ? JSON.stringify(saved) !== JSON.stringify(graph)
-                                        : false;
-                                    window.dispatchEvent(new CustomEvent('workflow-graph-changed'));
-                                }}
+                        <div className="flex h-full min-h-0 flex-col overflow-hidden">
+                            <div className="relative min-h-0 flex-1 overflow-hidden">
+                                <WorkflowCanvas
+                                    graph={config.graph}
+                                    nodeTypesMeta={config.nodeTypes || {}}
+                                    readOnly={readOnly}
+                                    defaultProvider={config.defaultProvider ?? ''}
+                                    defaultModel={config.defaultModel ?? ''}
+                                    agents={config.agents || []}
+                                    workflows={config.workflows || []}
+                                    tools={toolsCatalog}
+                                    mcpServers={config.mcpServers || []}
+                                    knowledgeBases={config.knowledgeBases || []}
+                                    ragSearchUrlTemplate={config.ragSearchUrlTemplate ?? ''}
+                                    outputClasses={config.outputClasses || []}
+                                    providers={config.providers || {}}
+                                    providerModels={config.providerModels || {}}
+                                    variables={config.variables || []}
+                                    onValidate={handleValidate}
+                                    onGraphChange={(graph) => {
+                                        window.__workflowGraph = graph;
+                                        const saved = window.__NEURONAI_CANVAS_CONFIG?.savedGraph;
+                                        window.__workflowGraphDirty = saved
+                                            ? JSON.stringify(saved) !== JSON.stringify(graph)
+                                            : false;
+                                        window.dispatchEvent(new CustomEvent('workflow-graph-changed'));
+                                    }}
+                                />
+
+                                <div className="ab-canvas-fabs-top pointer-events-none absolute right-4 top-4 z-20 flex items-center gap-2">
+                                    <div className="pointer-events-auto flex items-center gap-2">
+                                        <PlaygroundOverlay
+                                            workflowConfig={workflowPanelConfig}
+                                            onBeforeRun={window.saveGraphBeforeRun}
+                                        />
+                                        <ShareMenu workflowConfig={workflowPanelConfig} />
+                                        {!readOnly && (
+                                            <>
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    className="ab-fab gap-1.5 shadow-lg"
+                                                    onClick={() => setImportOpen(true)}
+                                                >
+                                                    <Upload className="h-3.5 w-3.5" />
+                                                    Import
+                                                </Button>
+                                                <Button
+                                                    size="sm"
+                                                    className="ab-fab gap-1.5 shadow-lg"
+                                                    onClick={handleSave}
+                                                >
+                                                    <Save className="h-3.5 w-3.5" />
+                                                    Save
+                                                </Button>
+                                            </>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <BottomDock
+                                workflowConfig={workflowPanelConfig}
+                                nodeTypesMeta={nodeTypesMeta}
+                                validationMessage={validationMessage}
                             />
-
-                            <div className="ab-canvas-fabs-top pointer-events-none absolute right-4 top-4 z-20 flex items-center gap-2">
-                                <div className="pointer-events-auto flex items-center gap-2">
-                                    <PlaygroundOverlay
-                                        workflowConfig={workflowPanelConfig}
-                                        onBeforeRun={window.saveGraphBeforeRun}
-                                    />
-                                    <ShareMenu workflowConfig={workflowPanelConfig} />
-                                    {!readOnly && (
-                                        <>
-                                            <Button
-                                                variant="outline"
-                                                size="sm"
-                                                className="ab-fab gap-1.5 shadow-lg"
-                                                onClick={() => setImportOpen(true)}
-                                            >
-                                                <Upload className="h-3.5 w-3.5" />
-                                                Import
-                                            </Button>
-                                            <Button
-                                                size="sm"
-                                                className="ab-fab gap-1.5 shadow-lg"
-                                                onClick={handleSave}
-                                            >
-                                                <Save className="h-3.5 w-3.5" />
-                                                Save
-                                            </Button>
-                                        </>
-                                    )}
-                                </div>
-                            </div>
-
-                            <div className="ab-canvas-fabs-bottom pointer-events-none absolute bottom-4 left-4 z-20">
-                                <div className="pointer-events-auto">
-                                    <LogsDrawer
-                                        workflowConfig={workflowPanelConfig}
-                                        validationMessage={validationMessage}
-                                    />
-                                </div>
-                            </div>
                         </div>
                     </ResizablePanel>
 
@@ -239,6 +238,7 @@ export default function WorkflowEditorShell({ config }) {
                                     outputClasses={config.outputClasses || []}
                                     providers={config.providers || {}}
                                     providerModels={config.providerModels || {}}
+                                    variables={config.variables || []}
                                     defaultProvider={config.defaultProvider ?? ''}
                                     defaultModel={config.defaultModel ?? ''}
                                     nodeTypesMeta={nodeTypesMeta}
