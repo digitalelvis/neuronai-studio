@@ -37,6 +37,8 @@ class IntentClassifierNodeCodegenTest extends TestCase
         $this->assertStringContainsString('IntentClassifierNodeExecutor::normalizeIntents', $result['body']);
         $this->assertStringContainsString('structuredInline(', $result['body']);
         $this->assertStringContainsString('IntentClassificationResult::class', $result['body']);
+        $this->assertStringContainsString('resolveClassifierMemoryConfig', $result['body']);
+        $this->assertStringContainsString("__studio_thread_id", $result['body']);
         $this->assertStringContainsString("return new BillingEvent();", $result['body']);
         $this->assertStringContainsString("return new OtherEvent();", $result['body']);
         $this->assertStringContainsString("resolveAttachmentsForNode", $result['body']);

@@ -42,22 +42,18 @@ class IntentClassifierNodeExecutor implements NodeExecutorInterface
         $attachments = $this->messages->resolveAttachmentsForNode($data, $state, defaultVision: false);
         $userMessage = $this->messages->resolveMessageWithAttachments($message, $attachments);
 
-        $memoryEnabled = ($data['memory'] ?? false) === true;
-        $threadKey = null;
-        if ($memoryEnabled) {
-            $threadId = $state->get('__studio_thread_id');
-            $threadKey = is_string($threadId) && $threadId !== '' ? $threadId : null;
-        }
+        // Always nest under the workflow conversation thread for metering (like LLM).
+        // Memory only controls whether chat history is loaded (eloquent vs in-memory).
+        $threadId = $state->get('__studio_thread_id');
+        $threadKey = is_string($threadId) && $threadId !== '' ? $threadId : null;
 
+        $memoryEnabled = ($data['memory'] ?? false) === true;
         $config = [
             'provider' => $provider,
             'model' => $model,
             'instructions' => self::buildInstructions($intents, (string) ($data['instructions'] ?? '')),
+            'memory_config' => self::resolveClassifierMemoryConfig($memoryEnabled, $data),
         ];
-
-        if ($memoryEnabled && isset($data['memory_config']) && is_array($data['memory_config'])) {
-            $config['memory_config'] = $data['memory_config'];
-        }
 
         $parentRun = $this->resolveParentRun($state);
 
@@ -77,6 +73,28 @@ class IntentClassifierNodeExecutor implements NodeExecutorInterface
         $this->captureRunUsage($state, $result->runId);
 
         return $chosenId;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    public static function resolveClassifierMemoryConfig(bool $memoryEnabled, array $data): array
+    {
+        if (! $memoryEnabled) {
+            return ['driver' => 'in_memory'];
+        }
+
+        $override = isset($data['memory_config']) && is_array($data['memory_config'])
+            ? $data['memory_config']
+            : [];
+
+        // Explicit eloquent (or inherit) so history loads from the workflow thread.
+        if (! isset($override['driver']) || $override['driver'] === null || $override['driver'] === '') {
+            $override['driver'] = 'eloquent';
+        }
+
+        return $override;
     }
 
     /**

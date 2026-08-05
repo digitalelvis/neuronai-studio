@@ -566,7 +566,8 @@ export default function NodeConfigForm({
                                     <div className="space-y-0.5">
                                         <Label htmlFor="intent-memory-toggle">Memory</Label>
                                         <p className="text-xs text-muted-foreground">
-                                            Include conversation history from the workflow thread.
+                                            Include prior conversation turns when classifying.
+                                            Metering always reuses the workflow thread.
                                         </p>
                                     </div>
                                     <Checkbox

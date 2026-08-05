@@ -46,12 +46,6 @@ class IntentClassifierNodeCodeGenerator implements NodeCodeGeneratorInterface
         $branchBlocks[] = "        {$fallbackReturn}";
         $branchPhp = implode("\n\n", $branchBlocks);
 
-        $memoryConfigBlock = '';
-        if (($data['memory'] ?? false) === true && isset($data['memory_config']) && is_array($data['memory_config'])) {
-            $memoryConfigExport = $context->exporter->exportValue($data['memory_config'], 3);
-            $memoryConfigBlock = "\n            'memory_config' => {$memoryConfigExport},";
-        }
-
         $body = <<<PHP
         \$intentsList = {$intentsExport};
         \$intents = IntentClassifierNodeExecutor::normalizeIntents(\$intentsList);
@@ -72,16 +66,18 @@ class IntentClassifierNodeCodeGenerator implements NodeCodeGeneratorInterface
         );
         \$userMessage = app(MessageFactory::class)->resolveMessageWithAttachments(\$prompt, \$attachments);
 
-        \$threadKey = null;
-        if ({$memory}) {
-            \$threadId = \$state->get('__studio_thread_id');
-            \$threadKey = is_string(\$threadId) && \$threadId !== '' ? \$threadId : null;
-        }
+        \$threadId = \$state->get('__studio_thread_id');
+        \$threadKey = is_string(\$threadId) && \$threadId !== '' ? \$threadId : null;
+        \$nodeData = ['memory' => {$memory}, 'memory_config' => {$context->exporter->exportValue(
+            is_array($data['memory_config'] ?? null) ? $data['memory_config'] : [],
+            3
+        )}];
 
         \$result = app(AgentRunner::class)->structuredInline([
             'provider' => {$this->exportConfigValue($provider)},
             'model' => {$this->exportConfigValue($model)},
-            'instructions' => IntentClassifierNodeExecutor::buildInstructions(\$intents, {$extraInstructions}),{$memoryConfigBlock}
+            'instructions' => IntentClassifierNodeExecutor::buildInstructions(\$intents, {$extraInstructions}),
+            'memory_config' => IntentClassifierNodeExecutor::resolveClassifierMemoryConfig({$memory}, \$nodeData),
         ], \$userMessage, {$shortClass}::class, threadKey: \$threadKey);
 
         \$chosenId = IntentClassifierNodeExecutor::resolveIntentId(\$result->structured, \$intents);

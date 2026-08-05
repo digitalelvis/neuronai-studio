@@ -196,4 +196,56 @@ class IntentClassifierNodeExecutorTest extends TestCase
             $intents,
         ));
     }
+
+    public function test_memory_off_reuses_workflow_thread_with_in_memory_driver(): void
+    {
+        $thread = \DigitalElvis\NeuronAIStudio\Models\StudioThread::create([
+            'id' => (string) \Illuminate\Support\Str::uuid(),
+        ]);
+        $parent = \DigitalElvis\NeuronAIStudio\Models\StudioRun::create([
+            'id' => (string) \Illuminate\Support\Str::uuid(),
+            'thread_id' => $thread->id,
+            'status' => 'running',
+        ]);
+
+        $fakeProvider = new FakeAIProvider(
+            new AssistantMessage('{"intent_id": "other"}'),
+        );
+        $executor = $this->makeExecutor($fakeProvider);
+        $context = new GraphContext([], []);
+        $state = new BuilderWorkflowState($context, null, [
+            'input' => 'Hello',
+            '__studio_thread_id' => $thread->id,
+            '__studio_run_id' => $parent->id,
+        ]);
+
+        $threadsBefore = \DigitalElvis\NeuronAIStudio\Models\StudioThread::query()->count();
+
+        $executor->execute([
+            'data' => [
+                'provider' => 'openai',
+                'model' => 'gpt-4o-mini',
+                'memory' => false,
+                'intents' => $this->sampleIntents(),
+            ],
+        ], $state, $context);
+
+        $this->assertSame($threadsBefore, \DigitalElvis\NeuronAIStudio\Models\StudioThread::query()->count());
+
+        $child = \DigitalElvis\NeuronAIStudio\Models\StudioRun::query()
+            ->where('parent_run_id', $parent->id)
+            ->latest('created_at')
+            ->first();
+
+        $this->assertNotNull($child);
+        $this->assertSame($thread->id, $child->thread_id);
+        $this->assertSame(
+            ['driver' => 'in_memory'],
+            IntentClassifierNodeExecutor::resolveClassifierMemoryConfig(false, []),
+        );
+        $this->assertSame(
+            'eloquent',
+            IntentClassifierNodeExecutor::resolveClassifierMemoryConfig(true, [])['driver'],
+        );
+    }
 }

@@ -174,10 +174,10 @@ Use when you need a one-off LLM step without tool bindings.
 | `instructions` | Optional extra guidance for the classifier |
 | `output_key` | State key for the chosen intent id (default `intent`); also writes `{output_key}_name` |
 | `vision` | When `true`, include run attachments (default `false`) |
-| `memory` | When `true`, reuse `__studio_thread_id` chat history |
+| `memory` | When `true`, load conversation history from the workflow thread (default `false` uses in-memory history only) |
 | `memory_config.context_window` | Optional token budget override when memory is on |
 
-Classification uses Neuron structured output (`IntentClassificationResult`). Unknown ids fall back to `other` / `unknown` when present.
+Classification uses Neuron structured output (`IntentClassificationResult`). Unknown ids fall back to `other` / `unknown` when present. Nested classifier runs always reuse `__studio_thread_id` for metering; **Memory** only toggles whether prior turns are sent to the model.
 
 ### Handles
 
