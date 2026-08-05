@@ -47,6 +47,7 @@ class NodeAsToolTest extends TestCase
         $this->assertCount(1, $resolved);
         $this->assertInstanceOf(NodeAsTool::class, $resolved[0]);
         $this->assertInstanceOf(ToolInterface::class, $resolved[0]);
+        $this->assertInstanceOf(\DigitalElvis\NeuronAIStudio\Runtime\Tools\ToolContextAware::class, $resolved[0]);
         $this->assertSame('research_agent', $resolved[0]->getName());
     }
 

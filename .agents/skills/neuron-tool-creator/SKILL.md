@@ -592,6 +592,66 @@ class MyAgent extends Agent
 }
 ```
 
+## Studio: Runtime ToolContext (NeuronAI Studio)
+
+Neuron core does **not** inject agent/workflow state into tools. In **NeuronAI Studio**, opt into a filtered snapshot so tools can read `account_id`, attachments, etc. without adding LLM tool properties.
+
+```php
+use DigitalElvis\NeuronAIStudio\Runtime\Tools\InteractsWithToolContext;
+use DigitalElvis\NeuronAIStudio\Runtime\Tools\ToolContextAware;
+use NeuronAI\Tools\Tool;
+use NeuronAI\Tools\ToolProperty;
+use NeuronAI\Tools\PropertyType;
+
+class LookupPlanTool extends Tool implements ToolContextAware
+{
+    use InteractsWithToolContext;
+
+    public function __construct()
+    {
+        parent::__construct(
+            name: 'lookup_plan',
+            description: 'Look up plan details for the authenticated contact.'
+        );
+    }
+
+    protected function properties(): array
+    {
+        // NEVER put account_id / user_id / session_id here — the model can invent them
+        return [
+            ToolProperty::make(
+                name: 'question',
+                type: PropertyType::STRING,
+                description: 'What to look up about the plan',
+                required: true
+            ),
+        ];
+    }
+
+    public function __invoke(string $question): string
+    {
+        $accountId = $this->contextGet('integration_context.account_id');
+        $planSlug = $this->contextGet('integration_context.plan_slug');
+
+        return json_encode([
+            'account_id' => $accountId,
+            'plan_slug' => $planSlug,
+            'question' => $question,
+        ]);
+    }
+}
+```
+
+How context arrives:
+
+| Entry point | Source |
+|-------------|--------|
+| Workflow agent node | Filtered `WorkflowState` snapshot (`tool_context`) |
+| Agent integrate / playground | `context` payload → `tool_context` (prompt augmentation still runs) |
+| `NodeAsTool` / `WorkflowAsTool` | Same snapshot forwarded to nested runs |
+
+See package docs: `docs/guides/tools/runtime-tool-context.md`.
+
 ## Best Practices
 
 ### 1. Write Clear Descriptions

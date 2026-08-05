@@ -16,6 +16,8 @@ use DigitalElvis\NeuronAIStudio\Support\ProviderParameters;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\StructuredOutputValidationException;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ToolApprovalRequiredException;
 use DigitalElvis\NeuronAIStudio\Runtime\Memory\MemoryConfig;
+use DigitalElvis\NeuronAIStudio\Runtime\Tools\ToolContext;
+use DigitalElvis\NeuronAIStudio\Runtime\Tools\ToolContextInjector;
 use DigitalElvis\NeuronAIStudio\Usage\UsageRecorder;
 use Illuminate\Support\Str;
 use Generator;
@@ -731,12 +733,17 @@ class AgentRunner
 
         $parameters = is_array($payload['parameters'] ?? null) ? $payload['parameters'] : [];
 
+        $toolContext = $context !== []
+            ? ToolContext::fromArray($context)
+            : ($payload['tool_context'] ?? null);
+
         return [
             'provider' => $definition->provider,
             'model' => $definition->model,
             'instructions' => PlaygroundContext::augmentInstructions($instructions, $context),
             'tools' => $definition->tools ?? [],
             'parameters' => $parameters,
+            'tool_context' => $toolContext,
         ];
     }
 
@@ -760,10 +767,12 @@ class AgentRunner
             );
         }
 
+        $toolContext = ToolContextInjector::fromConfig($config['tool_context'] ?? null);
+
         $tools = [];
         foreach ($config['tools'] ?? [] as $item) {
             if ($item instanceof ToolInterface || $item instanceof ToolkitInterface || $item instanceof ProviderToolInterface) {
-                $tools[] = $item;
+                $tools[] = ToolContextInjector::apply($item, $toolContext);
 
                 continue;
             }
@@ -773,7 +782,7 @@ class AgentRunner
             }
 
             foreach ($this->toolResolver->resolve((string) $item['ref'], $item) as $resolved) {
-                $tools[] = $resolved;
+                $tools[] = ToolContextInjector::apply($resolved, $toolContext);
             }
         }
         $memory = $this->resolveMemoryConfig($definition, $config);
