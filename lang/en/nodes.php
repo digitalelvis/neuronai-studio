@@ -6,6 +6,7 @@ return [
     'agent' => 'Agent',
     'agent_tool_description' => 'Delegate a task to this specialized agent.',
     'llm' => 'LLM',
+    'intent_classifier' => 'Intent Classifier',
     'condition' => 'Condition',
     'set_state' => 'Set State',
     'invoke' => 'Invoke',

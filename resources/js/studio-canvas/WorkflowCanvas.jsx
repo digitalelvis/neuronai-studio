@@ -376,8 +376,35 @@ function WorkflowCanvasInner({
                           model: defaultModel,
                           output_key: 'llm_response',
                           stream: true,
+                          vision: true,
                       }
-                    : type === 'agent'
+                    : type === 'intent_classifier'
+                      ? {
+                            provider: defaultProvider,
+                            model: defaultModel,
+                            message: '{{input}}',
+                            output_key: 'intent',
+                            vision: false,
+                            memory: false,
+                            intents: [
+                                {
+                                    id: 'after_sales',
+                                    name: 'After sales',
+                                    description: 'Question related to after sales',
+                                },
+                                {
+                                    id: 'how_to',
+                                    name: 'How to use',
+                                    description: 'Questions about how to use products',
+                                },
+                                {
+                                    id: 'other',
+                                    name: 'Other',
+                                    description: 'Other questions',
+                                },
+                            ],
+                        }
+                      : type === 'agent'
                       ? {
                             config_mode: 'inline',
                             tool_mode: false,

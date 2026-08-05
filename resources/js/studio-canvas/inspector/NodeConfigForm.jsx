@@ -13,6 +13,7 @@ import {
 import ProviderModelFields from './ProviderModelFields';
 import StructuredOutputFields from './shared/StructuredOutputFields';
 import StreamToggleField from './shared/StreamToggleField';
+import VisionToggleField from './shared/VisionToggleField';
 import RagFields from './shared/RagFields';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Switch } from '@/components/ui/switch';
@@ -488,6 +489,12 @@ export default function NodeConfigForm({
                                 readOnly={readOnly}
                                 onChange={(patch) => onUpdate?.({ ...data, ...patch })}
                             />
+                            <VisionToggleField
+                                vision={data.vision !== false}
+                                defaultOn
+                                readOnly={readOnly}
+                                onChange={(patch) => onUpdate?.({ ...data, ...patch })}
+                            />
                         </>
                     )}
                     {showAdvanced && (
@@ -498,6 +505,106 @@ export default function NodeConfigForm({
                             readOnly={readOnly}
                             onChange={(patch) => onUpdate?.({ ...data, ...patch })}
                         />
+                    )}
+                </>
+            )}
+
+            {node.type === 'intent_classifier' && (
+                <>
+                    {showControls && (
+                        <>
+                            <ProviderModelFields
+                                provider={data.provider}
+                                model={data.model}
+                                providers={providers}
+                                providerModels={providerModels}
+                                defaultProvider={defaultProvider}
+                                defaultModel={defaultModel}
+                                readOnly={readOnly}
+                                onChange={(patch) => onUpdate?.({ ...data, ...patch })}
+                            />
+                            <div className="space-y-2">
+                                <Label>Message</Label>
+                                <ExpandableTextField
+                                    rows={compact ? 2 : 3}
+                                    value={data.message ?? '{{input}}'}
+                                    onChange={(e) => updateField('message', e.target.value)}
+                                    disabled={readOnly}
+                                    label="Edit message"
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label>Output Key</Label>
+                                <Input
+                                    value={data.output_key ?? 'intent'}
+                                    onChange={(e) => updateField('output_key', e.target.value)}
+                                    disabled={readOnly}
+                                />
+                            </div>
+                            <IntentEditor data={data} readOnly={readOnly} onUpdate={onUpdate} />
+                            <div className="space-y-2">
+                                <Label>Instructions</Label>
+                                <p className="text-xs text-muted-foreground">
+                                    Optional guidance to help the model choose the right intent.
+                                </p>
+                                <ExpandableTextField
+                                    rows={compact ? 2 : 3}
+                                    value={data.instructions ?? ''}
+                                    onChange={(e) => updateField('instructions', e.target.value)}
+                                    disabled={readOnly}
+                                    label="Edit instructions"
+                                    placeholder="e.g. Prefer how_to when the user asks about features or setup…"
+                                />
+                            </div>
+                            <VisionToggleField
+                                vision={Boolean(data.vision)}
+                                readOnly={readOnly}
+                                onChange={(patch) => onUpdate?.({ ...data, ...patch })}
+                            />
+                            <div className="space-y-2 rounded-md border border-border bg-muted/20 p-3">
+                                <div className="flex items-center justify-between gap-3">
+                                    <div className="space-y-0.5">
+                                        <Label htmlFor="intent-memory-toggle">Memory</Label>
+                                        <p className="text-xs text-muted-foreground">
+                                            Include conversation history from the workflow thread.
+                                        </p>
+                                    </div>
+                                    <Checkbox
+                                        id="intent-memory-toggle"
+                                        checked={Boolean(data.memory)}
+                                        onCheckedChange={(checked) =>
+                                            onUpdate?.({ ...data, memory: checked === true })
+                                        }
+                                        disabled={readOnly}
+                                    />
+                                </div>
+                                {Boolean(data.memory) && (
+                                    <div className="space-y-2 pt-2">
+                                        <Label>Context window (tokens)</Label>
+                                        <Input
+                                            type="number"
+                                            min={1}
+                                            value={data.memory_config?.context_window ?? ''}
+                                            onChange={(e) => {
+                                                const value =
+                                                    e.target.value === ''
+                                                        ? null
+                                                        : Number(e.target.value);
+                                                onUpdate?.({
+                                                    ...data,
+                                                    memory_config: {
+                                                        ...(data.memory_config || {}),
+                                                        context_window: value,
+                                                    },
+                                                });
+                                            }}
+                                            disabled={readOnly}
+                                            placeholder="Inherit default"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        </>
                     )}
                 </>
             )}
@@ -1086,6 +1193,170 @@ function ForkBranchEditor({ data, readOnly, onUpdate }) {
             {!readOnly && (
                 <Button variant="outline" size="sm" onClick={addBranch}>
                     Add Branch
+                </Button>
+            )}
+        </div>
+    );
+}
+
+function slugifyIntentId(value) {
+    const slug = String(value || '')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9_]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .replace(/_+/g, '_');
+
+    if (!slug) {
+        return 'intent';
+    }
+
+    return /^[a-z]/.test(slug) ? slug : `intent_${slug}`;
+}
+
+function normalizeIntents(intents) {
+    if (!Array.isArray(intents)) {
+        return [];
+    }
+
+    return intents
+        .filter((item) => item && typeof item === 'object')
+        .map((item, index) => {
+            const id =
+                typeof item.id === 'string' && item.id !== ''
+                    ? item.id
+                    : `intent_${index + 1}`;
+            return {
+                id,
+                name: typeof item.name === 'string' && item.name !== '' ? item.name : id,
+                description: typeof item.description === 'string' ? item.description : '',
+            };
+        });
+}
+
+function IntentEditor({ data, readOnly, onUpdate }) {
+    const intents = normalizeIntents(data.intents);
+
+    const commit = (next) => {
+        onUpdate?.({ ...data, intents: next });
+    };
+
+    const addIntent = () => {
+        const nextIndex = intents.length + 1;
+        commit([
+            ...intents,
+            {
+                id: `intent_${nextIndex}`,
+                name: `Intent ${nextIndex}`,
+                description: '',
+            },
+        ]);
+    };
+
+    const updateIntent = (index, patch) => {
+        commit(intents.map((intent, i) => (i === index ? { ...intent, ...patch } : intent)));
+    };
+
+    const renameFromName = (index, name) => {
+        const current = intents[index];
+        const shouldSyncId =
+            !current?.id || current.id === slugifyIntentId(current.name) || current.id.startsWith('intent_');
+        updateIntent(index, {
+            name,
+            ...(shouldSyncId ? { id: slugifyIntentId(name) } : {}),
+        });
+    };
+
+    const removeIntent = (index) => {
+        commit(intents.filter((_, i) => i !== index));
+    };
+
+    const duplicateIntent = (index) => {
+        const source = intents[index];
+        if (!source) {
+            return;
+        }
+        const baseId = `${source.id}_copy`;
+        let id = baseId;
+        let n = 2;
+        const existing = new Set(intents.map((i) => i.id));
+        while (existing.has(id)) {
+            id = `${baseId}_${n}`;
+            n += 1;
+        }
+        commit([
+            ...intents.slice(0, index + 1),
+            { ...source, id, name: `${source.name} copy` },
+            ...intents.slice(index + 1),
+        ]);
+    };
+
+    return (
+        <div className="space-y-3">
+            <div>
+                <Label>Intents</Label>
+                <p className="text-xs text-muted-foreground">
+                    Each intent adds an output handle. Use clear, mutually exclusive descriptions.
+                    Include an Other intent for unmatched messages.
+                </p>
+            </div>
+
+            {intents.map((intent, index) => (
+                <div
+                    key={intent.id || index}
+                    className="relative space-y-2 rounded-md border border-border p-3"
+                    data-ab-handle-anchor={`intent:${intent.id}`}
+                >
+                    <div className="flex items-center gap-2">
+                        <Input
+                            value={intent.name}
+                            onChange={(e) => renameFromName(index, e.target.value)}
+                            disabled={readOnly}
+                            placeholder="Intent name"
+                        />
+                        {!readOnly && (
+                            <>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => duplicateIntent(index)}
+                                    title="Duplicate"
+                                >
+                                    ⎘
+                                </Button>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => removeIntent(index)}
+                                    title="Remove"
+                                    disabled={intents.length <= 2}
+                                >
+                                    ✕
+                                </Button>
+                            </>
+                        )}
+                    </div>
+                    <Input
+                        value={intent.id}
+                        onChange={(e) => updateIntent(index, { id: e.target.value })}
+                        disabled={readOnly}
+                        className="font-mono text-xs"
+                        placeholder="intent_id"
+                    />
+                    <ExpandableTextField
+                        rows={2}
+                        value={intent.description}
+                        onChange={(e) => updateIntent(index, { description: e.target.value })}
+                        disabled={readOnly}
+                        label="Edit description"
+                        placeholder="Describe when this intent applies…"
+                    />
+                </div>
+            ))}
+
+            {!readOnly && (
+                <Button variant="outline" size="sm" onClick={addIntent}>
+                    Add Intent
                 </Button>
             )}
         </div>

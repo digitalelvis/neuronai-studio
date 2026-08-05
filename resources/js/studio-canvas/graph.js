@@ -42,6 +42,10 @@ export function edgeLabelForHandle(handle, targetHandle = 'default') {
         return 'exit';
     }
 
+    if (typeof handle === 'string' && handle !== '' && handle !== 'default') {
+        return handle;
+    }
+
     return undefined;
 }
 

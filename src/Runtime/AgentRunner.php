@@ -178,26 +178,24 @@ class AgentRunner
         ?StudioRun $parentRun = null,
     ): array {
         $threadId = $threadKey;
-        if ($threadId === null && $definition) {
+        if ($threadId === null) {
             $threadId = (string) Str::uuid();
         }
 
-        $thread = null;
-        if ($threadId !== null) {
-            if (str_contains($threadId, ':')) {
-                $threadId = ChatThreadKey::publicId($threadId);
-            }
-            $thread = StudioThread::firstOrCreate([
-                'id' => $threadId,
-            ], [
-                'entity_type' => AgentDefinition::class,
-                'entity_id' => $definition ? $definition->id : null,
-            ]);
+        if (str_contains($threadId, ':')) {
+            $threadId = ChatThreadKey::publicId($threadId);
         }
+
+        $thread = StudioThread::firstOrCreate([
+            'id' => $threadId,
+        ], [
+            'entity_type' => $definition ? AgentDefinition::class : null,
+            'entity_id' => $definition ? $definition->id : null,
+        ]);
 
         $run = StudioRun::create([
             'id' => (string) Str::uuid(),
-            'thread_id' => $thread ? $thread->id : (string) Str::uuid(),
+            'thread_id' => $thread->id,
             'parent_run_id' => $parentRun?->id,
             'status' => 'running',
             'input' => $input,

@@ -14,7 +14,7 @@ import { normalizeNodeForEdit, resolveAgentConfigMode, isToolModeEnabled } from 
 import NodeConfigForm from '../inspector/NodeConfigForm';
 import { NodeTypeIcon } from './nodeIcons';
 
-const DENSE_TYPES = new Set(['agent', 'llm', 'rag', 'mcp', 'tool']);
+const DENSE_TYPES = new Set(['agent', 'llm', 'intent_classifier', 'rag', 'mcp', 'tool']);
 
 const AGENT_HANDLE_FALLBACKS = {
     tools: 'calc(100% - 18.5rem)',
@@ -30,6 +30,16 @@ function forkBranches(config) {
 
     return config.branches
         .map((branch) => (typeof branch === 'string' ? branch : branch?.id))
+        .filter((id) => typeof id === 'string' && id !== '');
+}
+
+function intentHandles(config) {
+    if (!config || !Array.isArray(config.intents)) {
+        return [];
+    }
+
+    return config.intents
+        .map((intent) => (typeof intent === 'object' && intent ? intent.id : null))
         .filter((id) => typeof id === 'string' && id !== '');
 }
 
@@ -100,6 +110,56 @@ function useAgentHandleTops(nodeId, nodeRef, enabled, revision) {
     return tops;
 }
 
+function useIntentHandleTops(nodeId, nodeRef, enabled, intentIds, revision) {
+    const updateNodeInternals = useUpdateNodeInternals();
+    const [tops, setTops] = useState(null);
+    const topsRef = useRef(null);
+    const intentKey = intentIds.join('|');
+
+    useLayoutEffect(() => {
+        if (!enabled || intentIds.length === 0) {
+            topsRef.current = null;
+            setTops(null);
+            return undefined;
+        }
+
+        const nodeEl = nodeRef.current;
+        if (!nodeEl) {
+            return undefined;
+        }
+
+        const sync = () => {
+            const next = {};
+            for (const intentId of intentIds) {
+                next[intentId] =
+                    measureHandleAnchor(nodeEl, `intent:${intentId}`) ??
+                    measureHandleAnchor(nodeEl, intentId);
+            }
+
+            const prev = topsRef.current;
+            const changed =
+                !prev ||
+                intentIds.some((intentId) => prev[intentId] !== next[intentId]) ||
+                Object.keys(prev).length !== intentIds.length;
+
+            if (!changed) {
+                return;
+            }
+
+            topsRef.current = next;
+            setTops(next);
+            updateNodeInternals(nodeId);
+        };
+
+        sync();
+        const observer = new ResizeObserver(sync);
+        observer.observe(nodeEl);
+        return () => observer.disconnect();
+    }, [enabled, nodeId, nodeRef, intentKey, revision, updateNodeInternals, intentIds]);
+
+    return tops;
+}
+
 function NodeHandles({ nodeType, config, expanded = false, handleTops = null }) {
     if (nodeType === 'start') {
         return <Handle type="source" position={Position.Right} id="default" className="ab-flow-handle" />;
@@ -155,6 +215,32 @@ function NodeHandles({ nodeType, config, expanded = false, handleTops = null }) 
                         style={{ top: `${28 + ((index + 1) / (count + 1)) * 55}%` }}
                     />
                 ))}
+            </>
+        );
+    }
+
+    if (nodeType === 'intent_classifier') {
+        const intents = intentHandles(config);
+        const count = Math.max(intents.length, 1);
+
+        return (
+            <>
+                <Handle type="target" position={Position.Left} id="default" className="ab-flow-handle" />
+                {intents.map((intentId, index) => {
+                    const measured = handleTops?.[intentId];
+                    const fallback = `${18 + ((index + 1) / (count + 1)) * 64}%`;
+
+                    return (
+                        <Handle
+                            key={intentId}
+                            type="source"
+                            position={Position.Right}
+                            id={intentId}
+                            className="ab-flow-handle"
+                            style={{ top: measured || fallback }}
+                        />
+                    );
+                })}
             </>
         );
     }
@@ -354,6 +440,8 @@ export default function WorkflowNode({ id, data, selected }) {
             ? [data.config?.provider, data.config?.model].filter(Boolean).join(' / ') || null
             : null;
 
+    const intentIds = useMemo(() => intentHandles(data.config), [data.config]);
+
     const handleTopsRevision = useMemo(
         () =>
             [
@@ -364,6 +452,8 @@ export default function WorkflowNode({ id, data, selected }) {
                 agentToolMode,
                 data.config?.structured ? '1' : '0',
                 data.config?.instructions?.length || 0,
+                data.config?.memory ? '1' : '0',
+                intentIds.join('|'),
             ].join(':'),
         [
             data.nodeType,
@@ -373,6 +463,8 @@ export default function WorkflowNode({ id, data, selected }) {
             agentToolMode,
             data.config?.structured,
             data.config?.instructions?.length,
+            data.config?.memory,
+            intentIds,
         ],
     );
 
@@ -382,6 +474,21 @@ export default function WorkflowNode({ id, data, selected }) {
         data.nodeType === 'agent' && expanded,
         handleTopsRevision,
     );
+
+    const intentHandleTops = useIntentHandleTops(
+        id,
+        nodeRef,
+        data.nodeType === 'intent_classifier' && expanded,
+        intentIds,
+        handleTopsRevision,
+    );
+
+    const nodeHandleTops =
+        data.nodeType === 'agent'
+            ? agentHandleTops
+            : data.nodeType === 'intent_classifier'
+              ? intentHandleTops
+              : null;
 
     const editNode = useMemo(
         () =>
@@ -504,7 +611,7 @@ export default function WorkflowNode({ id, data, selected }) {
                 nodeType={data.nodeType}
                 config={data.config}
                 expanded={expanded}
-                handleTops={agentHandleTops}
+                handleTops={nodeHandleTops}
             />
 
             <div className="ab-flow-node-accent" />
@@ -556,6 +663,9 @@ export default function WorkflowNode({ id, data, selected }) {
                     )}
                     {data.nodeType === 'fork' && forkBranches(data.config).length > 0 && (
                         <div className="ab-flow-node-meta">{forkBranches(data.config).join(', ')}</div>
+                    )}
+                    {data.nodeType === 'intent_classifier' && intentHandles(data.config).length > 0 && (
+                        <div className="ab-flow-node-meta">{intentHandles(data.config).join(', ')}</div>
                     )}
                 </>
             )}

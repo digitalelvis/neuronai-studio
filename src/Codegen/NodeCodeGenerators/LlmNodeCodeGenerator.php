@@ -17,6 +17,9 @@ class LlmNodeCodeGenerator implements NodeCodeGeneratorInterface
         $prompt = var_export((string) ($data['prompt'] ?? ''), true);
         $outputKey = var_export((string) ($data['output_key'] ?? 'llm_response'), true);
         $return = $context->returnStatement($nodePlan['returnType']);
+        $visionFlag = array_key_exists('vision', $data)
+            ? (($data['vision'] === true) ? 'true' : 'false')
+            : 'true';
 
         $messageSetup = <<<PHP
         \$template = {$prompt};
@@ -25,7 +28,11 @@ class LlmNodeCodeGenerator implements NodeCodeGeneratorInterface
             \$prompt = (string) \$state->get('input');
         }
 
-        \$attachments = is_array(\$state->get('attachments')) ? \$state->get('attachments') : [];
+        \$attachments = app(MessageFactory::class)->resolveAttachmentsForNode(
+            ['vision' => {$visionFlag}],
+            \$state,
+            defaultVision: true,
+        );
         \$userMessage = app(MessageFactory::class)->resolveMessageWithAttachments(\$prompt, \$attachments);
 PHP;
 

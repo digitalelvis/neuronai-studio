@@ -119,6 +119,34 @@ export function normalizeNodeForEdit(node) {
         data.output_key = 'llm_response';
     }
 
+    if (node.type === 'intent_classifier') {
+        if (!data.output_key) {
+            data.output_key = 'intent';
+        }
+        if (!Array.isArray(data.intents) || data.intents.length === 0) {
+            data.intents = [
+                {
+                    id: 'after_sales',
+                    name: 'After sales',
+                    description: 'Question related to after sales',
+                },
+                {
+                    id: 'how_to',
+                    name: 'How to use',
+                    description: 'Questions about how to use products',
+                },
+                {
+                    id: 'other',
+                    name: 'Other',
+                    description: 'Other questions',
+                },
+            ];
+        }
+        if (data.message === undefined) {
+            data.message = '{{input}}';
+        }
+    }
+
     if (node.type === 'invoke') {
         if (!data.output_key) {
             data.output_key = 'invoke_result';

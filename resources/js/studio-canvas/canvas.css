@@ -133,6 +133,7 @@
     height: 10px !important;
     background: var(--ab-primary, #6366f1) !important;
     border: 2px solid var(--ab-surface, #151c2c) !important;
+    z-index: 6 !important;
 }
 
 .ab-flow-handle-true { background: #22c55e !important; }

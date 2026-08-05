@@ -112,7 +112,7 @@ Custom node fields appear in the inspector when you extend the React inspector c
 
 See the registered types in `NeuronAIStudioServiceProvider::registerNodeTypes()`:
 
-- start, stop, agent, llm, condition, set_state, invoke, run_workflow, loop, tool, rag, delay, mcp, human, fork, join
+- start, stop, agent, llm, intent_classifier, condition, set_state, invoke, run_workflow, loop, tool, rag, delay, mcp, human, fork, join
 
 Use these as reference implementations in `src/Runtime/NodeExecutors/`.
 

@@ -496,6 +496,11 @@ return [
             'icon' => 'message-square',
             'category' => 'ai',
         ],
+        'intent_classifier' => [
+            'label' => 'Intent Classifier',
+            'icon' => 'tags',
+            'category' => 'ai',
+        ],
         'condition' => [
             'label' => 'Condition',
             'icon' => 'git-branch',

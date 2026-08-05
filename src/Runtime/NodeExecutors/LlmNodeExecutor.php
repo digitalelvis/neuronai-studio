@@ -38,7 +38,7 @@ class LlmNodeExecutor implements NodeExecutorInterface
         );
         $outputKey = $data['output_key'] ?? 'llm_response';
 
-        $attachments = is_array($state->get('attachments')) ? $state->get('attachments') : [];
+        $attachments = $this->messages->resolveAttachmentsForNode($data, $state, defaultVision: true);
         $userMessage = $this->messages->resolveMessageWithAttachments((string) $prompt, $attachments);
         $threadKey = $this->resolveThreadKey($state);
         $parentRun = $this->resolveParentRun($state);

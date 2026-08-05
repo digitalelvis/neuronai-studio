@@ -6,6 +6,7 @@ return [
     'agent' => 'Agente',
     'agent_tool_description' => 'Delegue uma tarefa a este agente especializado.',
     'llm' => 'LLM',
+    'intent_classifier' => 'Classificador de intenções',
     'condition' => 'Condição',
     'set_state' => 'Definir estado',
     'invoke' => 'Invocar',
