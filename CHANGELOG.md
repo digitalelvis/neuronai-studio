@@ -1,5 +1,12 @@
 # Changelog
 
+# [2.5.0](https://github.com/digitalelvis/neuronai-studio/compare/v2.4.0...v2.5.0) (2026-08-05)
+
+
+### Features
+
+* **tools:** inject filtered runtime ToolContext into opt-in tools ([04d7cec](https://github.com/digitalelvis/neuronai-studio/commit/04d7ceccc6681e109b0a8c6257694cb80fcb9b38))
+
 # [2.4.0](https://github.com/digitalelvis/neuronai-studio/compare/v2.3.0...v2.4.0) (2026-08-04)
 
 
