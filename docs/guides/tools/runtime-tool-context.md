@@ -131,5 +131,7 @@ Tools receive `ToolContext`. Instructions are still augmented with the same JSON
 ## Related
 
 - [Tools overview](overview.md)
+- [Invoking Agents](../agents/invoking-agents.md) — `context` on `AgentRunner::stream()`
+- [Invoking Workflows](../workflows/invoking-workflows.md) — `state` on `WorkflowRunner::run()`
 - [Workflow state](../workflows/state-and-conditions.md)
 - [Stream adapters / integrate](../integration/stream-adapters.md)

@@ -68,5 +68,7 @@ Agent and LLM nodes read attachments through `MessageFactory::resolveMessageWith
 
 ## Related
 
+- [Invoking Agents](invoking-agents.md) — pass attachment refs from PHP (`stream` / `runInline`)
+- [Invoking Workflows](../workflows/invoking-workflows.md) — `state.attachments` on `WorkflowRunner::run()`
 - [Playground & Threads](playground-and-threads.md)
 - [Configuration](../../reference/configuration.md)

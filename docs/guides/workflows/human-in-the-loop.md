@@ -181,5 +181,6 @@ One fork branch runs an LLM eligibility check; the other runs `refund-actions-ag
 
 ## See also
 
+- [Invoking Workflows](invoking-workflows.md) — `resume()` / `dispatchResume()` from PHP
 - [Flow Nodes](node-types/flow-nodes.md)
 - [Runtime & Traces](runtime-and-traces.md)

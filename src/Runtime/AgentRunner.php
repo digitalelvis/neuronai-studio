@@ -47,8 +47,9 @@ class AgentRunner
         protected MessageFactory $messages,
     ) {}
 
-    public function run(AgentDefinition $definition, string $message, bool $fake = false): AgentRunResult
+    public function run(AgentDefinition|string $definition, string $message, bool $fake = false): AgentRunResult
     {
+        $definition = $this->resolveDefinition($definition);
         $definition->loadMissing('mcpBindings');
 
         return $this->runInline([
@@ -59,6 +60,18 @@ class AgentRunner
             'require_tool_approval' => (bool) $definition->require_tool_approval,
             ...$this->toolControlConfigFromDefinition($definition),
         ], $message, $definition, fake: $fake);
+    }
+
+    /**
+     * Resolve an agent by model instance or unique slug.
+     */
+    protected function resolveDefinition(AgentDefinition|string $definition): AgentDefinition
+    {
+        if ($definition instanceof AgentDefinition) {
+            return $definition;
+        }
+
+        return AgentDefinition::query()->where('slug', $definition)->firstOrFail();
     }
 
     public function resolveAgent(AgentDefinition $definition): DynamicAgent
