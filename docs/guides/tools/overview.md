@@ -28,6 +28,8 @@ flowchart TD
 
 Runtime resolves bindings through `ToolResolver` with prefixes such as `toolkit:`, `class:`, `tool:db:` / `db:`, `mcp:`, `provider:`, and `node:`.
 
+For secure access to workflow/integrate state inside tools (without LLM tool properties), see [Runtime ToolContext](runtime-tool-context.md).
+
 ### Package demo class
 
 `IssueRefundTool` (`class:…\IssueRefundTool`) ships with the package for tool-approval demos — see the [refund-actions-agent template](../templates.md) and [Human-in-the-Loop](../workflows/human-in-the-loop.md#tool-approval). Prefer class-based tools when approval pauses must serialize across resume.

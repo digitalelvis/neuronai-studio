@@ -11,6 +11,7 @@ use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
 use DigitalElvis\NeuronAIStudio\Runtime\MessageFactory;
 use DigitalElvis\NeuronAIStudio\Runtime\StateTemplateInterpolator;
 use DigitalElvis\NeuronAIStudio\Runtime\StructuredOutput\StructuredOutputResolver;
+use DigitalElvis\NeuronAIStudio\Runtime\Tools\ToolContext;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
 use NeuronAI\Chat\Messages\Stream\Chunks\TextChunk;
 use NeuronAI\Chat\Messages\Stream\Chunks\ToolCallChunk;
@@ -333,6 +334,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
         );
         $definitionTools = $definition !== null && is_array($definition->tools) ? $definition->tools : [];
         $tools = array_values(array_merge($definitionTools, $canvasBindings));
+        $toolContext = ToolContext::fromWorkflowState($state);
 
         if ($definition !== null) {
             return [
@@ -340,6 +342,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
                 'model' => $definition->model,
                 'instructions' => $definition->instructions,
                 'tools' => $tools,
+                'tool_context' => $toolContext,
                 ...$this->toolControlConfig($data, $definition),
                 ...$this->memoryOverrideConfig($data, $definition),
                 ...$extra,
@@ -348,6 +351,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
 
         return array_merge($data, [
             'tools' => $tools,
+            'tool_context' => $toolContext,
             ...$this->toolControlConfig($data, null),
             ...$this->memoryOverrideConfig($data, null),
             ...$extra,

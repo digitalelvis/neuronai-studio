@@ -15,8 +15,10 @@ use NeuronAI\Workflow\WorkflowState;
 use RuntimeException;
 use Throwable;
 
-final class WorkflowAsTool extends Tool
+final class WorkflowAsTool extends Tool implements ToolContextAware
 {
+    use InteractsWithToolContext;
+
     /**
      * @param  array<string, mixed>  $nodeData  run_workflow node `data`
      * @param  array<string, mixed>  $parentState  Parent workflow state snapshot for templates
@@ -61,6 +63,10 @@ final class WorkflowAsTool extends Tool
         $parentWorkflowState = new WorkflowState($this->parentState);
         $message = $this->resolveMessage($input, $parentWorkflowState);
         $childState = $this->resolveStateMap($parentWorkflowState);
+
+        if (($toolContext = $this->toolContext()) !== null && ! $toolContext->isEmpty()) {
+            $childState = array_merge($toolContext->all(), $childState);
+        }
 
         $parentRun = $this->parentRunId !== null && $this->parentRunId !== ''
             ? StudioRun::query()->find($this->parentRunId)

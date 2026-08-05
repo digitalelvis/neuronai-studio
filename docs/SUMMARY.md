@@ -26,6 +26,7 @@
 ### Tools
 
 * [Overview](guides/tools/overview.md)
+* [Runtime ToolContext](guides/tools/runtime-tool-context.md)
 * [Builder Tools](guides/tools/builder-tools.md)
 * [Webhook Tools](guides/tools/webhook-tools.md)
 * [Registry & Codegen](guides/tools/registry-and-codegen.md)

@@ -20,6 +20,8 @@ class ToolClassGeneratorTest extends TestCase
         ]);
 
         $this->assertStringContainsString('class ExampleTool extends Tool', $generated);
+        $this->assertStringContainsString('implements ToolContextAware', $generated);
+        $this->assertStringContainsString('use InteractsWithToolContext', $generated);
         $this->assertStringContainsString("'example_tool'", $generated);
         $this->assertStringContainsString('function __invoke(string $query): string', $generated);
         $this->assertStringContainsString("return 'Result: '.\$query;", $generated);

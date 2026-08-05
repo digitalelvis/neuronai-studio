@@ -7,6 +7,7 @@ use DigitalElvis\NeuronAIStudio\Models\StudioThread;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
 use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
 use DigitalElvis\NeuronAIStudio\Runtime\ToolResolver;
+use DigitalElvis\NeuronAIStudio\Runtime\Tools\ToolContext;
 use DigitalElvis\NeuronAIStudio\Runtime\Tools\WorkflowAsTool;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
 use Illuminate\Support\Str;
@@ -133,6 +134,40 @@ class WorkflowAsToolTest extends TestCase
         $this->assertNotNull($nested);
         $this->assertSame('completed', $nested->status);
         $this->assertSame(1, $nested->output[WorkflowRunner::NESTING_DEPTH_INPUT_KEY] ?? null);
+    }
+
+    public function test_tool_context_merges_into_child_workflow_state(): void
+    {
+        $child = WorkflowDefinition::create([
+            'name' => 'Tool Context Child',
+            'slug' => 'tool-context-child-wf',
+            'graph' => $this->childGraphWithGreeting(),
+        ]);
+
+        $tool = new WorkflowAsTool(
+            'run_with_context',
+            'Run with context',
+            [
+                'workflow_id' => (string) $child->id,
+                'message' => 'go',
+                'state_map' => [
+                    ['key' => 'from_map', 'value' => 'mapped'],
+                ],
+            ],
+            parentState: [],
+            nestingDepth: 0,
+        );
+
+        $tool->setToolContext(ToolContext::fromArray([
+            'integration_context' => ['account_id' => 68],
+            'include_history' => true,
+        ]));
+
+        $decoded = json_decode($tool('hi'), true);
+
+        $this->assertSame(68, $decoded['integration_context']['account_id'] ?? null);
+        $this->assertTrue($decoded['include_history'] ?? false);
+        $this->assertSame('mapped', $decoded['from_map'] ?? null);
     }
 
     public function test_invoke_uses_default_message_when_caller_input_empty(): void
