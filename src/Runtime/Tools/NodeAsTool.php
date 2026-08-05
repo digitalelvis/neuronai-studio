@@ -10,8 +10,10 @@ use NeuronAI\Tools\Tool;
 use NeuronAI\Tools\ToolProperty;
 use Throwable;
 
-final class NodeAsTool extends Tool
+final class NodeAsTool extends Tool implements ToolContextAware
 {
+    use InteractsWithToolContext;
+
     /**
      * @param  array<string, mixed>  $agentConfig  Specialist node `data` (inline or existing).
      */
@@ -80,12 +82,15 @@ final class NodeAsTool extends Tool
      */
     protected function buildRunnerConfig(?AgentDefinition $definition): array
     {
+        $toolContext = $this->toolContext();
+
         if ($definition !== null) {
             return [
                 'provider' => $definition->provider,
                 'model' => $definition->model,
                 'instructions' => $definition->instructions,
                 'tools' => $definition->tools ?? [],
+                'tool_context' => $toolContext,
             ];
         }
 
@@ -94,6 +99,7 @@ final class NodeAsTool extends Tool
             'model' => $this->agentConfig['model'] ?? config('neuronai-studio.default_model'),
             'instructions' => $this->agentConfig['instructions'] ?? 'You are a helpful AI assistant.',
             'tools' => is_array($this->agentConfig['tools'] ?? null) ? $this->agentConfig['tools'] : [],
+            'tool_context' => $toolContext,
         ];
     }
 }

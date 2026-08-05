@@ -2,12 +2,16 @@
 
 namespace {{ namespace }};
 
+use DigitalElvis\NeuronAIStudio\Runtime\Tools\InteractsWithToolContext;
+use DigitalElvis\NeuronAIStudio\Runtime\Tools\ToolContextAware;
 use NeuronAI\Tools\PropertyType;
 use NeuronAI\Tools\Tool;
 use NeuronAI\Tools\ToolProperty;
 
-class {{ className }} extends Tool
+class {{ className }} extends Tool implements ToolContextAware
 {
+    use InteractsWithToolContext;
+
     public function __construct()
     {
         parent::__construct(
