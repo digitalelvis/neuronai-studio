@@ -153,6 +153,7 @@ Attach a PDF or image in the harness before sending — the same attachment arra
 |--------|-------------|
 | `provider` | LLM provider key |
 | `model` | Model ID |
+| `api_key` | Optional Vault credential bind (`var:NAME`) or leave empty for install-time provider config |
 | `prompt` | Prompt template with `{{state_key}}` placeholders |
 | `output_key` | State key for the response |
 | `structured` | When `true`, validate and store typed output instead of plain text |
@@ -169,6 +170,7 @@ Use when you need a one-off LLM step without tool bindings.
 | Config | Description |
 |--------|-------------|
 | `provider` / `model` | LLM used for classification |
+| `api_key` | Optional Vault credential bind (`var:NAME`) or leave empty for install-time provider config |
 | `message` | Input template (default `{{input}}`) |
 | `intents` | List of `{ id, name, description }`. Each `id` becomes a source handle |
 | `instructions` | Optional extra guidance for the classifier |

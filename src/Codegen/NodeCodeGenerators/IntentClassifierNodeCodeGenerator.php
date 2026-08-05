@@ -45,6 +45,7 @@ class IntentClassifierNodeCodeGenerator implements NodeCodeGeneratorInterface
         $fallbackReturn = $context->returnStatement('', $fallbackId, $branchReturns);
         $branchBlocks[] = "        {$fallbackReturn}";
         $branchPhp = implode("\n\n", $branchBlocks);
+        $apiKeyConfigLine = $this->apiKeyConfigLine($data);
 
         $body = <<<PHP
         \$intentsList = {$intentsExport};
@@ -77,7 +78,7 @@ class IntentClassifierNodeCodeGenerator implements NodeCodeGeneratorInterface
             'provider' => {$this->exportConfigValue($provider)},
             'model' => {$this->exportConfigValue($model)},
             'instructions' => IntentClassifierNodeExecutor::buildInstructions(\$intents, {$extraInstructions}),
-            'memory_config' => IntentClassifierNodeExecutor::resolveClassifierMemoryConfig({$memory}, \$nodeData),
+            'memory_config' => IntentClassifierNodeExecutor::resolveClassifierMemoryConfig({$memory}, \$nodeData),{$apiKeyConfigLine}
         ], \$userMessage, {$shortClass}::class, threadKey: \$threadKey);
 
         \$chosenId = IntentClassifierNodeExecutor::resolveIntentId(\$result->structured, \$intents);
@@ -102,5 +103,18 @@ PHP;
     protected function exportConfigValue(string $value): string
     {
         return var_export($value, true);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function apiKeyConfigLine(array $data): string
+    {
+        $apiKey = $data['api_key'] ?? null;
+        if (! is_string($apiKey) || $apiKey === '') {
+            return '';
+        }
+
+        return "\n            'api_key' => ".$this->exportConfigValue($apiKey).',';
     }
 }

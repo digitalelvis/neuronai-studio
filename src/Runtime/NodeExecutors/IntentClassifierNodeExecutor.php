@@ -55,6 +55,11 @@ class IntentClassifierNodeExecutor implements NodeExecutorInterface
             'memory_config' => self::resolveClassifierMemoryConfig($memoryEnabled, $data),
         ];
 
+        $apiKey = $data['api_key'] ?? null;
+        if (is_string($apiKey) && $apiKey !== '') {
+            $config['api_key'] = $apiKey;
+        }
+
         $parentRun = $this->resolveParentRun($state);
 
         $result = $this->agentRunner->structuredInline(

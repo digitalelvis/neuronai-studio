@@ -36,6 +36,11 @@ class LlmNodeCodeGenerator implements NodeCodeGeneratorInterface
         \$userMessage = app(MessageFactory::class)->resolveMessageWithAttachments(\$prompt, \$attachments);
 PHP;
 
+        $apiKey = $this->resolveApiKeyOverride($data);
+        $apiKeyConfigLine = $apiKey !== null
+            ? "\n            'api_key' => ".$this->exportConfigValue($apiKey).','
+            : '';
+
         if ($data['structured'] ?? false) {
             $outputClass = (string) ($data['output_class'] ?? '');
             $shortClass = class_basename($outputClass);
@@ -47,7 +52,7 @@ PHP;
         \$result = app(AgentRunner::class)->structuredInline([
             'provider' => {$this->exportConfigValue($provider)},
             'model' => {$this->exportConfigValue($model)},
-            'instructions' => {$instructions},
+            'instructions' => {$instructions},{$apiKeyConfigLine}
         ], \$userMessage, {$shortClass}::class);
 
         \$state->set({$outputKey}, \$result->structured);
@@ -65,7 +70,7 @@ PHP;
             ];
         }
 
-        $providerExpr = $context->providerExpression($provider, $model);
+        $providerExpr = $context->providerExpression($provider, $model, $apiKey);
 
         $body = <<<PHP
         {$messageSetup}
@@ -88,5 +93,15 @@ PHP;
     protected function exportConfigValue(string $value): string
     {
         return var_export($value, true);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function resolveApiKeyOverride(array $data): ?string
+    {
+        $apiKey = $data['api_key'] ?? null;
+
+        return is_string($apiKey) && $apiKey !== '' ? $apiKey : null;
     }
 }

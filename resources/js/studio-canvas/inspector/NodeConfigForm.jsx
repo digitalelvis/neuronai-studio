@@ -466,6 +466,18 @@ export default function NodeConfigForm({
                                 onChange={(patch) => onUpdate?.({ ...data, ...patch })}
                             />
                             <div className="space-y-2">
+                                <Label>API Key (optional override)</Label>
+                                <VariableInput
+                                    value={data.api_key ?? ''}
+                                    onChange={(value) => updateField('api_key', value)}
+                                    variables={variables}
+                                    sensitive
+                                    disabled={readOnly}
+                                    placeholder=""
+                                    hint="Bind a Credential variable (var:NAME) or leave empty for install-time config."
+                                />
+                            </div>
+                            <div className="space-y-2">
                                 <Label>Prompt</Label>
                                 <ExpandableTextField
                                     rows={compact ? 3 : 4}
@@ -523,6 +535,18 @@ export default function NodeConfigForm({
                                 readOnly={readOnly}
                                 onChange={(patch) => onUpdate?.({ ...data, ...patch })}
                             />
+                            <div className="space-y-2">
+                                <Label>API Key (optional override)</Label>
+                                <VariableInput
+                                    value={data.api_key ?? ''}
+                                    onChange={(value) => updateField('api_key', value)}
+                                    variables={variables}
+                                    sensitive
+                                    disabled={readOnly}
+                                    placeholder=""
+                                    hint="Bind a Credential variable (var:NAME) or leave empty for install-time config."
+                                />
+                            </div>
                             <div className="space-y-2">
                                 <Label>Message</Label>
                                 <ExpandableTextField

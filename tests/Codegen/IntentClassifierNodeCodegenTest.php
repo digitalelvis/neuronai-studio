@@ -47,4 +47,30 @@ class IntentClassifierNodeCodegenTest extends TestCase
             $result['imports'],
         );
     }
+
+    public function test_includes_vault_api_key_when_set(): void
+    {
+        $generator = new IntentClassifierNodeCodeGenerator;
+        $context = new CodegenContext(new PhpArrayExporter);
+
+        $result = $generator->generate([
+            'data' => [
+                'provider' => 'openai',
+                'model' => 'gpt-4o-mini',
+                'api_key' => 'var:OPENAI_KEY',
+                'message' => '{{input}}',
+                'intents' => [
+                    ['id' => 'a', 'name' => 'A', 'description' => 'A'],
+                    ['id' => 'b', 'name' => 'B', 'description' => 'B'],
+                ],
+            ],
+            'returnType' => 'DefaultEvent',
+            'branchReturns' => [
+                'a' => 'AEvent',
+                'b' => 'BEvent',
+            ],
+        ], $context);
+
+        $this->assertStringContainsString("'api_key' => 'var:OPENAI_KEY'", $result['body']);
+    }
 }

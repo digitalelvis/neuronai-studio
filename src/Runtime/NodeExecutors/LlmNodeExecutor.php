@@ -42,14 +42,26 @@ class LlmNodeExecutor implements NodeExecutorInterface
         $userMessage = $this->messages->resolveMessageWithAttachments((string) $prompt, $attachments);
         $threadKey = $this->resolveThreadKey($state);
         $parentRun = $this->resolveParentRun($state);
+        $apiKey = $this->resolveApiKeyOverride($data);
 
         if ($data['structured'] ?? false) {
             $outputClass = $this->outputResolver->resolve((string) ($data['output_class'] ?? ''));
-            $result = $this->agentRunner->structuredInline([
+            $config = [
                 'provider' => $provider,
                 'model' => $model,
                 'instructions' => (string) ($data['instructions'] ?? 'Extract structured data from the user message.'),
-            ], $userMessage, $outputClass, threadKey: $threadKey, parentRun: $parentRun);
+            ];
+            if ($apiKey !== null) {
+                $config['api_key'] = $apiKey;
+            }
+
+            $result = $this->agentRunner->structuredInline(
+                $config,
+                $userMessage,
+                $outputClass,
+                threadKey: $threadKey,
+                parentRun: $parentRun,
+            );
 
             $state->set($outputKey, $result->structured);
             $this->captureRunUsage($state, $result->runId);
@@ -57,7 +69,7 @@ class LlmNodeExecutor implements NodeExecutorInterface
             return 'default';
         }
 
-        $aiProvider = $this->providers->resolve($provider, $model);
+        $aiProvider = $this->providers->resolve($provider, $model, [], $apiKey);
 
         if (($data['stream'] ?? false) === true && $state instanceof BuilderWorkflowState && $state->stepEmitter !== null) {
             $nodeId = (string) ($nodeConfig['id'] ?? 'llm');
@@ -180,5 +192,15 @@ class LlmNodeExecutor implements NodeExecutorInterface
         $threadKey = $state->get('__studio_thread_id');
 
         return is_string($threadKey) && $threadKey !== '' ? $threadKey : null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function resolveApiKeyOverride(array $data): ?string
+    {
+        $apiKey = $data['api_key'] ?? null;
+
+        return is_string($apiKey) && $apiKey !== '' ? $apiKey : null;
     }
 }
