@@ -42,7 +42,7 @@ const graphListeners = new Set();
 
 /**
  * Keep a live copy of the canvas graph for inspectors outside ReactFlowProvider
- * (e.g. NodeEditSheet).
+ * (e.g. NodeInspectorSidebar).
  *
  * @param {unknown[]} nodes
  * @param {unknown[]} [edges]

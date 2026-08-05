@@ -1,12 +1,43 @@
 import { useCallback, useEffect, useState } from 'react';
 import { normalizeNodeForEdit } from './nodeUtils';
 
+const INSPECTOR_WIDTH_KEY = 'ab-inspector-width';
+
+export function getStoredInspectorSize(fallback = 28) {
+    try {
+        const raw = window.localStorage.getItem(INSPECTOR_WIDTH_KEY);
+        const value = raw != null ? Number(raw) : NaN;
+        if (Number.isFinite(value) && value >= 18 && value <= 48) {
+            return value;
+        }
+    } catch {
+        // ignore storage errors
+    }
+
+    return fallback;
+}
+
+export function storeInspectorSize(size) {
+    try {
+        if (Number.isFinite(size)) {
+            window.localStorage.setItem(INSPECTOR_WIDTH_KEY, String(Math.round(size)));
+        }
+    } catch {
+        // ignore storage errors
+    }
+}
+
 export function useNodeEditor() {
     const [editingNode, setEditingNode] = useState(null);
-    const [sheetOpen, setSheetOpen] = useState(false);
     const [section, setSection] = useState('all');
 
     const openNodeEditor = useCallback((node, nextSection = 'all') => {
+        if (!node?.id || node.type === 'note') {
+            setEditingNode(null);
+            setSection('all');
+            return;
+        }
+
         const normalized = normalizeNodeForEdit(node);
 
         if (!normalized) {
@@ -15,7 +46,12 @@ export function useNodeEditor() {
 
         setEditingNode(normalized);
         setSection(nextSection);
-        setSheetOpen(true);
+    }, []);
+
+    const closeNodeEditor = useCallback(() => {
+        setEditingNode(null);
+        setSection('all');
+        window.dispatchEvent(new CustomEvent('canvas-clear-selection'));
     }, []);
 
     const syncNode = useCallback(
@@ -24,11 +60,11 @@ export function useNodeEditor() {
                 return;
             }
 
-            setEditingNode((current) => ({ ...current, data }));
+            setEditingNode((current) => (current ? { ...current, data } : current));
 
             window.dispatchEvent(
                 new CustomEvent('canvas-node-updated', {
-                    detail: { id: editingNode.id, data },
+                    detail: { id: editingNode.id, data, source: 'inspector' },
                 }),
             );
         },
@@ -46,18 +82,68 @@ export function useNodeEditor() {
             }),
         );
         setEditingNode(null);
-        setSheetOpen(false);
+        setSection('all');
     }, [editingNode]);
 
     useEffect(() => {
-        const onEdit = (event) => {
-            if (event.detail?.id) {
-                openNodeEditor(event.detail, event.detail.section || 'all');
+        const onSelected = (event) => {
+            const detail = event.detail || {};
+
+            // Silent selection syncs (e.g. after canvas-node-updated) should not remount the form.
+            if (detail.silent) {
+                if (!detail.id) {
+                    return;
+                }
+
+                setEditingNode((current) => {
+                    if (!current || current.id !== detail.id) {
+                        return current;
+                    }
+
+                    return {
+                        ...current,
+                        data: { ...current.data, ...(detail.data || {}) },
+                    };
+                });
+                return;
             }
+
+            if (!detail.id) {
+                setEditingNode(null);
+                setSection('all');
+                return;
+            }
+
+            if (detail.type === 'note') {
+                setEditingNode(null);
+                setSection('all');
+                return;
+            }
+
+            openNodeEditor(
+                {
+                    id: detail.id,
+                    type: detail.type,
+                    data: detail.data || {},
+                },
+                'all',
+            );
         };
 
+        const onEdit = (event) => {
+            if (!event.detail?.id) {
+                return;
+            }
+
+            openNodeEditor(event.detail, event.detail.section || 'all');
+        };
+
+        window.addEventListener('canvas-node-selected', onSelected);
         window.addEventListener('canvas-node-edit', onEdit);
-        return () => window.removeEventListener('canvas-node-edit', onEdit);
+        return () => {
+            window.removeEventListener('canvas-node-selected', onSelected);
+            window.removeEventListener('canvas-node-edit', onEdit);
+        };
     }, [openNodeEditor]);
 
     useEffect(() => {
@@ -75,21 +161,35 @@ export function useNodeEditor() {
         return () => window.removeEventListener('canvas-inspector-flush', flush);
     }, [editingNode]);
 
-    const handleOpenChange = useCallback((open) => {
-        setSheetOpen(open);
+    // Keep sidebar form in sync when the same node is updated from elsewhere.
+    useEffect(() => {
+        const onUpdated = (event) => {
+            const detail = event.detail || {};
+            if (!detail.id || detail.source === 'inspector') {
+                return;
+            }
 
-        if (!open) {
-            setEditingNode(null);
-            setSection('all');
-        }
+            setEditingNode((current) => {
+                if (!current || detail.id !== current.id) {
+                    return current;
+                }
+
+                return {
+                    ...current,
+                    data: { ...current.data, ...(detail.data || {}) },
+                };
+            });
+        };
+
+        window.addEventListener('canvas-node-updated', onUpdated);
+        return () => window.removeEventListener('canvas-node-updated', onUpdated);
     }, []);
 
     return {
         editingNode,
-        sheetOpen,
         section,
-        setSheetOpen: handleOpenChange,
         openNodeEditor,
+        closeNodeEditor,
         syncNode,
         removeNode,
     };

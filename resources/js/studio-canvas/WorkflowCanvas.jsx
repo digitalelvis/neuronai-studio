@@ -674,11 +674,17 @@ function WorkflowCanvasInner({
             }
         };
 
+        const onClearSelection = () => {
+            setNodes((current) => current.map((node) => ({ ...node, selected: false })));
+            syncSelection(null);
+        };
+
         window.addEventListener('canvas-node-updated', onNodeUpdated);
         window.addEventListener('canvas-remove-node', onRemoveNode);
         window.addEventListener('canvas-duplicate-node', onDuplicateNode);
         window.addEventListener('canvas-auto-layout', onAutoLayout);
         window.addEventListener('canvas-focus-node', onFocusNode);
+        window.addEventListener('canvas-clear-selection', onClearSelection);
         window.addEventListener('canvas-trace-start', onRunStart);
         window.addEventListener('canvas-run-start', onRunStart);
         window.addEventListener('canvas-execution-event', onExecutionEvent);
@@ -690,6 +696,7 @@ function WorkflowCanvasInner({
             window.removeEventListener('canvas-duplicate-node', onDuplicateNode);
             window.removeEventListener('canvas-auto-layout', onAutoLayout);
             window.removeEventListener('canvas-focus-node', onFocusNode);
+            window.removeEventListener('canvas-clear-selection', onClearSelection);
             window.removeEventListener('canvas-trace-start', onRunStart);
             window.removeEventListener('canvas-run-start', onRunStart);
             window.removeEventListener('canvas-execution-event', onExecutionEvent);
@@ -726,6 +733,10 @@ function WorkflowCanvasInner({
                 target?.isContentEditable;
 
             if (event.key === 'Escape') {
+                if (editing) {
+                    return;
+                }
+
                 setNodes((current) => current.map((node) => ({ ...node, selected: false })));
                 syncSelection(null);
                 return;

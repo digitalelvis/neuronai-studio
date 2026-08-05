@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Save, Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import WorkflowCanvas from './WorkflowCanvas';
 import NodePalette from './NodePalette';
-import NodeEditSheet from './inspector/NodeEditSheet';
+import NodeInspectorSidebar from './inspector/NodeInspectorSidebar';
+import { getStoredInspectorSize, storeInspectorSize, useNodeEditor } from './inspector/useNodeEditor';
 import ImportJsonDialog from './ImportJsonDialog';
 import WorkflowMetaDialog from './WorkflowMetaDialog';
 import ToolExposureModal from './ToolExposureModal';
@@ -33,6 +34,9 @@ export default function WorkflowEditorShell({ config }) {
     const [toolsCatalog, setToolsCatalog] = useState(config.tools || []);
     const readOnly = config.readOnly ?? false;
     const nodeTypesMeta = config.nodeTypes || {};
+    const inspectorDefaultSize = useMemo(() => getStoredInspectorSize(28), []);
+    const { editingNode, section, syncNode, removeNode, closeNodeEditor } = useNodeEditor();
+    const showInspector = Boolean(editingNode);
 
     useEffect(() => {
         setToolsCatalog(config.tools || []);
@@ -126,8 +130,12 @@ export default function WorkflowEditorShell({ config }) {
                     </div>
                 )}
 
-                <ResizablePanelGroup direction="horizontal" className="min-h-0 flex-1">
-                    <ResizablePanel defaultSize={20} minSize={14} maxSize={28}>
+                <ResizablePanelGroup
+                    direction="horizontal"
+                    className="min-h-0 flex-1"
+                    autoSaveId="ab-workflow-editor-panels"
+                >
+                    <ResizablePanel defaultSize={18} minSize={14} maxSize={28}>
                         <NodePalette
                             nodeTypes={config.nodeTypes || {}}
                             tools={toolsCatalog}
@@ -136,7 +144,7 @@ export default function WorkflowEditorShell({ config }) {
                         />
                     </ResizablePanel>
                     <ResizableHandle withHandle />
-                    <ResizablePanel defaultSize={80} minSize={50}>
+                    <ResizablePanel defaultSize={showInspector ? 54 : 82} minSize={40}>
                         <div className="relative h-full min-h-0 overflow-hidden">
                             <WorkflowCanvas
                                 graph={config.graph}
@@ -206,6 +214,39 @@ export default function WorkflowEditorShell({ config }) {
                             </div>
                         </div>
                     </ResizablePanel>
+
+                    {showInspector && (
+                        <>
+                            <ResizableHandle withHandle />
+                            <ResizablePanel
+                                defaultSize={inspectorDefaultSize}
+                                minSize={20}
+                                maxSize={45}
+                                onResize={(size) => storeInspectorSize(size)}
+                            >
+                                <NodeInspectorSidebar
+                                    editingNode={editingNode}
+                                    section={section}
+                                    onClose={closeNodeEditor}
+                                    onUpdate={syncNode}
+                                    onRemove={removeNode}
+                                    agents={config.agents || []}
+                                    workflows={config.workflows || []}
+                                    tools={toolsCatalog}
+                                    mcpServers={config.mcpServers || []}
+                                    knowledgeBases={config.knowledgeBases || []}
+                                    ragSearchUrlTemplate={config.ragSearchUrlTemplate ?? ''}
+                                    outputClasses={config.outputClasses || []}
+                                    providers={config.providers || {}}
+                                    providerModels={config.providerModels || {}}
+                                    defaultProvider={config.defaultProvider ?? ''}
+                                    defaultModel={config.defaultModel ?? ''}
+                                    nodeTypesMeta={nodeTypesMeta}
+                                    readOnly={readOnly}
+                                />
+                            </ResizablePanel>
+                        </>
+                    )}
                 </ResizablePanelGroup>
 
                 <WorkflowMetaDialog
@@ -278,22 +319,6 @@ export default function WorkflowEditorShell({ config }) {
                             ).map((tool) => (tool.ref === updatedTool.ref ? updatedTool : tool));
                         }
                     }}
-                />
-
-                <NodeEditSheet
-                    agents={config.agents || []}
-                    workflows={config.workflows || []}
-                    tools={toolsCatalog}
-                    mcpServers={config.mcpServers || []}
-                    knowledgeBases={config.knowledgeBases || []}
-                    ragSearchUrlTemplate={config.ragSearchUrlTemplate ?? ''}
-                    outputClasses={config.outputClasses || []}
-                    providers={config.providers || {}}
-                    providerModels={config.providerModels || {}}
-                    defaultProvider={config.defaultProvider ?? ''}
-                    defaultModel={config.defaultModel ?? ''}
-                    nodeTypesMeta={nodeTypesMeta}
-                    readOnly={readOnly}
                 />
             </div>
         </TooltipProvider>
