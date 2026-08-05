@@ -38,6 +38,7 @@ import {
 } from './graph';
 import './canvas.css';
 import { isToolModeEnabled } from './inspector/nodeUtils';
+import { setStateVariableGraphSnapshot } from './inspector/shared/stateVariables';
 
 const nodeTypes = { workflowNode: WorkflowNode, stickyNote: StickyNote };
 const edgeTypes = { workflowEdge: WorkflowEdge };
@@ -124,6 +125,10 @@ function WorkflowCanvasInner({
     useEffect(() => {
         takeSnapshot(nodes, edges);
     }, [nodes, edges, takeSnapshot]);
+
+    useEffect(() => {
+        setStateVariableGraphSnapshot(nodes, edges);
+    }, [nodes, edges]);
 
     useEffect(() => {
         if (initialViewport.x || initialViewport.y || initialViewport.zoom !== 1) {

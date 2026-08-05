@@ -20,6 +20,10 @@ import { Switch } from '@/components/ui/switch';
 import { resolveAgentConfigMode, isToolModeEnabled, isNodeTypeToolable, defaultToolExposure } from './nodeUtils';
 import { useCanvasUi } from '../CanvasUiContext';
 import VariableInput from '@/studio-forms/VariableInput';
+import {
+    StateVariableSelect,
+    StateVariableTextField,
+} from './shared/state-variables';
 
 export default function NodeConfigForm({
     node,
@@ -208,11 +212,15 @@ export default function NodeConfigForm({
                                     {!toolMode && (
                                         <div className="space-y-2" data-ab-handle-anchor="input">
                                             <Label>Message override</Label>
-                                            <Input
+                                            <StateVariableTextField
                                                 value={data.message ?? ''}
                                                 onChange={(e) => updateField('message', e.target.value)}
+                                                currentNodeId={node.id}
                                                 placeholder="{{input}}"
                                                 disabled={readOnly}
+                                                compact={compact}
+                                                rows={compact ? 2 : 3}
+                                                label="Edit message override"
                                             />
                                         </div>
                                     )}
@@ -243,13 +251,15 @@ export default function NodeConfigForm({
                                     </div>
                                     <div className="space-y-2">
                                         <Label>Agent Instructions</Label>
-                                        <ExpandableTextField
+                                        <StateVariableTextField
                                             rows={compact ? 3 : 5}
                                             value={data.instructions ?? ''}
                                             onChange={(e) => updateField('instructions', e.target.value)}
+                                            currentNodeId={node.id}
                                             placeholder="You are a helpful assistant…"
                                             disabled={readOnly}
-                                            label="Edit text content"
+                                            compact={compact}
+                                            label="Edit agent instructions"
                                         />
                                     </div>
                                     <div className="space-y-1" data-ab-handle-anchor="tools">
@@ -264,11 +274,15 @@ export default function NodeConfigForm({
                                     {!toolMode && (
                                         <div className="space-y-2" data-ab-handle-anchor="input">
                                             <Label>Input</Label>
-                                            <Input
+                                            <StateVariableTextField
                                                 value={data.message ?? ''}
                                                 onChange={(e) => updateField('message', e.target.value)}
+                                                currentNodeId={node.id}
                                                 placeholder="{{input}}"
                                                 disabled={readOnly}
+                                                compact={compact}
+                                                rows={compact ? 2 : 3}
+                                                label="Edit input"
                                             />
                                         </div>
                                     )}
@@ -479,12 +493,14 @@ export default function NodeConfigForm({
                             </div>
                             <div className="space-y-2">
                                 <Label>Prompt</Label>
-                                <ExpandableTextField
+                                <StateVariableTextField
                                     rows={compact ? 3 : 4}
                                     value={data.prompt ?? ''}
                                     onChange={(e) => updateField('prompt', e.target.value)}
+                                    currentNodeId={node.id}
                                     disabled={readOnly}
-                                    label="Edit text content"
+                                    compact={compact}
+                                    label="Edit prompt"
                                 />
                             </div>
                             <div className="space-y-2">
@@ -549,11 +565,13 @@ export default function NodeConfigForm({
                             </div>
                             <div className="space-y-2">
                                 <Label>Message</Label>
-                                <ExpandableTextField
+                                <StateVariableTextField
                                     rows={compact ? 2 : 3}
                                     value={data.message ?? '{{input}}'}
                                     onChange={(e) => updateField('message', e.target.value)}
+                                    currentNodeId={node.id}
                                     disabled={readOnly}
+                                    compact={compact}
                                     label="Edit message"
                                 />
                             </div>
@@ -638,13 +656,15 @@ export default function NodeConfigForm({
                 <>
                     <div className="space-y-2">
                         <Label>Prompt</Label>
-                        <ExpandableTextField
+                        <StateVariableTextField
                             rows={3}
                             value={data.prompt ?? ''}
                             onChange={(e) => updateField('prompt', e.target.value)}
+                            currentNodeId={node.id}
                             placeholder="Ask the user for input…"
                             disabled={readOnly}
-                            label="Edit text content"
+                            compact={compact}
+                            label="Edit prompt"
                         />
                     </div>
                     <div className="space-y-2">
@@ -700,12 +720,14 @@ export default function NodeConfigForm({
 
                     <div className="space-y-2">
                         <Label>{toolMode ? 'Default message' : 'Message'}</Label>
-                        <ExpandableTextField
+                        <StateVariableTextField
                             rows={compact ? 2 : 3}
                             value={data.message ?? ''}
                             onChange={(e) => updateField('message', e.target.value)}
+                            currentNodeId={node.id}
                             placeholder="{{input}}"
                             disabled={readOnly}
+                            compact={compact}
                             label="Edit message"
                         />
                         {toolMode && !compact && (
@@ -720,6 +742,7 @@ export default function NodeConfigForm({
                         readOnly={readOnly}
                         onUpdate={onUpdate}
                         compact={compact}
+                        currentNodeId={node.id}
                     />
 
                     {toolMode && (
@@ -766,11 +789,47 @@ export default function NodeConfigForm({
                 <>
                     <div className="space-y-2">
                         <Label>Key</Label>
-                        <Input value={data.key ?? ''} onChange={(e) => updateField('key', e.target.value)} disabled={readOnly} />
+                        <Input
+                            value={data.key ?? ''}
+                            onChange={(e) => updateField('key', e.target.value)}
+                            placeholder="tier"
+                            disabled={readOnly}
+                        />
+                        {!compact && (
+                            <p className="text-xs text-muted-foreground">
+                                Target state key to write (destination).
+                            </p>
+                        )}
                     </div>
                     <div className="space-y-2">
                         <Label>Value</Label>
-                        <Input value={data.value ?? ''} onChange={(e) => updateField('value', e.target.value)} disabled={readOnly} />
+                        <StateVariableTextField
+                            rows={compact ? 2 : 3}
+                            value={
+                                data.value != null && String(data.value) !== ''
+                                    ? String(data.value)
+                                    : data.from_key
+                                      ? `{{${data.from_key}}}`
+                                      : ''
+                            }
+                            onChange={(e) =>
+                                onUpdate?.({
+                                    ...data,
+                                    value: e.target.value,
+                                    from_key: null,
+                                    append_from_key: null,
+                                })
+                            }
+                            currentNodeId={node.id}
+                            placeholder="gold or Hello {{input}}"
+                            disabled={readOnly}
+                            label="Edit value"
+                        />
+                        {!compact && (
+                            <p className="text-xs text-muted-foreground">
+                                Literal or {'{{templates}}'} from workflow state.
+                            </p>
+                        )}
                     </div>
                 </>
             )}
@@ -807,9 +866,10 @@ export default function NodeConfigForm({
                 <>
                     <div className="space-y-2">
                         <Label>State Key</Label>
-                        <Input
+                        <StateVariableSelect
                             value={data.state_key ?? 'input'}
-                            onChange={(e) => updateField('state_key', e.target.value)}
+                            onChange={(key) => updateField('state_key', key)}
+                            currentNodeId={node.id}
                             disabled={readOnly}
                         />
                         {!compact && (
@@ -861,9 +921,10 @@ export default function NodeConfigForm({
                     </div>
                     <div className="space-y-2">
                         <Label>Exit Condition — State Key</Label>
-                        <Input
+                        <StateVariableSelect
                             value={data.state_key ?? 'input'}
-                            onChange={(e) => updateField('state_key', e.target.value)}
+                            onChange={(key) => updateField('state_key', key)}
+                            currentNodeId={node.id}
                             disabled={readOnly}
                         />
                     </div>
@@ -1055,6 +1116,7 @@ export default function NodeConfigForm({
                     knowledgeBases={knowledgeBases}
                     ragSearchUrlTemplate={ragSearchUrlTemplate}
                     readOnly={readOnly}
+                    currentNodeId={node.id}
                     onChange={(patch) => onUpdate?.({ ...data, ...patch })}
                 />
             )}
@@ -1079,7 +1141,7 @@ function normalizeStateMap(stateMap) {
     }));
 }
 
-function StateMapEditor({ data, readOnly, onUpdate, compact = false }) {
+function StateMapEditor({ data, readOnly, onUpdate, compact = false, currentNodeId = null }) {
     const rows = normalizeStateMap(data.state_map);
 
     const commit = (next) => {
@@ -1125,13 +1187,19 @@ function StateMapEditor({ data, readOnly, onUpdate, compact = false }) {
                         placeholder="key"
                         disabled={readOnly}
                     />
-                    <Input
-                        className="h-8"
-                        value={row.value}
-                        onChange={(e) => updateRow(index, { value: e.target.value })}
-                        placeholder="{{value}}"
-                        disabled={readOnly}
-                    />
+                    <div className="min-w-0 flex-1">
+                        <StateVariableTextField
+                            value={row.value}
+                            onChange={(e) => updateRow(index, { value: e.target.value })}
+                            currentNodeId={currentNodeId}
+                            placeholder="{{value}}"
+                            disabled={readOnly}
+                            compact
+                            rows={1}
+                            label="Edit state map value"
+                            className="[&_.ab-state-var-editor]:min-h-8 [&_.ab-state-var-editor]:py-1.5 [&_.ab-state-var-editor]:pb-7"
+                        />
+                    </div>
                     {!readOnly && (
                         <Button
                             type="button"

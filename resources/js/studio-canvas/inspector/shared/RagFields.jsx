@@ -2,7 +2,6 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { ExpandableTextField } from '@/components/ui/expandable-text-field';
 import {
     Select,
     SelectContent,
@@ -10,12 +9,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { StateVariableTextField } from './state-variables';
 
 export default function RagFields({
     data = {},
     knowledgeBases = [],
     ragSearchUrlTemplate = '',
     readOnly = false,
+    currentNodeId = null,
     onChange,
 }) {
     const [query, setQuery] = useState('');
@@ -102,13 +103,14 @@ export default function RagFields({
 
             <div className="space-y-2">
                 <Label>Query template</Label>
-                <ExpandableTextField
+                <StateVariableTextField
                     rows={2}
                     value={data.query ?? ''}
                     onChange={(e) => onChange?.({ query: e.target.value })}
-                    placeholder="{{ input }}"
+                    currentNodeId={currentNodeId}
+                    placeholder="{{input}}"
                     disabled={readOnly}
-                    label="Edit text content"
+                    label="Edit query template"
                 />
                 <p className="text-xs text-muted-foreground">
                     Interpolated against workflow state. Falls back to {'{{ input }}'} when empty.
