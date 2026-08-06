@@ -42,6 +42,10 @@ export function edgeLabelForHandle(handle, targetHandle = 'default') {
         return 'exit';
     }
 
+    if (typeof handle === 'string' && handle !== '' && handle !== 'default') {
+        return handle;
+    }
+
     return undefined;
 }
 
@@ -198,7 +202,7 @@ export function toPackageGraph(nodes, edges, viewport) {
     };
 }
 
-export const FLOW_NODE_WIDTH = 280;
+export const FLOW_NODE_WIDTH = 244;
 export const FLOW_NODE_HEIGHT = 96;
 
 export function dropFlowPosition(screenToFlowPosition, clientX, clientY) {

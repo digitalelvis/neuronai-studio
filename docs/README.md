@@ -61,9 +61,12 @@ The studio stores definitions in your database. At runtime, `AgentRunner` and `W
 | Install & configure | [Installation](getting-started/installation.md) |
 | AI coding assistants | [AI-Assisted Development](guides/ai-assisted-development.md) |
 | Create your first agent | [Quickstart: First Agent](getting-started/quickstart-first-agent.md) |
+| Conversation memory | [Quickstart: Conversation Memory](getting-started/quickstart-conversation-memory.md) |
 | Build a workflow graph | [Quickstart: First Workflow](getting-started/quickstart-first-workflow.md) |
 | Dashboard overview | [Dashboard](guides/dashboard.md) |
 | Agent CRUD & playground | [Agents](guides/agents/overview.md) |
+| Call agents from PHP | [Invoking Agents](guides/agents/invoking-agents.md) |
+| Call workflows from PHP | [Invoking Workflows](guides/workflows/invoking-workflows.md) |
 | Custom & webhook tools | [Tools](guides/tools/overview.md) |
 | Knowledge bases & RAG | [Knowledge Bases](guides/knowledge-bases/overview.md) |
 | MCP server connectors | [MCP Servers](guides/mcp-servers/overview.md) |

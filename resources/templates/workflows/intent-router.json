@@ -1,0 +1,134 @@
+{
+  "meta": {
+    "id": "intent-router",
+    "name": "Intent Router",
+    "description": "Classifies the user message with an Intent Classifier node and routes to dedicated agent or stop branches. Prefer this over LLM + Condition cascades for N-way routing.",
+    "complexity": "intermediate",
+    "category": "routing",
+    "tags": ["intent", "routing", "classifier"],
+    "agents": ["support-assistant"]
+  },
+  "graph": {
+    "version": 1,
+    "nodes": [
+      {
+        "id": "start_1",
+        "type": "start",
+        "position": { "x": 40, "y": 200 },
+        "data": {}
+      },
+      {
+        "id": "ic_1",
+        "type": "intent_classifier",
+        "position": { "x": 360, "y": 180 },
+        "data": {
+          "message": "{{input}}",
+          "output_key": "intent",
+          "vision": false,
+          "memory": false,
+          "intents": [
+            {
+              "id": "question",
+              "name": "Question",
+              "description": "General information requests about products or services"
+            },
+            {
+              "id": "complaint",
+              "name": "Complaint",
+              "description": "Dissatisfaction, service issues, or negative feedback"
+            },
+            {
+              "id": "other",
+              "name": "Other",
+              "description": "Anything that does not fit the other intents"
+            }
+          ]
+        }
+      },
+      {
+        "id": "agent_question",
+        "type": "agent",
+        "position": { "x": 720, "y": 40 },
+        "data": {
+          "config_mode": "existing",
+          "agent_id": "{{agent:support-assistant}}",
+          "message": "Answer this support question helpfully.\n\n{{input}}",
+          "output_key": "agent_response"
+        }
+      },
+      {
+        "id": "agent_complaint",
+        "type": "agent",
+        "position": { "x": 720, "y": 200 },
+        "data": {
+          "config_mode": "existing",
+          "agent_id": "{{agent:support-assistant}}",
+          "message": "Acknowledge the complaint empathetically and outline next steps.\n\n{{input}}",
+          "output_key": "agent_response"
+        }
+      },
+      {
+        "id": "stop_question",
+        "type": "stop",
+        "position": { "x": 1080, "y": 40 },
+        "data": {}
+      },
+      {
+        "id": "stop_complaint",
+        "type": "stop",
+        "position": { "x": 1080, "y": 200 },
+        "data": {}
+      },
+      {
+        "id": "stop_other",
+        "type": "stop",
+        "position": { "x": 720, "y": 360 },
+        "data": {}
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "source": "start_1",
+        "target": "ic_1",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "e2",
+        "source": "ic_1",
+        "target": "agent_question",
+        "sourceHandle": "question",
+        "targetHandle": "default"
+      },
+      {
+        "id": "e3",
+        "source": "ic_1",
+        "target": "agent_complaint",
+        "sourceHandle": "complaint",
+        "targetHandle": "default"
+      },
+      {
+        "id": "e4",
+        "source": "ic_1",
+        "target": "stop_other",
+        "sourceHandle": "other",
+        "targetHandle": "default"
+      },
+      {
+        "id": "e5",
+        "source": "agent_question",
+        "target": "stop_question",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      },
+      {
+        "id": "e6",
+        "source": "agent_complaint",
+        "target": "stop_complaint",
+        "sourceHandle": "default",
+        "targetHandle": "default"
+      }
+    ]
+  }
+}

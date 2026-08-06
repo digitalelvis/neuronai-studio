@@ -13,6 +13,7 @@ use DigitalElvis\NeuronAIStudio\Runtime\ToolResolver;
 use Illuminate\Support\Facades\Storage;
 use NeuronAI\Chat\Messages\AssistantMessage;
 use NeuronAI\Testing\FakeAIProvider;
+use NeuronAI\Workflow\WorkflowState;
 
 class MessageFactoryTest extends TestCase
 {
@@ -147,5 +148,20 @@ class MessageFactoryTest extends TestCase
 
         $response->assertUnprocessable();
         $response->assertJsonValidationErrors(['message']);
+    }
+
+    public function test_resolve_attachments_for_node_respects_vision_toggle(): void
+    {
+        $factory = new MessageFactory;
+        $state = new WorkflowState([
+            'attachments' => [
+                ['type' => 'image', 'storage_key' => 'a.png', 'mime_type' => 'image/png', 'name' => 'a.png'],
+            ],
+        ]);
+
+        $this->assertSame([], $factory->resolveAttachmentsForNode(['vision' => false], $state));
+        $this->assertCount(1, $factory->resolveAttachmentsForNode(['vision' => true], $state));
+        $this->assertCount(1, $factory->resolveAttachmentsForNode([], $state, defaultVision: true));
+        $this->assertSame([], $factory->resolveAttachmentsForNode([], $state, defaultVision: false));
     }
 }

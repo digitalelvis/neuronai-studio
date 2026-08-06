@@ -468,6 +468,99 @@ class GraphValidatorTest extends TestCase
         $this->assertStringContainsString('empty state_map key', strtolower(implode(' ', $result['errors'])));
     }
 
+    public function test_rejects_intent_classifier_with_fewer_than_two_intents(): void
+    {
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate([
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                [
+                    'id' => 'ic_1',
+                    'type' => 'intent_classifier',
+                    'position' => ['x' => 100, 'y' => 0],
+                    'data' => [
+                        'intents' => [
+                            ['id' => 'only_one', 'name' => 'Only', 'description' => 'One'],
+                        ],
+                    ],
+                ],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'ic_1', 'sourceHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'ic_1', 'target' => 'stop_1', 'sourceHandle' => 'only_one'],
+            ],
+        ]);
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('at least two intents', implode(' ', $result['errors']));
+    }
+
+    public function test_rejects_intent_classifier_duplicate_ids(): void
+    {
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate([
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                [
+                    'id' => 'ic_1',
+                    'type' => 'intent_classifier',
+                    'position' => ['x' => 100, 'y' => 0],
+                    'data' => [
+                        'intents' => [
+                            ['id' => 'billing', 'name' => 'Billing', 'description' => 'A'],
+                            ['id' => 'billing', 'name' => 'Billing 2', 'description' => 'B'],
+                        ],
+                    ],
+                ],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'ic_1', 'sourceHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'ic_1', 'target' => 'stop_1', 'sourceHandle' => 'billing'],
+            ],
+        ]);
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('duplicate intent id', strtolower(implode(' ', $result['errors'])));
+    }
+
+    public function test_accepts_valid_intent_classifier_graph(): void
+    {
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate([
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                [
+                    'id' => 'ic_1',
+                    'type' => 'intent_classifier',
+                    'position' => ['x' => 100, 'y' => 0],
+                    'data' => [
+                        'intents' => [
+                            ['id' => 'billing', 'name' => 'Billing', 'description' => 'Payment'],
+                            ['id' => 'other', 'name' => 'Other', 'description' => 'Fallback'],
+                        ],
+                    ],
+                ],
+                ['id' => 'agent_1', 'type' => 'agent', 'position' => ['x' => 200, 'y' => -40], 'data' => [
+                    'config_mode' => 'inline',
+                    'provider' => 'openai',
+                    'model' => 'gpt-4o-mini',
+                ]],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 300, 'y' => 0], 'data' => []],
+                ['id' => 'stop_2', 'type' => 'stop', 'position' => ['x' => 300, 'y' => 80], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'ic_1', 'sourceHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'ic_1', 'target' => 'agent_1', 'sourceHandle' => 'billing'],
+                ['id' => 'e3', 'source' => 'ic_1', 'target' => 'stop_2', 'sourceHandle' => 'other'],
+                ['id' => 'e4', 'source' => 'agent_1', 'target' => 'stop_1', 'sourceHandle' => 'default'],
+            ],
+        ]);
+
+        $this->assertTrue($result['valid'], implode(' ', $result['errors']));
+    }
+
     /**
      * @return array{nodes: array<int, array<string, mixed>>, edges: array<int, array<string, mixed>>}
      */

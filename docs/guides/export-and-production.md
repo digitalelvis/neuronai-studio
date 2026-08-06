@@ -154,6 +154,8 @@ app/Neuron/Workflows/LeadQualification.php
 
 ## See also
 
+- [Invoking Agents](agents/invoking-agents.md) — call DB agents via `AgentRunner` (or Neuron API on exported classes)
+- [Invoking Workflows](workflows/invoking-workflows.md) — call workflows via `WorkflowRunner` (native export still goes through the runner)
 - [Artisan Commands](../reference/artisan-commands.md)
 - [Configuration](../reference/configuration.md#codegen-feature-flags)
 - [Security & Access](security-and-access.md)

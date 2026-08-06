@@ -10,11 +10,25 @@ import StudioAgentInputPanel from './StudioAgentInputPanel';
 import StudioChat from './StudioChat';
 import ThreadSidebar from './ThreadSidebar';
 import { createThreadId, getThreadFromUrl, setThreadInUrl } from './utils/thread';
+import { loadLastContext, saveLastContext } from './utils/presets';
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 
 function threadLabel(threadId, threads) {
     const match = threads.find((thread) => thread.id === threadId);
     return match?.label ?? (threadId ? `Session ${threadId.slice(0, 8)}` : 'New chat');
+}
+
+function resolveInitialContext(mode, entityId, initialContext) {
+    if (initialContext && typeof initialContext === 'object' && Object.keys(initialContext).length > 0) {
+        return initialContext;
+    }
+
+    const stored = loadLastContext(mode, entityId);
+    if (stored) {
+        return stored;
+    }
+
+    return initialContext && typeof initialContext === 'object' ? initialContext : {};
 }
 
 export default function StudioTestHarness({
@@ -37,7 +51,7 @@ export default function StudioTestHarness({
     onClose,
 }) {
     const chatRef = useRef(null);
-    const [context, setContext] = useState(initialContext);
+    const [context, setContext] = useState(() => resolveInitialContext(mode, entityId, initialContext));
     const [instructions, setInstructions] = useState(agentMeta?.instructions ?? '');
     const [parameters, setParameters] = useState({});
     const [sending, setSending] = useState(false);
@@ -51,6 +65,39 @@ export default function StudioTestHarness({
     const [threadId, setThreadId] = useState(() => getThreadFromUrl() ?? createThreadId());
 
     const supportsThreads = mode === 'agent' || mode === 'workflow';
+
+    const updateContext = useCallback(
+        (next) => {
+            setContext((current) => {
+                const value = typeof next === 'function' ? next(current) : next;
+                if (entityId && value && typeof value === 'object' && !Array.isArray(value)) {
+                    saveLastContext(mode, entityId, value);
+                }
+
+                return value;
+            });
+        },
+        [entityId, mode],
+    );
+
+    useEffect(() => {
+        if (!entityId) {
+            return;
+        }
+
+        const stored = loadLastContext(mode, entityId);
+        if (!stored) {
+            return;
+        }
+
+        setContext((current) => {
+            if (current && typeof current === 'object' && Object.keys(current).length > 0) {
+                return current;
+            }
+
+            return stored;
+        });
+    }, [entityId, mode]);
 
     const threadRunsUrl = useMemo(() => {
         if (mode !== 'agent' || !threadRunsUrlTemplate || !threadId) {
@@ -132,7 +179,7 @@ export default function StudioTestHarness({
         uploadUrl,
         showPlayground: false,
         initialContext: context,
-        onContextChange: setContext,
+        onContextChange: updateContext,
         onRunCompleted: handleRunCompleted,
         threadHistoryUrl,
         instructions,
@@ -234,7 +281,7 @@ export default function StudioTestHarness({
                     mode={mode}
                     entityId={entityId}
                     context={context}
-                    onContextChange={setContext}
+                    onContextChange={updateContext}
                     agentMeta={agentMeta}
                 />
 
@@ -253,7 +300,7 @@ export default function StudioTestHarness({
                                     instructions={instructions}
                                     onInstructionsChange={setInstructions}
                                     context={context}
-                                    onContextChange={setContext}
+                                    onContextChange={updateContext}
                                     parameters={parameters}
                                     onParametersChange={setParameters}
                                     onSend={(text, attachments) => {

@@ -61,9 +61,18 @@ export default function PlaygroundOverlay({ workflowConfig = {}, onBeforeRun }) 
                         tracesIndexUrl={workflowConfig.tracesIndexUrl}
                         traceShowJsonUrlTemplate={workflowConfig.traceShowJsonUrlTemplate}
                         traceShowUrlTemplate={workflowConfig.traceShowUrlTemplate}
-                        onRunCompleted={() =>
-                            window.dispatchEvent(new CustomEvent('workflow-trace-finished'))
-                        }
+                        onRunCompleted={(data) => {
+                            window.dispatchEvent(new CustomEvent('workflow-trace-finished'));
+                            window.dispatchEvent(
+                                new CustomEvent('workflow-variable-cache', {
+                                    detail: {
+                                        workflowId: workflowConfig.workflowId,
+                                        output: data?.output ?? null,
+                                        runId: data?.trace_id ?? data?.run_id ?? null,
+                                    },
+                                }),
+                            );
+                        }}
                     />
                 ) : (
                     <p className="p-6 text-sm text-muted-foreground">Save the workflow first to enable testing.</p>

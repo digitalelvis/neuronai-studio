@@ -64,9 +64,11 @@ sequenceDiagram
 
 The workflow test harness uses the same upload endpoint and MIME validation as the Playground. Uploaded files are merged into `state.attachments` at run start (or resume) and survive across **Loop** iterations for autonomous agent workflows.
 
-Agent and LLM nodes read attachments through `MessageFactory::resolveMessageWithAttachments()`. Pair with the **Autonomous Lead Qualification** template for a full loop + tools + attachments example — see [Templates](../templates.md#autonomous-lead-qualification).
+Agent and LLM nodes read attachments through `MessageFactory::resolveAttachmentsForNode()` / `resolveMessageWithAttachments()`. LLM and Intent Classifier nodes expose a **Vision** toggle (`data.vision`) so authors can opt out of multimodal input per step. Pair with the **Autonomous Lead Qualification** template for a full loop + tools + attachments example — see [Templates](../templates.md#autonomous-lead-qualification).
 
 ## Related
 
+- [Invoking Agents](invoking-agents.md) — pass attachment refs from PHP (`stream` / `runInline`)
+- [Invoking Workflows](../workflows/invoking-workflows.md) — `state.attachments` on `WorkflowRunner::run()`
 - [Playground & Threads](playground-and-threads.md)
 - [Configuration](../../reference/configuration.md)

@@ -12,7 +12,7 @@ Workflows share a mutable key-value **state** (`WorkflowState`) for the duration
 | **LLM** / **RAG** nodes | `output_key` | Node output (string, or validated array when `structured` is on) |
 | **Tool** / **MCP** nodes | `output_key` (default: `tool_result` / `mcp_result`) | Tool result payload |
 | **Human** node | `output_key` (default: `human_response`) | User reply when the run resumes |
-| **Set State** node | `key` from node config | Static `value` or copy from `from_key` |
+| **Set State** node | `key` from node config | `value` (literal or `{{templates}}`), or legacy `from_key` / `append_from_key` |
 
 Internal keys such as `__workflow_run_id`, `__current_node_id`, `__steps`, `__studio_thread_id`, `__studio_run_id`, `__loop_iterations`, `__parent_run_id` (run input only), and `__workflow_nesting_depth` are reserved for runtime bookkeeping.
 

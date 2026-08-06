@@ -14,6 +14,7 @@ class NodeCodeGeneratorRegistry
             new InvokeNodeCodeGenerator,
             new RunWorkflowNodeCodeGenerator,
             new LlmNodeCodeGenerator,
+            new IntentClassifierNodeCodeGenerator,
             new AgentNodeCodeGenerator,
             new ConditionNodeCodeGenerator,
             new LoopNodeCodeGenerator,

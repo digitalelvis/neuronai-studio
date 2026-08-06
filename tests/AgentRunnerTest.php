@@ -2,6 +2,7 @@
 
 namespace DigitalElvis\NeuronAIStudio\Tests;
 
+use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Models\StudioThread;
 use DigitalElvis\NeuronAIStudio\Models\StudioTraceSpan;
@@ -11,6 +12,7 @@ use DigitalElvis\NeuronAIStudio\Runtime\McpToolResolver;
 use DigitalElvis\NeuronAIStudio\Runtime\MessageFactory;
 use DigitalElvis\NeuronAIStudio\Runtime\ToolEventExtractor;
 use DigitalElvis\NeuronAIStudio\Runtime\ToolResolver;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Str;
 use NeuronAI\Chat\Messages\AssistantMessage;
 use NeuronAI\Chat\Messages\Usage;
@@ -141,5 +143,53 @@ class AgentRunnerTest extends TestCase
         $this->assertSame('0.000150', $child->estimated_cost);
         $this->assertSame(1000, $parent->fresh()->prompt_tokens);
         $this->assertSame('0.000150', $parent->fresh()->estimated_cost);
+    }
+
+    public function test_run_accepts_agent_slug(): void
+    {
+        $slug = 'slug-run-'.uniqid();
+
+        AgentDefinition::create([
+            'name' => 'Slug Agent',
+            'slug' => $slug,
+            'provider' => 'openai',
+            'model' => 'gpt-4o-mini',
+            'instructions' => 'You are helpful.',
+        ]);
+
+        $provider = new FakeAIProvider(new AssistantMessage('Hello from slug'));
+
+        $registry = $this->createMock(ProviderRegistry::class);
+        $registry->expects($this->once())
+            ->method('resolve')
+            ->with('openai', 'gpt-4o-mini', [])
+            ->willReturn($provider);
+
+        $runner = new AgentRunner(
+            $registry,
+            $this->createMock(ToolResolver::class),
+            $this->createMock(McpToolResolver::class),
+            new ToolEventExtractor,
+            new MessageFactory,
+        );
+
+        $result = $runner->run($slug, 'Hi');
+
+        $this->assertSame('Hello from slug', $result->content);
+    }
+
+    public function test_run_throws_when_slug_not_found(): void
+    {
+        $runner = new AgentRunner(
+            $this->createMock(ProviderRegistry::class),
+            $this->createMock(ToolResolver::class),
+            $this->createMock(McpToolResolver::class),
+            new ToolEventExtractor,
+            new MessageFactory,
+        );
+
+        $this->expectException(ModelNotFoundException::class);
+
+        $runner->run('missing-agent-slug-'.uniqid(), 'Hi');
     }
 }

@@ -364,5 +364,6 @@ See [Attachments](../agents/attachments.md#workflow-test-harness) and [Playgroun
 
 ## See also
 
+- [Invoking Workflows](invoking-workflows.md) — call `WorkflowRunner` from app code
 - [Human-in-the-Loop](human-in-the-loop.md)
 - [State & Conditions](state-and-conditions.md)

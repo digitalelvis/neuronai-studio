@@ -349,13 +349,19 @@ class AgentNodeExecutor implements NodeExecutorInterface
             ];
         }
 
-        return array_merge($data, [
+        $config = array_merge($data, [
             'tools' => $tools,
             'tool_context' => $toolContext,
             ...$this->toolControlConfig($data, null),
             ...$this->memoryOverrideConfig($data, null),
             ...$extra,
         ]);
+
+        if (isset($config['instructions']) && is_string($config['instructions']) && $config['instructions'] !== '') {
+            $config['instructions'] = StateTemplateInterpolator::interpolate($config['instructions'], $state);
+        }
+
+        return $config;
     }
 
     /**

@@ -53,19 +53,20 @@ See [State & Conditions](../state-and-conditions.md) for detailed examples.
 
 ## Set State
 
-**Purpose:** Write or copy values into workflow state.
+**Purpose:** Write values into workflow state.
 
 | Config | Description |
 |--------|-------------|
 | `key` | Target state key |
-| `value` | Static value to write |
-| `from_key` | Copy value from another state key (alternative to `value`) |
+| `value` | Literal or `{{state_key}}` template (interpolated at runtime) |
 
 Use Set State to:
 
-- Initialize default values mid-flow
-- Rename or duplicate state keys
+- Initialize default values mid-flow (`value: "gold"`)
+- Copy or compose from other keys (`value: "{{input}}"` or `Hello {{input}}`)
 - Set flags for downstream Condition nodes
+
+Legacy fields `from_key` (whole-value copy) and `append_from_key` (newline append) still run if present in saved graphs, but the Studio UI only edits `key` + `value`.
 
 ```mermaid
 flowchart TD

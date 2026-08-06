@@ -49,6 +49,7 @@ Repeating the same workflow template creates a new workflow. Agents referenced b
 | `autonomous-lead-qualification` | Intermediate | Agent + tools + attachments in a loop |
 | `parallel-support-triage` | Intermediate | Fork/join parallel analysis + checkpoints |
 | `support-rag-hitl` | Advanced | Intent routing, RAG, human-in-the-loop |
+| `intent-router` | Intermediate | Intent Classifier N-way routing (question / complaint / other) |
 | `parallel-triage-hitl` | Advanced | Parallel analysis + human review branch + checkpoint resume |
 | `parallel-refund-approval` | Advanced | Parallel eligibility + approval-gated refund tool |
 | `dev-support-memory-loop` | Advanced | Tech-support loop with memory, RAG, HITL, tools, attachments |
