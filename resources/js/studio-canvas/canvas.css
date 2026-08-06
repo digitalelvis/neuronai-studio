@@ -751,6 +751,16 @@
     padding: 1.5rem;
 }
 
+.ab-variable-inspect-json {
+    display: flex;
+    flex-direction: column;
+}
+
+.ab-variable-inspect-json .cm-editor {
+    height: 100% !important;
+    border-radius: 0.5rem;
+}
+
 .ab-sticky-note {
     width: 220px;
     min-height: 140px;

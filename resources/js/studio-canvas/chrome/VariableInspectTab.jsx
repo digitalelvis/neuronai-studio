@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Braces, Copy, Check, RotateCcw } from 'lucide-react';
+import { Braces, BookmarkPlus, Check, Copy, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import CodeViewer from '@/components/code/CodeViewer';
 import { NodeTypeIcon } from '../nodes/nodeIcons';
 import {
     bindVariableInspectEvents,
@@ -11,9 +12,14 @@ import {
     resetVariableInspectCache,
     subscribeVariableInspect,
 } from './variable-inspect';
+import { presetStorageKey, upsertPreset } from '../../studio-chat/utils/presets';
 
 function selectionId(nodeId, key) {
     return `${nodeId}::${key}`;
+}
+
+function isStructuredJsonType(type) {
+    return type === 'object' || type === 'array' || (typeof type === 'string' && type.startsWith('array'));
 }
 
 export default function VariableInspectTab({
@@ -25,6 +31,7 @@ export default function VariableInspectTab({
     const [cache, setCache] = useState(() => getVariableInspectState());
     const [selectedId, setSelectedId] = useState(null);
     const [copied, setCopied] = useState(false);
+    const [presetSaved, setPresetSaved] = useState(false);
 
     useEffect(() => {
         return bindVariableInspectEvents();
@@ -75,6 +82,15 @@ export default function VariableInspectTab({
         return null;
     }, [cache.tree, selectedId]);
 
+    const selectedIsStructured = selected ? isStructuredJsonType(selected.variable.type) : false;
+    const selectedJson = useMemo(() => {
+        if (!selected || !selectedIsStructured) {
+            return '';
+        }
+
+        return formatInspectValue(selected.variable.value);
+    }, [selected, selectedIsStructured]);
+
     useEffect(() => {
         if (selectedId && !selected) {
             setSelectedId(null);
@@ -100,6 +116,28 @@ export default function VariableInspectTab({
             // Clipboard may be unavailable.
         }
     }, [selected]);
+
+    const handleSaveAsPreset = useCallback(() => {
+        if (!selected || !workflowId || !selectedIsStructured) {
+            return;
+        }
+
+        const defaultName = selected.variable.key;
+        const name = window.prompt('Preset name', defaultName);
+        if (name == null) {
+            return;
+        }
+
+        const trimmed = name.trim();
+        if (!trimmed) {
+            return;
+        }
+
+        const context = JSON.stringify({ [selected.variable.key]: selected.variable.value }, null, 2);
+        upsertPreset(presetStorageKey('workflow', workflowId), { name: trimmed, context });
+        setPresetSaved(true);
+        window.setTimeout(() => setPresetSaved(false), 1500);
+    }, [selected, selectedIsStructured, workflowId]);
 
     useEffect(() => {
         if (!onActionsChange) {
@@ -135,11 +173,38 @@ export default function VariableInspectTab({
                         )}
                     </Button>
                 )}
+                {selected && selectedIsStructured && workflowId && (
+                    <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={handleSaveAsPreset}
+                        title="Save as preset"
+                    >
+                        {presetSaved ? (
+                            <Check className="h-3.5 w-3.5 text-green-500" />
+                        ) : (
+                            <BookmarkPlus className="h-3.5 w-3.5" />
+                        )}
+                    </Button>
+                )}
             </>,
         );
 
         return () => onActionsChange(null);
-    }, [copied, handleCopy, handleReset, hasCache, onActionsChange, selected]);
+    }, [
+        copied,
+        handleCopy,
+        handleReset,
+        handleSaveAsPreset,
+        hasCache,
+        onActionsChange,
+        presetSaved,
+        selected,
+        selectedIsStructured,
+        workflowId,
+    ]);
 
     const focusNode = useCallback((nodeId) => {
         if (!nodeId || nodeId === 'start' || nodeId === '__start__') {
@@ -224,11 +289,22 @@ export default function VariableInspectTab({
                                 {selected.variable.type}
                             </span>
                         </div>
-                        <ScrollArea className="min-h-0 flex-1">
-                            <pre className="ab-variable-inspect-value">
-                                {formatInspectValue(selected.variable.value)}
-                            </pre>
-                        </ScrollArea>
+                        {selectedIsStructured ? (
+                            <div className="ab-variable-inspect-json min-h-0 flex-1 overflow-hidden p-2">
+                                <CodeViewer
+                                    value={selectedJson}
+                                    language="json"
+                                    height="100%"
+                                    className="h-full [&_.cm-editor]:h-full [&_.cm-scroller]:h-full"
+                                />
+                            </div>
+                        ) : (
+                            <ScrollArea className="min-h-0 flex-1">
+                                <pre className="ab-variable-inspect-value">
+                                    {formatInspectValue(selected.variable.value)}
+                                </pre>
+                            </ScrollArea>
+                        )}
                     </>
                 ) : (
                     <div className="ab-variable-inspect-empty">
