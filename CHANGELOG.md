@@ -1,5 +1,23 @@
 # Changelog
 
+# [2.6.0](https://github.com/digitalelvis/neuronai-studio/compare/v2.5.0...v2.6.0) (2026-08-06)
+
+
+### Bug Fixes
+
+* **workflows:** reuse workflow thread for Intent Classifier metering ([998d049](https://github.com/digitalelvis/neuronai-studio/commit/998d04983563888b8481763525a603654cec13d3))
+
+
+### Features
+
+* **agents:** accept slug in AgentRunner::run and document invocation ([a0a4c39](https://github.com/digitalelvis/neuronai-studio/commit/a0a4c398ad5db54ca68ced1ecfd6836375488f1a))
+* **canvas:** add IDE-style bottom dock with variable inspect ([1483a29](https://github.com/digitalelvis/neuronai-studio/commit/1483a29a2419e457b1818cd5e152dffb76beb5cb))
+* **canvas:** add JSON CodeMirror viewer and persistent playground presets ([2de2c78](https://github.com/digitalelvis/neuronai-studio/commit/2de2c784c9340571893fd86e2ac2276c86830e92))
+* **canvas:** redesign workflow nodes with inspector sidebar ([70de130](https://github.com/digitalelvis/neuronai-studio/commit/70de1306db27a42dbba9d52579c60407133267a0))
+* **workflows:** add Intent Classifier node with Vision and Memory ([abef008](https://github.com/digitalelvis/neuronai-studio/commit/abef008a21ead1657513300283c2564c40b281a5))
+* **workflows:** add Vault API key support to LLM and Intent Classifier ([f8e89a2](https://github.com/digitalelvis/neuronai-studio/commit/f8e89a23d63cc54352dea9e636455dd8d90ec476))
+* **workflows:** add visual state variable picker in Studio ([74bdbc7](https://github.com/digitalelvis/neuronai-studio/commit/74bdbc713c5cef74150c1c37ab95835c9a0a9937))
+
 # [2.5.0](https://github.com/digitalelvis/neuronai-studio/compare/v2.4.0...v2.5.0) (2026-08-05)
 
 
