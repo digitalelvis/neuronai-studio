@@ -153,13 +153,50 @@ Attach a PDF or image in the harness before sending — the same attachment arra
 |--------|-------------|
 | `provider` | LLM provider key |
 | `model` | Model ID |
+| `api_key` | Optional Vault credential bind (`var:NAME`) or leave empty for install-time provider config |
 | `prompt` | Prompt template with `{{state_key}}` placeholders |
 | `output_key` | State key for the response |
 | `structured` | When `true`, validate and store typed output instead of plain text |
 | `output_class` | FQCN or short name of a PHP output class (required when `structured` is on) |
 | `stream` | When `true`, stream the response token-by-token via SSE during the step (see [Streaming](#streaming)) |
+| `vision` | When `true` (default), include `state.attachments` in the model message. Set `false` to ignore attachments for this step |
 
 Use when you need a one-off LLM step without tool bindings.
+
+## Intent Classifier
+
+**Purpose:** Classify a user message into one of several **intents** and route the workflow exclusively along that branch — a simplified alternative to LLM + Condition cascades. (Dify calls this a Question Classifier / “Class”; Studio uses **Intent** to match NLU practice and avoid colliding with PHP `output_class`.)
+
+| Config | Description |
+|--------|-------------|
+| `provider` / `model` | LLM used for classification |
+| `api_key` | Optional Vault credential bind (`var:NAME`) or leave empty for install-time provider config |
+| `message` | Input template (default `{{input}}`) |
+| `intents` | List of `{ id, name, description }`. Each `id` becomes a source handle |
+| `instructions` | Optional extra guidance for the classifier |
+| `output_key` | State key for the chosen intent id (default `intent`); also writes `{output_key}_name` |
+| `vision` | When `true`, include run attachments (default `false`) |
+| `memory` | When `true`, load conversation history from the workflow thread (default `false` uses in-memory history only) |
+| `memory_config.context_window` | Optional token budget override when memory is on |
+
+Classification uses Neuron structured output (`IntentClassificationResult`). Unknown ids fall back to `other` / `unknown` when present. Nested classifier runs always reuse `__studio_thread_id` for metering; **Memory** only toggles whether prior turns are sent to the model.
+
+### Handles
+
+| Handle | Side | Role |
+|--------|------|------|
+| `default` (target) | Left | Control-flow input |
+| each `intents[].id` (source) | Right | Exclusive branch for that intent |
+
+```mermaid
+flowchart LR
+  Start --> IC[Intent Classifier]
+  IC -->|billing| AgentBilling
+  IC -->|how_to| RagHowTo
+  IC -->|other| Human
+```
+
+Prefer this node for graph routing. To expose classification as a tool to a supervisor, use an **Agent** in Tool Mode with the `intent-classifier` agent template instead.
 
 ## Streaming
 

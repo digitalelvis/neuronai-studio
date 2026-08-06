@@ -1,37 +1,18 @@
 import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { Handle, NodeToolbar, Position, useUpdateNodeInternals } from '@xyflow/react';
-import {
-    ChevronDown,
-    ChevronUp,
-    Copy,
-    Settings2,
-    SlidersHorizontal,
-    Trash2,
-} from 'lucide-react';
+import { Copy, Trash2 } from 'lucide-react';
 import { useCanvasUi } from '../CanvasUiContext';
 import { categoryColor } from '../graph';
-import { normalizeNodeForEdit, resolveAgentConfigMode, isToolModeEnabled } from '../inspector/nodeUtils';
-import NodeConfigForm from '../inspector/NodeConfigForm';
+import { isToolModeEnabled } from '../inspector/nodeUtils';
+import NodePreviewBody, { getForkBranches, getIntentIds } from './NodePreviewBody';
 import { NodeTypeIcon } from './nodeIcons';
 
-const DENSE_TYPES = new Set(['agent', 'llm', 'rag', 'mcp', 'tool']);
-
 const AGENT_HANDLE_FALLBACKS = {
-    tools: 'calc(100% - 18.5rem)',
-    input: 'calc(100% - 14.75rem)',
-    response: 'calc(100% - 5.25rem)',
-    toolset: 'calc(100% - 8.5rem)',
+    tools: '42%',
+    input: '28%',
+    response: '72%',
+    toolset: '62%',
 };
-
-function forkBranches(config) {
-    if (!config || !Array.isArray(config.branches)) {
-        return [];
-    }
-
-    return config.branches
-        .map((branch) => (typeof branch === 'string' ? branch : branch?.id))
-        .filter((id) => typeof id === 'string' && id !== '');
-}
 
 function measureHandleAnchor(nodeEl, name) {
     const anchor = nodeEl.querySelector(`[data-ab-handle-anchor="${name}"]`);
@@ -50,13 +31,14 @@ function measureHandleAnchor(nodeEl, name) {
     return `${Math.round(percent * 100) / 100}%`;
 }
 
-function useAgentHandleTops(nodeId, nodeRef, enabled, revision) {
+function useMeasuredHandleTops(nodeId, nodeRef, enabled, names, revision) {
     const updateNodeInternals = useUpdateNodeInternals();
     const [tops, setTops] = useState(null);
     const topsRef = useRef(null);
+    const namesKey = names.join('|');
 
     useLayoutEffect(() => {
-        if (!enabled) {
+        if (!enabled || names.length === 0) {
             topsRef.current = null;
             setTops(null);
             return undefined;
@@ -68,19 +50,16 @@ function useAgentHandleTops(nodeId, nodeRef, enabled, revision) {
         }
 
         const sync = () => {
-            const next = {
-                tools: measureHandleAnchor(nodeEl, 'tools'),
-                input: measureHandleAnchor(nodeEl, 'input'),
-                response: measureHandleAnchor(nodeEl, 'response'),
-                toolset: measureHandleAnchor(nodeEl, 'toolset'),
-            };
+            const next = {};
+            for (const name of names) {
+                next[name] = measureHandleAnchor(nodeEl, name);
+            }
+
             const prev = topsRef.current;
             const changed =
                 !prev ||
-                prev.tools !== next.tools ||
-                prev.input !== next.input ||
-                prev.response !== next.response ||
-                prev.toolset !== next.toolset;
+                names.some((name) => prev[name] !== next[name]) ||
+                Object.keys(prev).length !== names.length;
 
             if (!changed) {
                 return;
@@ -95,64 +74,102 @@ function useAgentHandleTops(nodeId, nodeRef, enabled, revision) {
         const observer = new ResizeObserver(sync);
         observer.observe(nodeEl);
         return () => observer.disconnect();
-    }, [enabled, nodeId, nodeRef, revision, updateNodeInternals]);
+    }, [enabled, nodeId, nodeRef, namesKey, revision, updateNodeInternals, names]);
 
     return tops;
 }
 
-function NodeHandles({ nodeType, config, expanded = false, handleTops = null }) {
+function FlowHandle({ type, position, id, className = '', style }) {
+    return (
+        <Handle type={type} position={position} id={id} className={`ab-flow-handle ${className}`.trim()} style={style}>
+            <span className="ab-flow-handle-plus" aria-hidden="true">
+                +
+            </span>
+        </Handle>
+    );
+}
+
+function NodeHandles({ nodeType, config, handleTops = null }) {
+    const topFor = (name, fallback) => handleTops?.[name] || fallback;
+
     if (nodeType === 'start') {
-        return <Handle type="source" position={Position.Right} id="default" className="ab-flow-handle" />;
+        return <FlowHandle type="source" position={Position.Right} id="default" />;
     }
 
     if (nodeType === 'stop') {
-        return <Handle type="target" position={Position.Left} id="default" className="ab-flow-handle" />;
+        return <FlowHandle type="target" position={Position.Left} id="default" />;
     }
 
     if (nodeType === 'condition') {
         return (
             <>
-                <Handle type="target" position={Position.Left} id="default" className="ab-flow-handle" />
-                <Handle
+                <FlowHandle type="target" position={Position.Left} id="default" />
+                <FlowHandle
                     type="source"
                     position={Position.Right}
                     id="true"
-                    className="ab-flow-handle ab-flow-handle-true"
-                    style={{ top: '35%' }}
+                    className="ab-flow-handle-true"
+                    style={{ top: topFor('true', '40%') }}
                 />
-                <Handle
+                <FlowHandle
                     type="source"
                     position={Position.Right}
                     id="false"
-                    className="ab-flow-handle ab-flow-handle-false"
-                    style={{ top: '65%' }}
+                    className="ab-flow-handle-false"
+                    style={{ top: topFor('false', '70%') }}
                 />
             </>
         );
     }
 
     if (nodeType === 'fork') {
-        const branches = forkBranches(config);
-        const count = branches.length;
+        const branches = getForkBranches(config);
 
         return (
             <>
-                <Handle type="target" position={Position.Left} id="default" className="ab-flow-handle" />
-                <Handle
+                <FlowHandle type="target" position={Position.Left} id="default" />
+                <FlowHandle
                     type="source"
                     position={Position.Right}
                     id="default"
-                    className="ab-flow-handle"
-                    style={{ top: '18%' }}
+                    style={{ top: topFor('default', '28%') }}
                 />
                 {branches.map((branchId, index) => (
-                    <Handle
+                    <FlowHandle
                         key={branchId}
                         type="source"
                         position={Position.Right}
                         id={branchId}
-                        className="ab-flow-handle"
-                        style={{ top: `${28 + ((index + 1) / (count + 1)) * 55}%` }}
+                        style={{
+                            top:
+                                topFor(`branch:${branchId}`) ||
+                                `${35 + ((index + 1) / (branches.length + 1)) * 50}%`,
+                        }}
+                    />
+                ))}
+            </>
+        );
+    }
+
+    if (nodeType === 'intent_classifier') {
+        const intents = getIntentIds(config);
+        const count = Math.max(intents.length, 1);
+
+        return (
+            <>
+                <FlowHandle type="target" position={Position.Left} id="default" />
+                {intents.map((intentId, index) => (
+                    <FlowHandle
+                        key={intentId}
+                        type="source"
+                        position={Position.Right}
+                        id={intentId}
+                        style={{
+                            top:
+                                topFor(`intent:${intentId}`) ||
+                                topFor(intentId) ||
+                                `${22 + ((index + 1) / (count + 1)) * 60}%`,
+                        }}
                     />
                 ))}
             </>
@@ -162,20 +179,20 @@ function NodeHandles({ nodeType, config, expanded = false, handleTops = null }) 
     if (nodeType === 'loop') {
         return (
             <>
-                <Handle type="target" position={Position.Left} id="default" className="ab-flow-handle" />
-                <Handle
+                <FlowHandle type="target" position={Position.Left} id="default" />
+                <FlowHandle
                     type="source"
                     position={Position.Right}
                     id="continue"
-                    className="ab-flow-handle ab-flow-handle-continue"
-                    style={{ top: '35%' }}
+                    className="ab-flow-handle-continue"
+                    style={{ top: topFor('continue', '40%') }}
                 />
-                <Handle
+                <FlowHandle
                     type="source"
                     position={Position.Right}
                     id="exit"
-                    className="ab-flow-handle ab-flow-handle-exit"
-                    style={{ top: '65%' }}
+                    className="ab-flow-handle-exit"
+                    style={{ top: topFor('exit', '70%') }}
                 />
             </>
         );
@@ -183,99 +200,48 @@ function NodeHandles({ nodeType, config, expanded = false, handleTops = null }) 
 
     if (nodeType === 'agent') {
         const toolMode = isToolModeEnabled(config || {});
-        // D8: tools target visible for inline and existing supervisors.
-        // v1: specialists in Tool Mode keep tools target so they can bind tool/mcp too.
-        const showToolsTarget = true;
-        const topFor = (name) => handleTops?.[name] || AGENT_HANDLE_FALLBACKS[name];
 
         if (toolMode) {
-            if (!expanded) {
-                return (
-                    <>
-                        {showToolsTarget && (
-                            <Handle
-                                type="target"
-                                position={Position.Left}
-                                id="tools"
-                                className="ab-flow-handle ab-flow-handle-tools"
-                                style={{ top: '38%' }}
-                            />
-                        )}
-                        <Handle
-                            type="source"
-                            position={Position.Right}
-                            id="toolset"
-                            className="ab-flow-handle ab-flow-handle-toolset"
-                        />
-                    </>
-                );
-            }
-
             return (
                 <>
-                    {showToolsTarget && (
-                        <Handle
-                            type="target"
-                            position={Position.Left}
-                            id="tools"
-                            className="ab-flow-handle ab-flow-handle-tools"
-                            style={{ top: topFor('tools') }}
-                        />
-                    )}
-                    <Handle
-                        type="source"
-                        position={Position.Right}
-                        id="toolset"
-                        className="ab-flow-handle ab-flow-handle-toolset"
-                        style={{ top: topFor('toolset') }}
-                    />
-                </>
-            );
-        }
-
-        if (!expanded) {
-            return (
-                <>
-                    <Handle type="target" position={Position.Left} id="default" className="ab-flow-handle" />
-                    {showToolsTarget && (
-                        <Handle
-                            type="target"
-                            position={Position.Left}
-                            id="tools"
-                            className="ab-flow-handle ab-flow-handle-tools"
-                            style={{ top: '62%' }}
-                        />
-                    )}
-                    <Handle type="source" position={Position.Right} id="default" className="ab-flow-handle" />
-                </>
-            );
-        }
-
-        // Align pins to Tools / Input / Response field anchors measured from the form.
-        return (
-            <>
-                {showToolsTarget && (
-                    <Handle
+                    <FlowHandle
                         type="target"
                         position={Position.Left}
                         id="tools"
-                        className="ab-flow-handle ab-flow-handle-tools"
-                        style={{ top: topFor('tools') }}
+                        className="ab-flow-handle-tools"
+                        style={{ top: topFor('tools', AGENT_HANDLE_FALLBACKS.tools) }}
                     />
-                )}
-                <Handle
+                    <FlowHandle
+                        type="source"
+                        position={Position.Right}
+                        id="toolset"
+                        className="ab-flow-handle-toolset"
+                        style={{ top: topFor('toolset', AGENT_HANDLE_FALLBACKS.toolset) }}
+                    />
+                </>
+            );
+        }
+
+        return (
+            <>
+                <FlowHandle
                     type="target"
                     position={Position.Left}
                     id="default"
-                    className="ab-flow-handle"
-                    style={{ top: topFor('input') }}
+                    style={{ top: topFor('input', AGENT_HANDLE_FALLBACKS.input) }}
                 />
-                <Handle
+                <FlowHandle
+                    type="target"
+                    position={Position.Left}
+                    id="tools"
+                    className="ab-flow-handle-tools"
+                    style={{ top: topFor('tools', AGENT_HANDLE_FALLBACKS.tools) }}
+                />
+                <FlowHandle
                     type="source"
                     position={Position.Right}
                     id="default"
-                    className="ab-flow-handle"
-                    style={{ top: topFor('response') }}
+                    style={{ top: topFor('response', AGENT_HANDLE_FALLBACKS.response) }}
                 />
             </>
         );
@@ -286,29 +252,55 @@ function NodeHandles({ nodeType, config, expanded = false, handleTops = null }) 
 
         if (toolMode) {
             return (
-                <Handle
+                <FlowHandle
                     type="source"
                     position={Position.Right}
                     id="toolset"
-                    className="ab-flow-handle ab-flow-handle-toolset"
+                    className="ab-flow-handle-toolset"
+                    style={{ top: topFor('toolset', '55%') }}
                 />
             );
         }
 
         return (
             <>
-                <Handle type="target" position={Position.Left} id="default" className="ab-flow-handle" />
-                <Handle type="source" position={Position.Right} id="default" className="ab-flow-handle" />
+                <FlowHandle type="target" position={Position.Left} id="default" />
+                <FlowHandle type="source" position={Position.Right} id="default" />
             </>
         );
     }
 
     return (
         <>
-            <Handle type="target" position={Position.Left} id="default" className="ab-flow-handle" />
-            <Handle type="source" position={Position.Right} id="default" className="ab-flow-handle" />
+            <FlowHandle type="target" position={Position.Left} id="default" />
+            <FlowHandle type="source" position={Position.Right} id="default" />
         </>
     );
+}
+
+function handleNamesForNode(nodeType, config) {
+    if (nodeType === 'condition') {
+        return ['true', 'false'];
+    }
+    if (nodeType === 'loop') {
+        return ['continue', 'exit'];
+    }
+    if (nodeType === 'fork') {
+        return ['default', ...getForkBranches(config).map((id) => `branch:${id}`)];
+    }
+    if (nodeType === 'intent_classifier') {
+        return getIntentIds(config).map((id) => `intent:${id}`);
+    }
+    if (nodeType === 'agent') {
+        if (isToolModeEnabled(config || {})) {
+            return ['tools', 'toolset'];
+        }
+        return ['input', 'tools', 'response'];
+    }
+    if (nodeType === 'run_workflow' && isToolModeEnabled(config || {})) {
+        return ['toolset'];
+    }
+    return [];
 }
 
 export default function WorkflowNode({ id, data, selected }) {
@@ -320,88 +312,35 @@ export default function WorkflowNode({ id, data, selected }) {
         tools = [],
         mcpServers = [],
         knowledgeBases = [],
-        ragSearchUrlTemplate = '',
-        outputClasses = [],
-        providers = {},
-        providerModels = {},
-        defaultProvider = '',
-        defaultModel = '',
     } = canvasUi;
 
     const accent = categoryColor(data.category);
     const executionClass = data.executionStatus ? ` ab-flow-node--${data.executionStatus}` : '';
-    const isDense = DENSE_TYPES.has(data.nodeType);
-    const [collapsed, setCollapsed] = useState(false);
-    const [formSection, setFormSection] = useState('controls');
-    // Forms stay open by default; user can collapse via toolbar.
-    const expanded = !collapsed && data.nodeType !== 'start' && data.nodeType !== 'stop';
     const nodeRef = useRef(null);
 
-    const agentMode = data.nodeType === 'agent' ? resolveAgentConfigMode(data.config || {}) : null;
-    const agentToolMode = data.nodeType === 'agent' ? isToolModeEnabled(data.config || {}) : false;
-    const runWorkflowToolMode =
-        data.nodeType === 'run_workflow' ? isToolModeEnabled(data.config || {}) : false;
-    const agentName =
-        data.nodeType === 'agent' && agentMode === 'existing' && data.config?.agent_id
-            ? agents.find((agent) => String(agent.id) === String(data.config.agent_id))?.name
-            : null;
-    const workflowName =
-        data.nodeType === 'run_workflow' && data.config?.workflow_id
-            ? workflows.find((workflow) => String(workflow.id) === String(data.config.workflow_id))?.name
-            : null;
-    const agentInlineMeta =
-        data.nodeType === 'agent' && agentMode === 'inline'
-            ? [data.config?.provider, data.config?.model].filter(Boolean).join(' / ') || null
-            : null;
+    const measureNames = useMemo(
+        () => handleNamesForNode(data.nodeType, data.config),
+        [data.nodeType, data.config],
+    );
 
     const handleTopsRevision = useMemo(
         () =>
             [
                 data.nodeType,
-                expanded,
-                formSection,
-                agentMode,
-                agentToolMode,
-                data.config?.structured ? '1' : '0',
-                data.config?.instructions?.length || 0,
+                measureNames.join('|'),
+                data.config?.tool_mode ? '1' : '0',
+                Array.isArray(data.config?.intents) ? data.config.intents.length : 0,
+                Array.isArray(data.config?.branches) ? data.config.branches.length : 0,
             ].join(':'),
-        [
-            data.nodeType,
-            expanded,
-            formSection,
-            agentMode,
-            agentToolMode,
-            data.config?.structured,
-            data.config?.instructions?.length,
-        ],
+        [data.nodeType, measureNames, data.config],
     );
 
-    const agentHandleTops = useAgentHandleTops(
+    const handleTops = useMeasuredHandleTops(
         id,
         nodeRef,
-        data.nodeType === 'agent' && expanded,
+        measureNames.length > 0,
+        measureNames,
         handleTopsRevision,
-    );
-
-    const editNode = useMemo(
-        () =>
-            normalizeNodeForEdit({
-                id,
-                type: data.nodeType,
-                data: data.config || {},
-            }),
-        [id, data.nodeType, data.config],
-    );
-
-    const syncNode = useCallback(
-        (nextData) => {
-            window.dispatchEvent(
-                new CustomEvent('canvas-node-updated', {
-                    detail: { id, data: nextData },
-                }),
-            );
-        },
-        [id],
     );
 
     const removeNode = useCallback(() => {
@@ -413,101 +352,40 @@ export default function WorkflowNode({ id, data, selected }) {
         window.dispatchEvent(new CustomEvent('canvas-duplicate-node', { detail: { id } }));
     };
 
-    const openAdvanced = (event) => {
-        event.stopPropagation();
-        window.dispatchEvent(
-            new CustomEvent('canvas-node-edit', {
-                detail: {
-                    id,
-                    type: data.nodeType,
-                    data: data.config || {},
-                    section: data.nodeType === 'rag' ? 'all' : 'advanced',
-                },
-            }),
-        );
-    };
-
     return (
         <div
             ref={nodeRef}
-            className={`ab-flow-node${selected ? ' selected' : ''}${expanded ? ' ab-flow-node--expanded' : ''}${executionClass}`}
+            className={`ab-flow-node${selected ? ' selected' : ''}${executionClass}`}
             style={{ '--node-accent': accent }}
         >
-            {!readOnly && (
+            {!readOnly && data.nodeType !== 'start' && data.nodeType !== 'stop' && (
                 <NodeToolbar isVisible={selected} position={Position.Top} offset={8}>
                     <div className="ab-flow-node-toolbar">
-                        {data.nodeType !== 'start' && data.nodeType !== 'stop' && (
-                            <>
-                                <button
-                                    type="button"
-                                    className={`ab-flow-node-toolbar-btn${formSection === 'controls' && expanded ? ' is-active' : ''}`}
-                                    onClick={(event) => {
-                                        event.stopPropagation();
-                                        setCollapsed(false);
-                                        setFormSection('controls');
-                                    }}
-                                    title="Controls"
-                                >
-                                    <SlidersHorizontal className="h-3.5 w-3.5" />
-                                </button>
-                                {isDense && (
-                                    <button
-                                        type="button"
-                                        className="ab-flow-node-toolbar-btn"
-                                        onClick={openAdvanced}
-                                        title="Advanced"
-                                    >
-                                        <Settings2 className="h-3.5 w-3.5" />
-                                    </button>
-                                )}
-                                <button
-                                    type="button"
-                                    className="ab-flow-node-toolbar-btn"
-                                    onClick={(event) => {
-                                        event.stopPropagation();
-                                        setCollapsed((value) => !value);
-                                    }}
-                                    title={collapsed ? 'Expand' : 'Collapse'}
-                                >
-                                    {collapsed ? (
-                                        <ChevronDown className="h-3.5 w-3.5" />
-                                    ) : (
-                                        <ChevronUp className="h-3.5 w-3.5" />
-                                    )}
-                                </button>
-                                <button
-                                    type="button"
-                                    className="ab-flow-node-toolbar-btn"
-                                    onClick={duplicateNode}
-                                    title="Duplicate"
-                                >
-                                    <Copy className="h-3.5 w-3.5" />
-                                </button>
-                                <button
-                                    type="button"
-                                    className="ab-flow-node-toolbar-btn"
-                                    onClick={(event) => {
-                                        event.stopPropagation();
-                                        removeNode();
-                                    }}
-                                    title="Delete"
-                                >
-                                    <Trash2 className="h-3.5 w-3.5" />
-                                </button>
-                            </>
-                        )}
+                        <button
+                            type="button"
+                            className="ab-flow-node-toolbar-btn"
+                            onClick={duplicateNode}
+                            title="Duplicate"
+                        >
+                            <Copy className="h-3.5 w-3.5" />
+                        </button>
+                        <button
+                            type="button"
+                            className="ab-flow-node-toolbar-btn"
+                            onClick={(event) => {
+                                event.stopPropagation();
+                                removeNode();
+                            }}
+                            title="Delete"
+                        >
+                            <Trash2 className="h-3.5 w-3.5" />
+                        </button>
                     </div>
                 </NodeToolbar>
             )}
 
-            <NodeHandles
-                nodeType={data.nodeType}
-                config={data.config}
-                expanded={expanded}
-                handleTops={agentHandleTops}
-            />
+            <NodeHandles nodeType={data.nodeType} config={data.config} handleTops={handleTops} />
 
-            <div className="ab-flow-node-accent" />
             <div className="ab-flow-node-header">
                 <span className="ab-flow-node-icon">
                     <NodeTypeIcon name={data.icon} />
@@ -518,80 +396,16 @@ export default function WorkflowNode({ id, data, selected }) {
                 </div>
             </div>
 
-            {!expanded && (
-                <>
-                    {data.nodeType === 'llm' && data.config?.model && (
-                        <div className="ab-flow-node-meta">{data.config.model}</div>
-                    )}
-                    {agentName && <div className="ab-flow-node-meta">{agentName}</div>}
-                    {workflowName && <div className="ab-flow-node-meta">{workflowName}</div>}
-                    {agentInlineMeta && <div className="ab-flow-node-meta">{agentInlineMeta}</div>}
-                    {data.nodeType === 'agent' && agentToolMode && (
-                        <div className="ab-flow-node-handles-labels">
-                            <span className="ab-flow-handle-label ab-flow-handle-label-tools">tools</span>
-                            <span className="ab-flow-handle-label ab-flow-handle-label-toolset">toolset</span>
-                        </div>
-                    )}
-                    {data.nodeType === 'agent' && !agentToolMode && (
-                        <div className="ab-flow-node-handles-labels">
-                            <span className="ab-flow-handle-label ab-flow-handle-label-tools">tools</span>
-                        </div>
-                    )}
-                    {data.nodeType === 'run_workflow' && runWorkflowToolMode && (
-                        <div className="ab-flow-node-handles-labels">
-                            <span className="ab-flow-handle-label ab-flow-handle-label-toolset">toolset</span>
-                        </div>
-                    )}
-                    {data.nodeType === 'condition' && (
-                        <div className="ab-flow-node-handles-labels">
-                            <span className="ab-flow-handle-label ab-flow-handle-label-true">true</span>
-                            <span className="ab-flow-handle-label ab-flow-handle-label-false">false</span>
-                        </div>
-                    )}
-                    {data.nodeType === 'loop' && (
-                        <div className="ab-flow-node-handles-labels">
-                            <span className="ab-flow-handle-label ab-flow-handle-label-continue">continue</span>
-                            <span className="ab-flow-handle-label ab-flow-handle-label-exit">exit</span>
-                        </div>
-                    )}
-                    {data.nodeType === 'fork' && forkBranches(data.config).length > 0 && (
-                        <div className="ab-flow-node-meta">{forkBranches(data.config).join(', ')}</div>
-                    )}
-                </>
-            )}
-
-            {data.nodeType === 'loop' && data.loopIteration && (
-                <div className="ab-flow-node-meta ab-flow-node-loop-iteration">
-                    {data.loopIteration.iteration} / {data.loopIteration.maxSteps}
-                </div>
-            )}
-
-            {expanded && editNode && (
-                <div className="nodrag nowheel ab-flow-node-form">
-                    <NodeConfigForm
-                        node={editNode}
-                        agents={agents}
-                        workflows={workflows}
-                        tools={tools}
-                        mcpServers={mcpServers}
-                        knowledgeBases={knowledgeBases}
-                        ragSearchUrlTemplate={ragSearchUrlTemplate}
-                        outputClasses={outputClasses}
-                        providers={providers}
-                        providerModels={providerModels}
-                        defaultProvider={defaultProvider}
-                        defaultModel={defaultModel}
-                        readOnly={readOnly}
-                        onUpdate={readOnly ? undefined : syncNode}
-                        section={isDense ? formSection : 'all'}
-                        compact
-                        showRemove={false}
-                        showType={false}
-                    />
-                </div>
-            )}
-
-            <div className="ab-flow-node-footer">{data.label || data.nodeType}</div>
+            <NodePreviewBody
+                nodeType={data.nodeType}
+                config={data.config}
+                agents={agents}
+                workflows={workflows}
+                tools={tools}
+                knowledgeBases={knowledgeBases}
+                mcpServers={mcpServers}
+                loopIteration={data.loopIteration}
+            />
         </div>
     );
 }

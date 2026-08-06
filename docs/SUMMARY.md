@@ -7,6 +7,7 @@
 * [Installation](getting-started/installation.md)
 * [Quickstart: First Agent](getting-started/quickstart-first-agent.md)
 * [Quickstart: First Workflow](getting-started/quickstart-first-workflow.md)
+* [Quickstart: Conversation Memory](getting-started/quickstart-conversation-memory.md)
 * [Demo App](getting-started/demo-app.md)
 * [AI-Assisted Development](guides/ai-assisted-development.md)
 * [GitBook Setup](getting-started/gitbook-setup.md)
@@ -19,6 +20,7 @@
 
 * [Overview](guides/agents/overview.md)
 * [Creating Agents](guides/agents/creating-agents.md)
+* [Invoking Agents](guides/agents/invoking-agents.md)
 * [Playground & Threads](guides/agents/playground-and-threads.md)
 * [Evaluations](guides/agents/evaluations.md)
 * [Attachments](guides/agents/attachments.md)
@@ -49,6 +51,7 @@
 ### Workflows
 
 * [Overview](guides/workflows/overview.md)
+* [Invoking Workflows](guides/workflows/invoking-workflows.md)
 * [Canvas Editor](guides/workflows/canvas-editor.md)
 * [State & Conditions](guides/workflows/state-and-conditions.md)
 * [Flow Nodes](guides/workflows/node-types/flow-nodes.md)

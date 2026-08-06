@@ -4,6 +4,7 @@ namespace DigitalElvis\NeuronAIStudio\Runtime;
 
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
 use DigitalElvis\NeuronAIStudio\Registry\NodeTypeRegistry;
+use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\IntentClassifierNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\InvokeNodeExecutor;
 use InvalidArgumentException;
 
@@ -92,6 +93,7 @@ class GraphValidator
         $errors = array_merge($errors, $this->validateToolModeControlFlow($nodes, $edges));
         $errors = array_merge($errors, $this->validateToolBindingEdges($nodes, $edges));
         $errors = array_merge($errors, $this->validateToolsetSlugs($nodes, $edges));
+        $errors = array_merge($errors, $this->validateIntentClassifierNodes($nodes, $controlEdges));
 
         if (empty($errors) && ! empty($startNodes)) {
             $startId = array_values($startNodes)[0]['id'];
@@ -362,6 +364,70 @@ class GraphValidator
                 $key = trim((string) ($row['key'] ?? ''));
                 if ($key === '') {
                     $errors[] = "Run Workflow node {$id} has an empty state_map key at index {$index}.";
+                }
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $nodes
+     * @param  array<int, array<string, mixed>>  $edges
+     * @return array<int, string>
+     */
+    protected function validateIntentClassifierNodes(array $nodes, array $edges): array
+    {
+        $errors = [];
+
+        foreach ($nodes as $node) {
+            if (($node['type'] ?? '') !== 'intent_classifier') {
+                continue;
+            }
+
+            $id = (string) ($node['id'] ?? 'unknown');
+            $data = is_array($node['data'] ?? null) ? $node['data'] : [];
+            $intents = IntentClassifierNodeExecutor::normalizeIntents(
+                is_array($data['intents'] ?? null) ? $data['intents'] : []
+            );
+
+            if (count($intents) < 2) {
+                $errors[] = "Intent Classifier node {$id} requires at least two intents with valid ids.";
+            }
+
+            $raw = is_array($data['intents'] ?? null) ? $data['intents'] : [];
+            $seen = [];
+            foreach ($raw as $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+                $intentId = trim((string) ($item['id'] ?? ''));
+                if ($intentId === '') {
+                    $errors[] = "Intent Classifier node {$id} has an intent with an empty id.";
+                    continue;
+                }
+                if (! preg_match('/^[a-zA-Z][a-zA-Z0-9_]*$/', $intentId)) {
+                    $errors[] = "Intent Classifier node {$id} has invalid intent id [{$intentId}]. Use letters, numbers, and underscores.";
+                    continue;
+                }
+                if (isset($seen[$intentId])) {
+                    $errors[] = "Intent Classifier node {$id} has duplicate intent id [{$intentId}].";
+                }
+                $seen[$intentId] = true;
+            }
+
+            $validHandles = array_keys($intents);
+            foreach ($edges as $edge) {
+                if (($edge['source'] ?? null) !== $id) {
+                    continue;
+                }
+                $handle = (string) ($edge['sourceHandle'] ?? 'default');
+                if ($handle === 'default' || $handle === '') {
+                    $errors[] = "Intent Classifier node {$id} must connect via an intent handle, not default.";
+                    continue;
+                }
+                if ($validHandles !== [] && ! in_array($handle, $validHandles, true)) {
+                    $errors[] = "Intent Classifier node {$id} has an edge on unknown intent handle [{$handle}].";
                 }
             }
         }

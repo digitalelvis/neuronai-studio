@@ -301,4 +301,43 @@ class LlmNodeExecutorTest extends TestCase
         $this->assertSame('0.000300', $span->estimated_cost);
         $this->assertSame('streamed', $state->get('llm_response'));
     }
+
+    public function test_execute_vision_false_skips_attachments(): void
+    {
+        Storage::fake('local');
+        config(['neuronai-studio.attachments.disk' => 'local']);
+
+        $storageKey = 'neuronai-studio/attachments/test.png';
+        Storage::disk('local')->put($storageKey, 'fake-image-bytes');
+
+        $fakeProvider = new FakeAIProvider(new AssistantMessage('no image'));
+        $executor = $this->makeExecutor($fakeProvider);
+        $context = new GraphContext([], []);
+        $state = new BuilderWorkflowState($context, null, [
+            'attachments' => [
+                [
+                    'type' => 'image',
+                    'storage_key' => $storageKey,
+                    'mime_type' => 'image/png',
+                    'name' => 'test.png',
+                ],
+            ],
+        ]);
+
+        $executor->execute([
+            'data' => [
+                'prompt' => 'Describe this image',
+                'provider' => 'openai',
+                'model' => 'gpt-4o',
+                'output_key' => 'llm_response',
+                'vision' => false,
+            ],
+        ], $state, $context);
+
+        $fakeProvider->assertSent(function (RequestRecord $record): bool {
+            $message = $record->messages[0] ?? null;
+
+            return $message !== null && $message->getImage() === null;
+        });
+    }
 }

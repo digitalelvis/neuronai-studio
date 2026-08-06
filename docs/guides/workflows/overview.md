@@ -130,6 +130,7 @@ The bundled `support-rag-hitl` template combines RAG retrieval with human approv
 
 ## Next steps
 
+- [Invoking Workflows](invoking-workflows.md) — `WorkflowRunner` from Laravel (state, attachments, HITL, async)
 - [Canvas Editor](canvas-editor.md)
 - [State & Conditions](state-and-conditions.md)
 - [Runtime & Traces](runtime-and-traces.md)

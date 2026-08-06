@@ -17,6 +17,9 @@ class LlmNodeCodeGenerator implements NodeCodeGeneratorInterface
         $prompt = var_export((string) ($data['prompt'] ?? ''), true);
         $outputKey = var_export((string) ($data['output_key'] ?? 'llm_response'), true);
         $return = $context->returnStatement($nodePlan['returnType']);
+        $visionFlag = array_key_exists('vision', $data)
+            ? (($data['vision'] === true) ? 'true' : 'false')
+            : 'true';
 
         $messageSetup = <<<PHP
         \$template = {$prompt};
@@ -25,9 +28,18 @@ class LlmNodeCodeGenerator implements NodeCodeGeneratorInterface
             \$prompt = (string) \$state->get('input');
         }
 
-        \$attachments = is_array(\$state->get('attachments')) ? \$state->get('attachments') : [];
+        \$attachments = app(MessageFactory::class)->resolveAttachmentsForNode(
+            ['vision' => {$visionFlag}],
+            \$state,
+            defaultVision: true,
+        );
         \$userMessage = app(MessageFactory::class)->resolveMessageWithAttachments(\$prompt, \$attachments);
 PHP;
+
+        $apiKey = $this->resolveApiKeyOverride($data);
+        $apiKeyConfigLine = $apiKey !== null
+            ? "\n            'api_key' => ".$this->exportConfigValue($apiKey).','
+            : '';
 
         if ($data['structured'] ?? false) {
             $outputClass = (string) ($data['output_class'] ?? '');
@@ -40,7 +52,7 @@ PHP;
         \$result = app(AgentRunner::class)->structuredInline([
             'provider' => {$this->exportConfigValue($provider)},
             'model' => {$this->exportConfigValue($model)},
-            'instructions' => {$instructions},
+            'instructions' => {$instructions},{$apiKeyConfigLine}
         ], \$userMessage, {$shortClass}::class);
 
         \$state->set({$outputKey}, \$result->structured);
@@ -58,7 +70,7 @@ PHP;
             ];
         }
 
-        $providerExpr = $context->providerExpression($provider, $model);
+        $providerExpr = $context->providerExpression($provider, $model, $apiKey);
 
         $body = <<<PHP
         {$messageSetup}
@@ -81,5 +93,15 @@ PHP;
     protected function exportConfigValue(string $value): string
     {
         return var_export($value, true);
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     */
+    protected function resolveApiKeyOverride(array $data): ?string
+    {
+        $apiKey = $data['api_key'] ?? null;
+
+        return is_string($apiKey) && $apiKey !== '' ? $apiKey : null;
     }
 }

@@ -77,6 +77,7 @@ See [AI Nodes — RAG](../guides/workflows/node-types/ai-nodes.md#rag).
 ## Next steps
 
 - [Workflow Overview](../guides/workflows/overview.md) — concepts and node types
+- [Invoking Workflows](../guides/workflows/invoking-workflows.md) — call workflows from Laravel with `WorkflowRunner`
 - [Canvas Editor](../guides/workflows/canvas-editor.md) — build custom graphs
 - [State & Conditions](../guides/workflows/state-and-conditions.md) — branch on workflow data
 - [Templates](../guides/templates.md) — try `lead-qualification` or `support-rag-hitl`

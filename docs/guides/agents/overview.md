@@ -27,6 +27,7 @@ flowchart TB
 |-------|-------|-------|
 | Create / edit | Agent form | [Creating Agents](creating-agents.md) |
 | Test | Playground | [Playground & Threads](playground-and-threads.md) |
+| Invoke from PHP | `AgentRunner` | [Invoking Agents](invoking-agents.md) |
 | Evaluate | Evals UI or CLI | [Evaluations](evaluations.md) |
 | Use in workflow | Agent node | [AI Nodes](../workflows/node-types/ai-nodes.md) |
 | Export | Studio UI, CLI, or codegen preview | [Export & Production](../export-and-production.md) |
@@ -78,6 +79,7 @@ Connect to agents via a **RAG tool** or a workflow **RAG node** — see [Agent b
 ## Next steps
 
 - [Creating Agents](creating-agents.md)
+- [Invoking Agents](invoking-agents.md) — `AgentRunner` from Laravel (sync, stream, context, attachments)
 - [Playground & Threads](playground-and-threads.md)
 - [Evaluations](evaluations.md)
 - [Tools Overview](../tools/overview.md)

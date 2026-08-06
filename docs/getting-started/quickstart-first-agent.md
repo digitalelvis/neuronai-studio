@@ -64,6 +64,8 @@ flowchart LR
 ## Next steps
 
 - [Creating Agents](../guides/agents/creating-agents.md) — tool bindings, MCP servers, advanced config
+- [Invoking Agents](../guides/agents/invoking-agents.md) — call the agent from Laravel with `AgentRunner`
+- [Quickstart: Conversation Memory](quickstart-conversation-memory.md) — multi-turn agents and workflows with persisted history
 - [Playground & Threads](../guides/agents/playground-and-threads.md) — persisted conversation threads
 - [Tools](../guides/tools/overview.md) — give your agent custom capabilities
 - [Export & Production](../guides/export-and-production.md) — deploy exported classes

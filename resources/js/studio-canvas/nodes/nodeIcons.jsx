@@ -13,6 +13,7 @@ import {
     Search,
     Square,
     StickyNote,
+    Tags,
     Workflow,
     Wrench,
     Play,
@@ -34,6 +35,7 @@ const ICON_MAP = {
     repeat: Repeat,
     plug: Plug,
     sticky: StickyNote,
+    tags: Tags,
     workflow: Workflow,
     circle: Circle,
 };

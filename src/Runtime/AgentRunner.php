@@ -47,8 +47,9 @@ class AgentRunner
         protected MessageFactory $messages,
     ) {}
 
-    public function run(AgentDefinition $definition, string $message, bool $fake = false): AgentRunResult
+    public function run(AgentDefinition|string $definition, string $message, bool $fake = false): AgentRunResult
     {
+        $definition = $this->resolveDefinition($definition);
         $definition->loadMissing('mcpBindings');
 
         return $this->runInline([
@@ -59,6 +60,18 @@ class AgentRunner
             'require_tool_approval' => (bool) $definition->require_tool_approval,
             ...$this->toolControlConfigFromDefinition($definition),
         ], $message, $definition, fake: $fake);
+    }
+
+    /**
+     * Resolve an agent by model instance or unique slug.
+     */
+    protected function resolveDefinition(AgentDefinition|string $definition): AgentDefinition
+    {
+        if ($definition instanceof AgentDefinition) {
+            return $definition;
+        }
+
+        return AgentDefinition::query()->where('slug', $definition)->firstOrFail();
     }
 
     public function resolveAgent(AgentDefinition $definition): DynamicAgent
@@ -165,26 +178,24 @@ class AgentRunner
         ?StudioRun $parentRun = null,
     ): array {
         $threadId = $threadKey;
-        if ($threadId === null && $definition) {
+        if ($threadId === null) {
             $threadId = (string) Str::uuid();
         }
 
-        $thread = null;
-        if ($threadId !== null) {
-            if (str_contains($threadId, ':')) {
-                $threadId = ChatThreadKey::publicId($threadId);
-            }
-            $thread = StudioThread::firstOrCreate([
-                'id' => $threadId,
-            ], [
-                'entity_type' => AgentDefinition::class,
-                'entity_id' => $definition ? $definition->id : null,
-            ]);
+        if (str_contains($threadId, ':')) {
+            $threadId = ChatThreadKey::publicId($threadId);
         }
+
+        $thread = StudioThread::firstOrCreate([
+            'id' => $threadId,
+        ], [
+            'entity_type' => $definition ? AgentDefinition::class : null,
+            'entity_id' => $definition ? $definition->id : null,
+        ]);
 
         $run = StudioRun::create([
             'id' => (string) Str::uuid(),
-            'thread_id' => $thread ? $thread->id : (string) Str::uuid(),
+            'thread_id' => $thread->id,
             'parent_run_id' => $parentRun?->id,
             'status' => 'running',
             'input' => $input,

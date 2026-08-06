@@ -38,6 +38,8 @@ import {
 } from './graph';
 import './canvas.css';
 import { isToolModeEnabled } from './inspector/nodeUtils';
+import { getVariableInspectState, subscribeVariableInspect } from './chrome/variable-inspect';
+import { setStateVariableGraphSnapshot } from './inspector/shared/stateVariables';
 
 const nodeTypes = { workflowNode: WorkflowNode, stickyNote: StickyNote };
 const edgeTypes = { workflowEdge: WorkflowEdge };
@@ -96,6 +98,8 @@ function WorkflowCanvasInner({
     const [runStatus, setRunStatus] = useState(null);
     const [minimapOpen, setMinimapOpen] = useState(false);
     const isTestRunning = runStatus === 'running';
+    const isTestRunningRef = useRef(false);
+    isTestRunningRef.current = isTestRunning;
     const { getViewport, setViewport, deleteElements, screenToFlowPosition, fitView, getNodes, getEdges, setCenter } =
         useReactFlow();
     const selectedNodeIdRef = useRef(null);
@@ -124,6 +128,10 @@ function WorkflowCanvasInner({
     useEffect(() => {
         takeSnapshot(nodes, edges);
     }, [nodes, edges, takeSnapshot]);
+
+    useEffect(() => {
+        setStateVariableGraphSnapshot(nodes, edges);
+    }, [nodes, edges]);
 
     useEffect(() => {
         if (initialViewport.x || initialViewport.y || initialViewport.zoom !== 1) {
@@ -192,6 +200,48 @@ function WorkflowCanvasInner({
         );
         setRunStatus(null);
     }, [setNodes]);
+
+    const applyCachedExecutionStatus = useCallback(
+        (nodeIds) => {
+            const idSet = new Set(Array.isArray(nodeIds) ? nodeIds : []);
+            if (idSet.size === 0) {
+                return;
+            }
+
+            setNodes((current) =>
+                current.map((node) => {
+                    const nextStatus = idSet.has(node.id) ? 'completed' : null;
+                    if (node.data?.executionStatus === nextStatus) {
+                        return node;
+                    }
+
+                    return {
+                        ...node,
+                        data: { ...node.data, executionStatus: nextStatus },
+                    };
+                }),
+            );
+            setRunStatus('completed');
+        },
+        [setNodes],
+    );
+
+    useEffect(() => {
+        const cached = getVariableInspectState();
+        if (!isTestRunningRef.current && cached.completedNodeIds?.length) {
+            applyCachedExecutionStatus(cached.completedNodeIds);
+        }
+
+        return subscribeVariableInspect((next) => {
+            if (isTestRunningRef.current) {
+                return;
+            }
+
+            if (next.completedNodeIds?.length) {
+                applyCachedExecutionStatus(next.completedNodeIds);
+            }
+        });
+    }, [applyCachedExecutionStatus]);
 
     const syncSelection = useCallback(
         (nodeId, nodeList = nodes, { silent = false } = {}) => {
@@ -376,8 +426,35 @@ function WorkflowCanvasInner({
                           model: defaultModel,
                           output_key: 'llm_response',
                           stream: true,
+                          vision: true,
                       }
-                    : type === 'agent'
+                    : type === 'intent_classifier'
+                      ? {
+                            provider: defaultProvider,
+                            model: defaultModel,
+                            message: '{{input}}',
+                            output_key: 'intent',
+                            vision: false,
+                            memory: false,
+                            intents: [
+                                {
+                                    id: 'after_sales',
+                                    name: 'After sales',
+                                    description: 'Question related to after sales',
+                                },
+                                {
+                                    id: 'how_to',
+                                    name: 'How to use',
+                                    description: 'Questions about how to use products',
+                                },
+                                {
+                                    id: 'other',
+                                    name: 'Other',
+                                    description: 'Other questions',
+                                },
+                            ],
+                        }
+                      : type === 'agent'
                       ? {
                             config_mode: 'inline',
                             tool_mode: false,
@@ -639,7 +716,62 @@ function WorkflowCanvasInner({
 
             if (detail.event === 'trace_failed') {
                 setRunStatus('failed');
+
+                if (detail.node_id) {
+                    setExecutionStatus(detail.node_id, 'failed');
+                } else {
+                    setNodes((current) =>
+                        current.map((node) =>
+                            node.data?.executionStatus === 'running'
+                                ? { ...node, data: { ...node.data, executionStatus: 'failed' } }
+                                : node,
+                        ),
+                    );
+                }
             }
+        };
+
+        const onClearSelection = () => {
+            setNodes((current) => current.map((node) => ({ ...node, selected: false })));
+            syncSelection(null);
+        };
+
+        const applyCompletedFromCache = (nodeIds) => {
+            const idSet = new Set(Array.isArray(nodeIds) ? nodeIds : []);
+            if (idSet.size === 0) {
+                return;
+            }
+
+            setNodes((current) =>
+                current.map((node) => {
+                    const nextStatus = idSet.has(node.id) ? 'completed' : null;
+                    if (node.data?.executionStatus === nextStatus) {
+                        return node;
+                    }
+
+                    return {
+                        ...node,
+                        data: { ...node.data, executionStatus: nextStatus },
+                    };
+                }),
+            );
+            setRunStatus('completed');
+        };
+
+        const onVariableInspectUpdated = (event) => {
+            if (isTestRunning) {
+                return;
+            }
+
+            applyCompletedFromCache(event.detail?.completedNodeIds);
+        };
+
+        const onVariableInspectReset = () => {
+            if (isTestRunning) {
+                return;
+            }
+
+            clearExecutionStatus();
         };
 
         window.addEventListener('canvas-node-updated', onNodeUpdated);
@@ -647,10 +779,13 @@ function WorkflowCanvasInner({
         window.addEventListener('canvas-duplicate-node', onDuplicateNode);
         window.addEventListener('canvas-auto-layout', onAutoLayout);
         window.addEventListener('canvas-focus-node', onFocusNode);
+        window.addEventListener('canvas-clear-selection', onClearSelection);
         window.addEventListener('canvas-trace-start', onRunStart);
         window.addEventListener('canvas-run-start', onRunStart);
         window.addEventListener('canvas-execution-event', onExecutionEvent);
         window.addEventListener('workflow-canvas-load-graph', onLoadGraph);
+        window.addEventListener('variable-inspect-updated', onVariableInspectUpdated);
+        window.addEventListener('variable-inspect-reset', onVariableInspectReset);
 
         return () => {
             window.removeEventListener('canvas-node-updated', onNodeUpdated);
@@ -658,16 +793,20 @@ function WorkflowCanvasInner({
             window.removeEventListener('canvas-duplicate-node', onDuplicateNode);
             window.removeEventListener('canvas-auto-layout', onAutoLayout);
             window.removeEventListener('canvas-focus-node', onFocusNode);
+            window.removeEventListener('canvas-clear-selection', onClearSelection);
             window.removeEventListener('canvas-trace-start', onRunStart);
             window.removeEventListener('canvas-run-start', onRunStart);
             window.removeEventListener('canvas-execution-event', onExecutionEvent);
             window.removeEventListener('workflow-canvas-load-graph', onLoadGraph);
+            window.removeEventListener('variable-inspect-updated', onVariableInspectUpdated);
+            window.removeEventListener('variable-inspect-reset', onVariableInspectReset);
         };
     }, [
         autoLayout,
         clearExecutionStatus,
         duplicateNode,
         getNodes,
+        isTestRunning,
         loadGraph,
         readOnly,
         removeSelectedNode,
@@ -694,6 +833,10 @@ function WorkflowCanvasInner({
                 target?.isContentEditable;
 
             if (event.key === 'Escape') {
+                if (editing) {
+                    return;
+                }
+
                 setNodes((current) => current.map((node) => ({ ...node, selected: false })));
                 syncSelection(null);
                 return;

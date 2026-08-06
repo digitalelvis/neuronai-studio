@@ -2,7 +2,6 @@
 
 namespace DigitalElvis\NeuronAIStudio\Runtime;
 
-use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\HumanInputRequiredException;
 use Illuminate\Support\Facades\Storage;
 use NeuronAI\Chat\Enums\SourceType;
 use NeuronAI\Chat\Messages\ContentBlocks\AudioContent;
@@ -11,10 +10,33 @@ use NeuronAI\Chat\Messages\ContentBlocks\ImageContent;
 use NeuronAI\Chat\Messages\ContentBlocks\TextContent;
 use NeuronAI\Chat\Messages\ContentBlocks\VideoContent;
 use NeuronAI\Chat\Messages\UserMessage;
+use NeuronAI\Workflow\WorkflowState;
 
 class MessageFactory
 {
     public const ATTACHMENT_ONLY_PROMPT = 'Analyze the attached file(s).';
+
+    /**
+     * Resolve attachments for a workflow node based on the Vision toggle.
+     *
+     * When `data.vision` is absent, `$defaultVision` preserves legacy always-on
+     * behavior for Agent/LLM nodes. Intent Classifier defaults to false.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<int, array<string, mixed>>
+     */
+    public function resolveAttachmentsForNode(array $data, WorkflowState $state, bool $defaultVision = true): array
+    {
+        $vision = array_key_exists('vision', $data) ? (bool) $data['vision'] : $defaultVision;
+
+        if (! $vision) {
+            return [];
+        }
+
+        $attachments = $state->get('attachments');
+
+        return is_array($attachments) ? $attachments : [];
+    }
 
     /** @param  array<int, array<string, mixed>>  $attachments */
     public function validateStoredAttachments(array $attachments): ?string

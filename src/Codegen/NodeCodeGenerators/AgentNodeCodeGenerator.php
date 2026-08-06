@@ -92,15 +92,20 @@ PHP;
         $instructions = var_export((string) ($data['instructions'] ?? ''), true);
         $toolsExport = $this->exportToolsExpression(is_array($data['tools'] ?? null) ? $data['tools'] : []);
         $threadKey = 'is_string($state->get(\'__studio_thread_id\')) ? $state->get(\'__studio_thread_id\') : null';
+        $instructionsSetup = <<<PHP
+        \$instructionsTemplate = {$instructions};
+        \$instructions = \\DigitalElvis\\NeuronAIStudio\\Runtime\\StateTemplateInterpolator::interpolate(\$instructionsTemplate, \$state);
+PHP;
 
         if ($structured) {
             $body = <<<PHP
         {$messageSetup}
 
+        {$instructionsSetup}
         \$response = app(AgentRunner::class)->structuredInline([
             'provider' => {$this->exportConfigValue($provider)},
             'model' => {$this->exportConfigValue($model)},
-            'instructions' => {$instructions},
+            'instructions' => \$instructions,
             'tools' => {$toolsExport['code']},
         ], \$userMessage, {$shortClass}::class, null, {$threadKey});
 
@@ -114,6 +119,7 @@ PHP;
                 'imports' => array_values(array_unique(array_filter([
                     'DigitalElvis\\NeuronAIStudio\\Runtime\\AgentRunner',
                     'DigitalElvis\\NeuronAIStudio\\Runtime\\MessageFactory',
+                    'DigitalElvis\\NeuronAIStudio\\Runtime\\StateTemplateInterpolator',
                     $outputClass !== '' ? $outputClass : null,
                     ...$toolsExport['imports'],
                 ]))),
@@ -126,10 +132,11 @@ PHP;
         $body = <<<PHP
         {$messageSetup}
 
+        {$instructionsSetup}
         \$response = app(AgentRunner::class)->runInline([
             'provider' => {$this->exportConfigValue($provider)},
             'model' => {$this->exportConfigValue($model)},
-            'instructions' => {$instructions},
+            'instructions' => \$instructions,
             'tools' => {$toolsExport['code']},{$approvalLine}{$toolControlLine}{$memoryLine}
         ], \$userMessage, null, {$threadKey});
 
@@ -143,6 +150,7 @@ PHP;
             'imports' => array_values(array_unique([
                 'DigitalElvis\\NeuronAIStudio\\Runtime\\AgentRunner',
                 'DigitalElvis\\NeuronAIStudio\\Runtime\\MessageFactory',
+                'DigitalElvis\\NeuronAIStudio\\Runtime\\StateTemplateInterpolator',
                 ...$toolsExport['imports'],
             ])),
         ];

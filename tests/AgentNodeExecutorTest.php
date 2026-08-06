@@ -411,4 +411,34 @@ class AgentNodeExecutorTest extends TestCase
         $refs = array_column($captured, 'ref');
         $this->assertSame(['node:specialist_1', 'toolkit:calculator'], $refs);
     }
+
+    public function test_inline_agent_instructions_interpolate_workflow_state(): void
+    {
+        $fakeProvider = new FakeAIProvider(new AssistantMessage('ok'));
+        $executor = $this->makeExecutor($fakeProvider);
+        $context = new GraphContext([], []);
+        $state = new BuilderWorkflowState($context, null, [
+            'input' => 'Alice',
+            'account' => ['status' => 'active'],
+        ]);
+
+        $method = new \ReflectionMethod(AgentNodeExecutor::class, 'buildAgentConfig');
+        $method->setAccessible(true);
+
+        $config = $method->invoke(
+            $executor,
+            [
+                'config_mode' => 'inline',
+                'provider' => 'openai',
+                'model' => 'gpt-4o-mini',
+                'instructions' => 'Help {{input}} — status {{account.status}}',
+            ],
+            null,
+            $context,
+            'agent_1',
+            $state,
+        );
+
+        $this->assertSame('Help Alice — status active', $config['instructions']);
+    }
 }

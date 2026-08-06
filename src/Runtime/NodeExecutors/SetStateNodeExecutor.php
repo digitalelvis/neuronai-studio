@@ -3,6 +3,7 @@
 namespace DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors;
 
 use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
+use DigitalElvis\NeuronAIStudio\Runtime\StateTemplateInterpolator;
 use NeuronAI\Workflow\WorkflowState;
 
 class SetStateNodeExecutor implements NodeExecutorInterface
@@ -13,11 +14,11 @@ class SetStateNodeExecutor implements NodeExecutorInterface
         $key = $data['key'] ?? 'value';
         $value = $data['value'] ?? null;
 
-        if (($data['from_key'] ?? null) !== null) {
+        // Legacy: whole-value copy (kept for existing graphs; not shown in Studio UI).
+        if (($data['from_key'] ?? null) !== null && $data['from_key'] !== '') {
             $value = $state->get($data['from_key']);
-        }
-
-        if (($data['append_from_key'] ?? null) !== null) {
+        } elseif (($data['append_from_key'] ?? null) !== null && $data['append_from_key'] !== '') {
+            // Legacy: append onto the current destination key.
             $append = $state->get($data['append_from_key']);
             $current = $state->get($key, '');
             $segments = array_filter([
@@ -26,6 +27,8 @@ class SetStateNodeExecutor implements NodeExecutorInterface
             ], fn (string $segment) => $segment !== '');
 
             $value = implode("\n", $segments);
+        } elseif (is_string($value)) {
+            $value = StateTemplateInterpolator::interpolate($value, $state);
         }
 
         $state->set($key, $value);
