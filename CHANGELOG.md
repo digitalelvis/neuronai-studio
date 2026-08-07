@@ -1,5 +1,18 @@
 # Changelog
 
+# [2.7.0](https://github.com/digitalelvis/neuronai-studio/compare/v2.6.1...v2.7.0) (2026-08-07)
+
+
+### Bug Fixes
+
+* **canvas:** sync intent and fork edges when handles change ([2e0726a](https://github.com/digitalelvis/neuronai-studio/commit/2e0726a135700318923b3a353f55caec6588abf2))
+* **workflows:** persist metadata with saveGraph payload ([14b71d6](https://github.com/digitalelvis/neuronai-studio/commit/14b71d6b91607b5091871ad05e99dd81a278fa0e))
+
+
+### Features
+
+* **studio:** add global bottom-center toast alerts ([f4f3ea0](https://github.com/digitalelvis/neuronai-studio/commit/f4f3ea05063cf86d8118e92f936311f3c4a0b91f))
+
 ## [2.6.1](https://github.com/digitalelvis/neuronai-studio/compare/v2.6.0...v2.6.1) (2026-08-07)
 
 # [2.6.0](https://github.com/digitalelvis/neuronai-studio/compare/v2.5.0...v2.6.0) (2026-08-06)
