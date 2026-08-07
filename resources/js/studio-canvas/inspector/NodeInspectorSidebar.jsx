@@ -64,36 +64,28 @@ export default function NodeInspectorSidebar({
 
             <ScrollArea className="min-h-0 flex-1">
                 <div className="px-4 py-4">
-                    {nodeType === 'start' || nodeType === 'stop' ? (
-                        <p className="text-sm text-muted-foreground">
-                            {nodeType === 'start'
-                                ? 'Entry point of the workflow. No additional configuration.'
-                                : 'Terminal node. No additional configuration.'}
-                        </p>
-                    ) : (
-                        <NodeConfigForm
-                            node={editingNode}
-                            agents={agents}
-                            workflows={workflows}
-                            tools={tools}
-                            mcpServers={mcpServers}
-                            knowledgeBases={knowledgeBases}
-                            ragSearchUrlTemplate={ragSearchUrlTemplate}
-                            outputClasses={outputClasses}
-                            providers={providers}
-                            providerModels={providerModels}
-                            variables={variables}
-                            defaultProvider={defaultProvider}
-                            defaultModel={defaultModel}
-                            nodeTypesMeta={nodeTypesMeta}
-                            readOnly={readOnly}
-                            onUpdate={readOnly ? undefined : onUpdate}
-                            onRemove={readOnly ? undefined : onRemove}
-                            section={section}
-                            showRemove
-                            showType={false}
-                        />
-                    )}
+                    <NodeConfigForm
+                        node={editingNode}
+                        agents={agents}
+                        workflows={workflows}
+                        tools={tools}
+                        mcpServers={mcpServers}
+                        knowledgeBases={knowledgeBases}
+                        ragSearchUrlTemplate={ragSearchUrlTemplate}
+                        outputClasses={outputClasses}
+                        providers={providers}
+                        providerModels={providerModels}
+                        variables={variables}
+                        defaultProvider={defaultProvider}
+                        defaultModel={defaultModel}
+                        nodeTypesMeta={nodeTypesMeta}
+                        readOnly={readOnly}
+                        onUpdate={readOnly ? undefined : onUpdate}
+                        onRemove={readOnly ? undefined : onRemove}
+                        section={section}
+                        showRemove
+                        showType={false}
+                    />
                 </div>
             </ScrollArea>
         </aside>
