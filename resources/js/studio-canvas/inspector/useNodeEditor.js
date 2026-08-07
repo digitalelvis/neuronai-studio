@@ -114,7 +114,7 @@ export function useNodeEditor() {
                 return;
             }
 
-            if (detail.type === 'note') {
+            if (detail.type === 'note' || detail.type === 'start' || detail.type === 'stop') {
                 setEditingNode(null);
                 setSection('all');
                 return;
