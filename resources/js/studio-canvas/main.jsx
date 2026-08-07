@@ -6,6 +6,16 @@ import './canvas.css';
 
 const editorRoots = new WeakMap();
 
+function getWorkflowMeta() {
+    const config = window.__NEURONAI_CANVAS_CONFIG || {};
+
+    return {
+        name: config.workflowName ?? '',
+        description: config.workflowDescription ?? '',
+        status: config.workflowStatus ?? 'draft',
+    };
+}
+
 function syncMetadataToLivewire() {
     const config = window.__NEURONAI_CANVAS_CONFIG;
     const wireId = config?.wireId;
@@ -19,9 +29,10 @@ function syncMetadataToLivewire() {
         return;
     }
 
-    component.set('name', config.workflowName ?? '');
-    component.set('description', config.workflowDescription ?? '');
-    component.set('status', config.workflowStatus ?? 'draft');
+    const meta = getWorkflowMeta();
+    component.set('name', meta.name);
+    component.set('description', meta.description);
+    component.set('status', meta.status);
 }
 
 function exportGraphForSave() {
@@ -61,13 +72,16 @@ function saveGraphToLivewire(graphOverride = null) {
         return;
     }
 
+    const meta = getWorkflowMeta();
     syncMetadataToLivewire();
 
     const wireId = window.__NEURONAI_CANVAS_CONFIG?.wireId;
     if (wireId && window.Livewire) {
         const component = window.Livewire.find(wireId);
         if (component) {
-            component.call('saveGraph', graph);
+            // Pass meta in the same request so name/description/status are not lost
+            // to a race between Livewire set() and call('saveGraph').
+            component.call('saveGraph', graph, meta);
         }
     }
 
@@ -107,6 +121,7 @@ async function saveGraphBeforeRun() {
     });
 
     const graph = mergePendingNodeUpdate(exportGraphForSave(), pendingUpdate);
+    const meta = getWorkflowMeta();
     syncMetadataToLivewire();
 
     const wireId = window.__NEURONAI_CANVAS_CONFIG?.wireId;
@@ -120,7 +135,7 @@ async function saveGraphBeforeRun() {
         return false;
     }
 
-    await component.call('saveGraph', graph);
+    await component.call('saveGraph', graph, meta);
     window.__NEURONAI_CANVAS_CONFIG.savedGraph = graph;
     window.__workflowGraphDirty = false;
     return true;

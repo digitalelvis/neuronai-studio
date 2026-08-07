@@ -260,6 +260,16 @@ export default function WorkflowEditorShell({ config }) {
                         setName(nextName);
                         setDescription(nextDescription);
                         setStatus(nextStatus);
+
+                        // Update config immediately (before useEffect) so save persists the new meta.
+                        if (window.__NEURONAI_CANVAS_CONFIG) {
+                            window.__NEURONAI_CANVAS_CONFIG.workflowName = nextName;
+                            window.__NEURONAI_CANVAS_CONFIG.workflowDescription = nextDescription;
+                            window.__NEURONAI_CANVAS_CONFIG.workflowStatus = nextStatus;
+                        }
+                        syncBreadcrumbName(nextName);
+                        window.dispatchEvent(new CustomEvent('workflow-meta-changed'));
+                        window.dispatchEvent(new CustomEvent('workflow-canvas-save'));
                     }}
                 />
 

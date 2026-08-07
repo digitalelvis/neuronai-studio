@@ -77,10 +77,28 @@ class Editor extends Component
         }
     }
 
-    public function saveGraph(array $graph): void
+    /**
+     * @param  array<string, mixed>  $graph
+     * @param  array{name?: string, description?: string|null, status?: string}|null  $meta
+     */
+    public function saveGraph(array $graph, ?array $meta = null): void
     {
         if ($this->readOnly) {
             return;
+        }
+
+        if (is_array($meta)) {
+            if (array_key_exists('name', $meta)) {
+                $this->name = trim((string) $meta['name']);
+            }
+
+            if (array_key_exists('description', $meta)) {
+                $this->description = (string) ($meta['description'] ?? '');
+            }
+
+            if (array_key_exists('status', $meta)) {
+                $this->status = (string) $meta['status'];
+            }
         }
 
         $this->graph = $graph;
