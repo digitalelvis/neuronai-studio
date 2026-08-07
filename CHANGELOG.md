@@ -1,5 +1,7 @@
 # Changelog
 
+## [2.6.1](https://github.com/digitalelvis/neuronai-studio/compare/v2.6.0...v2.6.1) (2026-08-07)
+
 # [2.6.0](https://github.com/digitalelvis/neuronai-studio/compare/v2.5.0...v2.6.0) (2026-08-06)
 
 
