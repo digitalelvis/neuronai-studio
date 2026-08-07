@@ -30,8 +30,12 @@ import {
     findEdgeNearPoint,
     FLOW_NODE_HEIGHT,
     FLOW_NODE_WIDTH,
+    forkBranchIdsFromConfig,
+    intentIdsFromConfig,
     isToolBindingEdge,
+    pruneOrphanNamedHandleEdges,
     spliceNodeIntoEdge,
+    syncNamedSourceHandleEdges,
     toFlowEdges,
     toFlowNodes,
     toPackageGraph,
@@ -280,11 +284,10 @@ function WorkflowCanvasInner({
                 return;
             }
 
-            const flowEdges = toFlowEdges(nextGraph.edges);
-            const flowNodes = ensureLayoutedGraph(
-                toFlowNodes(nextGraph.nodes, nodeTypesMeta, nextGraph.annotations),
-                flowEdges,
-            );
+            const flowNodesRaw = toFlowNodes(nextGraph.nodes, nodeTypesMeta, nextGraph.annotations);
+            const healed = pruneOrphanNamedHandleEdges(flowNodesRaw, toFlowEdges(nextGraph.edges));
+            const flowEdges = healed.edges;
+            const flowNodes = ensureLayoutedGraph(healed.nodes, flowEdges);
             const viewport = nextGraph.viewport || { x: 0, y: 0, zoom: 1 };
 
             setNodes(flowNodes);
@@ -510,8 +513,10 @@ function WorkflowCanvasInner({
         (nodeId, data) => {
             setNodes((current) => {
                 const previous = current.find((node) => node.id === nodeId);
-                const previousToolMode = isToolModeEnabled(previous?.data?.config || {});
+                const previousConfig = previous?.data?.config || {};
+                const previousToolMode = isToolModeEnabled(previousConfig);
                 const nextToolMode = isToolModeEnabled(data || {});
+                const nodeType = previous?.data?.nodeType;
 
                 if (nextToolMode && !previousToolMode) {
                     setEdges((edges) =>
@@ -531,6 +536,26 @@ function WorkflowCanvasInner({
                             (edge) =>
                                 !(edge.source === nodeId && (edge.sourceHandle || 'default') === 'toolset'),
                         ),
+                    );
+                }
+
+                if (nodeType === 'intent_classifier' && Array.isArray(data?.intents)) {
+                    const previousIds = intentIdsFromConfig(previousConfig);
+                    const nextIds = intentIdsFromConfig(data);
+                    setEdges((edges) =>
+                        syncNamedSourceHandleEdges(edges, nodeId, previousIds, nextIds, {
+                            allowDefault: false,
+                        }),
+                    );
+                }
+
+                if (nodeType === 'fork' && Array.isArray(data?.branches)) {
+                    const previousIds = forkBranchIdsFromConfig(previousConfig);
+                    const nextIds = forkBranchIdsFromConfig(data);
+                    setEdges((edges) =>
+                        syncNamedSourceHandleEdges(edges, nodeId, previousIds, nextIds, {
+                            allowDefault: true,
+                        }),
                     );
                 }
 

@@ -84,6 +84,191 @@ export function isToolBindingEdge(edge) {
     );
 }
 
+/**
+ * ASCII intent/branch id matching backend GraphValidator:
+ * /^[a-zA-Z][a-zA-Z0-9_]*$/
+ */
+export function sanitizeIntentId(value) {
+    const slug = String(value || '')
+        .normalize('NFD')
+        .replace(/\p{M}/gu, '')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9_]+/g, '_')
+        .replace(/^_+|_+$/g, '')
+        .replace(/_+/g, '_');
+
+    if (!slug) {
+        return 'intent';
+    }
+
+    return /^[a-z]/.test(slug) ? slug : `intent_${slug}`;
+}
+
+export function uniqueIntentId(desired, existingIds, excludeId = null) {
+    const base = sanitizeIntentId(desired);
+    const taken = new Set(
+        (existingIds || []).filter((id) => typeof id === 'string' && id !== '' && id !== excludeId),
+    );
+
+    if (!taken.has(base)) {
+        return base;
+    }
+
+    let n = 2;
+    let candidate = `${base}_${n}`;
+    while (taken.has(candidate)) {
+        n += 1;
+        candidate = `${base}_${n}`;
+    }
+
+    return candidate;
+}
+
+export function intentIdsFromConfig(config) {
+    if (!config || !Array.isArray(config.intents)) {
+        return [];
+    }
+
+    return config.intents
+        .map((intent) => (intent && typeof intent === 'object' ? String(intent.id || '').trim() : ''))
+        .filter((id) => id !== '');
+}
+
+export function forkBranchIdsFromConfig(config) {
+    if (!config || !Array.isArray(config.branches)) {
+        return [];
+    }
+
+    return config.branches
+        .map((branch) => (typeof branch === 'string' ? branch : branch?.id))
+        .map((id) => (typeof id === 'string' ? id.trim() : ''))
+        .filter((id) => id !== '');
+}
+
+/**
+ * Rename and prune outgoing edges when named source handles change
+ * (intent classifier intents / fork branches).
+ *
+ * @param {Array} edges
+ * @param {string} nodeId
+ * @param {string[]} previousIds
+ * @param {string[]} nextIds
+ * @param {{ allowDefault?: boolean }} [options]
+ */
+export function syncNamedSourceHandleEdges(edges, nodeId, previousIds, nextIds, options = {}) {
+    const allowDefault = options.allowDefault === true;
+    const prev = Array.isArray(previousIds) ? previousIds : [];
+    const next = Array.isArray(nextIds) ? nextIds : [];
+    const nextSet = new Set(next);
+
+    const renameMap = new Map();
+    // Index-aligned rename is only safe when the list length is unchanged
+    // (in-place id edits). Removals/additions must prune by set membership.
+    if (prev.length === next.length) {
+        for (let i = 0; i < prev.length; i += 1) {
+            if (prev[i] && next[i] && prev[i] !== next[i]) {
+                renameMap.set(prev[i], next[i]);
+            }
+        }
+    }
+
+    const result = [];
+
+    for (const edge of edges || []) {
+        if (edge.source !== nodeId) {
+            result.push(edge);
+            continue;
+        }
+
+        let handle = edge.sourceHandle || 'default';
+
+        if (renameMap.has(handle)) {
+            handle = renameMap.get(handle);
+        }
+
+        if (handle === 'default' || handle === '') {
+            if (allowDefault) {
+                result.push(edge);
+            }
+            continue;
+        }
+
+        if (!nextSet.has(handle)) {
+            continue;
+        }
+
+        if (handle !== (edge.sourceHandle || 'default')) {
+            result.push(
+                buildFlowEdge({
+                    ...edge,
+                    sourceHandle: handle,
+                }),
+            );
+            continue;
+        }
+
+        result.push(edge);
+    }
+
+    return result;
+}
+
+/**
+ * Drop orphan named-handle edges for intent_classifier and fork nodes.
+ * Also sanitizes intent ids (accents → ASCII) and remaps edges.
+ */
+export function pruneOrphanNamedHandleEdges(nodes, edges) {
+    let nextEdges = edges || [];
+    const nextNodes = (nodes || []).map((node) => {
+        const nodeType = node.data?.nodeType ?? node.type;
+        const config = node.data?.config || {};
+
+        if (nodeType === 'intent_classifier' && Array.isArray(config.intents)) {
+            const previousIds = intentIdsFromConfig(config);
+            const seen = [];
+            const nextIntents = config.intents.map((intent, index) => {
+                if (!intent || typeof intent !== 'object') {
+                    return intent;
+                }
+                const raw = typeof intent.id === 'string' && intent.id !== '' ? intent.id : `intent_${index + 1}`;
+                const id = uniqueIntentId(raw, seen);
+                seen.push(id);
+                return { ...intent, id };
+            });
+            const nextIds = nextIntents
+                .map((intent) => (intent && typeof intent === 'object' ? String(intent.id || '') : ''))
+                .filter((id) => id !== '');
+
+            nextEdges = syncNamedSourceHandleEdges(nextEdges, node.id, previousIds, nextIds, {
+                allowDefault: false,
+            });
+
+            return {
+                ...node,
+                data: {
+                    ...node.data,
+                    config: {
+                        ...config,
+                        intents: nextIntents,
+                    },
+                },
+            };
+        }
+
+        if (nodeType === 'fork') {
+            const ids = forkBranchIdsFromConfig(config);
+            nextEdges = syncNamedSourceHandleEdges(nextEdges, node.id, ids, ids, {
+                allowDefault: true,
+            });
+        }
+
+        return node;
+    });
+
+    return { nodes: nextNodes, edges: nextEdges };
+}
+
 export function buildFlowEdge(connectionOrEdge) {
     const handle = connectionOrEdge.sourceHandle || 'default';
     const targetHandle = connectionOrEdge.targetHandle || 'default';
