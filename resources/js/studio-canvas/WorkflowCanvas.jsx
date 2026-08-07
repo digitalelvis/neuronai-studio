@@ -251,10 +251,18 @@ function WorkflowCanvasInner({
 
             selectedNodeIdRef.current = nodeId;
             const node = nodeId ? nodeList.find((n) => n.id === nodeId) : null;
+            const nodeType = node?.data?.nodeType;
+
+            // start/stop have no inspector config — clear selection payload instead of opening the sidebar
+            if (node && (nodeType === 'start' || nodeType === 'stop')) {
+                window.dispatchEvent(new CustomEvent('canvas-node-selected', { detail: { silent } }));
+                return;
+            }
+
             const payload = node
                 ? {
                       id: node.id,
-                      type: node.data.nodeType,
+                      type: nodeType,
                       position: node.position,
                       data: node.data.config || {},
                       silent,
