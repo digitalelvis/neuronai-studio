@@ -4,7 +4,7 @@
     "type": "module",
     "scripts": {
         "dev": "vite build --watch",
-        "build": "BUILD_TARGET=css vite build && BUILD_TARGET=canvas vite build && BUILD_TARGET=chat vite build && BUILD_TARGET=forms vite build && BUILD_TARGET=code vite build",
+        "build": "BUILD_TARGET=css vite build && BUILD_TARGET=toast vite build && BUILD_TARGET=canvas vite build && BUILD_TARGET=chat vite build && BUILD_TARGET=forms vite build && BUILD_TARGET=code vite build",
         "build:css": "BUILD_TARGET=css vite build",
         "release": "release-it",
         "release:dry": "release-it --dry-run"

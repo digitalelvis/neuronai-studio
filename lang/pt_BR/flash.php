@@ -3,6 +3,8 @@
 return [
     'agent_saved' => 'Agente salvo com sucesso.',
     'workflow_saved' => 'Fluxo salvo.',
+    'workflow_read_only' => 'Este fluxo é somente leitura e não pode ser salvo.',
+    'workflow_save_failed' => 'Não foi possível salvar o fluxo.',
     'workflow_exported' => 'Exportado(s) :count arquivo(s) PHP nativo(s).',
     'workflow_import_failed' => 'Não foi possível importar a classe do fluxo.',
     'workflow_import_json_failed' => 'Não foi possível importar o arquivo JSON do fluxo.',

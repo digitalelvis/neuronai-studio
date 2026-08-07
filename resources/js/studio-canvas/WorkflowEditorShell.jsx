@@ -114,9 +114,23 @@ export default function WorkflowEditorShell({ config }) {
 
     const handleValidate = async () => {
         const component = window.Livewire?.find(config.wireId);
-        if (component) {
-            await component.call('validateGraph');
-            setValidationMessage(component.get('validationMessage') ?? '');
+        if (!component) {
+            window.NeuronAIStudioToast?.error('Livewire is not available.');
+            return;
+        }
+
+        const result = await component.call('validateGraph');
+        const message = result?.message ?? component.get('validationMessage') ?? '';
+        setValidationMessage(message);
+
+        if (!message) {
+            return;
+        }
+
+        if (result?.valid) {
+            window.NeuronAIStudioToast?.success(message);
+        } else {
+            window.NeuronAIStudioToast?.error(message);
         }
     };
     const handleSave = () => window.dispatchEvent(new CustomEvent('workflow-canvas-save'));

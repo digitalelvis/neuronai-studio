@@ -94,6 +94,12 @@ export default function BottomDock({
                           ? 'Run completed'
                           : detail.event || 'Event';
 
+            if (detail.event === 'trace_failed') {
+                const errorMessage =
+                    detail.message || detail.error || 'Run failed';
+                window.NeuronAIStudioToast?.error(errorMessage);
+            }
+
             setRunEvents((current) => [
                 ...current.slice(-99),
                 {

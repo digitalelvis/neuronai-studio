@@ -41,6 +41,13 @@ const entries = {
         format: 'iife',
         name: 'NeuronStudioCode',
     },
+    toast: {
+        input: resolve(__dirname, 'resources/js/studio-toast/main.jsx'),
+        fileName: 'studio-toast.bundle.js',
+        cssName: 'studio-toast.css',
+        format: 'iife',
+        name: 'NeuronAIStudioToast',
+    },
 };
 
 const entry = entries[target] ?? entries.canvas;
