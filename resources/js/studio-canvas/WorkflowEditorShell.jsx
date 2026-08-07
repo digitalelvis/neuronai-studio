@@ -114,9 +114,23 @@ export default function WorkflowEditorShell({ config }) {
 
     const handleValidate = async () => {
         const component = window.Livewire?.find(config.wireId);
-        if (component) {
-            await component.call('validateGraph');
-            setValidationMessage(component.get('validationMessage') ?? '');
+        if (!component) {
+            window.NeuronAIStudioToast?.error('Livewire is not available.');
+            return;
+        }
+
+        const result = await component.call('validateGraph');
+        const message = result?.message ?? component.get('validationMessage') ?? '';
+        setValidationMessage(message);
+
+        if (!message) {
+            return;
+        }
+
+        if (result?.valid) {
+            window.NeuronAIStudioToast?.success(message);
+        } else {
+            window.NeuronAIStudioToast?.error(message);
         }
     };
     const handleSave = () => window.dispatchEvent(new CustomEvent('workflow-canvas-save'));
@@ -260,6 +274,16 @@ export default function WorkflowEditorShell({ config }) {
                         setName(nextName);
                         setDescription(nextDescription);
                         setStatus(nextStatus);
+
+                        // Update config immediately (before useEffect) so save persists the new meta.
+                        if (window.__NEURONAI_CANVAS_CONFIG) {
+                            window.__NEURONAI_CANVAS_CONFIG.workflowName = nextName;
+                            window.__NEURONAI_CANVAS_CONFIG.workflowDescription = nextDescription;
+                            window.__NEURONAI_CANVAS_CONFIG.workflowStatus = nextStatus;
+                        }
+                        syncBreadcrumbName(nextName);
+                        window.dispatchEvent(new CustomEvent('workflow-meta-changed'));
+                        window.dispatchEvent(new CustomEvent('workflow-canvas-save'));
                     }}
                 />
 

@@ -3,6 +3,8 @@
 return [
     'agent_saved' => 'Agent saved successfully.',
     'workflow_saved' => 'Workflow saved.',
+    'workflow_read_only' => 'This workflow is read-only and cannot be saved.',
+    'workflow_save_failed' => 'Could not save the workflow.',
     'workflow_exported' => 'Exported :count native PHP file(s).',
     'workflow_import_failed' => 'Could not import workflow class.',
     'workflow_import_json_failed' => 'Could not import workflow JSON file.',

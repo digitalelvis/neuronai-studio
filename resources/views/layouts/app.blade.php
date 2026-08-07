@@ -19,14 +19,24 @@
     @if (\DigitalElvis\NeuronAIStudio\Support\StudioLayout::isCodeEditorPage())
         <link rel="stylesheet" href="{{ asset('vendor/neuronai-studio/js/dist/studio-code.css') }}">
     @endif
+    <link rel="stylesheet" href="{{ asset('vendor/neuronai-studio/js/dist/studio-toast.css') }}">
     <script>
         window.__STUDIO_I18N__ = @json([
             'locale' => app()->getLocale(),
             'messages' => \DigitalElvis\NeuronAIStudio\Support\StudioI18n::jsMessages(),
         ]);
+        window.__STUDIO_FLASH_TOASTS__ = [
+            @if (session('success'))
+                { variant: 'success', message: @json(session('success')) },
+            @endif
+            @if (session('error'))
+                { variant: 'error', message: @json(session('error')) },
+            @endif
+        ];
     </script>
 </head>
 <body class="bg-background text-foreground">
+    <div id="studio-toast-root"></div>
     <div class="studio-shell">
         <aside class="studio-icon-rail" aria-label="{{ __('neuronai-studio::ui.nav.main') }}">
             <div class="flex h-12 items-center justify-center border-b border-border">
@@ -109,5 +119,7 @@
     @endif
     @stack('code-editor')
     @livewireScripts
+    @php($studioToastVersion = @filemtime(public_path('vendor/neuronai-studio/js/dist/studio-toast.bundle.js')) ?: time())
+    <script src="{{ asset('vendor/neuronai-studio/js/dist/studio-toast.bundle.js') }}?v={{ $studioToastVersion }}"></script>
 </body>
 </html>

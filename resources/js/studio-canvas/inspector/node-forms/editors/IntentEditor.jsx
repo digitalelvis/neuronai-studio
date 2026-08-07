@@ -2,21 +2,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ExpandableTextField } from '@/components/ui/expandable-text-field';
-
-function slugifyIntentId(value) {
-    const slug = String(value || '')
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9_]+/g, '_')
-        .replace(/^_+|_+$/g, '')
-        .replace(/_+/g, '_');
-
-    if (!slug) {
-        return 'intent';
-    }
-
-    return /^[a-z]/.test(slug) ? slug : `intent_${slug}`;
-}
+import { sanitizeIntentId, uniqueIntentId } from '../../../graph';
 
 function normalizeIntents(intents) {
     if (!Array.isArray(intents)) {
@@ -26,31 +12,41 @@ function normalizeIntents(intents) {
     return intents
         .filter((item) => item && typeof item === 'object')
         .map((item, index) => {
-            const id =
+            const rawId =
                 typeof item.id === 'string' && item.id !== ''
                     ? item.id
                     : `intent_${index + 1}`;
             return {
-                id,
-                name: typeof item.name === 'string' && item.name !== '' ? item.name : id,
+                id: rawId,
+                name: typeof item.name === 'string' && item.name !== '' ? item.name : rawId,
                 description: typeof item.description === 'string' ? item.description : '',
             };
         });
+}
+
+function ensureUniqueIds(intents) {
+    const seen = new Set();
+    return intents.map((intent) => {
+        const id = uniqueIntentId(intent.id, [...seen]);
+        seen.add(id);
+        return { ...intent, id };
+    });
 }
 
 export default function IntentEditor({ data, readOnly, onUpdate }) {
     const intents = normalizeIntents(data.intents);
 
     const commit = (next) => {
-        onUpdate?.({ ...data, intents: next });
+        onUpdate?.({ ...data, intents: ensureUniqueIds(next) });
     };
 
     const addIntent = () => {
         const nextIndex = intents.length + 1;
+        const id = uniqueIntentId(`intent_${nextIndex}`, intents.map((i) => i.id));
         commit([
             ...intents,
             {
-                id: `intent_${nextIndex}`,
+                id,
                 name: `Intent ${nextIndex}`,
                 description: '',
             },
@@ -71,13 +67,44 @@ export default function IntentEditor({ data, readOnly, onUpdate }) {
             return;
         }
 
+        const sanitizedId = sanitizeIntentId(current.id);
+        const idIsInvalid = current.id !== sanitizedId;
         const shouldSyncId =
-            !current.id || current.id === slugifyIntentId(current.name) || current.id.startsWith('intent_');
+            !current.id ||
+            idIsInvalid ||
+            current.id === sanitizeIntentId(current.name) ||
+            current.id.startsWith('intent_');
+
         if (!shouldSyncId) {
             return;
         }
 
-        const nextId = slugifyIntentId(current.name);
+        const source = idIsInvalid ? current.id : current.name;
+        const nextId = uniqueIntentId(
+            source,
+            intents.map((i) => i.id),
+            current.id,
+        );
+
+        if (nextId === current.id) {
+            return;
+        }
+
+        updateIntent(index, { id: nextId });
+    };
+
+    const commitSanitizedId = (index) => {
+        const current = intents[index];
+        if (!current) {
+            return;
+        }
+
+        const nextId = uniqueIntentId(
+            current.id,
+            intents.map((i) => i.id),
+            current.id,
+        );
+
         if (nextId === current.id) {
             return;
         }
@@ -94,14 +121,7 @@ export default function IntentEditor({ data, readOnly, onUpdate }) {
         if (!source) {
             return;
         }
-        const baseId = `${source.id}_copy`;
-        let id = baseId;
-        let n = 2;
-        const existing = new Set(intents.map((i) => i.id));
-        while (existing.has(id)) {
-            id = `${baseId}_${n}`;
-            n += 1;
-        }
+        const id = uniqueIntentId(`${source.id}_copy`, intents.map((i) => i.id));
         commit([
             ...intents.slice(0, index + 1),
             { ...source, id, name: `${source.name} copy` },
@@ -158,6 +178,7 @@ export default function IntentEditor({ data, readOnly, onUpdate }) {
                     <Input
                         value={intent.id}
                         onChange={(e) => updateIntent(index, { id: e.target.value })}
+                        onBlur={() => commitSanitizedId(index)}
                         disabled={readOnly}
                         className="font-mono text-xs"
                         placeholder="intent_id"

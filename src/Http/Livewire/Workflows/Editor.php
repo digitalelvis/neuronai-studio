@@ -16,16 +16,20 @@ use DigitalElvis\NeuronAIStudio\Registry\OutputClassRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
 use DigitalElvis\NeuronAIStudio\Models\ToolDefinition;
 use DigitalElvis\NeuronAIStudio\Registry\ToolRegistry;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\Concerns\DispatchesStudioToast;
 use DigitalElvis\NeuronAIStudio\Runtime\GraphValidator;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
 use DigitalElvis\NeuronAIStudio\Support\ResolvesOptionalRouteModel;
 use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
 use DigitalElvis\NeuronAIStudio\Support\ToolSchemaInspector;
 use Illuminate\Support\Str;
+use Illuminate\Validation\ValidationException;
 use Livewire\Component;
+use Throwable;
 
 class Editor extends Component
 {
+    use DispatchesStudioToast;
     use ResolvesOptionalRouteModel;
 
     public ?WorkflowDefinition $workflow = null;
@@ -77,10 +81,30 @@ class Editor extends Component
         }
     }
 
-    public function saveGraph(array $graph): void
+    /**
+     * @param  array<string, mixed>  $graph
+     * @param  array{name?: string, description?: string|null, status?: string}|null  $meta
+     */
+    public function saveGraph(array $graph, ?array $meta = null): void
     {
         if ($this->readOnly) {
+            $this->toastOnly('error', __('neuronai-studio::flash.workflow_read_only'));
+
             return;
+        }
+
+        if (is_array($meta)) {
+            if (array_key_exists('name', $meta)) {
+                $this->name = trim((string) $meta['name']);
+            }
+
+            if (array_key_exists('description', $meta)) {
+                $this->description = (string) ($meta['description'] ?? '');
+            }
+
+            if (array_key_exists('status', $meta)) {
+                $this->status = (string) $meta['status'];
+            }
         }
 
         $this->graph = $graph;
@@ -188,30 +212,51 @@ class Editor extends Component
     public function save(): void
     {
         if ($this->readOnly) {
+            $this->toastOnly('error', __('neuronai-studio::flash.workflow_read_only'));
+
             return;
         }
 
-        $validated = $this->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'status' => 'required|in:draft,published',
-        ]);
+        try {
+            $validated = $this->validate([
+                'name' => 'required|string|max:255',
+                'description' => 'nullable|string',
+                'status' => 'required|in:draft,published',
+            ]);
+        } catch (ValidationException $exception) {
+            $this->toastOnly('error', $exception->validator->errors()->first() ?: __('neuronai-studio::flash.workflow_save_failed'));
 
-        $payload = array_merge($validated, [
-            'slug' => $this->resolveSlug($this->workflow),
-            'graph' => $this->graph,
-            'source' => 'studio',
-            'locked' => false,
-        ]);
-
-        if ($this->workflow?->exists) {
-            $this->workflow->update($payload);
-        } else {
-            $this->workflow = WorkflowDefinition::create($payload);
-            $this->redirect(route('neuronai-studio.workflows.edit', $this->workflow));
+            throw $exception;
         }
 
-        session()->flash('success', __('neuronai-studio::flash.workflow_saved'));
+        try {
+            $payload = array_merge($validated, [
+                'slug' => $this->resolveSlug($this->workflow),
+                'graph' => $this->graph,
+                'source' => 'studio',
+                'locked' => false,
+            ]);
+
+            if ($this->workflow?->exists) {
+                $this->workflow->update($payload);
+            } else {
+                $this->workflow = WorkflowDefinition::create($payload);
+                // Flash only — toast hydrates on the redirected edit page.
+                session()->flash('success', __('neuronai-studio::flash.workflow_saved'));
+                $this->redirect(route('neuronai-studio.workflows.edit', $this->workflow));
+
+                return;
+            }
+
+            // Toast only on in-place save — avoid inline flash + toast stacking on the canvas.
+            $this->toastOnly('success', __('neuronai-studio::flash.workflow_saved'));
+        } catch (ValidationException $exception) {
+            throw $exception;
+        } catch (Throwable $exception) {
+            $this->toastOnly('error', $exception->getMessage() ?: __('neuronai-studio::flash.workflow_save_failed'));
+
+            throw $exception;
+        }
     }
 
     protected function resolveSlug(?WorkflowDefinition $existing = null): string
@@ -236,12 +281,20 @@ class Editor extends Component
         return $slug;
     }
 
-    public function validateGraph(GraphValidator $validator): void
+    /**
+     * @return array{valid: bool, message: string}
+     */
+    public function validateGraph(GraphValidator $validator): array
     {
         $result = $validator->validate($this->graph, $this->workflow?->id);
         $this->validationMessage = $result['valid']
             ? 'Graph is valid.'
             : implode(' ', $result['errors']);
+
+        return [
+            'valid' => (bool) $result['valid'],
+            'message' => $this->validationMessage,
+        ];
     }
 
     public function runWorkflow(WorkflowRunner $runner): void
@@ -260,7 +313,7 @@ class Editor extends Component
         try {
             CodegenGuard::ensureExport();
         } catch (CodegenDisabledException $e) {
-            session()->flash('error', $e->getMessage());
+            $this->flashToast('error', $e->getMessage());
 
             return;
         }
@@ -272,7 +325,7 @@ class Editor extends Component
         $result = $exporter->exportWithMeta($this->workflow);
         $this->workflow->update(['class_path' => $result['fqcn']]);
         $this->linkedClassPath = $result['fqcn'];
-        session()->flash('success', __('neuronai-studio::flash.workflow_exported', ['count' => count($result['files'])]));
+        $this->flashToast('success', __('neuronai-studio::flash.workflow_exported', ['count' => count($result['files'])]));
     }
 
     /** @return array{code: string, className: string, namespace: string, fqcn: string, fileCount: int} */
@@ -301,7 +354,7 @@ class Editor extends Component
         $imported = app(WorkflowClassImporter::class)->fromClass($class);
 
         if ($imported === null || app(WorkflowClassImporter::class)->hasError($imported)) {
-            session()->flash('error', $imported['error'] ?? __('neuronai-studio::flash.workflow_import_failed'));
+            $this->flashToast('error', $imported['error'] ?? __('neuronai-studio::flash.workflow_import_failed'));
             $this->redirect(route('neuronai-studio.workflows.index'));
 
             return;
@@ -315,7 +368,7 @@ class Editor extends Component
         $imported = app(WorkflowClassImporter::class)->fromJsonFile($jsonPath);
 
         if ($imported === null || app(WorkflowClassImporter::class)->hasError($imported)) {
-            session()->flash('error', $imported['error'] ?? __('neuronai-studio::flash.workflow_import_json_failed'));
+            $this->flashToast('error', $imported['error'] ?? __('neuronai-studio::flash.workflow_import_json_failed'));
             $this->redirect(route('neuronai-studio.workflows.index'));
 
             return;

@@ -8,6 +8,32 @@ use Livewire\Livewire;
 
 class WorkflowEditorSaveTest extends TestCase
 {
+    public function test_save_graph_persists_metadata_from_payload(): void
+    {
+        $workflow = WorkflowDefinition::create([
+            'name' => 'Original Name',
+            'slug' => 'original-name',
+            'description' => 'Old description',
+            'status' => 'draft',
+            'graph' => WorkflowDefinition::defaultGraph(),
+        ]);
+
+        Livewire::test(Editor::class, ['workflow' => $workflow])
+            ->call('saveGraph', $workflow->graph, [
+                'name' => 'Renamed Workflow',
+                'description' => 'Updated description',
+                'status' => 'published',
+            ])
+            ->assertHasNoErrors();
+
+        $workflow->refresh();
+
+        $this->assertSame('Renamed Workflow', $workflow->name);
+        $this->assertSame('Updated description', $workflow->description);
+        $this->assertSame('published', $workflow->status);
+        $this->assertSame('renamed-workflow', $workflow->slug);
+    }
+
     public function test_save_graph_keeps_deduplicated_slug_when_name_is_unchanged(): void
     {
         WorkflowDefinition::create([
