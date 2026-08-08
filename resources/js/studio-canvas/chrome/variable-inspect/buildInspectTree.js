@@ -202,6 +202,13 @@ export function buildInspectTree(source = {}) {
                 value: output.input,
             });
         }
+        if (Array.isArray(output.attachments)) {
+            startVars.push({
+                key: 'attachments',
+                type: inferValueType(output.attachments),
+                value: output.attachments,
+            });
+        }
 
         if (startVars.length > 0) {
             groups.unshift({

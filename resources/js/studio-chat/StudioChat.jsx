@@ -225,11 +225,25 @@ export default forwardRef(function StudioChat({
                         inputs: packet.data?.inputs ?? {},
                         result: packet.data?.result ?? null,
                     });
+                    const snapshot = [...toolMessages];
+                    updateMessage(assistantId, (current) => ({
+                        meta: {
+                            ...current.meta,
+                            toolEvents: snapshot,
+                        },
+                    }));
                 }
 
                 if (packet.event === 'human_input_required') {
                     traceFinished = true;
-                    updateMessage(assistantId, { streaming: false, content: assistantText || 'Waiting for your input…' });
+                    updateMessage(assistantId, (current) => ({
+                        streaming: false,
+                        content: assistantText || 'Waiting for your input…',
+                        meta: {
+                            ...current.meta,
+                            toolEvents: toolMessages.length ? [...toolMessages] : current.meta?.toolEvents,
+                        },
+                    }));
                     appendMessage({
                         id: createId('system'),
                         role: 'system',
@@ -241,10 +255,14 @@ export default forwardRef(function StudioChat({
 
                 if (packet.event === 'tool_approval_required') {
                     traceFinished = true;
-                    updateMessage(assistantId, {
+                    updateMessage(assistantId, (current) => ({
                         streaming: false,
                         content: assistantText || 'Waiting for tool approval…',
-                    });
+                        meta: {
+                            ...current.meta,
+                            toolEvents: toolMessages.length ? [...toolMessages] : current.meta?.toolEvents,
+                        },
+                    }));
                     appendMessage({
                         id: createId('tool-approval'),
                         role: 'system',

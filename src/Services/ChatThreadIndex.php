@@ -8,10 +8,85 @@ use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Models\StudioThread;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
 use DigitalElvis\NeuronAIStudio\Support\ChatThreadKey;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
 class ChatThreadIndex
 {
+    /**
+     * @return list<array{id: string, updated_at: string|null, preview: string|null, message_count: int, run_count: int, label: string, entity_type: string|null, entity_id: int|string|null, ownerable_type: string|null, ownerable_id: string|null}>
+     */
+    public function listForOwner(Model|string $owner, string|int|null $ownerId = null, ?string $entityType = null, int|string|null $entityId = null): array
+    {
+        $query = StudioThread::query()->ownedBy($owner, $ownerId);
+
+        if ($entityType !== null) {
+            $query->where('entity_type', $entityType);
+        }
+
+        if ($entityId !== null) {
+            $query->where('entity_id', $entityId);
+        }
+
+        $threads = $query
+            ->withCount('runs')
+            ->withMax('runs', 'started_at')
+            ->orderByDesc('runs_max_started_at')
+            ->orderByDesc('updated_at')
+            ->limit(100)
+            ->get();
+
+        if ($threads->isEmpty()) {
+            return [];
+        }
+
+        $previews = $this->firstUserPreviews($threads, function (string $publicId) use ($threads) {
+            $thread = $threads->firstWhere('id', $publicId);
+            if ($thread === null) {
+                return [$publicId];
+            }
+
+            if ($thread->entity_type === AgentDefinition::class && $thread->entity_id) {
+                return [
+                    ChatThreadKey::forAgent((int) $thread->entity_id, $publicId),
+                    $publicId,
+                ];
+            }
+
+            if ($thread->entity_type === WorkflowDefinition::class && $thread->entity_id) {
+                return [
+                    ChatThreadKey::forWorkflow((int) $thread->entity_id, $publicId),
+                    $publicId,
+                ];
+            }
+
+            return [$publicId];
+        });
+
+        return $threads->map(function (StudioThread $thread) use ($previews) {
+            $preview = $previews[$thread->id] ?? null;
+            $updatedAt = $thread->runs_max_started_at
+                ?? $thread->updated_at?->toIso8601String();
+
+            if ($updatedAt instanceof \DateTimeInterface) {
+                $updatedAt = $updatedAt->format(\DateTimeInterface::ATOM);
+            }
+
+            return [
+                'id' => $thread->id,
+                'updated_at' => $updatedAt,
+                'preview' => $preview,
+                'message_count' => $preview !== null ? 1 : 0,
+                'run_count' => (int) $thread->runs_count,
+                'label' => $this->labelFor($preview, $updatedAt, $thread->id),
+                'entity_type' => $thread->entity_type,
+                'entity_id' => $thread->entity_id,
+                'ownerable_type' => $thread->ownerable_type,
+                'ownerable_id' => $thread->ownerable_id !== null ? (string) $thread->ownerable_id : null,
+            ];
+        })->values()->all();
+    }
+
     /**
      * @return list<array{id: string, updated_at: string|null, preview: string|null, message_count: int, run_count: int, label: string}>
      */

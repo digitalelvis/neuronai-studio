@@ -28,6 +28,7 @@ export default function WorkflowEditorShell({ config }) {
     const [status, setStatus] = useState(config.workflowStatus ?? 'draft');
     const [metaOpen, setMetaOpen] = useState(false);
     const [validationMessage, setValidationMessage] = useState('');
+    const [validationErrorCount, setValidationErrorCount] = useState(0);
     const [importOpen, setImportOpen] = useState(false);
     const [toolExposureEdit, setToolExposureEdit] = useState(null);
     const [toolActionsEdit, setToolActionsEdit] = useState(null);
@@ -122,7 +123,9 @@ export default function WorkflowEditorShell({ config }) {
 
         const result = await component.call('validateGraph');
         const message = result?.message ?? component.get('validationMessage') ?? '';
+        const errors = Array.isArray(result?.errors) ? result.errors : [];
         setValidationMessage(message);
+        setValidationErrorCount(result?.valid ? 0 : errors.length || (message ? 1 : 0));
 
         if (!message) {
             return;
@@ -225,6 +228,7 @@ export default function WorkflowEditorShell({ config }) {
                                 workflowConfig={workflowPanelConfig}
                                 nodeTypesMeta={nodeTypesMeta}
                                 validationMessage={validationMessage}
+                                validationErrorCount={validationErrorCount}
                             />
                         </div>
                     </ResizablePanel>

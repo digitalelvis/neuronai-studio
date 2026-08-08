@@ -124,6 +124,8 @@ Workflow runs use a similar persistence model with a per-trace thread ID stored 
 
 When an **Agent** node executes inside a loop, subsequent iterations load prior messages for the same thread — enabling multi-turn qualification or refinement without manual state stitching.
 
+Host apps can bind a polymorphic **owner** (`User`, `Customer`, …) via `StudioInvoke::forOwner($model)` / `owner_type`+`owner_id`. See [Invoking Workflows](../workflows/invoking-workflows.md#with-thread-owner-polymorphic). Cross-thread memory for the same owner is deferred.
+
 Configure the same context window via `NEURONAI_STUDIO_CHAT_HISTORY_CONTEXT_WINDOW`; it applies to agent history loaded during workflow runs.
 
 ### Related code

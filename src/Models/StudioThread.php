@@ -3,6 +3,7 @@
 namespace DigitalElvis\NeuronAIStudio\Models;
 
 use DigitalElvis\NeuronAIStudio\Support\StudioTables;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
@@ -20,6 +21,8 @@ class StudioThread extends Model
         'id',
         'entity_type',
         'entity_id',
+        'ownerable_type',
+        'ownerable_id',
     ];
 
     public function __construct(array $attributes = [])
@@ -43,6 +46,11 @@ class StudioThread extends Model
         return $this->morphTo();
     }
 
+    public function owner(): MorphTo
+    {
+        return $this->morphTo('owner', 'ownerable_type', 'ownerable_id');
+    }
+
     public function runs(): HasMany
     {
         return $this->hasMany(StudioRun::class, 'thread_id');
@@ -51,5 +59,26 @@ class StudioThread extends Model
     public function messages(): HasMany
     {
         return $this->hasMany(StudioChatMessage::class, 'thread_id');
+    }
+
+    /**
+     * @param  Builder<StudioThread>  $query
+     * @return Builder<StudioThread>
+     */
+    public function scopeOwnedBy(Builder $query, Model|string $owner, string|int|null $ownerId = null): Builder
+    {
+        if ($owner instanceof Model) {
+            return $query
+                ->where('ownerable_type', $owner->getMorphClass())
+                ->where('ownerable_id', (string) $owner->getKey());
+        }
+
+        if ($ownerId === null || $ownerId === '') {
+            throw new \InvalidArgumentException('ownerId is required when owner is a morph type string.');
+        }
+
+        return $query
+            ->where('ownerable_type', $owner)
+            ->where('ownerable_id', (string) $ownerId);
     }
 }

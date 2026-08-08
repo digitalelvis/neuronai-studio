@@ -21,6 +21,37 @@ class StateTemplateInterpolator
     }
 
     /**
+     * Resolve {{__studio_now}}, {{__studio_timezone}}, {{__studio_locale}} from app defaults
+     * (no workflow state). Used for standalone AgentRunner instructions.
+     *
+     * @param  array<string, mixed>  $overrides  Optional timezone/locale overrides
+     */
+    public static function interpolateStudioDatetimePlaceholders(string $template, array $overrides = []): string
+    {
+        $context = StudioDatetimeContext::defaults(
+            isset($overrides[StudioDatetimeContext::KEY_TIMEZONE]) && is_string($overrides[StudioDatetimeContext::KEY_TIMEZONE])
+                ? $overrides[StudioDatetimeContext::KEY_TIMEZONE]
+                : null,
+            isset($overrides[StudioDatetimeContext::KEY_LOCALE]) && is_string($overrides[StudioDatetimeContext::KEY_LOCALE])
+                ? $overrides[StudioDatetimeContext::KEY_LOCALE]
+                : null,
+        );
+
+        return preg_replace_callback(
+            '/\{\{\s*('.StudioDatetimeContext::KEY_NOW.'|'.StudioDatetimeContext::KEY_TIMEZONE.'|'.StudioDatetimeContext::KEY_LOCALE.')\s*\}\}/',
+            function (array $matches) use ($context) {
+                $key = $matches[1];
+                if ($key === StudioDatetimeContext::KEY_NOW) {
+                    return StudioDatetimeContext::nowIso($context[StudioDatetimeContext::KEY_TIMEZONE]);
+                }
+
+                return (string) ($context[$key] ?? '');
+            },
+            $template,
+        ) ?? $template;
+    }
+
+    /**
      * @param  list<array<string, mixed>>|null  $truncationEvents  Collected when budgets truncate.
      */
     public static function interpolate(
@@ -40,6 +71,12 @@ class StateTemplateInterpolator
             if (str_starts_with($field, 'var.')) {
                 // Already handled by interpolateVariablesOnly; leave unresolved remnants alone.
                 return $matches[0];
+            }
+
+            if ($field === StudioDatetimeContext::KEY_NOW) {
+                $tz = WorkflowStateValue::get($state, StudioDatetimeContext::KEY_TIMEZONE);
+
+                return StudioDatetimeContext::nowIso(is_string($tz) ? $tz : null);
             }
 
             $value = WorkflowStateValue::get($state, $field);
