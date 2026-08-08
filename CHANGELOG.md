@@ -1,5 +1,17 @@
 # Changelog
 
+# [3.1.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.0.0...v3.1.0) (2026-08-08)
+
+
+### Bug Fixes
+
+* **playground:** restore thread history and auto-scroll chat ([0d51a71](https://github.com/digitalelvis/neuronai-studio/commit/0d51a71a5a6d6887802ee10b7e19317dbefab8a3))
+
+
+### Features
+
+* **playground:** add workflow thread history endpoint ([e54fda2](https://github.com/digitalelvis/neuronai-studio/commit/e54fda245a2fc9f4fdc2fd63ef2702ebb02abf90))
+
 # [3.0.0](https://github.com/digitalelvis/neuronai-studio/compare/v2.7.0...v3.0.0) (2026-08-08)
 
 
