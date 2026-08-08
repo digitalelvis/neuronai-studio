@@ -1,5 +1,12 @@
 # Changelog
 
+# [3.2.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.1.0...v3.2.0) (2026-08-08)
+
+
+### Features
+
+* **canvas:** show playground initial state in variable picker ([73a19db](https://github.com/digitalelvis/neuronai-studio/commit/73a19dbcb3533fe087efc77231aabb45a8616130))
+
 # [3.1.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.0.0...v3.1.0) (2026-08-08)
 
 
