@@ -2,6 +2,7 @@ import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useSta
 import { Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { setStateVariableInitialSnapshot } from '../studio-canvas/inspector/shared/stateVariables';
 import Composer from './Composer';
 import MessageList from './MessageList';
 import ThreadBar from './ThreadBar';
@@ -106,6 +107,14 @@ export default forwardRef(function StudioChat({
 
     const effectiveContext = onContextChange ? initialContext : context;
     const setEffectiveContext = onContextChange ?? setContext;
+
+    useEffect(() => {
+        if (!effectiveContext || typeof effectiveContext !== 'object' || Array.isArray(effectiveContext)) {
+            setStateVariableInitialSnapshot({});
+            return;
+        }
+        setStateVariableInitialSnapshot(effectiveContext);
+    }, [effectiveContext]);
 
     const handleInputJsonChange = useCallback(
         (value) => {
