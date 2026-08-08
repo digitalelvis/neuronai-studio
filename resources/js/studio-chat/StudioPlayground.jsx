@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import CodeEditor from '@/components/code/CodeEditor';
+import { setStateVariableInitialSnapshot } from '../studio-canvas/inspector/shared/stateVariables';
 import {
     deletePreset,
     loadPresets,
@@ -52,6 +53,14 @@ export default function StudioPlayground({
         setContextJson(JSON.stringify(context ?? {}, null, 2));
     }, [context]);
 
+    useEffect(() => {
+        if (!context || typeof context !== 'object' || Array.isArray(context)) {
+            setStateVariableInitialSnapshot({});
+            return;
+        }
+        setStateVariableInitialSnapshot(context);
+    }, [context]);
+
     const applyContext = useCallback(
         (value) => {
             setContextJson(value);
@@ -63,6 +72,7 @@ export default function StudioPlayground({
                 }
 
                 setJsonError('');
+                setStateVariableInitialSnapshot(parsed);
                 onContextChange?.(parsed);
             } catch {
                 setJsonError('Invalid JSON');

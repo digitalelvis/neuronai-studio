@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 
-/** @typedef {'start'|'node'|'system'} StateVariableGroup */
+/** @typedef {'start'|'initial'|'node'|'system'} StateVariableGroup */
 
 /**
  * @typedef {{
@@ -45,6 +45,12 @@ let graphSnapshot = { nodes: [], edges: [] };
 /** @type {Set<(snapshot: { nodes: unknown[], edges: unknown[] }) => void>} */
 const graphListeners = new Set();
 
+/** @type {Record<string, unknown>} */
+let initialSnapshot = {};
+
+/** @type {Set<(snapshot: Record<string, unknown>) => void>} */
+const initialListeners = new Set();
+
 /**
  * Keep a live copy of the canvas graph for inspectors outside ReactFlowProvider
  * (e.g. NodeInspectorSidebar).
@@ -71,6 +77,89 @@ export function getStateVariableGraphSnapshot() {
 export function subscribeStateVariableGraphSnapshot(listener) {
     graphListeners.add(listener);
     return () => graphListeners.delete(listener);
+}
+
+/**
+ * Keep a live copy of playground Initial State JSON for the state variable catalog.
+ *
+ * @param {unknown} value
+ */
+export function setStateVariableInitialSnapshot(value) {
+    initialSnapshot =
+        value && typeof value === 'object' && !Array.isArray(value)
+            ? /** @type {Record<string, unknown>} */ (value)
+            : {};
+    initialListeners.forEach((listener) => listener(initialSnapshot));
+}
+
+export function getStateVariableInitialSnapshot() {
+    return initialSnapshot;
+}
+
+/**
+ * @param {(snapshot: Record<string, unknown>) => void} listener
+ * @returns {() => void}
+ */
+export function subscribeStateVariableInitialSnapshot(listener) {
+    initialListeners.add(listener);
+    return () => initialListeners.delete(listener);
+}
+
+/**
+ * @param {unknown} value
+ * @returns {'string'|'number'|'boolean'|'array'|'object'}
+ */
+export function inferStateValueType(value) {
+    if (Array.isArray(value)) {
+        return 'array';
+    }
+    if (value === null) {
+        return 'object';
+    }
+
+    const kind = typeof value;
+    if (kind === 'string' || kind === 'number' || kind === 'boolean') {
+        return kind;
+    }
+    if (kind === 'object') {
+        return 'object';
+    }
+
+    return 'string';
+}
+
+/**
+ * Flatten nested plain objects into dot paths (`lead.tier`) matching runtime `data_get`.
+ * Arrays and scalars become leaf entries; nested objects emit both the object key and children.
+ *
+ * @param {unknown} value
+ * @param {string} [prefix]
+ * @returns {Array<{ key: string, type: string }>}
+ */
+export function flattenInitialStateKeys(value, prefix = '') {
+    if (!value || typeof value !== 'object' || Array.isArray(value)) {
+        return [];
+    }
+
+    /** @type {Array<{ key: string, type: string }>} */
+    const entries = [];
+    const record = /** @type {Record<string, unknown>} */ (value);
+
+    for (const [rawKey, nested] of Object.entries(record)) {
+        if (typeof rawKey !== 'string' || rawKey.trim() === '') {
+            continue;
+        }
+
+        const key = prefix ? `${prefix}.${rawKey}` : rawKey;
+        const type = inferStateValueType(nested);
+        entries.push({ key, type });
+
+        if (nested && typeof nested === 'object' && !Array.isArray(nested)) {
+            entries.push(...flattenInitialStateKeys(nested, key));
+        }
+    }
+
+    return entries;
 }
 
 /** @param {string} key */
@@ -243,9 +332,15 @@ export function resolveOutputKey(nodeType, config = {}) {
  * @param {unknown[]} nodes
  * @param {unknown[]} [_edges]
  * @param {string|null|undefined} [currentNodeId]
+ * @param {Record<string, unknown>|null|undefined} [initialState]
  * @returns {StateVariable[]}
  */
-export function collectAvailableStateVariables(nodes = [], _edges = [], currentNodeId = null) {
+export function collectAvailableStateVariables(
+    nodes = [],
+    _edges = [],
+    currentNodeId = null,
+    initialState = null,
+) {
     /** @type {StateVariable[]} */
     const variables = [
         {
@@ -265,6 +360,24 @@ export function collectAvailableStateVariables(nodes = [], _edges = [], currentN
     ];
 
     const seenKeys = new Set(['input', 'attachments']);
+    const initial =
+        initialState && typeof initialState === 'object' && !Array.isArray(initialState)
+            ? initialState
+            : getStateVariableInitialSnapshot();
+
+    for (const entry of flattenInitialStateKeys(initial)) {
+        if (seenKeys.has(entry.key)) {
+            continue;
+        }
+        seenKeys.add(entry.key);
+        variables.push({
+            key: entry.key,
+            label: entry.key,
+            type: entry.type,
+            group: 'initial',
+            sourceLabel: 'INITIAL',
+        });
+    }
 
     for (const raw of nodes) {
         if (!raw || typeof raw !== 'object') {
@@ -359,10 +472,10 @@ export function filterStateVariables(variables, query = '') {
 
 /**
  * @param {StateVariable[]} variables
- * @returns {Array<{ id: string, title: string, variables: StateVariable[] }>}
+ * @returns {Array<{ id: string, title: string, group: StateVariableGroup, variables: StateVariable[] }>}
  */
 export function groupStateVariables(variables) {
-    /** @type {Map<string, { id: string, title: string, variables: StateVariable[] }>} */
+    /** @type {Map<string, { id: string, title: string, group: StateVariableGroup, variables: StateVariable[] }>} */
     const sections = new Map();
 
     for (const variable of variables) {
@@ -372,6 +485,9 @@ export function groupStateVariables(variables) {
         if (variable.group === 'start') {
             id = 'start';
             title = 'START';
+        } else if (variable.group === 'initial') {
+            id = 'initial';
+            title = 'INITIAL STATE';
         } else if (variable.group === 'system') {
             id = 'system';
             title = 'SYSTEM';
@@ -381,15 +497,20 @@ export function groupStateVariables(variables) {
         }
 
         if (!sections.has(id)) {
-            sections.set(id, { id, title, variables: [] });
+            sections.set(id, {
+                id,
+                title,
+                group: variable.group,
+                variables: [],
+            });
         }
         sections.get(id).variables.push(variable);
     }
 
-    const order = { start: 0, node: 1, system: 2 };
+    const order = { start: 0, initial: 1, node: 2, system: 3 };
     return Array.from(sections.values()).sort((a, b) => {
-        const aGroup = a.variables[0]?.group || 'node';
-        const bGroup = b.variables[0]?.group || 'node';
+        const aGroup = a.group || a.variables[0]?.group || 'node';
+        const bGroup = b.group || b.variables[0]?.group || 'node';
         if (order[aGroup] !== order[bGroup]) {
             return order[aGroup] - order[bGroup];
         }
@@ -399,12 +520,14 @@ export function groupStateVariables(variables) {
 
 /**
  * @param {string|null|undefined} currentNodeId
- * @param {{ nodes?: unknown[], edges?: unknown[] }} [options]
+ * @param {{ nodes?: unknown[], edges?: unknown[], initialState?: Record<string, unknown> }} [options]
  */
 export function useAvailableStateVariables(currentNodeId, options = {}) {
     const propNodes = options.nodes;
     const propEdges = options.edges;
+    const propInitial = options.initialState;
     const [snapshot, setSnapshot] = useState(() => getStateVariableGraphSnapshot());
+    const [initial, setInitial] = useState(() => getStateVariableInitialSnapshot());
 
     useEffect(() => {
         if (Array.isArray(propNodes)) {
@@ -413,11 +536,22 @@ export function useAvailableStateVariables(currentNodeId, options = {}) {
         return subscribeStateVariableGraphSnapshot(setSnapshot);
     }, [propNodes]);
 
+    useEffect(() => {
+        if (propInitial && typeof propInitial === 'object' && !Array.isArray(propInitial)) {
+            return undefined;
+        }
+        return subscribeStateVariableInitialSnapshot(setInitial);
+    }, [propInitial]);
+
     const nodes = Array.isArray(propNodes) ? propNodes : snapshot.nodes;
     const edges = Array.isArray(propEdges) ? propEdges : snapshot.edges;
+    const initialState =
+        propInitial && typeof propInitial === 'object' && !Array.isArray(propInitial)
+            ? propInitial
+            : initial;
 
     return useMemo(
-        () => collectAvailableStateVariables(nodes, edges, currentNodeId),
-        [nodes, edges, currentNodeId],
+        () => collectAvailableStateVariables(nodes, edges, currentNodeId, initialState),
+        [nodes, edges, currentNodeId, initialState],
     );
 }

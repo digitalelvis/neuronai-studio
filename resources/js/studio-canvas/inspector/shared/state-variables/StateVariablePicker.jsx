@@ -6,7 +6,7 @@ import {
     filterStateVariables,
     groupStateVariables,
 } from '../stateVariables';
-import StateVariableBadge from './StateVariableBadge';
+import StateVariableBadge, { GROUP_HEADER_STYLES } from './StateVariableBadge';
 
 /**
  * @param {{
@@ -108,26 +108,38 @@ export default function StateVariablePicker({
                             {emptyText}
                         </p>
                     ) : (
-                        sections.map((section) => (
-                            <div key={section.id} className="mb-1">
-                                <div className="px-2 py-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                                    {section.title}
-                                </div>
-                                {section.variables.map((variable) => (
-                                    <button
-                                        key={`${section.id}:${variable.key}`}
-                                        type="button"
-                                        className="flex w-full items-center rounded-sm px-2 py-1.5 text-left hover:bg-accent hover:text-accent-foreground"
-                                        onClick={() => {
-                                            onSelect?.(variable);
-                                            onOpenChange?.(false);
-                                        }}
+                        sections.map((section) => {
+                            const group = section.group || section.variables[0]?.group || 'node';
+                            return (
+                                <div key={section.id} className="mb-1">
+                                    <div
+                                        className={cn(
+                                            'px-2 py-1 text-[10px] font-semibold uppercase tracking-wide',
+                                            GROUP_HEADER_STYLES[group] || 'text-muted-foreground',
+                                        )}
                                     >
-                                        <StateVariableBadge variable={variable} className="max-w-full" />
-                                    </button>
-                                ))}
-                            </div>
-                        ))
+                                        {section.title}
+                                    </div>
+                                    {section.variables.map((variable) => (
+                                        <button
+                                            key={`${section.id}:${variable.key}`}
+                                            type="button"
+                                            className="flex w-full items-center rounded-sm px-2 py-1.5 text-left hover:bg-accent hover:text-accent-foreground"
+                                            onClick={() => {
+                                                onSelect?.(variable);
+                                                onOpenChange?.(false);
+                                            }}
+                                        >
+                                            <StateVariableBadge
+                                                variable={variable}
+                                                hideSource
+                                                className="max-w-full"
+                                            />
+                                        </button>
+                                    ))}
+                                </div>
+                            );
+                        })
                     )}
                 </div>
             </PopoverContent>
