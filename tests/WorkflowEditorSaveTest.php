@@ -24,7 +24,8 @@ class WorkflowEditorSaveTest extends TestCase
                 'description' => 'Updated description',
                 'status' => 'published',
             ])
-            ->assertHasNoErrors();
+            ->assertHasNoErrors()
+            ->assertDispatched('studio-toast');
 
         $workflow->refresh();
 
@@ -32,6 +33,34 @@ class WorkflowEditorSaveTest extends TestCase
         $this->assertSame('Updated description', $workflow->description);
         $this->assertSame('published', $workflow->status);
         $this->assertSame('renamed-workflow', $workflow->slug);
+    }
+
+    public function test_silent_save_graph_persists_without_success_toast(): void
+    {
+        $workflow = WorkflowDefinition::create([
+            'name' => 'Silent Save Target',
+            'slug' => 'silent-save-target',
+            'description' => 'Before',
+            'status' => 'draft',
+            'graph' => WorkflowDefinition::defaultGraph(),
+        ]);
+
+        $graph = $workflow->graph;
+        $graph['nodes'][0]['data']['label'] = 'Updated Label';
+
+        Livewire::test(Editor::class, ['workflow' => $workflow])
+            ->call('saveGraph', $graph, [
+                'name' => 'Silent Save Target',
+                'description' => 'After silent save',
+                'status' => 'draft',
+            ], true)
+            ->assertHasNoErrors()
+            ->assertNotDispatched('studio-toast');
+
+        $workflow->refresh();
+
+        $this->assertSame('After silent save', $workflow->description);
+        $this->assertSame('Updated Label', $workflow->graph['nodes'][0]['data']['label'] ?? null);
     }
 
     public function test_save_graph_keeps_deduplicated_slug_when_name_is_unchanged(): void

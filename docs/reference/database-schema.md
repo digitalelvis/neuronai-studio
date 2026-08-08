@@ -87,6 +87,7 @@ Diagram nodes use logical names; physical tables always include the configured p
 
 - `id` — UUID (public thread id for playground / integrate)
 - `entity_type`, `entity_id` — owning agent or workflow definition (nullable)
+- `ownerable_type`, `ownerable_id` — optional polymorphic conversation owner (any host Model)
 
 ### runs
 
@@ -171,6 +172,7 @@ Relevant migrations for runtime telemetry:
 
 - `…_create_studio_runs_and_traces_tables` — `threads`, `runs`, `traces`, `trace_spans`
 - `…_add_usage_cost_columns_to_runs_and_spans` — `provider` / `model` / `estimated_cost` / `parent_run_id`
+- `…_add_ownerable_to_studio_threads_table` — polymorphic thread owner (`ownerable_*`)
 
 ## Related code
 

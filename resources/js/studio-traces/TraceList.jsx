@@ -11,6 +11,7 @@ export default function TraceList({
     selectedTraceId = null,
     onSelectTrace,
     refreshToken = 0,
+    onTracesMetaChange,
 }) {
     const [traces, setTraces] = useState([]);
     const [loading, setLoading] = useState(false);
@@ -18,6 +19,7 @@ export default function TraceList({
 
     const loadTraces = useCallback(async () => {
         if (!tracesIndexUrl) {
+            onTracesMetaChange?.({ total: 0 });
             return;
         }
 
@@ -26,13 +28,19 @@ export default function TraceList({
 
         try {
             const payload = await fetchTraces(tracesIndexUrl);
-            setTraces(payload.data ?? []);
+            const nextTraces = payload.data ?? [];
+            setTraces(nextTraces);
+            const total = Number(payload.meta?.total);
+            onTracesMetaChange?.({
+                total: Number.isFinite(total) ? total : nextTraces.length,
+            });
         } catch (loadError) {
             setError(loadError instanceof Error ? loadError.message : 'Failed to load traces.');
+            onTracesMetaChange?.({ total: 0 });
         } finally {
             setLoading(false);
         }
-    }, [tracesIndexUrl]);
+    }, [onTracesMetaChange, tracesIndexUrl]);
 
     useEffect(() => {
         loadTraces();
