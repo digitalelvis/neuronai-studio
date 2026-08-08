@@ -79,6 +79,59 @@ class WorkflowChatThreadTest extends TestCase
         $this->assertStringContainsString($threadId, $response->streamedContent());
     }
 
+    public function test_thread_endpoint_returns_persisted_messages(): void
+    {
+        $this->withoutMiddleware(EnsureNeuronAIStudioAuthorized::class);
+
+        $workflow = WorkflowDefinition::create([
+            'name' => 'Thread History Flow',
+            'slug' => 'thread-history-flow',
+            'graph' => WorkflowDefinition::defaultGraph(),
+        ]);
+
+        $threadId = '6ba7b810-9dad-11d1-80b4-00c04fd430c8';
+
+        StudioChatMessage::create([
+            'thread_id' => $threadId,
+            'role' => 'user',
+            'content' => [['type' => 'text', 'content' => 'Hi']],
+        ]);
+
+        StudioChatMessage::create([
+            'thread_id' => $threadId,
+            'role' => 'assistant',
+            'content' => [['type' => 'text', 'content' => 'Hello back']],
+        ]);
+
+        $scopedKey = ChatThreadKey::forWorkflow($workflow->id, $threadId);
+
+        StudioChatMessage::create([
+            'thread_id' => $scopedKey,
+            'role' => 'user',
+            'content' => [['type' => 'text', 'content' => 'Scoped hi']],
+        ]);
+
+        StudioChatMessage::create([
+            'thread_id' => $scopedKey,
+            'role' => 'assistant',
+            'content' => [['type' => 'text', 'content' => 'Scoped hello']],
+        ]);
+
+        $response = $this->getJson(route('neuronai-studio.workflows.chat.threads.show', [
+            'workflow' => $workflow->id,
+            'thread' => $threadId,
+        ]));
+
+        $response->assertOk();
+        $response->assertJsonPath('thread_id', $threadId);
+        $response->assertJsonCount(4, 'messages');
+        $response->assertJsonPath('messages.0.role', 'user');
+        $response->assertJsonPath('messages.0.content', 'Hi');
+        $response->assertJsonPath('messages.1.content', 'Hello back');
+        $response->assertJsonPath('messages.2.content', 'Scoped hi');
+        $response->assertJsonPath('messages.3.content', 'Scoped hello');
+    }
+
     protected function workflowWithAgentNode(): WorkflowDefinition
     {
         $agent = AgentDefinition::create([

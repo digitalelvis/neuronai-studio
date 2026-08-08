@@ -50,6 +50,7 @@ export default function WorkflowEditorShell({ config }) {
         resumeUrlTemplate: config.resumeUrlTemplate,
         uploadUrl: config.uploadUrl,
         threadsIndexUrl: config.threadsIndexUrl,
+        threadHistoryUrl: config.threadHistoryUrl,
         tracesIndexUrl: config.tracesIndexUrl,
         traceShowUrlTemplate: config.traceShowUrlTemplate,
         traceShowJsonUrlTemplate: config.traceShowJsonUrlTemplate,

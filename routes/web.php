@@ -5,6 +5,7 @@ use DigitalElvis\NeuronAIStudio\Http\Controllers\AgentChatThreadController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\AgentChatThreadIndexController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\AgentChatThreadRunsController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\AttachmentController;
+use DigitalElvis\NeuronAIStudio\Http\Controllers\WorkflowChatThreadController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\WorkflowChatThreadIndexController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\KnowledgeBaseSearchController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\WorkflowRunController;
@@ -91,6 +92,7 @@ Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
             Route::get('/preview', Editor::class)->name('preview');
             Route::get('/{workflow}/edit', Editor::class)->name('edit');
             Route::get('/{workflow}/chat/threads', WorkflowChatThreadIndexController::class)->name('chat.threads.index');
+            Route::get('/{workflow}/chat/threads/{thread}', WorkflowChatThreadController::class)->name('chat.threads.show');
             Route::match(['GET', 'POST'], '/{workflow}/trace/stream', WorkflowStreamController::class)->name('trace.stream');
             Route::post('/threads/{thread}/runs/{run}/resume/stream', WorkflowTraceResumeController::class)->name('runs.resume.stream');
             Route::post('/threads/{thread}/runs/{run}/resume', WorkflowTraceResumeJsonController::class)->name('runs.resume');

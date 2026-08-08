@@ -84,11 +84,12 @@ Each playground session uses a UUID-based thread. Threads persist message histor
 | `GET` | `/agents/{agent}/chat/threads/{thread}` | Load message history |
 | `GET` | `/agents/{agent}/chat/threads/{thread}/runs` | Runs for the Traces tab |
 | `GET` | `/workflows/{workflow}/chat/threads` | List workflow sessions |
+| `GET` | `/workflows/{workflow}/chat/threads/{thread}` | Load workflow message history |
 
 ### Thread behavior
 
 - **New thread** — starts a fresh conversation
-- **Switch thread** — loads persisted history for that UUID (agents)
+- **Switch thread** — loads persisted history for that UUID (agents and workflows)
 - **Context window** — older messages are trimmed (or compacted into a summary when summarization is enabled) based on the agent's `memory_config.context_window`, falling back to `chat_history_context_window` in config
 
 Configure the global default context window:
@@ -117,8 +118,9 @@ Workflow runs use a similar persistence model with a per-trace thread ID stored 
 
 | Context | Thread scope | Loader |
 |---------|--------------|--------|
-| Playground | Per agent + user-selected UUID | `ChatThreadLoader` |
-| Workflow harness | Per trace/run, stable across loop iterations | `AgentRunner` via `__studio_thread_id` |
+| Agent Playground | Per agent + user-selected UUID | `ChatThreadLoader::loadForAgent` |
+| Workflow Playground | Per workflow + user-selected UUID | `ChatThreadLoader::loadForWorkflow` |
+| Workflow harness (runtime) | Per trace/run, stable across loop iterations | `AgentRunner` via `__studio_thread_id` |
 
 When an **Agent** node executes inside a loop, subsequent iterations load prior messages for the same thread — enabling multi-turn qualification or refinement without manual state stitching.
 

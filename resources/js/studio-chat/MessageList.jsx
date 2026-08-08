@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Bot, ChevronDown, MessageSquare, Sparkles, User } from 'lucide-react';
+import { Bot, ChevronDown, Loader2, MessageSquare, Sparkles, User } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import { cn } from '@/lib/utils';
@@ -138,7 +138,18 @@ export default function MessageList({
     viewMode = 'pretty',
     onToolApproval,
     approvalDisabled = false,
+    loading = false,
+    bottomRef = null,
 }) {
+    if (loading && !messages.length) {
+        return (
+            <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
+                <Loader2 className="mb-3 h-6 w-6 animate-spin text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">Loading conversation…</p>
+            </div>
+        );
+    }
+
     if (!messages.length) {
         return (
             <div className="flex flex-col items-center justify-center px-6 py-20 text-center">
@@ -251,6 +262,7 @@ export default function MessageList({
                     </div>
                 </div>
             ))}
+            <div ref={bottomRef} aria-hidden="true" className="h-px w-full shrink-0" />
         </div>
     );
 }

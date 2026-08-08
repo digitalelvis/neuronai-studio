@@ -58,6 +58,7 @@ export default function PlaygroundOverlay({ workflowConfig = {}, onBeforeRun }) 
                         showCloseButton
                         onClose={() => setOpen(false)}
                         threadsIndexUrl={workflowConfig.threadsIndexUrl}
+                        threadHistoryUrl={workflowConfig.threadHistoryUrl}
                         tracesIndexUrl={workflowConfig.tracesIndexUrl}
                         traceShowJsonUrlTemplate={workflowConfig.traceShowJsonUrlTemplate}
                         traceShowUrlTemplate={workflowConfig.traceShowUrlTemplate}
