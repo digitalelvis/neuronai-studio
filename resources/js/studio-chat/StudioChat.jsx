@@ -38,6 +38,20 @@ function usageFromPayload(data) {
     };
 }
 
+const STICK_TO_BOTTOM_THRESHOLD_PX = 80;
+
+function getScrollViewport(root) {
+    return root?.querySelector('[data-radix-scroll-area-viewport]') ?? null;
+}
+
+function isNearBottom(viewport, threshold = STICK_TO_BOTTOM_THRESHOLD_PX) {
+    if (!viewport) {
+        return true;
+    }
+
+    return viewport.scrollHeight - viewport.scrollTop - viewport.clientHeight <= threshold;
+}
+
 export default forwardRef(function StudioChat({
     adapter,
     mode = 'agent',
@@ -74,6 +88,10 @@ export default forwardRef(function StudioChat({
         [isThreadControlled, onThreadIdChange, threadId],
     );
     const historyLoadedRef = useRef(null);
+    const scrollAreaRef = useRef(null);
+    const bottomRef = useRef(null);
+    const stickToBottomRef = useRef(true);
+    const [historyLoading, setHistoryLoading] = useState(false);
     const [context, setContext] = useState(initialContext);
     const [inputJson, setInputJson] = useState(() => JSON.stringify(initialContext ?? {}, null, 2));
     const [inputJsonError, setInputJsonError] = useState('');
@@ -120,6 +138,21 @@ export default forwardRef(function StudioChat({
     const appendMessage = useCallback((message) => {
         setMessages((current) => [...current, message]);
         return message.id;
+    }, []);
+
+    const scrollToBottom = useCallback((behavior = 'auto') => {
+        const viewport = getScrollViewport(scrollAreaRef.current);
+        if (!viewport) {
+            bottomRef.current?.scrollIntoView({ behavior, block: 'end' });
+            return;
+        }
+
+        if (behavior === 'smooth' && typeof viewport.scrollTo === 'function') {
+            viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+            return;
+        }
+
+        viewport.scrollTop = viewport.scrollHeight;
     }, []);
 
     const consumeAssistantStream = useCallback(
@@ -320,15 +353,19 @@ export default forwardRef(function StudioChat({
 
         setMessages([]);
         setError('');
+        setHistoryLoading(Boolean(threadHistoryUrl));
         historyLoadedRef.current = null;
-    }, [isThreadControlled, threadId]);
+        stickToBottomRef.current = true;
+    }, [isThreadControlled, threadId, threadHistoryUrl]);
 
     useEffect(() => {
         if ((mode !== 'agent' && mode !== 'workflow') || !threadHistoryUrl || !threadId) {
+            setHistoryLoading(false);
             return;
         }
 
         if (mode === 'workflow' && !threadHistoryUrl.includes('__THREAD__')) {
+            setHistoryLoading(false);
             return;
         }
 
@@ -336,41 +373,94 @@ export default forwardRef(function StudioChat({
             return;
         }
 
-        historyLoadedRef.current = threadId;
         let cancelled = false;
+        setHistoryLoading(true);
+        setError('');
 
         const url = threadHistoryUrl.replace('__THREAD__', encodeURIComponent(threadId));
 
         fetch(url, {
             headers: { Accept: 'application/json' },
         })
-            .then((response) => (response.ok ? response.json() : null))
+            .then(async (response) => {
+                if (!response.ok) {
+                    throw new Error('Failed to load conversation history.');
+                }
+
+                return response.json();
+            })
             .then((data) => {
-                if (cancelled || !data?.messages?.length) {
+                if (cancelled) {
                     return;
                 }
 
+                historyLoadedRef.current = threadId;
+                const historyMessages = Array.isArray(data?.messages) ? data.messages : [];
+
                 setMessages(
-                    data.messages.map((message, index) => ({
+                    historyMessages.map((message, index) => ({
                         id: createId(`history-${message.role}-${index}`),
                         role: message.role,
                         content: message.content,
                     })),
                 );
+                stickToBottomRef.current = true;
+                requestAnimationFrame(() => scrollToBottom('auto'));
             })
-            .catch(() => {});
+            .catch((loadError) => {
+                if (cancelled) {
+                    return;
+                }
+
+                historyLoadedRef.current = null;
+                setError(loadError instanceof Error ? loadError.message : 'Failed to load conversation history.');
+            })
+            .finally(() => {
+                if (!cancelled) {
+                    setHistoryLoading(false);
+                }
+            });
 
         return () => {
             cancelled = true;
         };
-    }, [mode, threadHistoryUrl, threadId]);
+    }, [mode, threadHistoryUrl, threadId, scrollToBottom]);
+
+    useEffect(() => {
+        const viewport = getScrollViewport(scrollAreaRef.current);
+        if (!viewport) {
+            return undefined;
+        }
+
+        const onScroll = () => {
+            stickToBottomRef.current = isNearBottom(viewport);
+        };
+
+        viewport.addEventListener('scroll', onScroll, { passive: true });
+        return () => viewport.removeEventListener('scroll', onScroll);
+    }, []);
+
+    const lastMessage = messages[messages.length - 1];
+    const lastMessageSignature = lastMessage
+        ? `${lastMessage.id}:${lastMessage.content?.length ?? 0}:${lastMessage.streaming ? 1 : 0}:${lastMessage.meta?.stepEvents?.length ?? 0}`
+        : 'empty';
+
+    useEffect(() => {
+        if (!stickToBottomRef.current) {
+            return;
+        }
+
+        scrollToBottom(lastMessage?.streaming ? 'auto' : 'smooth');
+    }, [messages.length, lastMessageSignature, scrollToBottom, lastMessage?.streaming]);
 
     const handleNewThread = () => {
         const nextThreadId = createThreadId();
         historyLoadedRef.current = nextThreadId;
+        setHistoryLoading(false);
         setThreadId(nextThreadId);
         setMessages([]);
         setError('');
+        stickToBottomRef.current = true;
         adapter?.reset?.();
         setThreadInUrl(nextThreadId);
     };
@@ -414,6 +504,9 @@ export default forwardRef(function StudioChat({
                 streaming: true,
                 meta: mode === 'workflow' ? { userMessage: text, stepEvents: [] } : undefined,
             });
+
+            stickToBottomRef.current = true;
+            requestAnimationFrame(() => scrollToBottom('smooth'));
 
             if (mode === 'workflow') {
                 window.dispatchEvent(new CustomEvent('canvas-trace-start'));
@@ -552,22 +645,28 @@ export default forwardRef(function StudioChat({
 
     return (
         <div className="flex h-full flex-col">
-           
+            {error && (
+                <div className="border-b border-destructive/30 bg-destructive/5 px-4 py-2 text-sm text-destructive">
+                    {error}
+                </div>
+            )}
 
-            <ScrollArea className="flex-1 px-4">
+            <ScrollArea ref={scrollAreaRef} className="flex-1 px-4">
                 <MessageList
                     messages={messages}
                     mode={mode}
                     viewMode={viewMode}
                     onToolApproval={handleToolApproval}
                     approvalDisabled={sending}
+                    loading={historyLoading}
+                    bottomRef={bottomRef}
                 />
             </ScrollArea>
 
             {!hideComposer && (
                 <div className="border-t border-border p-4">
                     <Composer
-                        disabled={sending}
+                        disabled={sending || historyLoading}
                         onSend={handleSend}
                         enableAttachments={enableAttachments}
                         enableInputJson={mode === 'workflow'}
