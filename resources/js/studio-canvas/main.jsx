@@ -122,6 +122,14 @@ async function saveGraphBeforeRun() {
 
     const graph = mergePendingNodeUpdate(exportGraphForSave(), pendingUpdate);
     const meta = getWorkflowMeta();
+
+    const saved = window.__NEURONAI_CANVAS_CONFIG?.savedGraph;
+    const graphUnchanged = Boolean(saved) && JSON.stringify(saved) === JSON.stringify(graph);
+
+    if (!window.__workflowGraphDirty && graphUnchanged) {
+        return true;
+    }
+
     syncMetadataToLivewire();
 
     const wireId = window.__NEURONAI_CANVAS_CONFIG?.wireId;
@@ -135,7 +143,8 @@ async function saveGraphBeforeRun() {
         return false;
     }
 
-    await component.call('saveGraph', graph, meta);
+    // Silent persist so playground sends do not toast "Workflow saved."
+    await component.call('saveGraph', graph, meta, true);
     window.__NEURONAI_CANVAS_CONFIG.savedGraph = graph;
     window.__workflowGraphDirty = false;
     return true;

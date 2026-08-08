@@ -85,7 +85,7 @@ class Editor extends Component
      * @param  array<string, mixed>  $graph
      * @param  array{name?: string, description?: string|null, status?: string}|null  $meta
      */
-    public function saveGraph(array $graph, ?array $meta = null): void
+    public function saveGraph(array $graph, ?array $meta = null, bool $silent = false): void
     {
         if ($this->readOnly) {
             $this->toastOnly('error', __('neuronai-studio::flash.workflow_read_only'));
@@ -108,7 +108,7 @@ class Editor extends Component
         }
 
         $this->graph = $graph;
-        $this->save();
+        $this->save($silent);
     }
 
     /**
@@ -209,7 +209,7 @@ class Editor extends Component
         $this->graph = $graph;
     }
 
-    public function save(): void
+    public function save(bool $silent = false): void
     {
         if ($this->readOnly) {
             $this->toastOnly('error', __('neuronai-studio::flash.workflow_read_only'));
@@ -249,7 +249,10 @@ class Editor extends Component
             }
 
             // Toast only on in-place save — avoid inline flash + toast stacking on the canvas.
-            $this->toastOnly('success', __('neuronai-studio::flash.workflow_saved'));
+            // Silent saves (playground pre-run) persist without the success toast.
+            if (! $silent) {
+                $this->toastOnly('success', __('neuronai-studio::flash.workflow_saved'));
+            }
         } catch (ValidationException $exception) {
             throw $exception;
         } catch (Throwable $exception) {
@@ -282,18 +285,20 @@ class Editor extends Component
     }
 
     /**
-     * @return array{valid: bool, message: string}
+     * @return array{valid: bool, message: string, errors: array<int, string>}
      */
     public function validateGraph(GraphValidator $validator): array
     {
         $result = $validator->validate($this->graph, $this->workflow?->id);
+        $errors = is_array($result['errors'] ?? null) ? $result['errors'] : [];
         $this->validationMessage = $result['valid']
             ? 'Graph is valid.'
-            : implode(' ', $result['errors']);
+            : implode(' ', $errors);
 
         return [
             'valid' => (bool) $result['valid'],
             'message' => $this->validationMessage,
+            'errors' => $errors,
         ];
     }
 
