@@ -30,6 +30,9 @@ function groupClass(group) {
     if (group === 'start') {
         return 'border-sky-500/40 bg-sky-500/15 text-sky-100';
     }
+    if (group === 'initial') {
+        return 'border-emerald-500/40 bg-emerald-500/15 text-emerald-100';
+    }
     if (group === 'system') {
         return 'border-amber-500/40 bg-amber-500/15 text-amber-100';
     }

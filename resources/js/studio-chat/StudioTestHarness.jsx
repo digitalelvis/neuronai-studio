@@ -3,6 +3,7 @@ import { Settings, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
+import { setStateVariableInitialSnapshot } from '../studio-canvas/inspector/shared/stateVariables';
 import ChatTracesTabs from './ChatTracesTabs';
 import PlaygroundTracesPanel from './PlaygroundTracesPanel';
 import SettingsSheet from './SettingsSheet';
@@ -79,6 +80,14 @@ export default function StudioTestHarness({
         },
         [entityId, mode],
     );
+
+    useEffect(() => {
+        if (!context || typeof context !== 'object' || Array.isArray(context)) {
+            setStateVariableInitialSnapshot({});
+            return;
+        }
+        setStateVariableInitialSnapshot(context);
+    }, [context]);
 
     useEffect(() => {
         if (!entityId) {
