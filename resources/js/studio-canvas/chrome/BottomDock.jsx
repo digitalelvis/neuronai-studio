@@ -10,8 +10,10 @@ import {
 import { Button } from '@/components/ui/button';
 import { TraceList, TraceDetailSheet } from '../../studio-traces';
 import {
+    getVariableInspectState,
     loadInspectPanelPrefs,
     saveInspectPanelPrefs,
+    subscribeVariableInspect,
 } from './variable-inspect';
 import VariableInspectTab from './VariableInspectTab';
 
@@ -26,10 +28,26 @@ const TABS = [
     { id: 'validation', label: 'Validation', icon: AlertCircle },
 ];
 
+function countInspectVariables(tree = []) {
+    if (!Array.isArray(tree)) {
+        return 0;
+    }
+
+    return tree.reduce((total, group) => {
+        const vars = Array.isArray(group?.variables) ? group.variables.length : 0;
+        return total + vars;
+    }, 0);
+}
+
+function formatTabLabel(base, count) {
+    return count > 0 ? `${base} (${count})` : base;
+}
+
 export default function BottomDock({
     workflowConfig = {},
     nodeTypesMeta = {},
     validationMessage = '',
+    validationErrorCount = 0,
 }) {
     const workflowId = workflowConfig.workflowId ?? null;
     const prefs = useMemo(() => loadInspectPanelPrefs(workflowId), [workflowId]);
@@ -47,6 +65,8 @@ export default function BottomDock({
     const [traceSheetOpen, setTraceSheetOpen] = useState(false);
     const [refreshToken, setRefreshToken] = useState(0);
     const [runEvents, setRunEvents] = useState([]);
+    const [variableCache, setVariableCache] = useState(() => getVariableInspectState());
+    const [tracesTotal, setTracesTotal] = useState(0);
 
     useEffect(() => {
         if (!workflowId) {
@@ -55,6 +75,8 @@ export default function BottomDock({
 
         saveInspectPanelPrefs(workflowId, { open, height, tab });
     }, [workflowId, open, height, tab]);
+
+    useEffect(() => subscribeVariableInspect(setVariableCache), []);
 
     const openTab = useCallback((nextTab, { expand = true } = {}) => {
         setTab(nextTab);
@@ -78,7 +100,6 @@ export default function BottomDock({
     useEffect(() => {
         const onRunStart = () => {
             setRunEvents([{ id: Date.now(), text: 'Run started', level: 'info' }]);
-            openTab('events');
         };
 
         const onExecution = (event) => {
@@ -124,7 +145,7 @@ export default function BottomDock({
             window.removeEventListener('canvas-execution-event', onExecution);
             window.removeEventListener('workflow-trace-finished', onFinished);
         };
-    }, [openTab]);
+    }, []);
 
     const focusNode = useCallback((nodeId) => {
         if (!nodeId) {
@@ -173,8 +194,24 @@ export default function BottomDock({
         [height],
     );
 
+    const handleTracesMetaChange = useCallback((meta = {}) => {
+        const total = Number(meta.total);
+        setTracesTotal(Number.isFinite(total) && total > 0 ? total : 0);
+    }, []);
+
+    const tabCounts = useMemo(
+        () => ({
+            variables: countInspectVariables(variableCache?.tree),
+            traces: tracesTotal,
+            events: runEvents.length,
+            validation: validationErrorCount > 0 ? validationErrorCount : 0,
+        }),
+        [runEvents.length, tracesTotal, validationErrorCount, variableCache?.tree],
+    );
+
     const activeTabMeta = TABS.find((item) => item.id === tab) || TABS[0];
     const ActiveIcon = activeTabMeta.icon;
+    const activeTabLabel = formatTabLabel(activeTabMeta.label, tabCounts[activeTabMeta.id] ?? 0);
 
     return (
         <div className={`ab-bottom-dock ${open ? 'ab-bottom-dock--open' : ''}`}>
@@ -195,7 +232,7 @@ export default function BottomDock({
                     <div className="flex min-w-0 items-center gap-2">
                         <ActiveIcon className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
                         <h2 className="truncate text-xs font-semibold uppercase tracking-wide text-foreground">
-                            {activeTabMeta.label}
+                            {activeTabLabel}
                         </h2>
                     </div>
                     <div className="flex items-center gap-1">{tab === 'variables' ? tabActions : null}</div>
@@ -210,19 +247,18 @@ export default function BottomDock({
                         />
                     </div>
 
-                    {tab === 'traces' && (
-                        <div className="h-full min-h-0 overflow-hidden">
-                            <TraceList
-                                tracesIndexUrl={workflowConfig.tracesIndexUrl}
-                                selectedTraceId={selectedTraceId}
-                                onSelectTrace={(trace) => {
-                                    setSelectedTraceId(trace.id);
-                                    setTraceSheetOpen(true);
-                                }}
-                                refreshToken={refreshToken}
-                            />
-                        </div>
-                    )}
+                    <div className={tab === 'traces' ? 'h-full min-h-0 overflow-hidden' : 'hidden'}>
+                        <TraceList
+                            tracesIndexUrl={workflowConfig.tracesIndexUrl}
+                            selectedTraceId={selectedTraceId}
+                            onSelectTrace={(trace) => {
+                                setSelectedTraceId(trace.id);
+                                setTraceSheetOpen(true);
+                            }}
+                            refreshToken={refreshToken}
+                            onTracesMetaChange={handleTracesMetaChange}
+                        />
+                    </div>
 
                     {tab === 'events' && (
                         <div className="h-full overflow-auto p-3">
@@ -270,6 +306,7 @@ export default function BottomDock({
                     {TABS.map((item) => {
                         const Icon = item.icon;
                         const active = tab === item.id && open;
+                        const count = tabCounts[item.id] ?? 0;
                         return (
                             <button
                                 key={item.id}
@@ -280,7 +317,7 @@ export default function BottomDock({
                                 onClick={() => handleTabClick(item.id)}
                             >
                                 <Icon className="h-3.5 w-3.5 shrink-0" />
-                                <span>{item.label}</span>
+                                <span>{formatTabLabel(item.label, count)}</span>
                             </button>
                         );
                     })}
