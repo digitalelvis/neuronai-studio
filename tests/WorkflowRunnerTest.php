@@ -211,4 +211,45 @@ class WorkflowRunnerTest extends TestCase
         $this->assertSame(2, $run->output[WorkflowRunner::NESTING_DEPTH_INPUT_KEY] ?? null);
         $this->assertSame(2, $run->input[WorkflowRunner::NESTING_DEPTH_INPUT_KEY] ?? null);
     }
+
+    public function test_seeds_studio_datetime_context_into_state(): void
+    {
+        config(['app.timezone' => 'UTC', 'app.locale' => 'en']);
+
+        $workflow = WorkflowDefinition::create([
+            'name' => 'Datetime Seed Flow',
+            'slug' => 'datetime-seed-flow',
+            'graph' => [
+                'version' => 1,
+                'nodes' => [
+                    ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                    ['id' => 'set_1', 'type' => 'set_state', 'position' => ['x' => 200, 'y' => 0], 'data' => [
+                        'key' => 'stamp',
+                        'value' => '{{__studio_timezone}}|{{__studio_locale}}',
+                    ]],
+                    ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 400, 'y' => 0], 'data' => []],
+                ],
+                'edges' => [
+                    ['id' => 'e1', 'source' => 'start_1', 'target' => 'set_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                    ['id' => 'e2', 'source' => 'set_1', 'target' => 'stop_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ],
+            ],
+        ]);
+
+        $run = app(WorkflowRunner::class)->run($workflow, [
+            'input' => 'test',
+            'state' => [
+                '__studio_timezone' => 'America/Sao_Paulo',
+                '__studio_locale' => 'pt_BR',
+                '__studio_now' => '2000-01-01T00:00:00+00:00',
+            ],
+        ]);
+
+        $this->assertSame('completed', $run->status);
+        $this->assertSame('America/Sao_Paulo', $run->output['__studio_timezone'] ?? null);
+        $this->assertSame('pt_BR', $run->output['__studio_locale'] ?? null);
+        $this->assertNotSame('2000-01-01T00:00:00+00:00', $run->output['__studio_now'] ?? null);
+        $this->assertNotEmpty($run->output['__studio_now'] ?? null);
+        $this->assertSame('America/Sao_Paulo|pt_BR', $run->output['stamp'] ?? null);
+    }
 }

@@ -25,7 +25,7 @@ Studio is definition-driven: the package ships no domain Agent subclasses. Runti
 | **Name** | Display name shown in lists and workflow nodes |
 | **Provider** | LLM provider (OpenAI, Anthropic, Gemini, Ollama) |
 | **Model** | Model ID for the selected provider |
-| **Instructions** | System prompt — defines agent behavior and constraints |
+| **Instructions** | System prompt — defines agent behavior and constraints. Supports `{{ var.NAME }}` vault vars and Studio datetime placeholders (`{{__studio_now}}`, `{{__studio_timezone}}`, `{{__studio_locale}}`). |
 
 Providers and models come from `config/neuronai-studio.php`. Credentials are read from `config/neuron.php`.
 

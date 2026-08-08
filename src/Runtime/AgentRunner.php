@@ -822,11 +822,14 @@ class AgentRunner
     }
 
     /**
-     * Interpolate {{ var.NAME }} in agent instructions (no workflow state).
+     * Interpolate {{ var.NAME }} and Studio datetime placeholders in agent instructions
+     * (no workflow state).
      */
     protected function interpolateVariablePlaceholders(string $template): string
     {
-        return StateTemplateInterpolator::interpolateVariablesOnly($template);
+        $template = StateTemplateInterpolator::interpolateVariablesOnly($template);
+
+        return StateTemplateInterpolator::interpolateStudioDatetimePlaceholders($template);
     }
 
     /**

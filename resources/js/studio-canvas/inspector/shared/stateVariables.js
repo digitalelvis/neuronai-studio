@@ -17,6 +17,9 @@ export const SYSTEM_STATE_VARIABLES = /** @type {const} */ ([
     { key: '__studio_thread_id', label: '__studio_thread_id', type: 'string' },
     { key: '__studio_run_id', label: '__studio_run_id', type: 'string' },
     { key: '__studio_trace_id', label: '__studio_trace_id', type: 'string' },
+    { key: '__studio_now', label: '__studio_now', type: 'string' },
+    { key: '__studio_timezone', label: '__studio_timezone', type: 'string' },
+    { key: '__studio_locale', label: '__studio_locale', type: 'string' },
     { key: '__workflow_trace_id', label: '__workflow_trace_id', type: 'string' },
     { key: '__workflow_nesting_depth', label: '__workflow_nesting_depth', type: 'number' },
 ]);
@@ -250,9 +253,16 @@ export function collectAvailableStateVariables(nodes = [], _edges = [], currentN
             group: 'start',
             sourceLabel: 'START',
         },
+        {
+            key: 'attachments',
+            label: 'attachments',
+            type: 'array',
+            group: 'start',
+            sourceLabel: 'START',
+        },
     ];
 
-    const seenKeys = new Set(['input']);
+    const seenKeys = new Set(['input', 'attachments']);
 
     for (const raw of nodes) {
         if (!raw || typeof raw !== 'object') {

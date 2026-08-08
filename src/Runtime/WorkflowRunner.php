@@ -712,7 +712,7 @@ class WorkflowRunner
             'input' => $message,
             '__studio_run_id' => $run->id,
             '__studio_thread_id' => $run->thread_id,
-        ]);
+        ], StudioDatetimeContext::forState($initialState));
 
         if (! empty($input['attachments']) && is_array($input['attachments'])) {
             $stateData['attachments'] = $input['attachments'];
@@ -735,7 +735,7 @@ class WorkflowRunner
             '__studio_run_id' => $run->id,
             '__studio_trace_id' => $trace->id,
             '__studio_thread_id' => $run->thread_id,
-        ]);
+        ], StudioDatetimeContext::forState($initialState));
 
         if (! empty($input['attachments']) && is_array($input['attachments'])) {
             $stateData['attachments'] = $input['attachments'];
