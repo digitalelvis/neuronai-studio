@@ -28,7 +28,7 @@ class AgentChatThreadTest extends TestCase
         ]);
 
         $threadId = '550e8400-e29b-41d4-a716-446655440000';
-        $runner = $this->runnerWithFakeProvider(new AssistantMessage('Hello back'));
+        $runner = $this->runnerWithFakeProvider(new FakeAIProvider(new AssistantMessage('Hello back')));
 
         foreach ($runner->stream($agent, ['message' => 'Hi', 'thread_id' => $threadId]) as $chunk) {
         }
@@ -36,6 +36,32 @@ class AgentChatThreadTest extends TestCase
         $scopedKey = ChatThreadKey::forAgent($agent->id, $threadId);
 
         $this->assertSame(2, StudioChatMessage::query()->where('thread_id', $scopedKey)->count());
+    }
+
+    public function test_stream_does_not_persist_messages_when_provider_fails(): void
+    {
+        $agent = AgentDefinition::create([
+            'name' => 'Failing Thread Agent',
+            'slug' => 'failing-thread-agent',
+            'provider' => 'openai',
+            'model' => 'gpt-4o-mini',
+            'instructions' => 'You are helpful.',
+        ]);
+
+        $threadId = '550e8400-e29b-41d4-a716-446655440001';
+        $scopedKey = ChatThreadKey::forAgent($agent->id, $threadId);
+        $runner = $this->runnerWithFakeProvider(new FakeAIProvider);
+
+        try {
+            foreach ($runner->stream($agent, ['message' => 'Hi', 'thread_id' => $threadId]) as $chunk) {
+            }
+
+            $this->fail('Expected provider failure was not thrown.');
+        } catch (\Throwable) {
+            // Neuron 3.16.3 persists the user message only after a successful provider call.
+        }
+
+        $this->assertSame(0, StudioChatMessage::query()->where('thread_id', $scopedKey)->count());
     }
 
     public function test_thread_endpoint_returns_persisted_messages(): void
@@ -116,10 +142,10 @@ class AgentChatThreadTest extends TestCase
         $this->assertStringContainsString($threadId, $response->streamedContent());
     }
 
-    protected function runnerWithFakeProvider(AssistantMessage $response): AgentRunner
+    protected function runnerWithFakeProvider(FakeAIProvider $provider): AgentRunner
     {
         $registry = $this->createMock(ProviderRegistry::class);
-        $registry->method('resolve')->willReturn(new FakeAIProvider($response));
+        $registry->method('resolve')->willReturn($provider);
 
         $toolResolver = $this->createMock(ToolResolver::class);
         $toolResolver->method('resolveMany')->willReturn([]);
