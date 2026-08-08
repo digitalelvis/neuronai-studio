@@ -16,12 +16,36 @@ class ChatThreadLoader
             $threadId = ChatThreadKey::publicId($threadId);
         }
 
+        return $this->loadMessages($threadId, [
+            $threadId,
+            ChatThreadKey::forAgent($agentId, $threadId),
+            ChatThreadKey::forWorkflow($agentId, $threadId),
+        ]);
+    }
+
+    /**
+     * @return array{thread_id: string, messages: array<int, array{role: string, content: string}>}
+     */
+    public function loadForWorkflow(int $workflowId, string $threadId): array
+    {
+        if (str_contains($threadId, ':')) {
+            $threadId = ChatThreadKey::publicId($threadId);
+        }
+
+        return $this->loadMessages($threadId, [
+            $threadId,
+            ChatThreadKey::forWorkflow($workflowId, $threadId),
+        ]);
+    }
+
+    /**
+     * @param  list<string>  $keys
+     * @return array{thread_id: string, messages: array<int, array{role: string, content: string}>}
+     */
+    protected function loadMessages(string $publicThreadId, array $keys): array
+    {
         $records = StudioChatMessage::query()
-            ->where(function ($query) use ($agentId, $threadId) {
-                $query->where('thread_id', $threadId)
-                      ->orWhere('thread_id', ChatThreadKey::forAgent($agentId, $threadId))
-                      ->orWhere('thread_id', ChatThreadKey::forWorkflow($agentId, $threadId));
-            })
+            ->whereIn('thread_id', array_unique($keys))
             ->orderBy('id')
             ->get(['role', 'content']);
 
@@ -41,7 +65,7 @@ class ChatThreadLoader
         }
 
         return [
-            'thread_id' => $threadId,
+            'thread_id' => $publicThreadId,
             'messages' => $messages,
         ];
     }
