@@ -1,5 +1,28 @@
 # Changelog
 
+# [3.0.0](https://github.com/digitalelvis/neuronai-studio/compare/v2.7.0...v3.0.0) (2026-08-08)
+
+
+* chore(deps)!: require neuron-core/neuron-ai ^3.16 ([b50ae2a](https://github.com/digitalelvis/neuronai-studio/commit/b50ae2a19bf7df20e344422244de70a686bd7937))
+
+
+### Bug Fixes
+
+* **studio:** scope playground tool events to current turn ([183ba2d](https://github.com/digitalelvis/neuronai-studio/commit/183ba2db3d7c8f1d0e967143ada2d5921fd350d2))
+* **studio:** silent-save graph before playground run ([5116b20](https://github.com/digitalelvis/neuronai-studio/commit/5116b20eec61b38035690605abdfa7109dd94956))
+
+
+### Features
+
+* **studio:** keep events dock closed and show tab counters ([cb1345f](https://github.com/digitalelvis/neuronai-studio/commit/cb1345fbf651ada28f7d86f2cd25528002293630))
+* **studio:** seed datetime context and expose attachments in START ([82305c3](https://github.com/digitalelvis/neuronai-studio/commit/82305c322f24430021278dc84c83a7e0afcbb53e))
+* **threads:** associate conversations with polymorphic owners ([effc036](https://github.com/digitalelvis/neuronai-studio/commit/effc0367b2ce2abcdccdedee7038525dddff2fba))
+
+
+### BREAKING CHANGES
+
+* neuron-core/neuron-ai minimum is now ^3.16 (was ^3.15).
+
 # [2.7.0](https://github.com/digitalelvis/neuronai-studio/compare/v2.6.1...v2.7.0) (2026-08-07)
 
 
