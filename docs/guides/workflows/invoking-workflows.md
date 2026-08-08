@@ -84,6 +84,43 @@ $run = app(WorkflowRunner::class)->run($workflow, [
 
 Inside a single run with a **Loop**, the runner keeps one `__studio_thread_id` across iterations automatically. See [Quickstart: Conversation Memory](../../getting-started/quickstart-conversation-memory.md).
 
+## With thread owner (polymorphic)
+
+Associate a conversation with any Eloquent model (`User`, `Customer`, `Contact`, …). Ownership is stored on `StudioThread` (`ownerable_type` / `ownerable_id`) and stamped into state as `__studio_owner_type` / `__studio_owner_id`.
+
+```php
+use DigitalElvis\NeuronAIStudio\StudioInvoke;
+
+$run = StudioInvoke::workflow($workflow)
+    ->forOwner($customer)          // any Model with a primary key
+    ->onThread($threadId)           // optional; omit to create a new thread
+    ->run(['message' => 'Hello']);
+
+// Equivalent payload (no builder):
+$run = app(WorkflowRunner::class)->run($workflow, [
+    'message' => 'Hello',
+    'thread_id' => $threadId,
+    'owner_type' => $customer->getMorphClass(),
+    'owner_id' => (string) $customer->getKey(),
+]);
+```
+
+Rules:
+
+- Empty thread + owner → assign
+- Same owner → ok
+- Different owner → `ThreadOwnerMismatchException`
+- Playground / omit owner → thread stays unowned; reusing an owned thread still hydrates owner keys into state
+
+List threads for an owner:
+
+```php
+use DigitalElvis\NeuronAIStudio\Services\ChatThreadIndex;
+
+$threads = app(ChatThreadIndex::class)->listForOwner($customer);
+// optional: listForOwner($customer, entityType: WorkflowDefinition::class, entityId: $workflow->id)
+```
+
 ## With attachments
 
 ```php

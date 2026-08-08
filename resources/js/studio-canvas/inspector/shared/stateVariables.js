@@ -17,6 +17,8 @@ export const SYSTEM_STATE_VARIABLES = /** @type {const} */ ([
     { key: '__studio_thread_id', label: '__studio_thread_id', type: 'string' },
     { key: '__studio_run_id', label: '__studio_run_id', type: 'string' },
     { key: '__studio_trace_id', label: '__studio_trace_id', type: 'string' },
+    { key: '__studio_owner_type', label: '__studio_owner_type', type: 'string' },
+    { key: '__studio_owner_id', label: '__studio_owner_id', type: 'string' },
     { key: '__studio_now', label: '__studio_now', type: 'string' },
     { key: '__studio_timezone', label: '__studio_timezone', type: 'string' },
     { key: '__studio_locale', label: '__studio_locale', type: 'string' },

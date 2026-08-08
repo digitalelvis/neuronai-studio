@@ -19,6 +19,7 @@ use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\WorkflowExecutionException;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\HumanNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Support\ChatThreadKey;
 use DigitalElvis\NeuronAIStudio\Usage\UsageRecorder;
+use DigitalElvis\NeuronAIStudio\Support\ThreadOwner;
 use Illuminate\Support\Str;
 use NeuronAI\Workflow\Interrupt\WorkflowInterrupt;
 use NeuronAI\Workflow\Persistence\InMemoryPersistence;
@@ -43,6 +44,8 @@ class WorkflowRunner
 
     protected function createExecutionSession(WorkflowDefinition $workflow, array $input = [], ?StudioRun $parentRun = null): array
     {
+        $owner = ThreadOwner::consumeFromInput($input);
+
         $threadId = null;
         if (isset($input['thread_id']) && is_string($input['thread_id']) && $input['thread_id'] !== '') {
             $threadId = $input['thread_id'];
@@ -60,6 +63,10 @@ class WorkflowRunner
             'entity_id' => $workflow->id,
         ]);
 
+        if ($owner !== null) {
+            $owner->bindTo($thread);
+        }
+
         $parentRun = $this->resolveParentRun($parentRun, $input);
 
         $run = StudioRun::create([
@@ -70,6 +77,9 @@ class WorkflowRunner
             'input' => $input,
             'started_at' => now(),
         ]);
+
+        // Keep owner relation available for state hydration without an extra query.
+        $run->setRelation('thread', $thread);
 
         $trace = StudioTrace::create([
             'run_id' => $run->id,
@@ -714,6 +724,8 @@ class WorkflowRunner
             '__studio_thread_id' => $run->thread_id,
         ], StudioDatetimeContext::forState($initialState));
 
+        $this->applyOwnerState($stateData, $run, $input);
+
         if (! empty($input['attachments']) && is_array($input['attachments'])) {
             $stateData['attachments'] = $input['attachments'];
         }
@@ -737,6 +749,8 @@ class WorkflowRunner
             '__studio_thread_id' => $run->thread_id,
         ], StudioDatetimeContext::forState($initialState));
 
+        $this->applyOwnerState($stateData, $run, $input);
+
         if (! empty($input['attachments']) && is_array($input['attachments'])) {
             $stateData['attachments'] = $input['attachments'];
         }
@@ -752,6 +766,28 @@ class WorkflowRunner
         }
 
         return $state;
+    }
+
+    /**
+     * Stamp owner keys from input, else hydrate from the thread.
+     *
+     * @param  array<string, mixed>  $stateData
+     * @param  array<string, mixed>  $input
+     */
+    protected function applyOwnerState(array &$stateData, StudioRun $run, array $input): void
+    {
+        $type = $input[ThreadOwner::TYPE_INPUT_KEY] ?? null;
+        $id = $input[ThreadOwner::ID_INPUT_KEY] ?? null;
+
+        $owner = (is_string($type) && $type !== '' && $id !== null && $id !== '')
+            ? new ThreadOwner($type, (string) $id)
+            : ThreadOwner::fromThread($run->relationLoaded('thread') ? $run->thread : $run->thread()->first());
+
+        if ($owner === null) {
+            return;
+        }
+
+        $stateData = array_merge($stateData, $owner->toState());
     }
 
     /**

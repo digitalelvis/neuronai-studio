@@ -400,6 +400,8 @@ Themes turned into specified features (AD-022 — shipped on `v0.9.x` / `v0.10.0
 - [x] **Nested workflow / Run Flow** — done as [`execute-workflow`](../features/execute-workflow/spec.md) (M13 / AD-030); PR → `v2.1.x` pending
 - [ ] Dedicated Usage page / advanced charts / filters (beyond M5 minimal Dashboard)
 - [ ] Multi-tenant / user attribution in usage
+- [ ] **Cross-thread owner memory** (TO-D1 summarize / TO-D2 RAG) — depends on [`thread-owner-association`](../features/thread-owner-association/spec.md) (`ownerable_*` shipped on `feat/thread-owner-association`)
+- [ ] Studio UI multi-thread by owner (TO-D3)
 - [ ] Embeddings / RAG cost as a separate line item
 - [ ] TraceDetail ↔ Inspector/Langfuse URL bridge — deep-link from Studio run to exporter UI
 

@@ -15,12 +15,14 @@ Workflows share a mutable key-value **state** (`WorkflowState`) for the duration
 | **Human** node | `output_key` (default: `human_response`) | User reply when the run resumes |
 | **Set State** node | `key` from node config | `value` (literal or `{{templates}}`), or legacy `from_key` / `append_from_key` |
 
-Internal keys such as `__workflow_run_id`, `__current_node_id`, `__steps`, `__studio_thread_id`, `__studio_run_id`, `__studio_now`, `__studio_timezone`, `__studio_locale`, `__loop_iterations`, `__parent_run_id` (run input only), and `__workflow_nesting_depth` are reserved for runtime bookkeeping.
+Internal keys such as `__workflow_run_id`, `__current_node_id`, `__steps`, `__studio_thread_id`, `__studio_run_id`, `__studio_owner_type`, `__studio_owner_id`, `__studio_now`, `__studio_timezone`, `__studio_locale`, `__loop_iterations`, `__parent_run_id` (run input only), and `__workflow_nesting_depth` are reserved for runtime bookkeeping.
 
 | Key | Where | Description |
 |-----|--------|-------------|
 | `__parent_run_id` | Child run **input** | Parent `StudioRun` id for nested metering (also accepted as `WorkflowRunner::run(..., parentRun:)`). Not copied into workflow state. |
 | `__workflow_nesting_depth` | Child run **input** → state | Nesting depth stamp (`0` = top-level). `run_workflow` increments this; depth `> 3` is rejected by the executor. |
+| `__studio_owner_type` | Seeded at run start | Morph class of the thread owner (`StudioInvoke::forOwner` / `owner_type`). Hydrated from the thread when omitted on later turns. |
+| `__studio_owner_id` | Seeded at run start | Morph id (string) of the thread owner. |
 | `__studio_now` | Seeded at run start; **fresh on** `{{__studio_now}}` | Current datetime (ISO-8601 with offset) in `__studio_timezone`. Bootstrap value is for inspectability; template interpolation always recomputes. |
 | `__studio_timezone` | Seeded at run start | IANA timezone (default `config('app.timezone')`). Override via initial state. |
 | `__studio_locale` | Seeded at run start | Locale string (default `config('app.locale')`). Override via initial state. |

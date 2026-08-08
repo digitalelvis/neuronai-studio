@@ -97,6 +97,18 @@ class ObservabilityManager
             $userId = null;
         }
 
+        if ($userId === null && $run !== null) {
+            $thread = $run->relationLoaded('thread')
+                ? $run->thread
+                : $run->thread()->first();
+            $ownerId = $thread?->ownerable_id;
+            if (is_string($ownerId) && $ownerId !== '') {
+                $userId = $ownerId;
+            } elseif ($ownerId !== null && $ownerId !== '') {
+                $userId = (string) $ownerId;
+            }
+        }
+
         return array_filter([
             'session_id' => is_string($sessionId) && $sessionId !== '' ? $sessionId : null,
             'user_id' => $userId,

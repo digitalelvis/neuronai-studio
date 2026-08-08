@@ -13,6 +13,7 @@ use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
 use DigitalElvis\NeuronAIStudio\Support\ChatThreadKey;
 use DigitalElvis\NeuronAIStudio\Support\PlaygroundContext;
 use DigitalElvis\NeuronAIStudio\Support\ProviderParameters;
+use DigitalElvis\NeuronAIStudio\Support\ThreadOwner;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\StructuredOutputValidationException;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ToolApprovalRequiredException;
 use DigitalElvis\NeuronAIStudio\Runtime\Memory\MemoryConfig;
@@ -47,10 +48,18 @@ class AgentRunner
         protected MessageFactory $messages,
     ) {}
 
-    public function run(AgentDefinition|string $definition, string $message, bool $fake = false): AgentRunResult
+    /**
+     * @param  array<string, mixed>  $options  Optional `thread_id`, `owner_type`/`owner_id`, or `owner` Model
+     */
+    public function run(AgentDefinition|string $definition, string $message, bool $fake = false, array $options = []): AgentRunResult
     {
         $definition = $this->resolveDefinition($definition);
         $definition->loadMissing('mcpBindings');
+
+        $threadKey = null;
+        if (isset($options['thread_id']) && is_string($options['thread_id']) && $options['thread_id'] !== '') {
+            $threadKey = ChatThreadKey::forAgent($definition->id, $options['thread_id']);
+        }
 
         return $this->runInline([
             'provider' => $definition->provider,
@@ -59,7 +68,12 @@ class AgentRunner
             'tools' => $definition->tools ?? [],
             'require_tool_approval' => (bool) $definition->require_tool_approval,
             ...$this->toolControlConfigFromDefinition($definition),
-        ], $message, $definition, fake: $fake);
+        ], $message, $definition, $threadKey, fake: $fake, sessionInput: array_intersect_key($options, array_flip([
+            ThreadOwner::TYPE_INPUT_KEY,
+            ThreadOwner::ID_INPUT_KEY,
+            ThreadOwner::MODEL_INPUT_KEY,
+            'thread_id',
+        ])));
     }
 
     /**
@@ -98,9 +112,10 @@ class AgentRunner
         $config = $this->resolvePlaygroundConfig($definition, $payload);
         $messageText = (string) ($payload['message'] ?? '');
 
-        [$run, $trace] = $this->createExecutionSession($definition, $threadKey, [
-            'message' => $messageText,
-        ]);
+        $sessionInput = $payload;
+        $sessionInput['message'] = $messageText;
+
+        [$run, $trace] = $this->createExecutionSession($definition, $threadKey, $sessionInput);
 
         try {
             $agent = $this->makeAgent($definition, $config, $threadKey);
@@ -149,9 +164,10 @@ class AgentRunner
         $config = $this->resolvePlaygroundConfig($definition, $payload);
         $messageText = (string) ($payload['message'] ?? '');
 
-        [$run, $trace] = $this->createExecutionSession($definition, $threadKey, [
-            'message' => $messageText,
-        ]);
+        $sessionInput = $payload;
+        $sessionInput['message'] = $messageText;
+
+        [$run, $trace] = $this->createExecutionSession($definition, $threadKey, $sessionInput);
 
         try {
             $agent = $this->makeAgent($definition, $config, $threadKey);
@@ -177,6 +193,8 @@ class AgentRunner
         array $input = [],
         ?StudioRun $parentRun = null,
     ): array {
+        $owner = ThreadOwner::consumeFromInput($input);
+
         $threadId = $threadKey;
         if ($threadId === null) {
             $threadId = (string) Str::uuid();
@@ -193,6 +211,10 @@ class AgentRunner
             'entity_id' => $definition ? $definition->id : null,
         ]);
 
+        if ($owner !== null) {
+            $owner->bindTo($thread);
+        }
+
         $run = StudioRun::create([
             'id' => (string) Str::uuid(),
             'thread_id' => $thread->id,
@@ -202,6 +224,8 @@ class AgentRunner
             'started_at' => now(),
         ]);
 
+        $run->setRelation('thread', $thread);
+
         $trace = StudioTrace::create([
             'run_id' => $run->id,
         ]);
@@ -209,6 +233,9 @@ class AgentRunner
         return [$run, $trace];
     }
 
+    /**
+     * @param  array<string, mixed>  $sessionInput  Extra session keys (owner_type/owner_id, etc.)
+     */
     public function runInline(
         array $config,
         string|UserMessage $message,
@@ -216,10 +243,13 @@ class AgentRunner
         ?string $threadKey = null,
         bool $fake = false,
         ?StudioRun $parentRun = null,
+        array $sessionInput = [],
     ): AgentRunResult {
-        [$run, $trace] = $this->createExecutionSession($definition, $threadKey, [
-            'message' => $message instanceof UserMessage ? $message->getContent() : $message
-        ], $parentRun);
+        $input = array_merge($sessionInput, [
+            'message' => $message instanceof UserMessage ? $message->getContent() : $message,
+        ]);
+
+        [$run, $trace] = $this->createExecutionSession($definition, $threadKey, $input, $parentRun);
 
         try {
             $agent = $this->makeAgent(
