@@ -132,9 +132,14 @@ class ConditionNodeExecutorTest extends TestCase
             ['active' => true],
         ));
 
-        $this->assertSame('false', $this->runCondition(
+        $this->assertSame('true', $this->runCondition(
             ['state_key' => 'active', 'operator' => 'is_true'],
             ['active' => 'true'],
+        ));
+
+        $this->assertSame('false', $this->runCondition(
+            ['state_key' => 'active', 'operator' => 'is_true'],
+            ['active' => 'false'],
         ));
     }
 

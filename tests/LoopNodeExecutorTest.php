@@ -73,4 +73,66 @@ class LoopNodeExecutorTest extends TestCase
             '__loop_iterations.loop_1' => 2,
         ]));
     }
+
+    public function test_exit_on_is_true_with_boolean_state(): void
+    {
+        $this->assertSame('exit', $this->runLoop(
+            [
+                'max_steps' => 10,
+                'state_key' => 'done',
+                'operator' => 'is_true',
+            ],
+            ['done' => true],
+        ));
+    }
+
+    public function test_exit_on_is_true_with_string_true_from_set_state(): void
+    {
+        $this->assertSame('exit', $this->runLoop(
+            [
+                'max_steps' => 10,
+                'state_key' => 'done',
+                'operator' => 'is_true',
+            ],
+            ['done' => 'true'],
+        ));
+    }
+
+    public function test_continue_when_is_true_and_string_false(): void
+    {
+        $this->assertSame('continue', $this->runLoop(
+            [
+                'max_steps' => 10,
+                'state_key' => 'done',
+                'operator' => 'is_true',
+            ],
+            ['done' => 'false'],
+        ));
+    }
+
+    public function test_exit_on_is_false_with_string_false(): void
+    {
+        $this->assertSame('exit', $this->runLoop(
+            [
+                'max_steps' => 10,
+                'state_key' => 'pending',
+                'operator' => 'is_false',
+            ],
+            ['pending' => 'false'],
+        ));
+    }
+
+    public function test_exit_on_equals_boolean_value_type_with_string_state(): void
+    {
+        $this->assertSame('exit', $this->runLoop(
+            [
+                'max_steps' => 10,
+                'state_key' => 'done',
+                'operator' => 'equals',
+                'value' => true,
+                'value_type' => 'boolean',
+            ],
+            ['done' => 'true'],
+        ));
+    }
 }

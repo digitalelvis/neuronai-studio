@@ -2,6 +2,8 @@
 
 namespace DigitalElvis\NeuronAIStudio\Codegen\NodeCodeGenerators;
 
+use DigitalElvis\NeuronAIStudio\Runtime\ConditionEvaluator;
+
 class LoopNodeCodeGenerator implements NodeCodeGeneratorInterface
 {
     public function supports(string $type): bool
@@ -15,7 +17,8 @@ class LoopNodeCodeGenerator implements NodeCodeGeneratorInterface
         $nodeId = var_export((string) $nodePlan['id'], true);
         $key = var_export((string) ($data['state_key'] ?? 'input'), true);
         $operator = (string) ($data['operator'] ?? 'not_empty');
-        $value = $context->exporter->exportValue($data['value'] ?? null, 2);
+        $valueType = (string) ($data['value_type'] ?? ConditionEvaluator::VALUE_TYPE_AUTO);
+        $strict = (bool) ($data['strict'] ?? false);
         $branchReturns = $nodePlan['branchReturns'];
 
         $maxSteps = isset($data['max_steps'])
@@ -26,13 +29,18 @@ class LoopNodeCodeGenerator implements NodeCodeGeneratorInterface
         $continueReturn = $context->returnStatement('', 'continue', $branchReturns);
         $exitReturn = $context->returnStatement('', 'exit', $branchReturns);
 
-        $condition = match ($operator) {
-            'equals' => "\$stateValue == {$value}",
-            'not_equals' => "\$stateValue != {$value}",
-            'contains' => "is_string(\$stateValue) && str_contains(\$stateValue, (string) {$value})",
-            'empty' => 'empty($stateValue)',
-            default => '! empty($stateValue)',
-        };
+        $evaluator = new ConditionEvaluator;
+        $normalizedValue = $context->exporter->exportValue(
+            $evaluator->normalizeConditionValue($data['value'] ?? null, $valueType),
+            2,
+        );
+        $condition = ConditionEvaluator::buildCodegenCondition(
+            '$stateValue',
+            $operator,
+            $normalizedValue,
+            $valueType,
+            $strict,
+        );
 
         $body = <<<PHP
         \$iterationKey = "__loop_iterations.{$nodeId}";
@@ -52,7 +60,7 @@ class LoopNodeCodeGenerator implements NodeCodeGeneratorInterface
             throw new MaxLoopIterationsException({$nodeId}, \$iterations, \$maxSteps);
         }
 
-        \$stateValue = \$state->get({$key});
+        \$stateValue = \\DigitalElvis\\NeuronAIStudio\\Runtime\\WorkflowStateValue::get(\$state, {$key});
 
         if ({$condition}) {
             {$exitReturn}
