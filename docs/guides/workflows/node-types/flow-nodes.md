@@ -14,13 +14,23 @@ All runs begin at the Start node. Initial state is merged from the test harness 
 
 ## Stop
 
-**Purpose:** Terminates the workflow run successfully.
+**Purpose:** Terminates the workflow run successfully and (optionally) declares the **user-facing reply**.
 
 | Config | Description |
 |--------|-------------|
-| (none) | Marks run as completed |
+| `reply` | Template for the channel message (e.g. `{{agent_response}}`). Interpolated into `state.reply` when the Stop runs. |
 
-At least one Stop node is required. A workflow may have multiple Stop nodes for different exit paths.
+At least one Stop node is required. A workflow may have multiple Stop nodes for different exit paths — give each branch its own Stop with the correct `reply`.
+
+Channels (Studio Pretty, Vercel/AG-UI, WhatsApp integrate, MCP, nested `run_workflow`) read `state.reply` via `WorkflowReplyResolver`. Without `reply`, they fall back to a legacy last-string heuristic (fragile on large graphs).
+
+```mermaid
+flowchart LR
+    Agent[Agent output_key] --> Stop["Stop reply={{agent_response}}"]
+    Stop --> Channel[WhatsApp / Studio / API]
+```
+
+Prefer **one Stop per exit path** rather than converging every branch into a single Stop that cannot know which key holds the answer.
 
 ## Delay
 
@@ -43,10 +53,12 @@ flowchart LR
 
 | Config | Description |
 |--------|-------------|
-| `prompt` | Message shown to the user |
+| `prompt` | Message shown to the user (also published as the channel reply while paused) |
 | `output_key` | State key for the reply (default: `human_response`) |
 
-When the Human node executes, the workflow pauses and saves a checkpoint. The user replies via the test harness, and execution resumes from the checkpoint.
+When the Human node executes, the workflow pauses and saves a checkpoint. Integrate clients receive the interpolated `prompt` as assistant text plus an `awaiting_input` signal. The user replies via the test harness or resume API, and execution continues from the checkpoint.
+
+Always connect an outgoing edge from Human (typically back into a loop or toward Stop). A Human with no successor ends the run after resume with no explicit reply.
 
 See [Human-in-the-Loop](../human-in-the-loop.md) for the full resume flow.
 

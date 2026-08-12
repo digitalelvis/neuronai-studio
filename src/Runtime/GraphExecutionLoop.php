@@ -50,16 +50,6 @@ class GraphExecutionLoop
                 'iteration' => $iteration,
             ]);
 
-            if ($nodeType === 'stop') {
-                $state->emitStep('step_completed', [
-                    'node_id' => $nodeId,
-                    'node_type' => $nodeType,
-                    'handle' => 'default',
-                    'duration_ms' => 0,
-                ]);
-                break;
-            }
-
             try {
                 $handle = $this->executors->execute($nodeType, $nodeConfig, $state, $graphContext);
             } catch (StructuredOutputValidationException $exception) {
@@ -96,6 +86,10 @@ class GraphExecutionLoop
             }
 
             $state->emitStep('step_completed', $completedPayload);
+
+            if ($nodeType === 'stop') {
+                break;
+            }
 
             $nextNodeId = $graphContext->targetForHandle($nodeId, $handle) ?? '';
             $state->set('__current_node_id', $nextNodeId);

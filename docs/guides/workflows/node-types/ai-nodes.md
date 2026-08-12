@@ -28,6 +28,7 @@ Legacy graphs without `config_mode` resolve to **existing** when `agent_id` is s
 | `output_class` | FQCN or short name of a PHP output class (required when `structured` is on) |
 | `require_tool_approval` | Optional per-node override. Pause for human approval before the agent runs any tool (see [Tool approval](#tool-approval)) |
 | `stream` | When `true`, stream the response token-by-token via SSE during the step (see [Streaming](#streaming)) |
+| `publish_reply` | When `false` with `stream`, do not forward tokens to external channels (default: publish) |
 | `context_window` | Optional per-node memory override (tokens). Empty inherits the agent's `memory_config` |
 | `driver` | Optional `eloquent` / `in_memory` override for this visit |
 | `summarization_enabled` | Optional compaction override for this visit |
@@ -159,6 +160,7 @@ Attach a PDF or image in the harness before sending — the same attachment arra
 | `structured` | When `true`, validate and store typed output instead of plain text |
 | `output_class` | FQCN or short name of a PHP output class (required when `structured` is on) |
 | `stream` | When `true`, stream the response token-by-token via SSE during the step (see [Streaming](#streaming)) |
+| `publish_reply` | When `false` with `stream`, do not forward tokens to external channels (default: publish) |
 | `vision` | When `true` (default), include `state.attachments` in the model message. Set `false` to ignore attachments for this step |
 
 Use when you need a one-off LLM step without tool bindings.
@@ -201,6 +203,13 @@ Prefer this node for graph routing. To expose classification as a tool to a supe
 ## Streaming
 
 Agent and LLM nodes can stream their text output token-by-token instead of blocking until the full response is ready. Set `stream: true` on the node to emit incremental `token` SSE events during the step; the chat surface renders the text as it arrives while the final content is still written to `output_key`.
+
+| Config | Description |
+|--------|-------------|
+| `stream` | When `true`, emit token events during the step |
+| `publish_reply` | When `false`, tokens stay internal (Studio timeline / state) and are **not** forwarded to Vercel/AG-UI/WhatsApp. Default `true` when unset. |
+
+Use `publish_reply: false` on internal steps (file transcription, classifiers, tool-only agents) so they do not become the channel reply. Pair the user-facing Agent/LLM with a Stop `reply` template.
 
 Streaming applies only to plain-text responses on an interactive SSE run. It is automatically skipped (falling back to the blocking path) for **structured output** nodes and for Agent nodes with **tool approval** enabled. See [Runtime & Traces → Token streaming](../runtime-and-traces.md#token-streaming) for the event sequence.
 

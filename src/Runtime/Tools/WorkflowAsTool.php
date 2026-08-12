@@ -106,7 +106,7 @@ final class WorkflowAsTool extends Tool implements ToolContextAware
             ));
         }
 
-        return $this->serializeOutput($childRun->output);
+        return $this->serializeOutput($childRun->output, $this->nodeData);
     }
 
     protected function resolveDefinition(): WorkflowDefinition
@@ -187,8 +187,13 @@ final class WorkflowAsTool extends Tool implements ToolContextAware
         return $resolved;
     }
 
-    protected function serializeOutput(mixed $output): string
+    /**
+     * @param  array<string, mixed>|null  $nodeData
+     */
+    protected function serializeOutput(mixed $output, ?array $nodeData = null): string
     {
+        $mode = is_string($nodeData['output_mode'] ?? null) ? $nodeData['output_mode'] : 'reply';
+
         if (is_string($output)) {
             return $output;
         }
@@ -197,6 +202,24 @@ final class WorkflowAsTool extends Tool implements ToolContextAware
             return '';
         }
 
+        if (! is_array($output)) {
+            return json_encode($output, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
+        }
+
+        // Explicit state mode always returns the full snapshot.
+        if ($mode === 'state') {
+            return json_encode($output, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
+        }
+
+        // Reply mode: only when the child declared Stop.reply (key present).
+        if (array_key_exists(\DigitalElvis\NeuronAIStudio\Runtime\WorkflowReplyResolver::STATE_KEY, $output)) {
+            $text = app(\DigitalElvis\NeuronAIStudio\Runtime\WorkflowReplyResolver::class)
+                ->textFromOutput($output);
+
+            return $text;
+        }
+
+        // Legacy child graphs without reply → full snapshot JSON.
         return json_encode($output, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
     }
 }

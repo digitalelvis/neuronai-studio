@@ -36,9 +36,15 @@ $run = app(WorkflowRunner::class)->run($workflow, [
 
 // $run->status — completed | failed | awaiting_input | awaiting_tool_approval | …
 // $run->output — final state snapshot (array)
+// Prefer the canonical reply when talking to a user:
+$reply = app(\DigitalElvis\NeuronAIStudio\Runtime\WorkflowReplyResolver::class)
+    ->textFromRun($run);
+// or: $run->output['reply'] when the Stop set data.reply
 ```
 
 `message` and `input` both seed state key `input` (`message` wins if both are set).
+
+Configure each **Stop** with a `reply` template (e.g. `{{agent_response}}`) so `$run->output['reply']` is stable across branches. Without it, consumers fall back to guessing the last non-meta string in state.
 
 ## With state (context)
 

@@ -67,6 +67,7 @@ export default function LlmNodeFields({
                     <StreamToggleField
                         stream={Boolean(data.stream)}
                         structured={Boolean(data.structured)}
+                        publishReply={data.publish_reply !== false}
                         readOnly={readOnly}
                         onChange={(patch) => onUpdate?.({ ...data, ...patch })}
                     />

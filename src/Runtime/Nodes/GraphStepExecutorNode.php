@@ -37,12 +37,16 @@ class GraphStepExecutorNode extends Node
         }
 
         if ($nodeType === 'stop') {
+            $this->executors->execute($nodeType, $nodeConfig, $state, $this->graphContext);
+            $durationMs = (int) ((microtime(true) - $startedAt) * 1000);
+            $this->recordStep($state, $nodeId, $nodeType, $startedAt);
+
             if ($state instanceof BuilderWorkflowState) {
                 $state->emitStep('step_completed', [
                     'node_id' => $nodeId,
                     'node_type' => $nodeType,
                     'handle' => 'default',
-                    'duration_ms' => 0,
+                    'duration_ms' => $durationMs,
                 ]);
             }
 

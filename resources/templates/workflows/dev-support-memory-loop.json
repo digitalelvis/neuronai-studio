@@ -140,7 +140,9 @@
           "x": 1640,
           "y": 216
         },
-        "data": {}
+        "data": {
+          "reply": "{{support_reply}}"
+        }
       }
     ],
     "edges": [
