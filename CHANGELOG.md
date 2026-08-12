@@ -1,5 +1,13 @@
 # Changelog
 
+# [3.4.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.3.3...v3.4.0) (2026-08-12)
+
+
+### Features
+
+* **canvas:** make Switch inspector cases collapsible ([7426e3e](https://github.com/digitalelvis/neuronai-studio/commit/7426e3eee31450e4a3effd104a859a194cb23062))
+* **workflows:** add canonical reply contract for channels ([19d8d7e](https://github.com/digitalelvis/neuronai-studio/commit/19d8d7e5f5297498791a91533a47ead17470f3fe))
+
 ## [3.3.3](https://github.com/digitalelvis/neuronai-studio/compare/v3.3.2...v3.3.3) (2026-08-12)
 
 
