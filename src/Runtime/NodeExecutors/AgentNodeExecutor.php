@@ -210,6 +210,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
                 $state->emitStep('token', [
                     'node_id' => $nodeId,
                     'delta' => $chunk->content,
+                    'publish_reply' => ($data['publish_reply'] ?? true) !== false,
                 ]);
 
                 continue;

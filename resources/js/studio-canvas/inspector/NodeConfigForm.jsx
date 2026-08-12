@@ -17,6 +17,7 @@ import DelayNodeFields from './node-forms/DelayNodeFields';
 import ToolNodeFields from './node-forms/ToolNodeFields';
 import McpNodeFields from './node-forms/McpNodeFields';
 import RagNodeFields from './node-forms/RagNodeFields';
+import StopNodeFields from './node-forms/StopNodeFields';
 
 const NODE_FIELDS = {
     agent: AgentNodeFields,
@@ -35,6 +36,7 @@ const NODE_FIELDS = {
     tool: ToolNodeFields,
     mcp: McpNodeFields,
     rag: RagNodeFields,
+    stop: StopNodeFields,
 };
 
 export default function NodeConfigForm({

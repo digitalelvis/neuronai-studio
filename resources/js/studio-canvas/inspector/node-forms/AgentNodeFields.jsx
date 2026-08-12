@@ -257,6 +257,7 @@ export default function AgentNodeFields({
                         <StreamToggleField
                             stream={Boolean(data.stream)}
                             structured={Boolean(data.structured)}
+                            publishReply={data.publish_reply !== false}
                             readOnly={readOnly}
                             onChange={(patch) => onUpdate?.({ ...data, ...patch })}
                         />

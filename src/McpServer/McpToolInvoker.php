@@ -202,11 +202,14 @@ class McpToolInvoker
         }
 
         $run = $this->workflowRunner->run($workflow, $input);
+        $resolver = app(\DigitalElvis\NeuronAIStudio\Runtime\WorkflowReplyResolver::class);
+        $output = is_array($run->output) ? $run->output : [];
 
         return [
             'run_id' => $run->id,
             'status' => $run->status,
-            'output' => $run->output,
+            'reply' => $resolver->textFromRun($run),
+            'output' => $output,
             'error_message' => $run->error_message,
         ];
     }

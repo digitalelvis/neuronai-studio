@@ -59,7 +59,9 @@
           "x": 1240,
           "y": 40
         },
-        "data": {}
+        "data": {
+          "reply": "{{agent_response}}"
+        }
       }
     ],
     "edges": [

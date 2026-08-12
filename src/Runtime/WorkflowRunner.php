@@ -935,6 +935,7 @@ class WorkflowRunner
                 'state' => $state?->all() ?? [],
                 'node_id' => $exception->nodeId,
                 'output_key' => $exception->outputKey,
+                'prompt' => $exception->prompt,
             ],
             'finished_at' => null,
         ]);
@@ -984,6 +985,7 @@ class WorkflowRunner
                 'node_id' => $isToolApproval ? $exception->pendingNodeId : $exception->forkId,
                 'kind' => 'parallel',
                 'output_key' => $exception->outputKey,
+                'prompt' => $isToolApproval ? null : $exception->prompt,
                 'pending_tools' => $isToolApproval ? $exception->pendingTools : null,
                 'interrupt' => $isToolApproval ? $exception->serializedInterrupt : null,
                 'parallel' => $parallel,
@@ -1068,6 +1070,7 @@ class WorkflowRunner
                 'state' => $interrupt->getState()->all(),
                 'node_id' => $nodeId,
                 'output_key' => 'human_response',
+                'prompt' => $request->getMessage(),
                 'interrupt' => [
                     'workflow_id' => $interrupt->getWorkflowId(),
                     'request' => base64_encode(serialize($request)),

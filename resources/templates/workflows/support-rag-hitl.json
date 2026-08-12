@@ -97,7 +97,9 @@
           "x": 2440,
           "y": 40
         },
-        "data": {}
+        "data": {
+          "reply": "{{agent_response}}"
+        }
       },
       {
         "id": "cond_complaint",
@@ -144,7 +146,9 @@
           "x": 2840,
           "y": 216
         },
-        "data": {}
+        "data": {
+          "reply": "{{agent_response}}"
+        }
       },
       {
         "id": "human_escalation",
@@ -190,7 +194,9 @@
           "x": 3240,
           "y": 392
         },
-        "data": {}
+        "data": {
+          "reply": "{{agent_response}}"
+        }
       }
     ],
     "edges": [

@@ -62,7 +62,7 @@ class RunWorkflowNodeExecutor implements NodeExecutorInterface
 
         $this->assertChildSucceeded($childRun, $definition);
 
-        $state->set($outputKey, $this->serializeOutput($childRun->output));
+        $state->set($outputKey, $this->serializeOutput($childRun->output, $data));
 
         return 'default';
     }
@@ -159,14 +159,32 @@ class RunWorkflowNodeExecutor implements NodeExecutorInterface
         }
     }
 
-    protected function serializeOutput(mixed $output): string
+    /**
+     * @param  array<string, mixed>  $nodeData
+     */
+    protected function serializeOutput(mixed $output, array $nodeData = []): string
     {
+        $mode = is_string($nodeData['output_mode'] ?? null) ? $nodeData['output_mode'] : 'reply';
+
         if (is_string($output)) {
             return $output;
         }
 
         if ($output === null) {
             return '';
+        }
+
+        if (! is_array($output)) {
+            return json_encode($output, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
+        }
+
+        if ($mode === 'state') {
+            return json_encode($output, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
+        }
+
+        if (array_key_exists(\DigitalElvis\NeuronAIStudio\Runtime\WorkflowReplyResolver::STATE_KEY, $output)) {
+            return app(\DigitalElvis\NeuronAIStudio\Runtime\WorkflowReplyResolver::class)
+                ->textFromOutput($output);
         }
 
         return json_encode($output, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';

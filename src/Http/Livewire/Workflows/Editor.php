@@ -188,7 +188,7 @@ class Editor extends Component
         return ['ok' => true, 'tool' => $enriched];
     }
 
-    /** @return array{valid: bool, errors: array<int, string>} */
+    /** @return array{valid: bool, errors: array<int, string>, warnings: array<int, string>} */
     public function validateGraphPayload(array $graph): array
     {
         return app(GraphValidator::class)->validate($graph, $this->workflow?->id);
@@ -285,20 +285,22 @@ class Editor extends Component
     }
 
     /**
-     * @return array{valid: bool, message: string, errors: array<int, string>}
+     * @return array{valid: bool, message: string, errors: array<int, string>, warnings: array<int, string>}
      */
     public function validateGraph(GraphValidator $validator): array
     {
         $result = $validator->validate($this->graph, $this->workflow?->id);
         $errors = is_array($result['errors'] ?? null) ? $result['errors'] : [];
+        $warnings = is_array($result['warnings'] ?? null) ? $result['warnings'] : [];
         $this->validationMessage = $result['valid']
-            ? 'Graph is valid.'
+            ? (empty($warnings) ? 'Graph is valid.' : 'Graph is valid with warnings.')
             : implode(' ', $errors);
 
         return [
             'valid' => (bool) $result['valid'],
             'message' => $this->validationMessage,
             'errors' => $errors,
+            'warnings' => $warnings,
         ];
     }
 
