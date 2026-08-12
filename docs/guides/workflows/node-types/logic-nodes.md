@@ -43,7 +43,7 @@ Back-edges into the loop body require a Loop node with `max_steps` > 0. `GraphVa
 |----------|----------|
 | `not_empty` | Value is non-empty → true branch |
 | `empty` / `is_empty` | Value is empty → true branch |
-| `is_true` / `is_false` | Strict boolean check (`=== true/false`) |
+| `is_true` / `is_false` | Boolean check; accepts PHP bools and common literals (`"true"`/`"false"`/`"1"`/`"0"`) from Set State |
 | `is_null` / `is_not_null` | Explicit null check (missing keys are null) |
 | `equals` | Equality against value (`value_type` + optional `strict`) |
 | `not_equals` | Not equal to value |

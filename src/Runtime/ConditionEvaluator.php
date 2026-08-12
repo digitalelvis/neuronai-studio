@@ -49,12 +49,12 @@ class ConditionEvaluator
         $orderComparison = $this->compareOrdered($stateValue, $normalizedValue, $valueType);
 
         return match ($operator) {
-            'equals' => $this->compareEquals($stateValue, $normalizedValue, $strict),
-            'not_equals' => ! $this->compareEquals($stateValue, $normalizedValue, $strict),
+            'equals' => $this->compareEquals($stateValue, $normalizedValue, $strict, $valueType),
+            'not_equals' => ! $this->compareEquals($stateValue, $normalizedValue, $strict, $valueType),
             'contains' => is_string($stateValue) && str_contains($stateValue, (string) $normalizedValue),
             'empty', 'is_empty' => empty($stateValue),
-            'is_true' => $stateValue === true,
-            'is_false' => $stateValue === false,
+            'is_true' => $this->coerceBoolean($stateValue) === true,
+            'is_false' => $this->coerceBoolean($stateValue) === false,
             'is_null' => $stateValue === null,
             'is_not_null' => $stateValue !== null,
             'gt' => $orderComparison !== null && $orderComparison > 0,
@@ -148,8 +148,20 @@ class ConditionEvaluator
         string $valueType,
         bool $strict,
     ): string {
+        $evaluatorClass = self::class;
+
         if (in_array($operator, self::ORDER_OPERATORS, true)) {
             return self::buildOrderCodegenCondition($stateExpr, $operator, $normalizedValue, $valueType);
+        }
+
+        if (in_array($operator, ['equals', 'not_equals'], true)
+            && ($valueType === self::VALUE_TYPE_BOOLEAN || $normalizedValue === 'true' || $normalizedValue === 'false')) {
+            $left = "{$evaluatorClass}::coerceBooleanForCodegen({$stateExpr})";
+            $right = "{$evaluatorClass}::coerceBooleanForCodegen({$normalizedValue})";
+
+            return $operator === 'equals'
+                ? "({$left} !== null && {$right} !== null && {$left} === {$right})"
+                : "({$left} !== null && {$right} !== null && {$left} !== {$right})";
         }
 
         return match ($operator) {
@@ -161,12 +173,17 @@ class ConditionEvaluator
                 : "{$stateExpr} != {$normalizedValue}",
             'contains' => "is_string({$stateExpr}) && str_contains({$stateExpr}, (string) {$normalizedValue})",
             'empty', 'is_empty' => "empty({$stateExpr})",
-            'is_true' => "{$stateExpr} === true",
-            'is_false' => "{$stateExpr} === false",
+            'is_true' => "({$evaluatorClass}::coerceBooleanForCodegen({$stateExpr}) === true)",
+            'is_false' => "({$evaluatorClass}::coerceBooleanForCodegen({$stateExpr}) === false)",
             'is_null' => "{$stateExpr} === null",
             'is_not_null' => "{$stateExpr} !== null",
             default => "! empty({$stateExpr})",
         };
+    }
+
+    public static function coerceBooleanForCodegen(mixed $value): ?bool
+    {
+        return (new self)->coerceBoolean($value);
     }
 
     public static function parseDateTimestamp(mixed $value): ?int
@@ -271,8 +288,62 @@ class ConditionEvaluator
         return null;
     }
 
-    protected function compareEquals(mixed $stateValue, mixed $normalizedValue, bool $strict): bool
+    /**
+     * Coerce common boolean representations from state / UI literals.
+     * Set State and templates typically store "true"/"false" strings, not PHP bools.
+     */
+    protected function coerceBoolean(mixed $value): ?bool
     {
+        if (is_bool($value)) {
+            return $value;
+        }
+
+        if (is_int($value) || is_float($value)) {
+            if ($value === 1 || $value === 1.0) {
+                return true;
+            }
+            if ($value === 0 || $value === 0.0) {
+                return false;
+            }
+
+            return null;
+        }
+
+        if (! is_string($value)) {
+            return null;
+        }
+
+        $trimmed = trim($value);
+        if ($trimmed === '') {
+            return null;
+        }
+
+        return filter_var($trimmed, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+    }
+
+    protected function compareEquals(
+        mixed $stateValue,
+        mixed $normalizedValue,
+        bool $strict,
+        string $valueType = self::VALUE_TYPE_AUTO,
+    ): bool {
+        $treatAsBoolean = $valueType === self::VALUE_TYPE_BOOLEAN
+            || is_bool($normalizedValue)
+            || (is_string($normalizedValue) && in_array(strtolower(trim($normalizedValue)), ['true', 'false'], true));
+
+        if ($treatAsBoolean) {
+            $left = $this->coerceBoolean($stateValue);
+            $right = is_bool($normalizedValue)
+                ? $normalizedValue
+                : $this->coerceBoolean($normalizedValue);
+
+            if ($left === null || $right === null) {
+                return false;
+            }
+
+            return $left === $right;
+        }
+
         if ($strict) {
             return $stateValue === $normalizedValue;
         }
