@@ -5,6 +5,7 @@ import { cn } from '@/lib/utils';
 import {
     filterStateVariables,
     groupStateVariables,
+    normalizeStateKey,
 } from '../stateVariables';
 import StateVariableBadge, { GROUP_HEADER_STYLES } from './StateVariableBadge';
 
@@ -49,24 +50,53 @@ export default function StateVariablePicker({
         [variables, query],
     );
     const sections = React.useMemo(() => groupStateVariables(filtered), [filtered]);
-    const trimmedQuery = query.trim();
+    const normalizedKey = normalizeStateKey(query);
     const canUseCustom =
-        trimmedQuery !== '' &&
-        !variables.some((variable) => variable.key === trimmedQuery) &&
-        /^[\w.]+$/.test(trimmedQuery);
+        normalizedKey !== '' &&
+        !variables.some((variable) => variable.key === normalizedKey);
 
     const selectCustom = () => {
         if (!canUseCustom) {
             return;
         }
         onSelect?.({
-            key: trimmedQuery,
-            label: trimmedQuery,
+            key: normalizedKey,
+            label: normalizedKey,
             type: 'string',
-            group: trimmedQuery.startsWith('__') ? 'system' : 'node',
-            sourceLabel: trimmedQuery.startsWith('__') ? 'SYSTEM' : 'Custom',
+            group: normalizedKey.startsWith('__') ? 'system' : 'node',
+            sourceLabel: normalizedKey.startsWith('__') ? 'SYSTEM' : 'Custom',
         });
         onOpenChange?.(false);
+    };
+
+    const selectFirstFiltered = () => {
+        const first = filtered[0];
+        if (!first) {
+            return false;
+        }
+        onSelect?.(first);
+        onOpenChange?.(false);
+        return true;
+    };
+
+    const handleEnter = (event) => {
+        event.preventDefault();
+        if (canUseCustom) {
+            selectCustom();
+            return;
+        }
+        if (filtered.length === 1) {
+            selectFirstFiltered();
+            return;
+        }
+        // Exact match on an existing key (e.g. typed {{input}} when input exists).
+        if (normalizedKey !== '') {
+            const exact = variables.find((variable) => variable.key === normalizedKey);
+            if (exact) {
+                onSelect?.(exact);
+                onOpenChange?.(false);
+            }
+        }
     };
 
     return (
@@ -76,7 +106,9 @@ export default function StateVariablePicker({
                 align={align}
                 side={side}
                 className={cn('w-72 p-0', className)}
+                data-state-var-picker=""
                 onOpenAutoFocus={(event) => event.preventDefault()}
+                onCloseAutoFocus={(event) => event.preventDefault()}
             >
                 <div className="border-b border-border p-2">
                     <Input
@@ -85,11 +117,10 @@ export default function StateVariablePicker({
                         onChange={(event) => setQuery(event.target.value)}
                         onKeyDown={(event) => {
                             if (event.key === 'Enter') {
-                                event.preventDefault();
-                                selectCustom();
+                                handleEnter(event);
                             }
                         }}
-                        placeholder="Search variables…"
+                        placeholder="Search or type {{key}}…"
                         className="h-8"
                     />
                 </div>
@@ -100,7 +131,7 @@ export default function StateVariablePicker({
                             className="mb-1 flex w-full items-center rounded-sm px-2 py-1.5 text-left text-sm hover:bg-accent hover:text-accent-foreground"
                             onClick={selectCustom}
                         >
-                            Use <code className="mx-1 rounded bg-muted px-1 text-xs">{trimmedQuery}</code>
+                            Use <code className="mx-1 rounded bg-muted px-1 text-xs">{normalizedKey}</code>
                         </button>
                     )}
                     {sections.length === 0 && !canUseCustom ? (

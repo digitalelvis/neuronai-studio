@@ -8,6 +8,8 @@ import StateVariablePicker from './StateVariablePicker';
 
 /**
  * Single state-variable select. Persists the raw key (not `{{key}}`).
+ * Clicking anywhere opens the picker; type a custom key (or `{{key}}`) in the
+ * search input and press Enter to commit.
  *
  * @param {{
  *   value?: string,
@@ -46,7 +48,7 @@ export default function StateVariableSelect({
                   label: rawValue,
                   type: 'string',
                   group: rawValue.startsWith('__') ? 'system' : 'node',
-                  sourceLabel: rawValue.startsWith('__') ? 'SYSTEM' : undefined,
+                  sourceLabel: rawValue.startsWith('__') ? 'SYSTEM' : 'Custom',
               }
             : null);
 

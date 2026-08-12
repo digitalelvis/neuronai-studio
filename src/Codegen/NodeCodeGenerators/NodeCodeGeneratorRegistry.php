@@ -17,6 +17,7 @@ class NodeCodeGeneratorRegistry
             new IntentClassifierNodeCodeGenerator,
             new AgentNodeCodeGenerator,
             new ConditionNodeCodeGenerator,
+            new SwitchNodeCodeGenerator,
             new LoopNodeCodeGenerator,
             new ForkNodeCodeGenerator,
             new JoinNodeCodeGenerator,

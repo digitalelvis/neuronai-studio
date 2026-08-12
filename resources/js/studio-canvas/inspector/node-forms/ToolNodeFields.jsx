@@ -1,12 +1,6 @@
 import { Button } from '@/components/ui/button';
+import { Combobox } from '@/components/ui/combobox';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import OutputKeyField from './fields/OutputKeyField';
 import ParametersJsonField from './fields/ParametersJsonField';
 
@@ -35,28 +29,26 @@ export default function ToolNodeFields({
         );
     };
 
+    const toolOptions = tools.map((tool) => ({
+        value: tool.ref,
+        label: tool.label || tool.ref,
+    }));
+
     return (
         <>
             {showControls && (
                 <>
                     <div className="space-y-2">
                         <Label>Tool</Label>
-                        <Select
+                        <Combobox
+                            options={toolOptions}
                             value={data.tool_ref ?? ''}
                             onValueChange={(value) => updateField('tool_ref', value)}
+                            placeholder="Select tool"
+                            searchPlaceholder="Search tools…"
+                            emptyText="No tools found."
                             disabled={readOnly}
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Select tool" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                {tools.map((tool) => (
-                                    <SelectItem key={tool.ref} value={tool.ref}>
-                                        {tool.label}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
+                        />
                     </div>
                     <OutputKeyField
                         value={data.output_key}

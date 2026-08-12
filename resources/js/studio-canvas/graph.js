@@ -146,6 +146,16 @@ export function forkBranchIdsFromConfig(config) {
         .filter((id) => id !== '');
 }
 
+export function switchCaseIdsFromConfig(config) {
+    if (!config || !Array.isArray(config.cases)) {
+        return [];
+    }
+
+    return config.cases
+        .map((caseItem) => (caseItem && typeof caseItem === 'object' ? String(caseItem.id || '').trim() : ''))
+        .filter((id) => id !== '');
+}
+
 /**
  * Rename and prune outgoing edges when named source handles change
  * (intent classifier intents / fork branches).
@@ -261,6 +271,43 @@ export function pruneOrphanNamedHandleEdges(nodes, edges) {
             nextEdges = syncNamedSourceHandleEdges(nextEdges, node.id, ids, ids, {
                 allowDefault: true,
             });
+        }
+
+        if (nodeType === 'switch' && Array.isArray(config.cases)) {
+            const previousIds = switchCaseIdsFromConfig(config);
+            const seen = [];
+            const nextCases = config.cases.map((caseItem, index) => {
+                if (!caseItem || typeof caseItem !== 'object') {
+                    return caseItem;
+                }
+                const raw =
+                    typeof caseItem.id === 'string' && caseItem.id !== ''
+                        ? caseItem.id
+                        : `case_${index + 1}`;
+                const id = uniqueIntentId(raw, seen);
+                seen.push(id);
+                return { ...caseItem, id };
+            });
+            const nextIds = nextCases
+                .map((caseItem) =>
+                    caseItem && typeof caseItem === 'object' ? String(caseItem.id || '') : '',
+                )
+                .filter((id) => id !== '');
+
+            nextEdges = syncNamedSourceHandleEdges(nextEdges, node.id, previousIds, nextIds, {
+                allowDefault: true,
+            });
+
+            return {
+                ...node,
+                data: {
+                    ...node.data,
+                    config: {
+                        ...config,
+                        cases: nextCases,
+                    },
+                },
+            };
         }
 
         return node;

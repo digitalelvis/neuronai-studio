@@ -1,6 +1,6 @@
-import { ConditionRulesEditor } from './fields/ConditionRuleFields';
+import CaseEditor from './editors/CaseEditor';
 
-export default function ConditionNodeFields({
+export default function SwitchNodeFields({
     node,
     data,
     readOnly = false,
@@ -14,7 +14,7 @@ export default function ConditionNodeFields({
 
     return (
         <>
-            <ConditionRulesEditor
+            <CaseEditor
                 data={data}
                 readOnly={readOnly}
                 currentNodeId={node.id}
@@ -22,7 +22,8 @@ export default function ConditionNodeFields({
             />
             {!compact && (
                 <p className="text-xs text-muted-foreground">
-                    Key in workflow state. Use dot notation for nested values (e.g. lead.tier).
+                    Evaluates cases top to bottom. Connect each case handle to a branch; use
+                    default for no match.
                 </p>
             )}
         </>

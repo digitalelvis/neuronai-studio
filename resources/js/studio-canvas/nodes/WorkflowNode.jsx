@@ -4,7 +4,7 @@ import { Copy, Trash2 } from 'lucide-react';
 import { useCanvasUi } from '../CanvasUiContext';
 import { categoryColor } from '../graph';
 import { isToolModeEnabled } from '../inspector/nodeUtils';
-import NodePreviewBody, { getForkBranches, getIntentIds } from './NodePreviewBody';
+import NodePreviewBody, { getForkBranches, getIntentIds, getSwitchCaseIds } from './NodePreviewBody';
 import { NodeTypeIcon } from './nodeIcons';
 
 const AGENT_HANDLE_FALLBACKS = {
@@ -176,6 +176,37 @@ function NodeHandles({ nodeType, config, handleTops = null }) {
         );
     }
 
+    if (nodeType === 'switch') {
+        const cases = getSwitchCaseIds(config);
+        const count = Math.max(cases.length, 1);
+
+        return (
+            <>
+                <FlowHandle type="target" position={Position.Left} id="default" />
+                <FlowHandle
+                    type="source"
+                    position={Position.Right}
+                    id="default"
+                    style={{ top: topFor('default', '22%') }}
+                />
+                {cases.map((caseId, index) => (
+                    <FlowHandle
+                        key={caseId}
+                        type="source"
+                        position={Position.Right}
+                        id={caseId}
+                        style={{
+                            top:
+                                topFor(`case:${caseId}`) ||
+                                topFor(caseId) ||
+                                `${28 + ((index + 1) / (count + 1)) * 60}%`,
+                        }}
+                    />
+                ))}
+            </>
+        );
+    }
+
     if (nodeType === 'loop') {
         return (
             <>
@@ -291,6 +322,9 @@ function handleNamesForNode(nodeType, config) {
     if (nodeType === 'intent_classifier') {
         return getIntentIds(config).map((id) => `intent:${id}`);
     }
+    if (nodeType === 'switch') {
+        return ['default', ...getSwitchCaseIds(config).map((id) => `case:${id}`)];
+    }
     if (nodeType === 'agent') {
         if (isToolModeEnabled(config || {})) {
             return ['tools', 'toolset'];
@@ -330,6 +364,7 @@ export default function WorkflowNode({ id, data, selected }) {
                 measureNames.join('|'),
                 data.config?.tool_mode ? '1' : '0',
                 Array.isArray(data.config?.intents) ? data.config.intents.length : 0,
+                Array.isArray(data.config?.cases) ? data.config.cases.length : 0,
                 Array.isArray(data.config?.branches) ? data.config.branches.length : 0,
             ].join(':'),
         [data.nodeType, measureNames, data.config],
