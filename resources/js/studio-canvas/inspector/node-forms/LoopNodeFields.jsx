@@ -50,10 +50,7 @@ export default function LoopNodeFields({
                 value={data.value}
                 valueType={data.value_type}
                 strict={data.strict}
-                onOperatorChange={(value) => updateField('operator', value)}
-                onValueChange={(value) => updateField('value', value)}
-                onValueTypeChange={(value) => updateField('value_type', value)}
-                onStrictChange={(value) => updateField('strict', value)}
+                onFieldsChange={(patch) => onUpdate?.({ ...data, ...patch })}
                 readOnly={readOnly}
                 operatorLabel="Exit Condition — Operator"
                 valueLabel="Exit Condition — Value"

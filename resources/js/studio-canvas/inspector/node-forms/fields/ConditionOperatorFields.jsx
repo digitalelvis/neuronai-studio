@@ -31,15 +31,27 @@ const OPERATOR_OPTIONS = [
     { value: 'lte', label: 'less or equal (number/date)' },
 ];
 
+/**
+ * Emit a single patch so parent state updates are atomic (avoids stale overwrites
+ * when operator change also clears value / sets value_type).
+ *
+ * @param {{
+ *   operator?: string,
+ *   value?: unknown,
+ *   valueType?: string,
+ *   strict?: boolean,
+ *   onFieldsChange?: (patch: Record<string, unknown>) => void,
+ *   readOnly?: boolean,
+ *   operatorLabel?: string,
+ *   valueLabel?: string,
+ * }} props
+ */
 export default function ConditionOperatorFields({
     operator,
     value,
     valueType = 'auto',
     strict = false,
-    onOperatorChange,
-    onValueChange,
-    onValueTypeChange,
-    onStrictChange,
+    onFieldsChange,
     readOnly = false,
     operatorLabel = 'Operator',
     valueLabel = 'Value',
@@ -54,14 +66,19 @@ export default function ConditionOperatorFields({
             : 'number'
         : (valueType ?? 'auto');
 
+    const patchFields = (patch) => {
+        onFieldsChange?.(patch);
+    };
+
     const handleOperatorChange = (nextOperator) => {
-        onOperatorChange?.(nextOperator);
+        const patch = { operator: nextOperator };
         if (VALUELESS_OPERATORS.includes(nextOperator)) {
-            onValueChange?.(null);
+            patch.value = null;
         }
         if (ORDER_OPERATORS.includes(nextOperator) && !COMPARABLE_VALUE_TYPES.includes(valueType)) {
-            onValueTypeChange?.('number');
+            patch.value_type = 'number';
         }
+        patchFields(patch);
     };
 
     return (
@@ -85,10 +102,11 @@ export default function ConditionOperatorFields({
                     <Select
                         value={resolvedValueType}
                         onValueChange={(next) => {
-                            onValueTypeChange?.(next);
+                            const patch = { value_type: next };
                             if (next === 'null') {
-                                onValueChange?.(null);
+                                patch.value = null;
                             }
+                            patchFields(patch);
                         }}
                         disabled={readOnly}
                     >
@@ -116,7 +134,7 @@ export default function ConditionOperatorFields({
                     <Label>{valueLabel}</Label>
                     <Select
                         value={value === true || value === 'true' ? 'true' : 'false'}
-                        onValueChange={(next) => onValueChange?.(next === 'true')}
+                        onValueChange={(next) => patchFields({ value: next === 'true' })}
                         disabled={readOnly}
                     >
                         <SelectTrigger>
@@ -140,7 +158,11 @@ export default function ConditionOperatorFields({
                     <Input
                         type="number"
                         value={value ?? ''}
-                        onChange={(e) => onValueChange?.(e.target.value === '' ? null : Number(e.target.value))}
+                        onChange={(e) =>
+                            patchFields({
+                                value: e.target.value === '' ? null : Number(e.target.value),
+                            })
+                        }
                         disabled={readOnly}
                     />
                 </div>
@@ -152,7 +174,7 @@ export default function ConditionOperatorFields({
                     <Input
                         type="datetime-local"
                         value={value ?? ''}
-                        onChange={(e) => onValueChange?.(e.target.value || null)}
+                        onChange={(e) => patchFields({ value: e.target.value || null })}
                         disabled={readOnly}
                     />
                     <p className="text-xs text-muted-foreground">
@@ -166,7 +188,7 @@ export default function ConditionOperatorFields({
                     <Label>{valueLabel}</Label>
                     <Input
                         value={value ?? ''}
-                        onChange={(e) => onValueChange?.(e.target.value)}
+                        onChange={(e) => patchFields({ value: e.target.value })}
                         disabled={readOnly}
                     />
                 </div>
@@ -178,7 +200,7 @@ export default function ConditionOperatorFields({
                         id={`strict-${operatorLabel}`}
                         type="checkbox"
                         checked={Boolean(strict)}
-                        onChange={(event) => onStrictChange?.(event.target.checked)}
+                        onChange={(event) => patchFields({ strict: event.target.checked })}
                         disabled={readOnly}
                         className="h-4 w-4 rounded border-input"
                     />
