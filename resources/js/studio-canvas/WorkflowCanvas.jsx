@@ -96,7 +96,10 @@ function WorkflowCanvasInner({
 
         return ensureLayoutedGraph(flowNodes, initialEdges);
     }, []);
-    const initialViewport = graph?.viewport || { x: 0, y: 0, zoom: 1 };
+    const initialViewport = useMemo(
+        () => graph?.viewport || { x: 0, y: 0, zoom: 1 },
+        [graph?.viewport],
+    );
 
     const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
     const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -110,6 +113,8 @@ function WorkflowCanvasInner({
     const selectedNodeIdRef = useRef(null);
     const historySeededRef = useRef(false);
     const didFitViewRef = useRef(false);
+    /** After a node drag, RF may still emit click — suppress opening the inspector. */
+    const suppressNodeClickRef = useRef(false);
 
     const { seedHistory, takeSnapshot, undo, redo, canUndo, canRedo } = useUndoRedo(setNodes, setEdges);
 
@@ -138,18 +143,24 @@ function WorkflowCanvasInner({
         setStateVariableGraphSnapshot(nodes, edges);
     }, [nodes, edges]);
 
+    // Apply saved viewport / fitView once on mount — never re-run on add/delete
+    // (nodes.length used to re-apply initialViewport and yank the camera back to start).
     useEffect(() => {
+        if (didFitViewRef.current) {
+            return;
+        }
+
         if (initialViewport.x || initialViewport.y || initialViewport.zoom !== 1) {
             setViewport(initialViewport, { duration: 0 });
             didFitViewRef.current = true;
             return;
         }
 
-        if (!didFitViewRef.current && nodes.length > 0) {
+        if (initialNodes.length > 0) {
             fitView({ padding: 0.2, duration: 0 });
             didFitViewRef.current = true;
         }
-    }, [initialViewport, nodes.length, setViewport, fitView]);
+    }, [initialViewport, initialNodes.length, setViewport, fitView]);
 
     const showEmptyState = useMemo(() => {
         const workflowNodes = nodes.filter((node) => node.data?.nodeType !== 'note');
@@ -394,13 +405,50 @@ function WorkflowCanvasInner({
         [isValidConnection, readOnly, setEdges],
     );
 
+    // Selection alone must not open the inspector — that would open mid-drag.
+    // Click opens (onNodeClick); empty selection closes; drag only moves.
     const onSelectionChange = useCallback(
         ({ nodes: selectedNodes }) => {
             if (isTestRunning) {
                 return;
             }
 
-            syncSelection(selectedNodes[0]?.id ?? null);
+            const id = selectedNodes[0]?.id ?? null;
+            if (!id) {
+                if (selectedNodeIdRef.current) {
+                    syncSelection(null);
+                }
+                return;
+            }
+
+            selectedNodeIdRef.current = id;
+        },
+        [isTestRunning, syncSelection],
+    );
+
+    const onNodeDragStart = useCallback(() => {
+        suppressNodeClickRef.current = true;
+    }, []);
+
+    const onNodeDragStop = useCallback(() => {
+        // Clear after the click event (if any) has had a chance to see the flag.
+        window.setTimeout(() => {
+            suppressNodeClickRef.current = false;
+        }, 0);
+    }, []);
+
+    const onNodeClick = useCallback(
+        (_event, node) => {
+            if (isTestRunning) {
+                return;
+            }
+
+            if (suppressNodeClickRef.current) {
+                suppressNodeClickRef.current = false;
+                return;
+            }
+
+            syncSelection(node.id);
         },
         [isTestRunning, syncSelection],
     );
@@ -947,12 +995,16 @@ function WorkflowCanvasInner({
                     isValidConnection={isValidConnection}
                     edgesReconnectable={!readOnly && !isTestRunning}
                     onSelectionChange={onSelectionChange}
+                    onNodeClick={isTestRunning ? undefined : onNodeClick}
+                    onNodeDragStart={readOnly || isTestRunning ? undefined : onNodeDragStart}
+                    onNodeDragStop={readOnly || isTestRunning ? undefined : onNodeDragStop}
                     onPaneClick={isTestRunning ? undefined : () => syncSelection(null)}
                     onDragOver={readOnly || isTestRunning ? undefined : onDragOver}
                     onDrop={readOnly || isTestRunning ? undefined : onDrop}
                     nodesDraggable={!readOnly && !isTestRunning}
                     nodesConnectable={!readOnly && !isTestRunning}
                     elementsSelectable={!isTestRunning}
+                    selectNodesOnDrag={false}
                     minZoom={0.25}
                     maxZoom={2}
                     snapToGrid
