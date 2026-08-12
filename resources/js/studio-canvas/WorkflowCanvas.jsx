@@ -32,6 +32,7 @@ import {
     FLOW_NODE_WIDTH,
     forkBranchIdsFromConfig,
     intentIdsFromConfig,
+    switchCaseIdsFromConfig,
     isToolBindingEdge,
     pruneOrphanNamedHandleEdges,
     spliceNodeIntoEdge,
@@ -465,6 +466,20 @@ function WorkflowCanvasInner({
                                 },
                             ],
                         }
+                      : type === 'switch'
+                        ? {
+                              cases: [
+                                  {
+                                      id: 'case_1',
+                                      label: 'Case 1',
+                                      state_key: 'input',
+                                      operator: 'not_empty',
+                                      value: null,
+                                      value_type: 'auto',
+                                      strict: false,
+                                  },
+                              ],
+                          }
                       : type === 'agent'
                       ? {
                             config_mode: 'inline',
@@ -552,6 +567,16 @@ function WorkflowCanvasInner({
                 if (nodeType === 'fork' && Array.isArray(data?.branches)) {
                     const previousIds = forkBranchIdsFromConfig(previousConfig);
                     const nextIds = forkBranchIdsFromConfig(data);
+                    setEdges((edges) =>
+                        syncNamedSourceHandleEdges(edges, nodeId, previousIds, nextIds, {
+                            allowDefault: true,
+                        }),
+                    );
+                }
+
+                if (nodeType === 'switch' && Array.isArray(data?.cases)) {
+                    const previousIds = switchCaseIdsFromConfig(previousConfig);
+                    const nextIds = switchCaseIdsFromConfig(data);
                     setEdges((edges) =>
                         syncNamedSourceHandleEdges(edges, nodeId, previousIds, nextIds, {
                             allowDefault: true,

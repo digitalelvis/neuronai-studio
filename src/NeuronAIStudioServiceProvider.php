@@ -45,6 +45,7 @@ use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\RunWorkflowNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\SetStateNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\StartNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\StopNodeExecutor;
+use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\SwitchNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\ToolNodeExecutor;
 use Illuminate\Contracts\Auth\Access\Gate;
 use Illuminate\Routing\Router;
@@ -256,6 +257,7 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
             'llm' => LlmNodeExecutor::class,
             'intent_classifier' => IntentClassifierNodeExecutor::class,
             'condition' => ConditionNodeExecutor::class,
+            'switch' => SwitchNodeExecutor::class,
             'set_state' => SetStateNodeExecutor::class,
             'invoke' => InvokeNodeExecutor::class,
             'run_workflow' => RunWorkflowNodeExecutor::class,

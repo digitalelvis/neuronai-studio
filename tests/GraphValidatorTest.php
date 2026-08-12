@@ -561,6 +561,60 @@ class GraphValidatorTest extends TestCase
         $this->assertTrue($result['valid'], implode(' ', $result['errors']));
     }
 
+    public function test_rejects_switch_without_cases(): void
+    {
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate([
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                ['id' => 'switch_1', 'type' => 'switch', 'position' => ['x' => 100, 'y' => 0], 'data' => ['cases' => []]],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'switch_1', 'sourceHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'switch_1', 'target' => 'stop_1', 'sourceHandle' => 'default'],
+            ],
+        ]);
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('requires at least one case', implode(' ', $result['errors']));
+    }
+
+    public function test_accepts_valid_switch_graph(): void
+    {
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate([
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                [
+                    'id' => 'switch_1',
+                    'type' => 'switch',
+                    'position' => ['x' => 100, 'y' => 0],
+                    'data' => [
+                        'cases' => [
+                            [
+                                'id' => 'gold',
+                                'label' => 'Gold',
+                                'state_key' => 'tier',
+                                'operator' => 'equals',
+                                'value' => 'gold',
+                            ],
+                        ],
+                    ],
+                ],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => -40], 'data' => []],
+                ['id' => 'stop_2', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 40], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'switch_1', 'sourceHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'switch_1', 'target' => 'stop_1', 'sourceHandle' => 'gold'],
+                ['id' => 'e3', 'source' => 'switch_1', 'target' => 'stop_2', 'sourceHandle' => 'default'],
+            ],
+        ]);
+
+        $this->assertTrue($result['valid'], implode(' ', $result['errors']));
+    }
+
     /**
      * @return array{nodes: array<int, array<string, mixed>>, edges: array<int, array<string, mixed>>}
      */

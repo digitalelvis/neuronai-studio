@@ -125,6 +125,70 @@ class ConditionNodeExecutorTest extends TestCase
         ));
     }
 
+    public function test_is_true_operator_with_boolean_state(): void
+    {
+        $this->assertSame('true', $this->runCondition(
+            ['state_key' => 'active', 'operator' => 'is_true'],
+            ['active' => true],
+        ));
+
+        $this->assertSame('false', $this->runCondition(
+            ['state_key' => 'active', 'operator' => 'is_true'],
+            ['active' => 'true'],
+        ));
+    }
+
+    public function test_is_null_operator(): void
+    {
+        $this->assertSame('true', $this->runCondition(
+            ['state_key' => 'missing', 'operator' => 'is_null'],
+            [],
+        ));
+
+        $this->assertSame('false', $this->runCondition(
+            ['state_key' => 'missing', 'operator' => 'is_null'],
+            ['missing' => ''],
+        ));
+    }
+
+    public function test_equals_with_boolean_value_type(): void
+    {
+        $this->assertSame('true', $this->runCondition(
+            [
+                'state_key' => 'active',
+                'operator' => 'equals',
+                'value' => 'true',
+                'value_type' => 'boolean',
+            ],
+            ['active' => 'true'],
+        ));
+    }
+
+    public function test_compound_rules_all_logic(): void
+    {
+        $this->assertSame('true', $this->runCondition(
+            [
+                'logic' => 'all',
+                'rules' => [
+                    ['state_key' => 'active', 'operator' => 'is_true'],
+                    ['state_key' => 'tier', 'operator' => 'equals', 'value' => 'gold'],
+                ],
+            ],
+            ['active' => true, 'tier' => 'gold'],
+        ));
+
+        $this->assertSame('false', $this->runCondition(
+            [
+                'logic' => 'all',
+                'rules' => [
+                    ['state_key' => 'active', 'operator' => 'is_true'],
+                    ['state_key' => 'tier', 'operator' => 'equals', 'value' => 'gold'],
+                ],
+            ],
+            ['active' => true, 'tier' => 'silver'],
+        ));
+    }
+
     public function test_workflow_routes_true_branch_when_condition_matches(): void
     {
         $workflow = WorkflowDefinition::create([

@@ -3,6 +3,7 @@
 namespace DigitalElvis\NeuronAIStudio\Codegen;
 
 use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
+use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\SwitchNodeExecutor;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
@@ -110,6 +111,25 @@ class GraphTranspiler
                         continue;
                     }
 
+                    $targetId = $context->targetForHandle($id, $handle);
+                    if ($targetId === null) {
+                        continue;
+                    }
+
+                    $eventName = $this->eventClassName($targetId);
+                    $branchReturns[$handle] = $eventName;
+                    $events[$targetId] = ['id' => $targetId, 'className' => $eventName];
+                }
+
+                $returnTypes = array_values(array_unique($branchReturns));
+                $returnType = count($returnTypes) === 1
+                    ? ($returnTypes[0] ?? 'StopEvent')
+                    : (count($returnTypes) > 1 ? implode('|', $returnTypes) : 'StopEvent');
+            } elseif ($type === 'switch') {
+                $cases = SwitchNodeExecutor::normalizeCases(is_array($data['cases'] ?? null) ? $data['cases'] : []);
+                $handles = array_merge(array_keys($cases), ['default']);
+
+                foreach ($handles as $handle) {
                     $targetId = $context->targetForHandle($id, $handle);
                     if ($targetId === null) {
                         continue;
