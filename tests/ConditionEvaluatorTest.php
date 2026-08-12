@@ -34,9 +34,30 @@ class ConditionEvaluatorTest extends TestCase
     {
         [$evaluator, $state] = $this->evaluatorWithState(['active' => 'true']);
 
+        // String "true" from Set State is accepted as boolean-true for is_true.
+        $this->assertTrue($evaluator->evaluateRule([
+            'state_key' => 'active',
+            'operator' => 'is_true',
+        ], $state));
+    }
+
+    public function test_is_true_rejects_unrelated_string(): void
+    {
+        [$evaluator, $state] = $this->evaluatorWithState(['active' => 'yes-please']);
+
         $this->assertFalse($evaluator->evaluateRule([
             'state_key' => 'active',
             'operator' => 'is_true',
+        ], $state));
+    }
+
+    public function test_is_false_accepts_string_false(): void
+    {
+        [$evaluator, $state] = $this->evaluatorWithState(['pending' => 'false']);
+
+        $this->assertTrue($evaluator->evaluateRule([
+            'state_key' => 'pending',
+            'operator' => 'is_false',
         ], $state));
     }
 
