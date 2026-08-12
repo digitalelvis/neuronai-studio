@@ -48,8 +48,12 @@ export default function LoopNodeFields({
             <ConditionOperatorFields
                 operator={data.operator}
                 value={data.value}
+                valueType={data.value_type}
+                strict={data.strict}
                 onOperatorChange={(value) => updateField('operator', value)}
                 onValueChange={(value) => updateField('value', value)}
+                onValueTypeChange={(value) => updateField('value_type', value)}
+                onStrictChange={(value) => updateField('strict', value)}
                 readOnly={readOnly}
                 operatorLabel="Exit Condition — Operator"
                 valueLabel="Exit Condition — Value"

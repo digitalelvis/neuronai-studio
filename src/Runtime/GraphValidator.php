@@ -6,6 +6,7 @@ use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
 use DigitalElvis\NeuronAIStudio\Registry\NodeTypeRegistry;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\IntentClassifierNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\InvokeNodeExecutor;
+use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\SwitchNodeExecutor;
 use InvalidArgumentException;
 
 class GraphValidator
@@ -94,6 +95,7 @@ class GraphValidator
         $errors = array_merge($errors, $this->validateToolBindingEdges($nodes, $edges));
         $errors = array_merge($errors, $this->validateToolsetSlugs($nodes, $edges));
         $errors = array_merge($errors, $this->validateIntentClassifierNodes($nodes, $controlEdges));
+        $errors = array_merge($errors, $this->validateSwitchNodes($nodes, $controlEdges));
 
         if (empty($errors) && ! empty($startNodes)) {
             $startId = array_values($startNodes)[0]['id'];
@@ -428,6 +430,69 @@ class GraphValidator
                 }
                 if ($validHandles !== [] && ! in_array($handle, $validHandles, true)) {
                     $errors[] = "Intent Classifier node {$id} has an edge on unknown intent handle [{$handle}].";
+                }
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $nodes
+     * @param  array<int, array<string, mixed>>  $edges
+     * @return array<int, string>
+     */
+    protected function validateSwitchNodes(array $nodes, array $edges): array
+    {
+        $errors = [];
+
+        foreach ($nodes as $node) {
+            if (($node['type'] ?? '') !== 'switch') {
+                continue;
+            }
+
+            $id = (string) ($node['id'] ?? 'unknown');
+            $data = is_array($node['data'] ?? null) ? $node['data'] : [];
+            $cases = SwitchNodeExecutor::normalizeCases(
+                is_array($data['cases'] ?? null) ? $data['cases'] : []
+            );
+
+            if ($cases === []) {
+                $errors[] = "Switch node {$id} requires at least one case with a valid id.";
+            }
+
+            $raw = is_array($data['cases'] ?? null) ? $data['cases'] : [];
+            $seen = [];
+            foreach ($raw as $item) {
+                if (! is_array($item)) {
+                    continue;
+                }
+                $caseId = trim((string) ($item['id'] ?? ''));
+                if ($caseId === '') {
+                    $errors[] = "Switch node {$id} has a case with an empty id.";
+                    continue;
+                }
+                if (! preg_match('/^[a-z][a-z0-9_]*$/', $caseId)) {
+                    $errors[] = "Switch node {$id} has invalid case id [{$caseId}]. Use lowercase letters, numbers, and underscores.";
+                    continue;
+                }
+                if (isset($seen[$caseId])) {
+                    $errors[] = "Switch node {$id} has duplicate case id [{$caseId}].";
+                }
+                $seen[$caseId] = true;
+            }
+
+            $validHandles = array_merge(array_keys($cases), ['default']);
+            foreach ($edges as $edge) {
+                if (($edge['source'] ?? null) !== $id) {
+                    continue;
+                }
+                $handle = (string) ($edge['sourceHandle'] ?? 'default');
+                if ($handle === '') {
+                    $handle = 'default';
+                }
+                if (! in_array($handle, $validHandles, true)) {
+                    $errors[] = "Switch node {$id} has an edge on unknown case handle [{$handle}].";
                 }
             }
         }

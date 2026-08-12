@@ -506,6 +506,11 @@ return [
             'icon' => 'git-branch',
             'category' => 'logic',
         ],
+        'switch' => [
+            'label' => 'Switch',
+            'icon' => 'git-merge',
+            'category' => 'logic',
+        ],
         'set_state' => [
             'label' => 'Set State',
             'icon' => 'database',

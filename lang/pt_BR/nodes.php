@@ -8,6 +8,7 @@ return [
     'llm' => 'LLM',
     'intent_classifier' => 'Classificador de intenções',
     'condition' => 'Condição',
+    'switch' => 'Switch',
     'set_state' => 'Definir estado',
     'invoke' => 'Invocar',
     'run_workflow' => 'Executar Workflow',

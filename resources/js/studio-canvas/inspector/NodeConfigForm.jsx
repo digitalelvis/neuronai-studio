@@ -9,6 +9,7 @@ import RunWorkflowNodeFields from './node-forms/RunWorkflowNodeFields';
 import SetStateNodeFields from './node-forms/SetStateNodeFields';
 import InvokeNodeFields from './node-forms/InvokeNodeFields';
 import ConditionNodeFields from './node-forms/ConditionNodeFields';
+import SwitchNodeFields from './node-forms/SwitchNodeFields';
 import LoopNodeFields from './node-forms/LoopNodeFields';
 import ForkNodeFields from './node-forms/ForkNodeFields';
 import JoinNodeFields from './node-forms/JoinNodeFields';
@@ -26,6 +27,7 @@ const NODE_FIELDS = {
     set_state: SetStateNodeFields,
     invoke: InvokeNodeFields,
     condition: ConditionNodeFields,
+    switch: SwitchNodeFields,
     loop: LoopNodeFields,
     fork: ForkNodeFields,
     join: JoinNodeFields,

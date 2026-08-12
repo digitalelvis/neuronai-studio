@@ -42,14 +42,37 @@ Back-edges into the loop body require a Loop node with `max_steps` > 0. `GraphVa
 | Operator | Behavior |
 |----------|----------|
 | `not_empty` | Value is non-empty → true branch |
-| `empty` | Value is empty → true branch |
-| `equals` | Loose equality (`==`) against value |
+| `empty` / `is_empty` | Value is empty → true branch |
+| `is_true` / `is_false` | Strict boolean check (`=== true/false`) |
+| `is_null` / `is_not_null` | Explicit null check (missing keys are null) |
+| `equals` | Equality against value (`value_type` + optional `strict`) |
 | `not_equals` | Not equal to value |
 | `contains` | String contains value |
+| `gt` / `gte` / `lt` / `lte` | Ordered comparison for **number** or **date** (`value_type`: `number` or `date`) |
+
+Compound conditions: set `logic` to `all` (AND) or `any` (OR) and provide a `rules[]` array. When `rules` is absent, the flat `state_key` / `operator` / `value` fields are used.
 
 The node has two output handles: `true` and `false`. Connect each to different downstream nodes.
 
 See [State & Conditions](../state-and-conditions.md) for detailed examples.
+
+## Switch
+
+**Purpose:** Deterministic N-way branching based on workflow state. Each case is evaluated in order; the first match routes via its handle. Unmatched flows use the `default` handle.
+
+| Config | Description |
+|--------|-------------|
+| `cases[]` | Ordered list of cases, each with `id`, `label`, `state_key`, `operator`, optional `value`, `value_type`, and `strict` |
+
+Each case uses the same operators as [Condition](#condition). Case ids become source handles (e.g. `gold`, `inactive`). Connect the `default` handle for fallback routing.
+
+```mermaid
+flowchart LR
+    Start[Start] --> Switch[Switch]
+    Switch -->|gold| VIP[VIP Agent]
+    Switch -->|silver| Std[Standard Agent]
+    Switch -->|default| Other[Other Agent]
+```
 
 ## Set State
 
@@ -199,6 +222,7 @@ See [Runtime & Traces](../runtime-and-traces.md#parallel-execution) for branch s
 |------|--------|---------|
 | Loop | 1 | 2 (continue, exit) |
 | Condition | 1 | 2 (true, false) |
+| Switch | 1 | 1 per case + default |
 | Set State | 1 | 1 |
 | Invoke | 1 | 1 |
 | Run Workflow | 1 (Step) / toolset (Tool Mode) | 1 (Step) / tools binding (Tool Mode) |
@@ -207,7 +231,7 @@ See [Runtime & Traces](../runtime-and-traces.md#parallel-execution) for branch s
 
 ## Related code
 
-- `LoopNodeExecutor`, `ConditionNodeExecutor`, `SetStateNodeExecutor`, `InvokeNodeExecutor`
+- `LoopNodeExecutor`, `ConditionNodeExecutor`, `SwitchNodeExecutor`, `SetStateNodeExecutor`, `InvokeNodeExecutor`
 - `RunWorkflowNodeExecutor`, `WorkflowAsTool`
 - `ForkNodeExecutor`, `JoinNodeExecutor`, `ParallelBranchRunner`
 - `StateTemplateInterpolator` — for `{{key}}` in other nodes, not Condition evaluation

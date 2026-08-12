@@ -3,13 +3,16 @@
 namespace DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors;
 
 use DigitalElvis\NeuronAIStudio\Runtime\BuilderWorkflowState;
+use DigitalElvis\NeuronAIStudio\Runtime\ConditionEvaluator;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\MaxLoopIterationsException;
 use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
-use DigitalElvis\NeuronAIStudio\Runtime\WorkflowStateValue;
 use NeuronAI\Workflow\WorkflowState;
 
 class LoopNodeExecutor implements NodeExecutorInterface
 {
+    public function __construct(
+        protected ConditionEvaluator $evaluator = new ConditionEvaluator,
+    ) {}
     public function execute(array $nodeConfig, WorkflowState $state, GraphContext $context): string
     {
         $nodeId = (string) ($nodeConfig['id'] ?? 'loop');
@@ -57,18 +60,13 @@ class LoopNodeExecutor implements NodeExecutorInterface
      */
     protected function conditionMet(array $data, WorkflowState $state): bool
     {
-        $key = (string) ($data['state_key'] ?? 'input');
-        $operator = $data['operator'] ?? 'not_empty';
-        $value = $data['value'] ?? null;
-        $stateValue = WorkflowStateValue::get($state, $key);
-
-        return match ($operator) {
-            'equals' => $stateValue == $value,
-            'not_equals' => $stateValue != $value,
-            'contains' => is_string($stateValue) && str_contains($stateValue, (string) $value),
-            'empty' => empty($stateValue),
-            default => ! empty($stateValue),
-        };
+        return $this->evaluator->evaluateRule([
+            'state_key' => $data['state_key'] ?? 'input',
+            'operator' => $data['operator'] ?? 'not_empty',
+            'value' => $data['value'] ?? null,
+            'value_type' => $data['value_type'] ?? ConditionEvaluator::VALUE_TYPE_AUTO,
+            'strict' => $data['strict'] ?? false,
+        ], $state);
     }
 
     protected function trackLoopIterations(WorkflowState $state, string $nodeId, int $iterations): void

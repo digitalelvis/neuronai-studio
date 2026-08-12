@@ -182,6 +182,25 @@ export function stripTemplate(value) {
 }
 
 /**
+ * Normalize user input into a raw state key (strip `{{key}}`, validate chars).
+ * Returns empty string when invalid.
+ * @param {unknown} input
+ * @returns {string}
+ */
+export function normalizeStateKey(input) {
+    if (typeof input !== 'string') {
+        return '';
+    }
+
+    const key = stripTemplate(input.trim());
+    if (key === '' || !/^[\w.]+$/.test(key)) {
+        return '';
+    }
+
+    return key;
+}
+
+/**
  * @param {string} text
  * @returns {Array<{ key: string, start: number, end: number, raw: string }>}
  */

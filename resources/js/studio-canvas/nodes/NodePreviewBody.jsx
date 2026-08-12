@@ -18,6 +18,14 @@ function intentList(config) {
     return config.intents.filter((intent) => intent && typeof intent === 'object' && intent.id);
 }
 
+function switchCaseList(config) {
+    if (!config || !Array.isArray(config.cases)) {
+        return [];
+    }
+
+    return config.cases.filter((caseItem) => caseItem && typeof caseItem === 'object' && caseItem.id);
+}
+
 function PreviewBadge({ children }) {
     if (!children) {
         return null;
@@ -51,6 +59,10 @@ export function getForkBranches(config) {
 
 export function getIntentIds(config) {
     return intentList(config).map((intent) => intent.id);
+}
+
+export function getSwitchCaseIds(config) {
+    return switchCaseList(config).map((caseItem) => caseItem.id);
 }
 
 export default function NodePreviewBody({
@@ -146,6 +158,24 @@ export default function NodePreviewBody({
                     label="false"
                     className="ab-flow-handle-label-false"
                 />
+            </div>
+        );
+    }
+
+    if (nodeType === 'switch') {
+        const cases = switchCaseList(config);
+
+        return (
+            <div className="ab-flow-node-preview">
+                <PreviewRow anchor="default" label="default" muted />
+                {cases.length === 0 && <PreviewMeta>No cases</PreviewMeta>}
+                {cases.map((caseItem) => (
+                    <PreviewRow
+                        key={caseItem.id}
+                        anchor={`case:${caseItem.id}`}
+                        label={caseItem.label || caseItem.id}
+                    />
+                ))}
             </div>
         );
     }

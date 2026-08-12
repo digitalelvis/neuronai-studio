@@ -17,6 +17,7 @@ import {
 import StateVariablePicker from './StateVariablePicker';
 
 const CHIP_ATTR = 'data-state-var-key';
+const BLOCK_TAGS = new Set(['DIV', 'P']);
 
 function escapeHtml(text) {
     return String(text)
@@ -24,6 +25,10 @@ function escapeHtml(text) {
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;');
+}
+
+function escapeHtmlWithNewlines(text) {
+    return escapeHtml(text).replace(/\n/g, '<br>');
 }
 
 function groupClass(group) {
@@ -62,6 +67,31 @@ function chipHtml(key, lookup) {
 }
 
 /**
+ * @param {string} text
+ * @param {Map<string, import('../stateVariables').StateVariable>} lookup
+ */
+function plainTextToHtml(text, lookup) {
+    const refs = parseTemplateRefs(text);
+    if (refs.length === 0) {
+        return escapeHtmlWithNewlines(text);
+    }
+
+    let html = '';
+    let cursor = 0;
+    for (const ref of refs) {
+        if (ref.start > cursor) {
+            html += escapeHtmlWithNewlines(text.slice(cursor, ref.start));
+        }
+        html += chipHtml(ref.key, lookup);
+        cursor = ref.end;
+    }
+    if (cursor < text.length) {
+        html += escapeHtmlWithNewlines(text.slice(cursor));
+    }
+    return html;
+}
+
+/**
  * @param {string} value
  * @param {Map<string, import('../stateVariables').StateVariable>} lookup
  */
@@ -71,24 +101,7 @@ function valueToHtml(value, lookup) {
         return '';
     }
 
-    const refs = parseTemplateRefs(source);
-    if (refs.length === 0) {
-        return escapeHtml(source);
-    }
-
-    let html = '';
-    let cursor = 0;
-    for (const ref of refs) {
-        if (ref.start > cursor) {
-            html += escapeHtml(source.slice(cursor, ref.start));
-        }
-        html += chipHtml(ref.key, lookup);
-        cursor = ref.end;
-    }
-    if (cursor < source.length) {
-        html += escapeHtml(source.slice(cursor));
-    }
-    return html;
+    return plainTextToHtml(source, lookup);
 }
 
 /**
@@ -101,7 +114,7 @@ function serializeEditor(root) {
 
     let out = '';
 
-    const walk = (node) => {
+    const walk = (node, isBlockChild = false) => {
         if (node.nodeType === Node.TEXT_NODE) {
             out += node.textContent ?? '';
             return;
@@ -123,23 +136,162 @@ function serializeEditor(root) {
             return;
         }
 
-        el.childNodes.forEach(walk);
+        if (BLOCK_TAGS.has(el.tagName)) {
+            if (out.length > 0 && !out.endsWith('\n')) {
+                out += '\n';
+            }
+            el.childNodes.forEach((child) => walk(child, true));
+            if (isBlockChild && el.nextSibling) {
+                out += '\n';
+            }
+            return;
+        }
+
+        el.childNodes.forEach((child) => walk(child, isBlockChild));
     };
 
-    root.childNodes.forEach(walk);
+    root.childNodes.forEach((child) => walk(child, false));
     return out;
 }
 
-function placeCaretAtEnd(el) {
+/**
+ * @param {HTMLElement} root
+ * @returns {number}
+ */
+function getCaretOffset(root) {
     const selection = window.getSelection();
-    if (!selection || !el) {
+    if (!selection || selection.rangeCount === 0) {
+        return 0;
+    }
+
+    const range = selection.getRangeAt(0);
+    if (!root.contains(range.startContainer)) {
+        return 0;
+    }
+
+    const preRange = document.createRange();
+    preRange.selectNodeContents(root);
+    preRange.setEnd(range.startContainer, range.startOffset);
+    return preRange.toString().length;
+}
+
+/**
+ * @param {HTMLElement} root
+ * @param {number} offset
+ */
+function setCaretOffset(root, offset) {
+    const selection = window.getSelection();
+    if (!selection) {
         return;
     }
+
+    let remaining = Math.max(0, offset);
     const range = document.createRange();
-    range.selectNodeContents(el);
-    range.collapse(false);
+    let found = false;
+
+    const walk = (node) => {
+        if (found) {
+            return;
+        }
+
+        if (node.nodeType === Node.TEXT_NODE) {
+            const length = node.textContent?.length ?? 0;
+            if (remaining <= length) {
+                range.setStart(node, remaining);
+                range.collapse(true);
+                found = true;
+                return;
+            }
+            remaining -= length;
+            return;
+        }
+
+        if (node.nodeType !== Node.ELEMENT_NODE) {
+            return;
+        }
+
+        const el = /** @type {HTMLElement} */ (node);
+        if (el.getAttribute?.(CHIP_ATTR)) {
+            const length = toTemplate(el.getAttribute(CHIP_ATTR) ?? '').length;
+            if (remaining <= length) {
+                range.setStartAfter(el);
+                range.collapse(true);
+                found = true;
+                return;
+            }
+            remaining -= length;
+            return;
+        }
+
+        if (el.tagName === 'BR') {
+            if (remaining <= 1) {
+                range.setStartBefore(el);
+                range.collapse(true);
+                found = true;
+                return;
+            }
+            remaining -= 1;
+            return;
+        }
+
+        for (const child of el.childNodes) {
+            walk(child);
+            if (found) {
+                return;
+            }
+        }
+    };
+
+    walk(root);
+
+    if (!found) {
+        range.selectNodeContents(root);
+        range.collapse(false);
+    }
+
     selection.removeAllRanges();
     selection.addRange(range);
+}
+
+function placeCaretAtEnd(el) {
+    setCaretOffset(el, serializeEditor(el).length);
+}
+
+/**
+ * @param {HTMLElement} root
+ * @returns {Range|null}
+ */
+function captureSelectionRange(root) {
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) {
+        return null;
+    }
+
+    const range = selection.getRangeAt(0);
+    if (!root.contains(range.startContainer)) {
+        return null;
+    }
+
+    return range.cloneRange();
+}
+
+/**
+ * @param {HTMLElement} root
+ * @param {Range|null} savedRange
+ */
+function restoreSelectionRange(root, savedRange) {
+    if (!savedRange) {
+        return;
+    }
+
+    root.focus();
+    const selection = window.getSelection();
+    if (!selection) {
+        return;
+    }
+
+    selection.removeAllRanges();
+    selection.addRange(savedRange);
 }
 
 /**
@@ -194,6 +346,8 @@ export default function StateVariableTextField({
     const editorRef = React.useRef(null);
     const expandedEditorRef = React.useRef(null);
     const lastEmitted = React.useRef(value ?? '');
+    const savedRangeRef = React.useRef(/** @type {Range|null} */ (null));
+    const inlineCaretOffsetRef = React.useRef(0);
     const [open, setOpen] = React.useState(false);
     const [pickerOpen, setPickerOpen] = React.useState(false);
     const [draft, setDraft] = React.useState(value ?? '');
@@ -212,13 +366,25 @@ export default function StateVariableTextField({
     );
 
     const syncDom = React.useCallback(
-        (el, nextValue) => {
+        (el, nextValue, preserveCaret = false) => {
             if (!el) {
                 return;
             }
+
+            if (document.activeElement === el && !preserveCaret) {
+                return;
+            }
+
             const html = valueToHtml(nextValue ?? '', lookup);
-            if (el.innerHTML !== html) {
-                el.innerHTML = html;
+            if (el.innerHTML === html) {
+                return;
+            }
+
+            const caretOffset = preserveCaret ? getCaretOffset(el) : null;
+            el.innerHTML = html;
+
+            if (preserveCaret && caretOffset !== null) {
+                setCaretOffset(el, caretOffset);
             }
         },
         [lookup],
@@ -234,6 +400,23 @@ export default function StateVariableTextField({
         syncDom(editorRef.current, next);
     }, [value, syncDom]);
 
+    const getActiveEditor = () =>
+        activeTarget === 'expanded' ? expandedEditorRef.current : editorRef.current;
+
+    const saveEditorSelection = (target) => {
+        if (!target) {
+            savedRangeRef.current = null;
+            return;
+        }
+        savedRangeRef.current = captureSelectionRange(target);
+    };
+
+    const openPicker = (target) => {
+        saveEditorSelection(target);
+        setActiveTarget(target === expandedEditorRef.current ? 'expanded' : 'inline');
+        setPickerOpen(true);
+    };
+
     const handleEditorInput = (event) => {
         if (locked) {
             return;
@@ -247,15 +430,54 @@ export default function StateVariableTextField({
         }
     };
 
+    const insertNewlineAtCaret = (target) => {
+        const selection = window.getSelection();
+        if (!selection) {
+            return;
+        }
+
+        let range;
+        if (selection.rangeCount > 0 && target.contains(selection.anchorNode)) {
+            range = selection.getRangeAt(0);
+        } else if (savedRangeRef.current && target.contains(savedRangeRef.current.startContainer)) {
+            range = savedRangeRef.current;
+        } else {
+            range = document.createRange();
+            range.selectNodeContents(target);
+            range.collapse(false);
+        }
+
+        range.deleteContents();
+        const textNode = document.createTextNode('\n');
+        range.insertNode(textNode);
+        range.setStartAfter(textNode);
+        range.collapse(true);
+        selection.removeAllRanges();
+        selection.addRange(range);
+
+        const next = serializeEditor(target);
+        emitChange(next);
+        if (open && target === expandedEditorRef.current) {
+            setDraft(next);
+        }
+    };
+
     const handleKeyDown = (event) => {
         if (locked) {
             return;
         }
 
+        const target = event.currentTarget;
+
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            insertNewlineAtCaret(target);
+            return;
+        }
+
         if (event.key === '/' && !event.metaKey && !event.ctrlKey && !event.altKey) {
             event.preventDefault();
-            setActiveTarget(event.currentTarget === expandedEditorRef.current ? 'expanded' : 'inline');
-            setPickerOpen(true);
+            openPicker(target);
         }
     };
 
@@ -264,8 +486,7 @@ export default function StateVariableTextField({
             return;
         }
 
-        const target =
-            activeTarget === 'expanded' ? expandedEditorRef.current : editorRef.current;
+        const target = getActiveEditor();
         if (!target) {
             const next = `${lastEmitted.current || ''}${toTemplate(variable.key)}`;
             emitChange(next);
@@ -284,6 +505,8 @@ export default function StateVariableTextField({
         let range;
         if (selection.rangeCount > 0 && target.contains(selection.anchorNode)) {
             range = selection.getRangeAt(0);
+        } else if (savedRangeRef.current && target.contains(savedRangeRef.current.startContainer)) {
+            range = savedRangeRef.current;
         } else {
             range = document.createRange();
             range.selectNodeContents(target);
@@ -304,6 +527,8 @@ export default function StateVariableTextField({
             selection.addRange(range);
         }
 
+        savedRangeRef.current = null;
+
         const next = serializeEditor(target);
         emitChange(next);
         if (open) {
@@ -312,9 +537,19 @@ export default function StateVariableTextField({
         }
     };
 
+    const handlePickerClose = () => {
+        const target = getActiveEditor();
+        if (target) {
+            restoreSelectionRange(target, savedRangeRef.current);
+        }
+    };
+
     const openEditor = (event) => {
         event.preventDefault();
         event.stopPropagation();
+        if (editorRef.current) {
+            inlineCaretOffsetRef.current = getCaretOffset(editorRef.current);
+        }
         setDraft(value ?? '');
         setOpen(true);
         setActiveTarget('expanded');
@@ -340,7 +575,9 @@ export default function StateVariableTextField({
         }
         const timer = window.setTimeout(() => {
             syncDom(expandedEditorRef.current, draft);
-            placeCaretAtEnd(expandedEditorRef.current);
+            if (expandedEditorRef.current) {
+                setCaretOffset(expandedEditorRef.current, inlineCaretOffsetRef.current);
+            }
         }, 0);
         return () => window.clearTimeout(timer);
     }, [open]); // eslint-disable-line react-hooks/exhaustive-deps -- sync once on open
@@ -352,6 +589,12 @@ export default function StateVariableTextField({
         <button
             type="button"
             disabled={locked}
+            onMouseDown={(event) => {
+                event.preventDefault();
+                if (!locked) {
+                    openPicker(getActiveEditor() ?? editorRef.current);
+                }
+            }}
             className="inline-flex h-6 items-center rounded-md px-1.5 font-mono text-[11px] text-muted-foreground transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
             title="Insert variable — click here or type /"
             aria-label="Insert variable"
@@ -384,9 +627,12 @@ export default function StateVariableTextField({
                 style={{ minHeight }}
                 onInput={handleEditorInput}
                 onKeyDown={handleKeyDown}
-                onBlur={() => {
-                    // Normalize after blur so chips stay consistent.
-                    syncDom(ref.current, lastEmitted.current);
+                onBlur={(event) => {
+                    const related = event.relatedTarget;
+                    if (related instanceof HTMLElement && related.closest('[data-state-var-picker]')) {
+                        return;
+                    }
+                    syncDom(ref.current, lastEmitted.current, true);
                 }}
             />
         </div>
@@ -402,6 +648,9 @@ export default function StateVariableTextField({
                             <StateVariablePicker
                                 open={pickerOpen && activeTarget === 'inline'}
                                 onOpenChange={(next) => {
+                                    if (!next) {
+                                        handlePickerClose();
+                                    }
                                     setActiveTarget('inline');
                                     setPickerOpen(next);
                                 }}
@@ -436,6 +685,9 @@ export default function StateVariableTextField({
                             <StateVariablePicker
                                 open={pickerOpen && activeTarget === 'expanded'}
                                 onOpenChange={(next) => {
+                                    if (!next) {
+                                        handlePickerClose();
+                                    }
                                     setActiveTarget('expanded');
                                     setPickerOpen(next);
                                 }}

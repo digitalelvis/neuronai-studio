@@ -115,6 +115,22 @@ export function normalizeNodeForEdit(node) {
         data.operator = 'not_empty';
     }
 
+    if (node.type === 'switch') {
+        if (!Array.isArray(data.cases) || data.cases.length === 0) {
+            data.cases = [
+                {
+                    id: 'case_1',
+                    label: 'Case 1',
+                    state_key: 'input',
+                    operator: 'not_empty',
+                    value: null,
+                    value_type: 'auto',
+                    strict: false,
+                },
+            ];
+        }
+    }
+
     if (node.type === 'llm' && !data.output_key) {
         data.output_key = 'llm_response';
     }
