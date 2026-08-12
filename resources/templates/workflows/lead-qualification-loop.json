@@ -97,7 +97,9 @@
           "x": 2040,
           "y": 128
         },
-        "data": {}
+        "data": {
+          "reply": "{{agent_response}}"
+        }
       },
       {
         "id": "stop_missing_email",
@@ -106,7 +108,9 @@
           "x": 2040,
           "y": 304
         },
-        "data": {}
+        "data": {
+          "reply": "{{agent_response}}"
+        }
       },
       {
         "id": "cond_has_email",

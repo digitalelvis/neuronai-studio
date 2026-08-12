@@ -221,8 +221,21 @@ export function buildWorkflowOutputFallback(output, userMessage = '', depth = 0)
         });
     }
 
+    const reply = typeof output.reply === 'string' ? output.reply : '';
+    if (reply && reply !== message) {
+        thread.push({
+            nodeId: '__reply__',
+            nodeType: 'reply',
+            label: 'reply',
+            content: reply,
+            key: 'reply',
+        });
+
+        return thread;
+    }
+
     for (const [key, value] of Object.entries(output)) {
-        if (isInternalKey(key) || METADATA_OUTPUT_KEYS.has(key)) {
+        if (isInternalKey(key) || METADATA_OUTPUT_KEYS.has(key) || key === 'reply') {
             continue;
         }
 
@@ -268,6 +281,21 @@ export function buildWorkflowPrettyThread(output, userMessage = '', depth = 0) {
         return thread;
     }
 
+    // Canonical channel reply (Stop.reply) — primary assistant bubble for Pretty.
+    // Full step diffs remain available in Data view (formatWorkflowData).
+    const reply = typeof output?.reply === 'string' ? output.reply : '';
+    if (reply && reply !== message) {
+        thread.push({
+            nodeId: '__reply__',
+            nodeType: 'reply',
+            label: 'reply',
+            content: reply,
+            key: 'reply',
+        });
+
+        return thread;
+    }
+
     const steps = Array.isArray(output?.__steps) ? output.__steps : [];
     let previousSnapshot = {};
 
@@ -276,7 +304,7 @@ export function buildWorkflowPrettyThread(output, userMessage = '', depth = 0) {
         const nodeId = step.node_id ?? nodeType;
         const snapshot = step.state_snapshot ?? {};
 
-        if (nodeType === 'start') {
+        if (nodeType === 'start' || nodeType === 'stop') {
             previousSnapshot = snapshot;
             continue;
         }

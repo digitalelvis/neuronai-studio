@@ -124,15 +124,22 @@ export default function WorkflowEditorShell({ config }) {
         const result = await component.call('validateGraph');
         const message = result?.message ?? component.get('validationMessage') ?? '';
         const errors = Array.isArray(result?.errors) ? result.errors : [];
+        const warnings = Array.isArray(result?.warnings) ? result.warnings : [];
         setValidationMessage(message);
         setValidationErrorCount(result?.valid ? 0 : errors.length || (message ? 1 : 0));
 
-        if (!message) {
+        if (!message && warnings.length === 0) {
             return;
         }
 
         if (result?.valid) {
-            window.NeuronAIStudioToast?.success(message);
+            if (warnings.length > 0) {
+                window.NeuronAIStudioToast?.success(
+                    `${message} ${warnings.slice(0, 2).join(' ')}${warnings.length > 2 ? '…' : ''}`,
+                );
+            } else {
+                window.NeuronAIStudioToast?.success(message);
+            }
         } else {
             window.NeuronAIStudioToast?.error(message);
         }

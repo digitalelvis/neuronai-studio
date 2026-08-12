@@ -115,7 +115,9 @@
           "x": 2440,
           "y": 40
         },
-        "data": {}
+        "data": {
+          "reply": "{{triage_summary}}"
+        }
       }
     ],
     "edges": [

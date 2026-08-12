@@ -16,10 +16,11 @@ class GraphValidator
         protected CycleDetector $cycleDetector,
     ) {}
 
-    /** @return array{valid: bool, errors: array<string>} */
+    /** @return array{valid: bool, errors: array<int, string>, warnings: array<int, string>} */
     public function validate(array $graph, ?int $currentWorkflowId = null): array
     {
         $errors = [];
+        $warnings = [];
         $nodes = array_values(array_filter(
             $graph['nodes'] ?? [],
             fn ($n) => ($n['type'] ?? '') !== 'note',
@@ -27,7 +28,7 @@ class GraphValidator
         $edges = $graph['edges'] ?? [];
 
         if (empty($nodes)) {
-            return ['valid' => false, 'errors' => ['Graph must contain at least one node.']];
+            return ['valid' => false, 'errors' => ['Graph must contain at least one node.'], 'warnings' => []];
         }
 
         $startNodes = array_filter($nodes, fn ($n) => ($n['type'] ?? '') === 'start');
@@ -96,6 +97,8 @@ class GraphValidator
         $errors = array_merge($errors, $this->validateToolsetSlugs($nodes, $edges));
         $errors = array_merge($errors, $this->validateIntentClassifierNodes($nodes, $controlEdges));
         $errors = array_merge($errors, $this->validateSwitchNodes($nodes, $controlEdges));
+        $errors = array_merge($errors, $this->validateDuplicateHandles($nodes, $controlEdges));
+        $warnings = array_merge($warnings, $this->validateReplyContractWarnings($nodes, $controlEdges));
 
         if (empty($errors) && ! empty($startNodes)) {
             $startId = array_values($startNodes)[0]['id'];
@@ -107,6 +110,7 @@ class GraphValidator
         return [
             'valid' => empty($errors),
             'errors' => $errors,
+            'warnings' => $warnings,
         ];
     }
 
@@ -777,6 +781,112 @@ class GraphValidator
         }
 
         return $errors;
+    }
+
+    /**
+     * Duplicate control-flow edges on the same source+handle: runtime only follows the first.
+     *
+     * @param  array<int, array<string, mixed>>  $nodes
+     * @param  array<int, array<string, mixed>>  $edges
+     * @return array<int, string>
+     */
+    protected function validateDuplicateHandles(array $nodes, array $edges): array
+    {
+        $errors = [];
+        $typeById = [];
+        foreach ($nodes as $node) {
+            $id = (string) ($node['id'] ?? '');
+            if ($id !== '') {
+                $typeById[$id] = (string) ($node['type'] ?? '');
+            }
+        }
+
+        $seen = [];
+        foreach ($edges as $edge) {
+            $source = (string) ($edge['source'] ?? '');
+            if ($source === '') {
+                continue;
+            }
+
+            // Fork intentionally fans out multiple edges from branch handles;
+            // each branch id is a distinct sourceHandle.
+            if (($typeById[$source] ?? '') === 'fork') {
+                continue;
+            }
+
+            $handle = (string) ($edge['sourceHandle'] ?? 'default');
+            $key = $source.'|'.$handle;
+            if (isset($seen[$key])) {
+                $errors[] = "Node {$source} has multiple control-flow edges on handle '{$handle}' (only the first runs).";
+            } else {
+                $seen[$key] = true;
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Soft reply-contract checks (do not fail validation).
+     *
+     * @param  array<int, array<string, mixed>>  $nodes
+     * @param  array<int, array<string, mixed>>  $edges
+     * @return array<int, string>
+     */
+    protected function validateReplyContractWarnings(array $nodes, array $edges): array
+    {
+        $warnings = [];
+        $outgoing = [];
+        foreach ($edges as $edge) {
+            $source = (string) ($edge['source'] ?? '');
+            $handle = (string) ($edge['sourceHandle'] ?? 'default');
+            if ($source === '') {
+                continue;
+            }
+            $outgoing[$source][$handle] = true;
+        }
+
+        foreach ($nodes as $node) {
+            $id = (string) ($node['id'] ?? 'unknown');
+            $type = (string) ($node['type'] ?? '');
+            $data = is_array($node['data'] ?? null) ? $node['data'] : [];
+            $handles = $outgoing[$id] ?? [];
+
+            if ($type === 'stop') {
+                $reply = is_string($data['reply'] ?? null) ? trim($data['reply']) : '';
+                if ($reply === '') {
+                    $warnings[] = "Stop node {$id} has no reply template; channel may guess or return empty.";
+                }
+            }
+
+            if ($type === 'human' && $handles === []) {
+                $warnings[] = "Human node {$id} has no outgoing edge; resume ends the run without a Stop.";
+            }
+
+            if ($type === 'condition') {
+                if (! isset($handles['true'])) {
+                    $warnings[] = "Condition node {$id} has no 'true' edge.";
+                }
+                if (! isset($handles['false'])) {
+                    $warnings[] = "Condition node {$id} has no 'false' edge; false path ends implicitly.";
+                }
+            }
+
+            if ($type === 'loop') {
+                if (! isset($handles['continue'])) {
+                    $warnings[] = "Loop node {$id} has no 'continue' edge.";
+                }
+                if (! isset($handles['exit'])) {
+                    $warnings[] = "Loop node {$id} has no 'exit' edge.";
+                }
+            }
+
+            if ($type === 'switch' && ! isset($handles['default'])) {
+                $warnings[] = "Switch node {$id} has no 'default' edge; unmatched cases end implicitly.";
+            }
+        }
+
+        return $warnings;
     }
 
     protected function canReachStop(string $startId, array $nodes, array $edges): bool

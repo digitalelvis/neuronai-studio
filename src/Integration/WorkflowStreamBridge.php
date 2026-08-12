@@ -3,6 +3,7 @@
 namespace DigitalElvis\NeuronAIStudio\Integration;
 
 use DigitalElvis\NeuronAIStudio\Models\StudioRun;
+use DigitalElvis\NeuronAIStudio\Runtime\WorkflowReplyResolver;
 use Illuminate\Support\Str;
 use NeuronAI\Chat\Messages\Stream\Adapters\AGUIAdapter;
 use NeuronAI\Chat\Messages\Stream\Adapters\StreamAdapterInterface;
@@ -28,12 +29,18 @@ class WorkflowStreamBridge
     /** Shared message id so all text deltas belong to one assistant message. */
     protected string $messageId;
 
-    /** Whether any text delta was streamed via `token` events. */
+    /** Whether any reply-facing text delta was streamed via `token` events. */
     protected bool $streamedText = false;
 
-    public function __construct(protected StreamAdapterInterface $adapter)
-    {
+    /** Human prompt captured from `human_input_required` for channel reply. */
+    protected ?string $humanPrompt = null;
+
+    public function __construct(
+        protected StreamAdapterInterface $adapter,
+        protected ?WorkflowReplyResolver $replyResolver = null,
+    ) {
         $this->messageId = 'msg_'.Str::uuid()->toString();
+        $this->replyResolver ??= app(WorkflowReplyResolver::class);
     }
 
     /**
@@ -58,11 +65,20 @@ class WorkflowStreamBridge
 
         $run = $execute($emitter);
 
-        // Step-boundary fallback: when no per-token deltas were streamed (node
-        // without `stream: true`), emit the final output text so external
-        // clients still receive the assistant response.
-        if (! $this->streamedText) {
-            $text = $this->finalText($run);
+        // Human pause: publish the prompt as the channel reply (WRC-03).
+        if ($run->status === 'awaiting_input' && ! $this->streamedText) {
+            $prompt = $this->humanPrompt ?? $this->replyResolver->textFromRun($run);
+            if ($prompt !== '') {
+                foreach ($this->adapter->transform(new TextChunk($this->messageId, $prompt)) as $line) {
+                    $sink($line);
+                }
+                $this->streamedText = true;
+            }
+        }
+
+        // Step-boundary fallback when no reply-facing tokens were streamed.
+        if (! $this->streamedText && ! in_array($run->status, ['awaiting_input', 'awaiting_tool_approval'], true)) {
+            $text = $this->replyResolver->textFromRun($run);
 
             if ($text !== '') {
                 foreach ($this->adapter->transform(new TextChunk($this->messageId, $text)) as $line) {
@@ -96,6 +112,11 @@ class WorkflowStreamBridge
     {
         switch ($event) {
             case 'token':
+                // WRC-04: only forward reply-facing streams to the wire protocol.
+                if (($data['publish_reply'] ?? true) === false) {
+                    return [];
+                }
+
                 $delta = (string) ($data['delta'] ?? '');
 
                 if ($delta === '') {
@@ -105,6 +126,14 @@ class WorkflowStreamBridge
                 $this->streamedText = true;
 
                 return $this->adapter->transform(new TextChunk($this->messageId, $delta));
+
+            case 'human_input_required':
+                $prompt = (string) ($data['prompt'] ?? '');
+                if ($prompt !== '') {
+                    $this->humanPrompt = $prompt;
+                }
+
+                return [];
 
             case 'tool_call':
                 return $this->adapter->transform(new ToolCallChunk($this->toolFrom($data)));
@@ -138,33 +167,6 @@ class WorkflowStreamBridge
     }
 
     /**
-     * Best-effort final text for the step-boundary fallback: the last non-meta
-     * string value written to the workflow output (typically the final agent/
-     * llm node response).
-     */
-    protected function finalText(StudioRun $run): string
-    {
-        $output = is_array($run->output) ? $run->output : [];
-        $text = '';
-
-        foreach ($output as $key => $value) {
-            if (is_string($key) && str_starts_with($key, '__')) {
-                continue;
-            }
-
-            if (in_array($key, ['input', 'attachments'], true)) {
-                continue;
-            }
-
-            if (is_string($value) && $value !== '') {
-                $text = $value;
-            }
-        }
-
-        return $text;
-    }
-
-    /**
      * Emit a protocol-appropriate terminal signal that the workflow paused and
      * is awaiting input, carrying the `trace_id` the client uses to resume via
      * `traces/{trace}/resume/{protocol}`.
@@ -178,6 +180,11 @@ class WorkflowStreamBridge
             'trace_id' => $run->id,
             'node_id' => $run->awaitingNodeId(),
         ];
+
+        $prompt = $this->humanPrompt ?? $this->replyResolver->textFromRun($run);
+        if ($prompt !== '') {
+            $payload['prompt'] = $prompt;
+        }
 
         if ($this->adapter instanceof AGUIAdapter) {
             yield 'data: '.json_encode([

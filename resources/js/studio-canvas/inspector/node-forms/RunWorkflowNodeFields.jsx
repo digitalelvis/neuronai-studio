@@ -127,14 +127,31 @@ export default function RunWorkflowNodeFields({
             )}
 
             {!toolMode && (
-                <OutputKeyField
-                    value={data.output_key}
-                    defaultValue="child_output"
-                    onChange={(value) => updateField('output_key', value)}
-                    readOnly={readOnly}
-                    compact={compact}
-                    hint="Parent state key where the child workflow output is stored."
-                />
+                <>
+                    <OutputKeyField
+                        value={data.output_key}
+                        defaultValue="child_output"
+                        onChange={(value) => updateField('output_key', value)}
+                        readOnly={readOnly}
+                        compact={compact}
+                        hint="Parent state key where the child workflow output is stored."
+                    />
+                    <div className="space-y-2">
+                        <Label>Output mode</Label>
+                        <select
+                            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+                            value={data.output_mode === 'state' ? 'state' : 'reply'}
+                            disabled={readOnly}
+                            onChange={(e) => updateField('output_mode', e.target.value)}
+                        >
+                            <option value="reply">Child reply text</option>
+                            <option value="state">Full child state (JSON)</option>
+                        </select>
+                        <p className="text-[10px] text-muted-foreground">
+                            Prefer reply (Stop.reply / legacy text). Use state when the parent needs the full snapshot.
+                        </p>
+                    </div>
+                </>
             )}
         </>
     );

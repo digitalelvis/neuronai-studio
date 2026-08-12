@@ -13,6 +13,7 @@ Workflows share a mutable key-value **state** (`WorkflowState`) for the duration
 | **LLM** / **RAG** nodes | `output_key` | Node output (string, or validated array when `structured` is on) |
 | **Tool** / **MCP** nodes | `output_key` (default: `tool_result` / `mcp_result`) | Tool result payload |
 | **Human** node | `output_key` (default: `human_response`) | User reply when the run resumes |
+| **Stop** node | `reply` | User-facing channel message (`state.reply`); template e.g. `{{agent_response}}` |
 | **Set State** node | `key` from node config | `value` (literal or `{{templates}}`), or legacy `from_key` / `append_from_key` |
 
 Internal keys such as `__workflow_run_id`, `__current_node_id`, `__steps`, `__studio_thread_id`, `__studio_run_id`, `__studio_owner_type`, `__studio_owner_id`, `__studio_now`, `__studio_timezone`, `__studio_locale`, `__loop_iterations`, `__parent_run_id` (run input only), and `__workflow_nesting_depth` are reserved for runtime bookkeeping.
