@@ -47,10 +47,7 @@ export default function ConditionRuleFields({
                 value={rule.value}
                 valueType={rule.value_type}
                 strict={rule.strict}
-                onOperatorChange={(value) => updateField('operator', value)}
-                onValueChange={(value) => updateField('value', value)}
-                onValueTypeChange={(value) => updateField('value_type', value)}
-                onStrictChange={(value) => updateField('strict', value)}
+                onFieldsChange={(patch) => onChange?.({ ...rule, ...patch })}
                 readOnly={readOnly}
             />
         </>

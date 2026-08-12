@@ -154,10 +154,7 @@ export default function CaseEditor({ data, readOnly, currentNodeId, onUpdate }) 
                         value={caseItem.value}
                         valueType={caseItem.value_type}
                         strict={caseItem.strict}
-                        onOperatorChange={(value) => updateCase(index, { operator: value })}
-                        onValueChange={(value) => updateCase(index, { value })}
-                        onValueTypeChange={(value) => updateCase(index, { value_type: value })}
-                        onStrictChange={(value) => updateCase(index, { strict: value })}
+                        onFieldsChange={(patch) => updateCase(index, patch)}
                         readOnly={readOnly}
                     />
                 </div>
