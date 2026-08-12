@@ -1,5 +1,13 @@
 # Changelog
 
+## [3.3.3](https://github.com/digitalelvis/neuronai-studio/compare/v3.3.2...v3.3.3) (2026-08-12)
+
+
+### Bug Fixes
+
+* **canvas:** keep viewport stable and open inspector only on click ([19da03a](https://github.com/digitalelvis/neuronai-studio/commit/19da03ad42b88f360ea69f56273f0f39173c1250))
+* **workflows:** coerce boolean literals in condition and loop operators ([c99156a](https://github.com/digitalelvis/neuronai-studio/commit/c99156a0278a7ba06cd35eb87db9120abd393956))
+
 ## [3.3.2](https://github.com/digitalelvis/neuronai-studio/compare/v3.3.1...v3.3.2) (2026-08-12)
 
 
