@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.3.2](https://github.com/digitalelvis/neuronai-studio/compare/v3.3.1...v3.3.2) (2026-08-12)
+
+
+### Bug Fixes
+
+* **canvas:** apply condition operator changes as a single patch ([3f0d0b2](https://github.com/digitalelvis/neuronai-studio/commit/3f0d0b2c5b327e3020af77d6b4443d084f614be5))
+
 ## [3.3.1](https://github.com/digitalelvis/neuronai-studio/compare/v3.3.0...v3.3.1) (2026-08-12)
 
 # [3.3.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.2.0...v3.3.0) (2026-08-12)
