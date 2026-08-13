@@ -35,12 +35,26 @@ class WorkflowStreamBridge
     /** Human prompt captured from `human_input_required` for channel reply. */
     protected ?string $humanPrompt = null;
 
+    /** @var array<string, mixed> */
+    protected array $lastClientState = [];
+
+    /**
+     * @param  list<array{id?: string, role: string, content: string}>  $messagesSnapshot
+     * @param  array<string, mixed>  $initialClientState
+     * @param  null|(callable(): list<array{id?: string, role: string, content: string}>)  $loadMessages
+     */
     public function __construct(
         protected StreamAdapterInterface $adapter,
         protected ?WorkflowReplyResolver $replyResolver = null,
+        protected array $messagesSnapshot = [],
+        protected array $initialClientState = [],
+        protected ?string $threadId = null,
+        protected ?string $runId = null,
+        protected mixed $loadMessages = null,
     ) {
         $this->messageId = 'msg_'.Str::uuid()->toString();
         $this->replyResolver ??= app(WorkflowReplyResolver::class);
+        $this->lastClientState = ClientFacingState::of($this->initialClientState);
     }
 
     /**
@@ -55,6 +69,11 @@ class WorkflowStreamBridge
     {
         foreach ($this->adapter->start() as $line) {
             $sink($line);
+        }
+
+        if ($this->adapter instanceof AGUIAdapter) {
+            $sink(AguiProtocol::messagesSnapshot($this->currentMessages()));
+            $sink(AguiProtocol::stateSnapshot($this->lastClientState));
         }
 
         $emitter = function (string $event, array $data) use ($sink): void {
@@ -87,10 +106,28 @@ class WorkflowStreamBridge
             }
         }
 
-        if (in_array($run->status, ['awaiting_input', 'awaiting_tool_approval'], true)) {
+        $paused = in_array($run->status, ['awaiting_input', 'awaiting_tool_approval'], true);
+
+        if ($paused && $this->adapter instanceof AGUIAdapter) {
+            $this->lastClientState = ClientFacingState::of(
+                is_array($run->output) ? $run->output : (is_array($run->checkpoint_state['state'] ?? null) ? $run->checkpoint_state['state'] : $this->lastClientState),
+            );
+            $sink(AguiProtocol::messagesSnapshot($this->currentMessages()));
+            $sink(AguiProtocol::stateSnapshot($this->lastClientState));
+        }
+
+        if ($paused) {
             foreach ($this->awaitingSignal($run) as $line) {
                 $sink($line);
             }
+        }
+
+        if ($paused && $this->adapter instanceof AGUIAdapter) {
+            foreach ($this->endWithInterrupt($run) as $line) {
+                $sink($line);
+            }
+
+            return $run;
         }
 
         foreach ($this->adapter->end() as $line) {
@@ -141,9 +178,38 @@ class WorkflowStreamBridge
             case 'tool_result':
                 return $this->adapter->transform(new ToolResultChunk($this->toolFrom($data, withResult: true)));
 
+            case 'step_completed':
+                return $this->stateDeltaFrom($data);
+
             default:
                 return [];
         }
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return iterable<string>
+     */
+    protected function stateDeltaFrom(array $data): iterable
+    {
+        if (! $this->adapter instanceof AGUIAdapter) {
+            return [];
+        }
+
+        if (! is_array($data['state'] ?? null)) {
+            return [];
+        }
+
+        $next = ClientFacingState::of($data['state']);
+        $ops = JsonPatch::diff($this->lastClientState, $next);
+
+        if ($ops === []) {
+            return [];
+        }
+
+        $this->lastClientState = $next;
+
+        yield AguiProtocol::stateDelta($ops);
     }
 
     /**
@@ -200,5 +266,53 @@ class WorkflowStreamBridge
             'type' => 'data-awaiting_input',
             'data' => $payload,
         ], JSON_THROW_ON_ERROR)."\n\n";
+    }
+
+    /**
+     * Close open AG-UI streams then emit canonical interrupt RUN_FINISHED
+     * instead of the adapter's success RUN_FINISHED (AGUI-08 dual-emit).
+     *
+     * @return iterable<string>
+     */
+    protected function endWithInterrupt(StudioRun $run): iterable
+    {
+        foreach ($this->adapter->end() as $line) {
+            if (str_contains($line, '"type":"RUN_FINISHED"')) {
+                $decoded = json_decode((string) preg_replace('/^data:\s*/', '', trim($line)), true);
+                $threadId = $this->threadId ?: (string) ($decoded['threadId'] ?? '');
+                $runId = $this->runId ?: (string) ($decoded['runId'] ?? '');
+
+                yield AguiProtocol::runFinishedInterrupt(
+                    $threadId,
+                    $runId,
+                    [[
+                        'interruptId' => $run->id,
+                        'reason' => $run->status,
+                        'payload' => [
+                            'status' => $run->status,
+                            'trace_id' => $run->id,
+                            'node_id' => $run->awaitingNodeId(),
+                            'prompt' => $this->humanPrompt ?? $this->replyResolver->textFromRun($run),
+                        ],
+                    ]],
+                );
+
+                continue;
+            }
+
+            yield $line;
+        }
+    }
+
+    /**
+     * @return list<array{id?: string, role: string, content: string}>
+     */
+    protected function currentMessages(): array
+    {
+        if (is_callable($this->loadMessages)) {
+            return ($this->loadMessages)();
+        }
+
+        return $this->messagesSnapshot;
     }
 }

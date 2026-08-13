@@ -8,7 +8,7 @@ use DigitalElvis\NeuronAIStudio\Support\ChatThreadKey;
 class ChatThreadLoader
 {
     /**
-     * @return array{thread_id: string, messages: array<int, array{role: string, content: string}>}
+     * @return array{thread_id: string, messages: array<int, array{id: string, role: string, content: string}>}
      */
     public function loadForAgent(int $agentId, string $threadId): array
     {
@@ -24,7 +24,7 @@ class ChatThreadLoader
     }
 
     /**
-     * @return array{thread_id: string, messages: array<int, array{role: string, content: string}>}
+     * @return array{thread_id: string, messages: array<int, array{id: string, role: string, content: string}>}
      */
     public function loadForWorkflow(int $workflowId, string $threadId): array
     {
@@ -40,14 +40,14 @@ class ChatThreadLoader
 
     /**
      * @param  list<string>  $keys
-     * @return array{thread_id: string, messages: array<int, array{role: string, content: string}>}
+     * @return array{thread_id: string, messages: array<int, array{id: string, role: string, content: string}>}
      */
     protected function loadMessages(string $publicThreadId, array $keys): array
     {
         $records = StudioChatMessage::query()
             ->whereIn('thread_id', array_unique($keys))
             ->orderBy('id')
-            ->get(['role', 'content']);
+            ->get(['id', 'role', 'content']);
 
         $messages = [];
 
@@ -59,6 +59,7 @@ class ChatThreadLoader
             }
 
             $messages[] = [
+                'id' => 'msg_'.$record->id,
                 'role' => $role,
                 'content' => $this->textFromContent($record->content),
             ];

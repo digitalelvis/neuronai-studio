@@ -60,22 +60,24 @@ export function ChatComponent() {
         }
 
         if (protocol === 'agui') {
-            return `// AG-UI Protocol Integration
-const response = await fetch('${streamUrl}', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ message: 'Hello' }),
+            return `// CopilotKit / AG-UI HttpAgent (RunAgentInput)
+import { HttpAgent } from '@ag-ui/client';
+
+const agent = new HttpAgent({ url: '${streamUrl}' });
+
+await agent.runAgent({
+  threadId: 'thread-1',
+  runId: 'run-1',
+  messages: [{ id: 'm1', role: 'user', content: 'Hello' }],
+  tools: [],
+  state: {},
+  context: [],
 });
 
-const reader = response.body.getReader();
-const decoder = new TextDecoder();
-
-while (true) {
-  const { done, value } = await reader.read();
-  if (done) break;
-  console.log(decoder.decode(value));
-}
-${resumeUrl ? `\n// Resume when awaiting input:\n// POST ${resumeUrl}` : ''}`;
+// Or fetch the same body:
+// POST ${streamUrl}
+// { threadId, runId, messages: [{ role: 'user', content: 'Hello' }] }
+${resumeUrl ? `\n// HITL: RUN_FINISHED.outcome.interrupt → resume[] on the same URL\n// Legacy resume: POST ${resumeUrl}  { message: '…' }` : ''}`;
         }
 
         return `// POST ${streamUrl}`;

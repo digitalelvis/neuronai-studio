@@ -20,6 +20,10 @@ class BuilderWorkflowState extends WorkflowState
     public function emitStep(string $event, array $data = []): void
     {
         if ($this->stepEmitter !== null) {
+            if ($event === 'step_completed' && ! array_key_exists('state', $data)) {
+                $data['state'] = $this->all();
+            }
+
             ($this->stepEmitter)($event, $data);
         }
     }

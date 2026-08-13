@@ -74,6 +74,38 @@ class AgentIntegrateStreamTest extends TestCase
     }
 
     #[DefineEnvironment('lightIntegrationMiddleware')]
+    public function test_agui_run_agent_input_echoes_ids_and_snapshots(): void
+    {
+        $this->fakeProvider('Hello agui');
+        $agent = $this->agent();
+
+        $response = $this->postJson(
+            route('neuronai-studio.integrate.agents.stream', ['agent' => $agent, 'protocol' => 'agui']),
+            [
+                'threadId' => 't-copilot',
+                'runId' => 'r-copilot',
+                'messages' => [
+                    ['id' => 'm1', 'role' => 'user', 'content' => 'hi there'],
+                ],
+                'tools' => [],
+                'state' => [],
+                'context' => [],
+            ],
+        );
+
+        $response->assertOk();
+
+        $content = $response->streamedContent();
+        $this->assertStringContainsString('"threadId":"t-copilot"', $content);
+        $this->assertStringContainsString('"runId":"r-copilot"', $content);
+        $this->assertStringContainsString('RUN_STARTED', $content);
+        $this->assertStringContainsString('MESSAGES_SNAPSHOT', $content);
+        $this->assertStringContainsString('STATE_SNAPSHOT', $content);
+        $this->assertStringContainsString('TEXT_MESSAGE_CONTENT', $content);
+        $this->assertStringContainsString('RUN_FINISHED', $content);
+    }
+
+    #[DefineEnvironment('lightIntegrationMiddleware')]
     public function test_unknown_protocol_returns_404(): void
     {
         $this->fakeProvider();
