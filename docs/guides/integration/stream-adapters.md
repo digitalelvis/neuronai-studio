@@ -39,7 +39,7 @@ The external integration routes are completely separate from the internal Studio
 | Surface | Protocol | UI |
 |---------|----------|----|
 | Studio Playground | Internal Studio SSE (`token`, `tool_*`, workflow step events) | Custom React shell (`studio-chat`) |
-| Host app / public chat (planned) | `vercel` or `agui` adapters | Prefer a market harness such as **assistant-ui** on Vercel AI SDK `useChat`, or a native AG-UI client |
+| Host app / public chat | `vercel` or `agui` adapters | **assistant-ui** + Vercel `useChat`, or CopilotKit `HttpAgent` / native AG-UI (`RunAgentInput` on `/stream/agui`) |
 
 The **same runners** back both paths. The playground validates agent/workflow behavior for Studio users; a future shareable/embed chat should speak the integrate adapters so web, mobile, and desktop clients stay portable without forking Studio SSE.
 

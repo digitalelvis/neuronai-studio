@@ -135,7 +135,7 @@ class StreamAdapterRegistry
      *
      * @throws InvalidArgumentException when the protocol is unknown or disabled
      */
-    public function resolve(string $protocol, ?string $threadId = null): StreamAdapterInterface
+    public function resolve(string $protocol, ?string $threadId = null, ?string $runId = null): StreamAdapterInterface
     {
         if (! isset($this->adapters[$protocol])) {
             throw new InvalidArgumentException("Unknown stream protocol [{$protocol}].");
@@ -146,7 +146,7 @@ class StreamAdapterRegistry
         }
 
         return match ($protocol) {
-            'agui' => new AGUIAdapter($threadId),
+            'agui' => new AGUIAdapter($threadId, $runId),
             default => new VercelAIAdapter,
         };
     }

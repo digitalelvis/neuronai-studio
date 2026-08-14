@@ -45,6 +45,15 @@ class StreamAdapterRegistryTest extends TestCase
         $this->assertInstanceOf(AGUIAdapter::class, $registry->resolve('agui'));
     }
 
+    public function test_agui_adapter_echoes_thread_and_run_ids(): void
+    {
+        $adapter = $this->registry()->resolve('agui', 't-client', 'r-client');
+        $started = implode('', iterator_to_array($adapter->start(), false));
+
+        $this->assertStringContainsString('"threadId":"t-client"', $started);
+        $this->assertStringContainsString('"runId":"r-client"', $started);
+    }
+
     public function test_resolve_throws_for_unknown_protocol(): void
     {
         $this->expectException(InvalidArgumentException::class);

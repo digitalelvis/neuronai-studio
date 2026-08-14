@@ -7,6 +7,8 @@ use DigitalElvis\NeuronAIStudio\Integration\StreamAdapterRegistry;
 use DigitalElvis\NeuronAIStudio\Integration\WorkflowStreamBridge;
 use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
+use DigitalElvis\NeuronAIStudio\Services\ChatThreadLoader;
+use DigitalElvis\NeuronAIStudio\Support\ChatThreadKey;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Throwable;
@@ -64,11 +66,32 @@ class WorkflowIntegrateResumeController
         $message = (string) $chat['message'];
         $attachments = $chat['attachments'] ?? [];
 
+        $runModel->loadMissing('thread');
+
         $nodeId = (string) ($runModel->awaiting_node_id ?? '');
 
-        $adapter = $registry->resolve($protocol, (string) $runModel->id);
+        $threadId = ChatThreadKey::publicId((string) $runModel->thread_id);
+        $runId = null;
+        if ($protocol === 'agui') {
+            $clientThread = $request->input('threadId') ?? $request->input('thread_id');
+            if (is_string($clientThread) && trim($clientThread) !== '') {
+                $threadId = trim($clientThread);
+            }
+            $clientRun = $request->input('runId') ?? $request->input('run_id');
+            if (is_string($clientRun) && trim($clientRun) !== '') {
+                $runId = trim($clientRun);
+            }
+        }
 
-        return response()->stream(function () use ($runModel, $adapter, $nodeId, $message, $attachments) {
+        $adapter = $registry->resolve($protocol, $threadId, $runId);
+
+        $workflowId = (int) ($runModel->thread?->entity_id ?? 0);
+        $threads = app(ChatThreadLoader::class);
+        $loadMessages = $workflowId > 0
+            ? fn () => $threads->loadForWorkflow($workflowId, $threadId)['messages']
+            : fn () => [];
+
+        return response()->stream(function () use ($runModel, $adapter, $nodeId, $message, $attachments, $loadMessages, $threadId, $runId) {
             $sink = static function (string $chunk): void {
                 echo $chunk;
 
@@ -81,7 +104,14 @@ class WorkflowIntegrateResumeController
 
             try {
                 $runner = app(WorkflowRunner::class);
-                (new WorkflowStreamBridge($adapter))->run(
+                (new WorkflowStreamBridge(
+                    adapter: $adapter,
+                    messagesSnapshot: $loadMessages(),
+                    initialClientState: is_array($runModel->output) ? $runModel->output : [],
+                    threadId: $threadId,
+                    runId: $runId,
+                    loadMessages: $loadMessages,
+                ))->run(
                     $sink,
                     fn (callable $emitter) => $runner->resume($runModel, $nodeId, $message, $emitter, $attachments),
                 );

@@ -192,7 +192,7 @@ For browser or mobile clients, POST to the integrate stream endpoint instead of 
 POST /api/neuronai/agents/{agent}/stream/{protocol}
 ```
 
-Protocols: `vercel`, `agui`. Body can include `message`, `thread_id`, `context`, `attachments`, `parameters`. Details: [Stream Adapters](../integration/stream-adapters.md), [Vercel AI SDK](../integration/vercel-ai-sdk.md), [AG-UI](../integration/ag-ui.md).
+Protocols: `vercel`, `agui`. Vercel body: `message`, `thread_id`, `context`, `attachments`, `parameters`. AG-UI also accepts CopilotKit `RunAgentInput` (`threadId`, `runId`, `messages[]`). Details: [Stream Adapters](../integration/stream-adapters.md), [Vercel AI SDK](../integration/vercel-ai-sdk.md), [AG-UI](../integration/ag-ui.md).
 
 ## Related
 
