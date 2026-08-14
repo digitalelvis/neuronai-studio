@@ -54,6 +54,7 @@ class StudioTraceMiddleware implements WorkflowMiddleware
             'node_type' => $nodeType,
             'handle' => 'default',
             'duration_ms' => $durationMs,
+            'state' => $state->all(),
         ]);
     }
 

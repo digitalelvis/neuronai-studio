@@ -2,11 +2,11 @@
 
 **North star:** Agentes multimodais autônomos com grafos de workflow cíclicos.
 
-**Development line (features):** `v2.1.x`  
-**Patch line:** `v2.0.x`  
-**Latest published:** `v2.0.0` on Packagist / `main`  
-**Última atualização:** 2026-08-03  
-**Etapa atual:** M13 `execute-workflow` **done** (EW-T1…T10) on `feat/execute-workflow` → merge to `v2.1.x`. TraceDetail bridge permanece deferred.
+**Development line (features):** `v3.1.x`  
+**Patch line:** `v3.1.x` (until next minor opens)  
+**Latest published:** `v3.1.0` on Packagist / `main`  
+**Última atualização:** 2026-08-13  
+**Etapa atual:** M17 `agui-native-protocol` **done** on `feat/agui-native-protocol` → `v3.1.x`. TraceDetail bridge permanece deferred.
 ---
 
 ## Milestones
@@ -190,9 +190,26 @@ Nó canvas `run_workflow` para executar outro workflow Studio como step ou como 
 
 **Linha:** Execute → `v2.1.x` (branch `feat/execute-workflow`).
 
+### M17 — AG-UI native protocol (P1) `done`
+
+Contrato AG-UI nativo nos integrate streams: `RunAgentInput`, echo `threadId`/`runId`, `MESSAGES_SNAPSHOT`, workflow `STATE_SNAPSHOT`/`STATE_DELTA`, HITL canônico em dual-emit com o resume URL M4.
+
+**Escopo (AD-035):** [agui-native-protocol](../features/agui-native-protocol/spec.md) · [context](../features/agui-native-protocol/context.md) · [design](../features/agui-native-protocol/design.md) · [tasks](../features/agui-native-protocol/tasks.md)
+
+| Ordem | Feature | Status | Spec |
+|-------|---------|--------|------|
+| 35 | `agui-native-protocol` | **done** (AGUI-T1…T8) | [spec](../features/agui-native-protocol/spec.md) |
+
+**Critério de conclusão M17:** CopilotKit `HttpAgent` POST `RunAgentInput` em `/stream/agui` sem tradutor no host; lifecycle ecoa IDs; Human pause emite CUSTOM **e** `RUN_FINISHED.outcome.interrupt`; resume no mesmo stream URL **e** no resume URL antigo; vercel/playground intactos.
+
+**Linha:** Execute → `v3.1.x` (branch `feat/agui-native-protocol`).
+
 ---
 
 ## Próximas tarefas (ordem de execução)
+
+0. Merge `feat/agui-native-protocol` → `v3.1.x` (PR)
+0b. When `v3.1.x` is stable, release PR `v3.1.x` → `main` (semver via release-it)
 
 1. ~~Sync pós-`v0.6.0` + AD-019 + abrir `v0.7.x`~~ ✅
 2. ~~Especificar / design / tasks / Execute M6~~ ✅
@@ -366,6 +383,12 @@ Mapeamento feature → arquivos `docs/` a criar/atualizar na implementação.
 |---------|------------------------|
 | `execute-workflow` | `guides/workflows/canvas-editor.md`, `guides/workflows/node-types/logic-nodes.md` (or ai-nodes), `guides/workflows/runtime-and-traces.md`, `extending/custom-node-types.md`, `guides/templates.md` |
 
+### M17
+
+| Feature | Documentos (expected) |
+|---------|------------------------|
+| `agui-native-protocol` | `guides/integration/ag-ui.md`, Connect Panel AG-UI snippet |
+
 ---
 
 ## Decisões em aberto (ver [STATE.md](STATE.md))
@@ -382,5 +405,6 @@ Mapeamento feature → arquivos `docs/` a criar/atualizar na implementação.
 - ~~M9 publish / next minor~~ → **resolvido (AD-025):** `v1.0.0` (breaking major); feature line `v1.1.x`; patch `v1.0.x`
 - ~~Delegação subagente / agent-as-tool no canvas~~ → **resolvido (AD-024):** feature `canvas-tool-mode` (Tool Mode Langflow-like; v1 Agent)
 - ~~Post-M10 / table-prefix major~~ → **resolvido (AD-027):** `v2.0.0` correct (not `v1.2.0`); lines `v2.0.x` / `v2.1.x`
-- ~~Nested workflow-as-tool / Run Flow~~ → **specified (AD-030):** feature [`execute-workflow`](../features/execute-workflow/spec.md) (M13)
+- ~~Nested workflow-as-tool / Run Flow~~ → **done (AD-030):** feature [`execute-workflow`](../features/execute-workflow/spec.md) (M13)
+- ~~AG-UI RunAgentInput / CopilotKit nativo~~ → **done (AD-035):** feature [`agui-native-protocol`](../features/agui-native-protocol/spec.md) (M17)
 - TraceDetail ↔ Inspector/Langfuse URL bridge (P2 deferred)

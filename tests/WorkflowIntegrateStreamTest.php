@@ -187,6 +187,85 @@ class WorkflowIntegrateStreamTest extends TestCase
         $this->assertStringContainsString('awaiting_input', $content);
         $this->assertStringContainsString('"trace_id"', $content);
         $this->assertStringContainsString('RUN_FINISHED', $content);
+        $this->assertStringContainsString('MESSAGES_SNAPSHOT', $content);
+        $this->assertStringContainsString('STATE_SNAPSHOT', $content);
+        $this->assertStringContainsString('"type":"interrupt"', $content);
+        $this->assertStringContainsString('interruptId', $content);
+    }
+
+    #[DefineEnvironment('lightIntegrationMiddleware')]
+    public function test_agui_run_agent_input_echoes_ids(): void
+    {
+        $this->fakeProvider('Hello agui workflow');
+        $workflow = $this->agentWorkflow();
+
+        $response = $this->postJson(
+            route('neuronai-studio.integrate.workflows.stream', ['workflow' => $workflow, 'protocol' => 'agui']),
+            [
+                'threadId' => 'wf-thread',
+                'runId' => 'wf-run',
+                'messages' => [
+                    ['id' => 'm1', 'role' => 'user', 'content' => 'run it'],
+                ],
+                'state' => [],
+            ],
+        );
+
+        $response->assertOk();
+
+        $content = $response->streamedContent();
+        $this->assertStringContainsString('"threadId":"wf-thread"', $content);
+        $this->assertStringContainsString('"runId":"wf-run"', $content);
+        $this->assertStringContainsString('MESSAGES_SNAPSHOT', $content);
+        $this->assertStringContainsString('STATE_SNAPSHOT', $content);
+        $this->assertStringContainsString('RUN_FINISHED', $content);
+    }
+
+    #[DefineEnvironment('lightIntegrationMiddleware')]
+    public function test_agui_resume_array_on_stream_completes_human(): void
+    {
+        $workflow = $this->humanWorkflow();
+
+        $pause = $this->postJson(
+            route('neuronai-studio.integrate.workflows.stream', ['workflow' => $workflow, 'protocol' => 'agui']),
+            [
+                'threadId' => 'hitl-thread',
+                'runId' => 'hitl-run-1',
+                'messages' => [
+                    ['id' => 'm1', 'role' => 'user', 'content' => 'start'],
+                ],
+            ],
+        );
+
+        $pause->assertOk();
+        $paused = $pause->streamedContent();
+        $this->assertStringContainsString('"type":"interrupt"', $paused);
+
+        preg_match('/"interruptId":"([^"]+)"/', $paused, $match);
+        $this->assertNotEmpty($match[1] ?? null);
+        $interruptId = $match[1];
+
+        $resume = $this->postJson(
+            route('neuronai-studio.integrate.workflows.stream', ['workflow' => $workflow, 'protocol' => 'agui']),
+            [
+                'threadId' => 'hitl-thread',
+                'runId' => 'hitl-run-2',
+                'resume' => [[
+                    'interruptId' => $interruptId,
+                    'status' => 'resolved',
+                    'payload' => ['message' => 'order-42'],
+                ]],
+            ],
+        );
+
+        $resume->assertOk();
+        $content = $resume->streamedContent();
+        $this->assertStringContainsString('"threadId":"hitl-thread"', $content);
+        $this->assertStringContainsString('"runId":"hitl-run-2"', $content);
+        $this->assertStringContainsString('order-42', $content);
+        $this->assertStringContainsString('RUN_FINISHED', $content);
+        $this->assertStringNotContainsString('"type":"interrupt"', $content);
+        $this->assertStringContainsString('STATE_DELTA', $content);
     }
 
     #[DefineEnvironment('lightIntegrationMiddleware')]

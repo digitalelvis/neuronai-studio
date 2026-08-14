@@ -1,14 +1,21 @@
 # State
 
-**Last Updated:** 2026-08-03
-**Development line (features):** `v2.1.x`
-**Patch line:** `v2.0.x`
-**Latest published:** `v2.0.0` on Packagist / `main`
-**Current Work:** M13 `execute-workflow` **done** (EW-T1…T10). Next: PR `feat/execute-workflow` → `v2.1.x`. TraceDetail bridge + OBS-06/OTel stay deferred.
+**Last Updated:** 2026-08-13
+**Development line (features):** `v3.1.x`
+**Patch line:** `v3.1.x`
+**Latest published:** `v3.1.0` on Packagist / `main`
+**Current Work:** M17 `agui-native-protocol` **done** — PR `feat/agui-native-protocol` → `v3.1.x`. TraceDetail bridge + OBS-06/OTel stay deferred.
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-035: AG-UI native protocol — RunAgentInput + dual-emit HITL (2026-08-13)
+
+**Decision:** Open M17 with feature **`agui-native-protocol`**. Integrate `agui` routes accept CopilotKit `RunAgentInput` (`threadId`/`runId`/`messages[]`) with `{ message }` fallback. Echo client IDs on `RUN_STARTED`/`RUN_FINISHED`. Emit `MESSAGES_SNAPSHOT`; workflows also `STATE_SNAPSHOT`/`STATE_DELTA` (RFC 6902, strip `__*` keys). HITL **dual-emit**: keep CUSTOM `awaiting_input` + `traces/{trace}/resume/agui`; add canonical `RUN_FINISHED.outcome.interrupt` and `resume[]` on the same stream URL. `interruptId` = Studio run UUID. No new `copilotkit` protocol. Playground SSE untouched. Frontend `tools[]` ignored.
+**Reason:** Hosts translate CopilotKit → Studio `{ message }`. Package should speak AG-UI so the gateway can shrink. Replacing CUSTOM would break M4 clients.
+**Trade-off:** Two HITL contracts until a later deprecation. STATE_DELTA is a small in-package JSON Patch helper (no Composer dep). Agent tool-approval on integrate stream stays deferred.
+**Impact:** Specs in [.specs/features/agui-native-protocol/](../features/agui-native-protocol/). ROADMAP M17. Execute on `v3.1.x`. Issue [#93](https://github.com/digitalelvis/neuronai-studio/issues/93).
 
 ### AD-030: Execute Workflow / Run Flow on canvas (2026-08-02)
 
@@ -398,6 +405,7 @@ Themes turned into specified features (AD-022 — shipped on `v0.9.x` / `v0.10.0
 - [x] **Canvas `invoke` / allowlisted hook node** — done: [`canvas-invoke-node`](../features/canvas-invoke-node/spec.md) shipped `v0.10.0`
 - [x] **Agent-as-tool / Tool Mode** — specified as [`canvas-tool-mode`](../features/canvas-tool-mode/spec.md) (M10 / AD-024); shipped `v1.1.0`
 - [x] **Nested workflow / Run Flow** — done as [`execute-workflow`](../features/execute-workflow/spec.md) (M13 / AD-030); PR → `v2.1.x` pending
+- [x] **AG-UI native protocol (CopilotKit RunAgentInput)** — done as [`agui-native-protocol`](../features/agui-native-protocol/spec.md) (M17 / AD-035); dual-emit HITL; agent tool-approval integrate HITL deferred
 - [ ] Dedicated Usage page / advanced charts / filters (beyond M5 minimal Dashboard)
 - [ ] Multi-tenant / user attribution in usage
 - [ ] **Cross-thread owner memory** (TO-D1 summarize / TO-D2 RAG) — depends on [`thread-owner-association`](../features/thread-owner-association/spec.md) (`ownerable_*` shipped on `feat/thread-owner-association`)
@@ -479,3 +487,5 @@ Themes turned into specified features (AD-022 — shipped on `v0.9.x` / `v0.10.0
 - [x] Specify M13 `execute-workflow` (AD-030) — spec/design/tasks
 - [x] Execute M13 `execute-workflow` (EW-T1…T10) on `feat/execute-workflow` → `v2.1.x`
 - [ ] Merge `feat/execute-workflow` → `v2.1.x` (PR)
+- [x] Specify + Execute M17 `agui-native-protocol` (AD-035) — AGUI-T1…T8
+- [ ] Merge `feat/agui-native-protocol` → `v3.1.x` (PR)
