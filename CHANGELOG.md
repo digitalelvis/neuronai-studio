@@ -1,5 +1,12 @@
 # Changelog
 
+# [3.5.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.4.0...v3.5.0) (2026-08-14)
+
+
+### Features
+
+* **integration:** accept AG-UI RunAgentInput for CopilotKit ([932db82](https://github.com/digitalelvis/neuronai-studio/commit/932db82bcbad8b412ec0d650d5dffa3780c1d211)), closes [#93](https://github.com/digitalelvis/neuronai-studio/issues/93)
+
 # [3.4.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.3.3...v3.4.0) (2026-08-12)
 
 
