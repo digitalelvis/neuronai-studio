@@ -21,7 +21,10 @@ $middleware = config('neuronai-studio.usage.export.middleware')
     ?? config('neuronai-studio.stream_adapters.middleware', ['api']);
 
 Route::prefix($prefix)
-    ->middleware($middleware)
+    ->middleware(array_values(array_filter(array_merge(
+        (array) $middleware,
+        ['neuronai-studio.tenant'],
+    ))))
     ->name('neuronai-studio.usage.')
     ->group(function () {
         Route::get('usage', [UsageExportController::class, 'index'])->name('aggregate');

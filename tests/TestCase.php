@@ -3,11 +3,21 @@
 namespace DigitalElvis\NeuronAIStudio\Tests;
 
 use DigitalElvis\NeuronAIStudio\NeuronAIStudioServiceProvider;
+use DigitalElvis\NeuronAIStudio\Tenancy\StudioTenancy;
+use DigitalElvis\NeuronAIStudio\Tests\Support\MutableTenantResolver;
 use Livewire\LivewireServiceProvider;
 use Orchestra\Testbench\TestCase as Orchestra;
 
 abstract class TestCase extends Orchestra
 {
+    protected function tearDown(): void
+    {
+        MutableTenantResolver::$id = null;
+        StudioTenancy::reset();
+
+        parent::tearDown();
+    }
+
     protected function setUp(): void
     {
         parent::setUp();

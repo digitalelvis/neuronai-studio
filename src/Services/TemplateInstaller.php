@@ -28,7 +28,7 @@ class TemplateInstaller
         $definition = $template['definition'];
         $slug = (string) ($meta['id'] ?? $id);
 
-        $existing = AgentDefinition::where('slug', $slug)->first();
+        $existing = AgentDefinition::findBySlug($slug);
 
         if ($existing !== null) {
             return $existing;
@@ -96,7 +96,7 @@ class TemplateInstaller
         $slug = $baseSlug;
         $counter = 1;
 
-        while (WorkflowDefinition::where('slug', $slug)->exists()) {
+        while (WorkflowDefinition::query()->inCurrentTenant()->where('slug', $slug)->exists()) {
             $slug = "{$baseSlug}-{$counter}";
             $counter++;
         }
@@ -160,7 +160,7 @@ class TemplateInstaller
         $meta = $template['meta'];
         $slug = (string) ($meta['id'] ?? $id);
 
-        $existing = WorkflowDefinition::where('slug', $slug)->first();
+        $existing = WorkflowDefinition::findBySlug($slug);
         if ($existing !== null) {
             return $existing;
         }

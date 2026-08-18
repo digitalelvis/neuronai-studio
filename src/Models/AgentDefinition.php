@@ -3,6 +3,7 @@
 namespace DigitalElvis\NeuronAIStudio\Models;
 
 use DigitalElvis\NeuronAIStudio\Support\StudioTables;
+use DigitalElvis\NeuronAIStudio\Tenancy\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Str;
@@ -11,6 +12,7 @@ use Illuminate\Support\Str;
 
 class AgentDefinition extends Model
 {
+    use BelongsToTenant;
     protected $table;
 
     protected $fillable = [

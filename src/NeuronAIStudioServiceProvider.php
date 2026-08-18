@@ -11,7 +11,10 @@ use DigitalElvis\NeuronAIStudio\Commands\MakeToolCommand;
 use DigitalElvis\NeuronAIStudio\Commands\PurgeCheckpointsCommand;
 use DigitalElvis\NeuronAIStudio\Http\Middleware\AuthenticateMcpEndpoint;
 use DigitalElvis\NeuronAIStudio\Http\Middleware\EnsureNeuronAIStudioAuthorized;
+use DigitalElvis\NeuronAIStudio\Http\Middleware\EnsureStudioTenant;
 use DigitalElvis\NeuronAIStudio\Http\Middleware\SetStudioLocale;
+use DigitalElvis\NeuronAIStudio\Tenancy\NullTenantResolver;
+use DigitalElvis\NeuronAIStudio\Tenancy\TenantResolver;
 use DigitalElvis\NeuronAIStudio\McpServer\McpInvocationRecorder;
 use DigitalElvis\NeuronAIStudio\McpServer\McpToolCatalog;
 use DigitalElvis\NeuronAIStudio\McpServer\McpToolInvoker;
@@ -149,6 +152,16 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
                 $app->make(ProviderRegistry::class),
             );
         });
+
+        $this->app->singleton(TenantResolver::class, function ($app) {
+            $class = config('neuronai-studio.tenancy.resolver');
+
+            if (is_string($class) && $class !== '' && is_a($class, TenantResolver::class, true)) {
+                return $app->make($class);
+            }
+
+            return new NullTenantResolver;
+        });
     }
 
     public function boot(): void
@@ -227,6 +240,7 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
         $router = $this->app->make(Router::class);
         $router->aliasMiddleware('neuronai-studio.auth', EnsureNeuronAIStudioAuthorized::class);
         $router->aliasMiddleware('neuronai-studio.locale', SetStudioLocale::class);
+        $router->aliasMiddleware('neuronai-studio.tenant', EnsureStudioTenant::class);
         $router->aliasMiddleware('neuronai-studio.mcp-endpoint', AuthenticateMcpEndpoint::class);
     }
 

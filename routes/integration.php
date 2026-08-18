@@ -17,7 +17,10 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::prefix(config('neuronai-studio.stream_adapters.route_prefix', 'api/neuronai'))
-    ->middleware(config('neuronai-studio.stream_adapters.middleware', ['api']))
+    ->middleware(array_values(array_filter(array_merge(
+        config('neuronai-studio.stream_adapters.middleware', ['api']),
+        ['neuronai-studio.tenant'],
+    ))))
     ->name('neuronai-studio.integrate.')
     ->group(function () {
         Route::post('agents/{agent}/stream/{protocol}', AgentIntegrateStreamController::class)

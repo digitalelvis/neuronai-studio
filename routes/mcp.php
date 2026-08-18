@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Route;
 Route::prefix(config('neuronai-studio.mcp_endpoints.route_prefix', 'api/neuronai/mcp'))
     ->middleware(array_values(array_filter(array_merge(
         config('neuronai-studio.mcp_endpoints.middleware', ['api']),
-        [AuthenticateMcpEndpoint::class],
+        ['neuronai-studio.tenant', AuthenticateMcpEndpoint::class],
     ))))
     ->name('neuronai-studio.mcp-endpoints.http.')
     ->group(function () {
