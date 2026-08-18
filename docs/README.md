@@ -75,6 +75,7 @@ The studio stores definitions in your database. At runtime, `AgentRunner` and `W
 | Pre-built templates | [Templates](guides/templates.md) |
 | Export to PHP | [Export & Production](guides/export-and-production.md) |
 | Auth & security | [Security & Access](guides/security-and-access.md) |
+| Optional multi-tenancy | [Tenancy](guides/tenancy.md) |
 | Cost estimation | [Cost Estimation](guides/analytics/costs.md) |
 | Full config reference | [Configuration](reference/configuration.md) |
 | Extend with custom nodes | [Custom Node Types](extending/custom-node-types.md) |

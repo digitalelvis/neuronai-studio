@@ -85,7 +85,7 @@ class AgentRunner
             return $definition;
         }
 
-        return AgentDefinition::query()->where('slug', $definition)->firstOrFail();
+        return AgentDefinition::findBySlugOrFail($definition);
     }
 
     public function resolveAgent(AgentDefinition $definition): DynamicAgent

@@ -1,14 +1,21 @@
 # State
 
-**Last Updated:** 2026-08-13
+**Last Updated:** 2026-08-18
 **Development line (features):** `v3.1.x`
 **Patch line:** `v3.1.x`
 **Latest published:** `v3.1.0` on Packagist / `main`
-**Current Work:** M17 `agui-native-protocol` **done** — PR `feat/agui-native-protocol` → `v3.1.x`. TraceDetail bridge + OBS-06/OTel stay deferred.
+**Current Work:** M18 `optional-multi-tenancy` — Execute on `feat/optional-multi-tenancy` → `v3.1.x`.
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-036: Optional multi-tenancy — shared tenant_id + Stancl driver (2026-08-18)
+
+**Decision:** Open M18 with feature **`optional-multi-tenancy`**. Default off. Shared-DB path: nullable `tenant_id` + host `TenantResolver`, global catalog (`tenant_id` null) with tenant slug override, HTTP 403 when enabled and no tenant. Authoring and runtime both isolated. Stancl DB-per-tenant via `driver=database` (no `tenant_id` scope, no Composer dep). Thread `ownerable_*` stays orthogonal. Globals created via install/seeders/`StudioTenancy::central()`, never via tenant HTTP writes.
+**Reason:** Hosts need org isolation without breaking single-tenant installs; Variable vault and usage export already deferred tenant columns; package must not own tenant CRUD or header/subdomain parsing.
+**Trade-off:** Unique slug becomes `(tenant_scope, slug)`; MCP/public URLs require the host resolver to identify tenant before those routes. Cross-DB globals for Stancl stay out of scope.
+**Impact:** Specs in [.specs/features/optional-multi-tenancy/](../features/optional-multi-tenancy/). ROADMAP M18. Execute on `v3.1.x`.
 
 ### AD-035: AG-UI native protocol — RunAgentInput + dual-emit HITL (2026-08-13)
 
@@ -407,7 +414,7 @@ Themes turned into specified features (AD-022 — shipped on `v0.9.x` / `v0.10.0
 - [x] **Nested workflow / Run Flow** — done as [`execute-workflow`](../features/execute-workflow/spec.md) (M13 / AD-030); PR → `v2.1.x` pending
 - [x] **AG-UI native protocol (CopilotKit RunAgentInput)** — done as [`agui-native-protocol`](../features/agui-native-protocol/spec.md) (M17 / AD-035); dual-emit HITL; agent tool-approval integrate HITL deferred
 - [ ] Dedicated Usage page / advanced charts / filters (beyond M5 minimal Dashboard)
-- [ ] Multi-tenant / user attribution in usage
+- [x] Multi-tenant / user attribution in usage — absorbed by [`optional-multi-tenancy`](../features/optional-multi-tenancy/spec.md) (Eloquent scope on runs/traces; no dedicated billing UI)
 - [ ] **Cross-thread owner memory** (TO-D1 summarize / TO-D2 RAG) — depends on [`thread-owner-association`](../features/thread-owner-association/spec.md) (`ownerable_*` shipped on `feat/thread-owner-association`)
 - [ ] Studio UI multi-thread by owner (TO-D3)
 - [ ] Embeddings / RAG cost as a separate line item

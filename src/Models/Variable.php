@@ -4,11 +4,13 @@ namespace DigitalElvis\NeuronAIStudio\Models;
 
 use DigitalElvis\NeuronAIStudio\Support\ConditionalEncryptedCast;
 use DigitalElvis\NeuronAIStudio\Support\StudioTables;
+use DigitalElvis\NeuronAIStudio\Tenancy\BelongsToTenant;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 
 class Variable extends Model
 {
+    use BelongsToTenant;
     public const TYPE_CREDENTIAL = 'credential';
 
     public const TYPE_GENERIC = 'generic';

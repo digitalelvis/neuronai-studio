@@ -5,6 +5,7 @@ namespace DigitalElvis\NeuronAIStudio\Jobs;
 use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Runtime\Progress\ProgressEmitter;
 use DigitalElvis\NeuronAIStudio\Runtime\WorkflowRunner;
+use DigitalElvis\NeuronAIStudio\Tenancy\RestoresStudioTenant;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -17,6 +18,7 @@ class ResumeWorkflowJob implements ShouldQueue
     use Dispatchable;
     use InteractsWithQueue;
     use Queueable;
+    use RestoresStudioTenant;
     use SerializesModels;
 
     public int $tries;
@@ -47,26 +49,34 @@ class ResumeWorkflowJob implements ShouldQueue
 
     public function handle(WorkflowRunner $runner): void
     {
-        $run = StudioRun::findOrFail($this->runId);
+        $run = $this->findWithoutTenantScope(StudioRun::class, $this->runId);
 
-        $run->update(['status' => 'running']);
-
-        $emitter = $this->makeProgressEmitter();
-
-        try {
-            $result = $runner->resume(
-                $run->fresh(),
-                $this->nodeId,
-                $this->message,
-                emitter: $emitter,
-                attachments: $this->attachments,
-                approval: $this->approval,
-            );
-            $emitter?->terminal((string) $result->status);
-        } catch (Throwable $exception) {
-            $emitter?->terminal('failed', ['error' => $exception->getMessage()]);
-            throw $exception;
+        if ($run === null) {
+            throw (new \Illuminate\Database\Eloquent\ModelNotFoundException)->setModel(StudioRun::class, [$this->runId]);
         }
+
+        $this->withRestoredTenant($run->tenant_id, function () use ($runner, $run) {
+            $run = $run->fresh() ?? $run;
+
+            $run->update(['status' => 'running']);
+
+            $emitter = $this->makeProgressEmitter();
+
+            try {
+                $result = $runner->resume(
+                    $run,
+                    $this->nodeId,
+                    $this->message,
+                    emitter: $emitter,
+                    attachments: $this->attachments,
+                    approval: $this->approval,
+                );
+                $emitter?->terminal((string) $result->status);
+            } catch (Throwable $exception) {
+                $emitter?->terminal('failed', ['error' => $exception->getMessage()]);
+                throw $exception;
+            }
+        });
     }
 
     protected function makeProgressEmitter(): ?ProgressEmitter
@@ -80,7 +90,7 @@ class ResumeWorkflowJob implements ShouldQueue
 
     public function failed(?Throwable $exception): void
     {
-        $run = StudioRun::find($this->runId);
+        $run = $this->findWithoutTenantScope(StudioRun::class, $this->runId);
 
         if ($run === null) {
             return;

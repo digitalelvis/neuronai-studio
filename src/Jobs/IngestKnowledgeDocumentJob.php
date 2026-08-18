@@ -2,8 +2,10 @@
 
 namespace DigitalElvis\NeuronAIStudio\Jobs;
 
+use DigitalElvis\NeuronAIStudio\Models\KnowledgeBase;
 use DigitalElvis\NeuronAIStudio\Models\KnowledgeDocument;
 use DigitalElvis\NeuronAIStudio\Runtime\Rag\DocumentIngestService;
+use DigitalElvis\NeuronAIStudio\Tenancy\RestoresStudioTenant;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -16,6 +18,7 @@ class IngestKnowledgeDocumentJob implements ShouldQueue
     use Dispatchable;
     use InteractsWithQueue;
     use Queueable;
+    use RestoresStudioTenant;
     use SerializesModels;
 
     public int $tries;
@@ -41,18 +44,32 @@ class IngestKnowledgeDocumentJob implements ShouldQueue
 
     public function handle(DocumentIngestService $ingest): void
     {
-        $document = KnowledgeDocument::query()->with('knowledgeBase')->find($this->documentId);
+        $document = KnowledgeDocument::query()->find($this->documentId);
 
-        if ($document === null || $document->knowledgeBase === null) {
+        if ($document === null) {
             return;
         }
 
-        $ingest->processRecord($document->knowledgeBase, $document);
+        $knowledgeBase = $this->findWithoutTenantScope(KnowledgeBase::class, $document->knowledge_base_id);
+
+        if ($knowledgeBase === null) {
+            return;
+        }
+
+        $this->withRestoredTenant($knowledgeBase->tenant_id, function () use ($ingest, $document) {
+            $document->load('knowledgeBase');
+
+            if ($document->knowledgeBase === null) {
+                return;
+            }
+
+            $ingest->processRecord($document->knowledgeBase, $document);
+        });
     }
 
     public function failed(?Throwable $exception): void
     {
-        $document = KnowledgeDocument::find($this->documentId);
+        $document = $this->findWithoutTenantScope(KnowledgeDocument::class, $this->documentId);
 
         if ($document === null) {
             return;

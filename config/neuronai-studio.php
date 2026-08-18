@@ -20,6 +20,27 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Tenancy (optional)
+    |--------------------------------------------------------------------------
+    |
+    | Disabled by default. When enabled, the host MUST resolve the current
+    | tenant via a TenantResolver class (Studio does not read headers or
+    | subdomains). HTTP Studio / integrate / MCP / usage abort 403 if no
+    | tenant is present.
+    |
+    | driver = shared   → filter/stamp tenant_id (one database, many tenants)
+    | driver = database → no tenant_id scope (e.g. stancl DB-per-tenant)
+    |
+    */
+
+    'tenancy' => [
+        'enabled' => env('NEURONAI_STUDIO_TENANCY', false),
+        'driver' => env('NEURONAI_STUDIO_TENANCY_DRIVER', 'shared'),
+        'resolver' => env('NEURONAI_STUDIO_TENANCY_RESOLVER'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Locale
     |--------------------------------------------------------------------------
     |

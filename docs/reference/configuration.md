@@ -12,8 +12,20 @@ php artisan vendor:publish --tag=neuronai-studio-config
 |-----|-----|---------|-------------|
 | `route_prefix` | `NEURONAI_STUDIO_ROUTE_PREFIX` | `neuronai-studio` | URL prefix for all studio routes |
 | `table_prefix` | `NEURONAI_STUDIO_TABLE_PREFIX` | `neuronai_studio_` | Prefix applied to **all** package tables (definitions, MCP, RAG, runs/traces, evals). See [Database schema](database-schema.md). |
-| `middleware` | — | `['web', 'neuronai-studio.auth']` | Route middleware stack |
+| `middleware` | — | `['web', 'neuronai-studio.locale', 'neuronai-studio.auth']` | Route middleware stack (`neuronai-studio.tenant` is always appended) |
 | `gate` | — | `viewNeuronAIStudio` | Authorization gate name |
+
+## Tenancy (optional)
+
+Disabled by default. See [Multi-tenancy](../guides/tenancy.md).
+
+| Key | Env | Default | Description |
+|-----|-----|---------|-------------|
+| `tenancy.enabled` | `NEURONAI_STUDIO_TENANCY` | `false` | Isolate authoring + runtime per host tenant |
+| `tenancy.driver` | `NEURONAI_STUDIO_TENANCY_DRIVER` | `shared` | `shared` = `tenant_id` scope; `database` = Stancl DB-per-tenant (no scope) |
+| `tenancy.resolver` | `NEURONAI_STUDIO_TENANCY_RESOLVER` | `null` | FQCN implementing `TenantResolver` |
+
+When enabled, Studio / integrate / MCP / usage HTTP abort **403** if the resolver returns null.
 
 ## Export
 

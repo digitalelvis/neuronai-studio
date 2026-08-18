@@ -35,9 +35,12 @@ Gate::define('viewNeuronAIStudio', function ($user) {
 flowchart LR
     Request[HTTP Request] --> Middleware[neuronai-studio.auth]
     Middleware --> Gate{viewNeuronAIStudio?}
-    Gate -->|yes| Studio[Studio UI]
+    Gate -->|yes| Tenant[neuronai-studio.tenant]
+    Tenant --> Studio[Studio UI]
     Gate -->|no| Deny[403 Forbidden]
 ```
+
+When `tenancy.enabled` is true, `neuronai-studio.tenant` also requires a resolved tenant (see [Multi-tenancy](tenancy.md)).
 
 ## Webhook security
 

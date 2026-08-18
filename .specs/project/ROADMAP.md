@@ -5,8 +5,8 @@
 **Development line (features):** `v3.1.x`  
 **Patch line:** `v3.1.x` (until next minor opens)  
 **Latest published:** `v3.1.0` on Packagist / `main`  
-**Última atualização:** 2026-08-13  
-**Etapa atual:** M17 `agui-native-protocol` **done** on `feat/agui-native-protocol` → `v3.1.x`. TraceDetail bridge permanece deferred.
+**Última atualização:** 2026-08-18  
+**Etapa atual:** M18 `optional-multi-tenancy` Execute on `feat/optional-multi-tenancy` → `v3.1.x`.
 ---
 
 ## Milestones
@@ -204,12 +204,27 @@ Contrato AG-UI nativo nos integrate streams: `RunAgentInput`, echo `threadId`/`r
 
 **Linha:** Execute → `v3.1.x` (branch `feat/agui-native-protocol`).
 
+### M18 — Multi-tenancy opcional (P1) `in progress`
+
+Isolamento opt-in de authoring e runtime: `tenant_id` em banco compartilhado + `TenantResolver` do host; catálogo global com override de slug; HTTP fail-closed; compatibilidade stancl/tenancy (`driver=database`) sem dependência Composer.
+
+**Escopo (AD-036):** [optional-multi-tenancy](../features/optional-multi-tenancy/spec.md) · [context](../features/optional-multi-tenancy/context.md) · [design](../features/optional-multi-tenancy/design.md) · [tasks](../features/optional-multi-tenancy/tasks.md)
+
+| Ordem | Feature | Status | Spec |
+|-------|---------|--------|------|
+| 36 | `optional-multi-tenancy` | **in progress** | [spec](../features/optional-multi-tenancy/spec.md) |
+
+**Critério de conclusão M18:** Default off não muda hosts atuais; com tenancy on, tenant A não lê/escreve dados de B; globais visíveis com override; 403 sem tenant; jobs restauram contexto; docs Stancl + guia.
+
+**Linha:** Execute → `v3.1.x` (branch `feat/optional-multi-tenancy`).
+
 ---
 
 ## Próximas tarefas (ordem de execução)
 
-0. Merge `feat/agui-native-protocol` → `v3.1.x` (PR)
+0. Merge `feat/agui-native-protocol` → `v3.1.x` (PR) ✅
 0b. When `v3.1.x` is stable, release PR `v3.1.x` → `main` (semver via release-it)
+0c. Execute `optional-multi-tenancy` (M18 / AD-036) on `feat/optional-multi-tenancy` → `v3.1.x`
 
 1. ~~Sync pós-`v0.6.0` + AD-019 + abrir `v0.7.x`~~ ✅
 2. ~~Especificar / design / tasks / Execute M6~~ ✅

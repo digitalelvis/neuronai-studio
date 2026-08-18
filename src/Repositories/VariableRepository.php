@@ -9,7 +9,7 @@ class VariableRepository
 {
     public function findByName(string $name): ?Variable
     {
-        return Variable::query()->where('name', $name)->first();
+        return Variable::findPreferred('name', $name);
     }
 
     /** @return Collection<int, Variable> */
