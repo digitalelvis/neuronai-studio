@@ -53,7 +53,7 @@ class Index extends Component
         $slug = $baseSlug;
         $counter = 1;
 
-        while (WorkflowDefinition::where('slug', $slug)->exists()) {
+        while (WorkflowDefinition::query()->inCurrentTenant()->where('slug', $slug)->exists()) {
             $slug = "{$baseSlug}-{$counter}";
             $counter++;
         }

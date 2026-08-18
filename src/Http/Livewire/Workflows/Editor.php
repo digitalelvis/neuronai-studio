@@ -273,7 +273,7 @@ class Editor extends Component
         $counter = 1;
 
         while (
-            WorkflowDefinition::where('slug', $slug)
+            WorkflowDefinition::query()->inCurrentTenant()->where('slug', $slug)
                 ->when($existing?->exists, fn ($query) => $query->where('id', '!=', $existing->id))
                 ->exists()
         ) {

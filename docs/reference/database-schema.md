@@ -63,7 +63,8 @@ Diagram nodes use logical names; physical tables always include the configured p
 
 ### agent_definitions
 
-- `slug` — unique identifier, used in templates and exports
+- `slug` — unique identifier **per tenant** (`tenant_scope` + slug); used in templates and exports
+- `tenant_id` — nullable host tenant key; `null` = global catalog (see [Tenancy](../guides/tenancy.md))
 - `provider`, `model` — LLM configuration
 - `api_key` — optional Studio override (`var:NAME` or empty = host `neuron.php`)
 - `instructions` — system prompt
@@ -74,7 +75,8 @@ Diagram nodes use logical names; physical tables always include the configured p
 
 ### variables
 
-- `name` — unique (`^[A-Z][A-Z0-9_]*$`)
+- `name` — unique per tenant (`^[A-Z][A-Z0-9_]*$`)
+- `tenant_id` — nullable; tenant vault overrides a global name
 - `type` — `credential` | `generic`
 - `value` — encrypted when credential; plaintext when generic
 

@@ -5,6 +5,7 @@ namespace DigitalElvis\NeuronAIStudio\Runtime\Rag;
 use Closure;
 use DigitalElvis\NeuronAIStudio\Models\KnowledgeBase;
 use DigitalElvis\NeuronAIStudio\Runtime\ConfigValueResolver;
+use DigitalElvis\NeuronAIStudio\Tenancy\StudioTenancy;
 use Illuminate\Support\Facades\DB;
 use InvalidArgumentException;
 use NeuronAI\RAG\VectorStore\ChromaVectorStore;
@@ -86,7 +87,7 @@ class VectorStoreFactory
     {
         $directory = (string) ($knowledgeBase->vector_store_config['directory']
             ?? config('neuronai-studio.rag.storage_path', storage_path('app/neuronai-studio/rag')));
-        $name = $knowledgeBase->slug ?: (string) $knowledgeBase->getKey();
+        $name = $this->namespaced($knowledgeBase, $knowledgeBase->slug ?: (string) $knowledgeBase->getKey());
 
         return rtrim($directory, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$name.'.store';
     }
@@ -100,12 +101,12 @@ class VectorStoreFactory
             return new StudioFileVectorStore(
                 directory: $directory,
                 topK: $this->topK($kb, $options),
-                name: $kb->slug ?: (string) $kb->getKey(),
+                name: $this->namespaced($kb, $kb->slug ?: (string) $kb->getKey()),
             );
         };
 
         $this->resolvers['memory'] = function (KnowledgeBase $kb, array $options): VectorStoreInterface {
-            $cacheKey = (string) ($kb->getKey() ?? $kb->slug);
+            $cacheKey = $this->namespaced($kb, (string) ($kb->getKey() ?? $kb->slug));
 
             if (! isset($this->memoryStores[$cacheKey])) {
                 $this->memoryStores[$cacheKey] = new MemoryVectorStore(
@@ -123,7 +124,7 @@ class VectorStoreFactory
                 key: $this->resolveEnv($cfg, 'key_env', 'PINECONE_API_KEY'),
                 indexUrl: $this->requireString($cfg, 'index_url', 'pinecone'),
                 topK: $this->topK($kb, $options),
-                namespace: (string) ($cfg['namespace'] ?? '__default__'),
+                namespace: $this->namespaced($kb, (string) ($cfg['namespace'] ?? '__default__')),
             );
         };
 
@@ -144,7 +145,7 @@ class VectorStoreFactory
             $key = $this->optionalEnv($cfg, 'key_env', 'CHROMA_API_KEY');
 
             return new ChromaVectorStore(
-                collection: $this->requireString($cfg, 'collection', 'chroma'),
+                collection: $this->namespaced($kb, $this->requireString($cfg, 'collection', 'chroma')),
                 host: (string) ($cfg['host'] ?? 'http://localhost:8000'),
                 tenant: (string) ($cfg['tenant'] ?? 'default_tenant'),
                 database: (string) ($cfg['database'] ?? 'default_database'),
@@ -158,7 +159,7 @@ class VectorStoreFactory
             $key = $this->optionalEnv($cfg, 'key_env', 'WEAVIATE_API_KEY');
 
             return new WeaviateVectorStore(
-                collection: $this->requireString($cfg, 'collection', 'weaviate'),
+                collection: $this->namespaced($kb, $this->requireString($cfg, 'collection', 'weaviate')),
                 host: (string) ($cfg['host'] ?? 'http://localhost:8080'),
                 key: $key !== '' ? $key : null,
                 topK: $this->topK($kb, $options),
@@ -170,7 +171,7 @@ class VectorStoreFactory
             $key = $this->optionalEnv($cfg, 'key_env', 'MEILISEARCH_API_KEY');
 
             return new MeilisearchVectorStore(
-                indexUid: $this->requireString($cfg, 'index_uid', 'meilisearch'),
+                indexUid: $this->namespaced($kb, $this->requireString($cfg, 'index_uid', 'meilisearch')),
                 host: (string) ($cfg['host'] ?? 'http://localhost:7700'),
                 key: $key !== '' ? $key : null,
                 embedder: (string) ($cfg['embedder'] ?? 'default'),
@@ -185,7 +186,7 @@ class VectorStoreFactory
 
             return new MariaDBVectorStore(
                 pdo: $this->pdo($connection),
-                tableName: (string) ($cfg['table'] ?? 'rag_documents'),
+                tableName: $this->namespaced($kb, (string) ($cfg['table'] ?? 'rag_documents')),
                 topK: $this->topK($kb, $options),
             );
         };
@@ -215,7 +216,7 @@ class VectorStoreFactory
 
             return new ElasticsearchVectorStore(
                 client: $builder->build(),
-                index: (string) ($cfg['index'] ?? 'neuron-ai'),
+                index: $this->namespaced($kb, (string) ($cfg['index'] ?? 'neuron-ai')),
                 topK: $this->topK($kb, $options),
             );
         };
@@ -234,7 +235,7 @@ class VectorStoreFactory
 
             return new OpenSearchVectorStore(
                 client: $client,
-                index: (string) ($cfg['index'] ?? 'neuron-ai'),
+                index: $this->namespaced($kb, (string) ($cfg['index'] ?? 'neuron-ai')),
                 topK: $this->topK($kb, $options),
             );
         };
@@ -265,7 +266,7 @@ class VectorStoreFactory
 
             return new TypesenseVectorStore(
                 client: $client,
-                collection: (string) ($cfg['collection'] ?? 'neuron-ai'),
+                collection: $this->namespaced($kb, (string) ($cfg['collection'] ?? 'neuron-ai')),
                 vectorDimension: (int) ($cfg['vector_dimension'] ?? 1024),
                 topK: (string) $this->topK($kb, $options),
             );
@@ -282,13 +283,33 @@ class VectorStoreFactory
             $path = (string) ($cfg['path']
                 ?? (config('neuronai-studio.rag.storage_path', storage_path('app/neuronai-studio/rag'))
                     .DIRECTORY_SEPARATOR.'phpvector'
-                    .DIRECTORY_SEPARATOR.($kb->slug ?: (string) $kb->getKey())));
+                    .DIRECTORY_SEPARATOR.$this->namespaced($kb, $kb->slug ?: (string) $kb->getKey())));
 
             return new \NeuronAI\PHPVector\PHPVector(
                 path: $path,
                 topK: $this->topK($kb, $options),
             );
         };
+    }
+
+    /**
+     * Prefix a store identifier with the knowledge base tenant when shared tenancy is on.
+     */
+    public function namespaced(KnowledgeBase $kb, string $name): string
+    {
+        if (! StudioTenancy::scopesShared()) {
+            return $name;
+        }
+
+        $tenant = $kb->tenant_id;
+
+        if ($tenant === null || $tenant === '') {
+            return $name;
+        }
+
+        $safe = preg_replace('/[^A-Za-z0-9_-]/', '_', $tenant) ?: 'tenant';
+
+        return $safe.'__'.$name;
     }
 
     /**

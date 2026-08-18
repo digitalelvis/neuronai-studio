@@ -284,10 +284,10 @@ class McpToolCatalog
 
             return ctype_digit($id)
                 ? AgentDefinition::find((int) $id)
-                : AgentDefinition::query()->where('slug', $id)->first();
+                : AgentDefinition::findBySlug($id);
         }
 
-        return AgentDefinition::query()->where('slug', $ref)->first();
+        return AgentDefinition::findBySlug($ref);
     }
 
     protected function resolveWorkflow(string $ref): ?WorkflowDefinition
@@ -301,10 +301,10 @@ class McpToolCatalog
 
             return ctype_digit($id)
                 ? WorkflowDefinition::find((int) $id)
-                : WorkflowDefinition::query()->where('slug', $id)->first();
+                : WorkflowDefinition::findBySlug($id);
         }
 
-        return WorkflowDefinition::query()->where('slug', $ref)->first();
+        return WorkflowDefinition::findBySlug($ref);
     }
 
     protected function toolDefinitionDescription(string $ref): ?string

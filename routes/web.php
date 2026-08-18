@@ -38,7 +38,10 @@ use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use Illuminate\Support\Facades\Route;
 
 Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
-    ->middleware(config('neuronai-studio.middleware', ['web', 'neuronai-studio.auth']))
+    ->middleware(array_values(array_filter(array_merge(
+        config('neuronai-studio.middleware', ['web', 'neuronai-studio.locale', 'neuronai-studio.auth']),
+        ['neuronai-studio.tenant'],
+    ))))
     ->name('neuronai-studio.')
     ->group(function () {
         Route::get('/', Dashboard::class)->name('dashboard');

@@ -12,7 +12,7 @@ class AuthenticateMcpEndpoint
     public function handle(Request $request, Closure $next): Response
     {
         $slug = (string) $request->route('slug');
-        $endpoint = McpEndpoint::query()->where('slug', $slug)->first();
+        $endpoint = McpEndpoint::findBySlug($slug);
 
         if (! $endpoint) {
             return response()->json([

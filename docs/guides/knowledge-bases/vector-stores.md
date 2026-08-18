@@ -23,6 +23,8 @@ Secrets should use **env var names** (`key_env` / `api_key_env`), not raw API ke
 
 Optional packages are listed under `suggest` in the Studio `composer.json`. Selecting a driver without its client installed fails with a `composer require …` hint.
 
+When [shared tenancy](../tenancy.md) is on, tenant-owned knowledge bases prefix file names, namespaces, and collection/index identifiers with `{tenant_id}__`. Global KBs are unprefixed. Qdrant `collection_url` is not rewritten.
+
 ## MariaDB setup
 
 Create a VECTOR table (adjust dimension to match your embedder):
