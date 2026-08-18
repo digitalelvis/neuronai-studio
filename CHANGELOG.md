@@ -1,5 +1,12 @@
 # Changelog
 
+# [3.6.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.5.0...v3.6.0) (2026-08-18)
+
+
+### Features
+
+* **tenancy:** add optional multi-tenant isolation ([be1f264](https://github.com/digitalelvis/neuronai-studio/commit/be1f264b23824309e8791a17f7abffcb5dbeaf6d))
+
 # [3.5.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.4.0...v3.5.0) (2026-08-14)
 
 
