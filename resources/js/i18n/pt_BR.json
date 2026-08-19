@@ -71,5 +71,7 @@
   "form.only_placeholder": "Only (separado por vírgula)",
   "form.exclude_placeholder": "Exclude (separado por vírgula)",
   "empty.no_sessions": "Nenhuma sessão ainda",
-  "empty.no_messages": "Nenhuma mensagem ainda"
+  "empty.no_messages": "Nenhuma mensagem ainda",
+  "inspector.node_name_placeholder": "Nome do nó",
+  "inspector.node_name_duplicate": "Este nome de nó já está em uso neste workflow."
 }

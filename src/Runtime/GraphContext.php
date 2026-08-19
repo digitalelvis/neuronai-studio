@@ -2,6 +2,8 @@
 
 namespace DigitalElvis\NeuronAIStudio\Runtime;
 
+use DigitalElvis\NeuronAIStudio\Support\NodeTitle;
+
 class GraphContext
 {
     /** @param array<string, mixed> $nodes */
@@ -19,6 +21,13 @@ class GraphContext
         }
 
         return [];
+    }
+
+    public function nodeTitle(string $nodeId): ?string
+    {
+        $node = $this->nodeConfig($nodeId);
+
+        return NodeTitle::normalize(isset($node['title']) ? (string) $node['title'] : null);
     }
 
     public function outgoingEdges(string $nodeId): array

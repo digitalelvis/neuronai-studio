@@ -14,7 +14,7 @@ class GraphJsonImportTest extends TestCase
 
         Livewire::test(Editor::class)
             ->call('validateGraphPayload', $graph)
-            ->assertReturned(['valid' => true, 'errors' => []]);
+            ->assertReturned(fn (array $result) => $result['valid'] === true && empty($result['errors']));
     }
 
     public function test_validate_graph_payload_rejects_invalid_graph(): void
@@ -55,5 +55,21 @@ class GraphJsonImportTest extends TestCase
             ->set('graph', $original)
             ->call('applyImportedGraph', $modified)
             ->assertSet('graph', $original);
+    }
+
+    public function test_apply_imported_graph_preserves_top_level_node_title(): void
+    {
+        $graph = WorkflowDefinition::defaultGraph();
+        $graph['nodes'][] = [
+            'id' => 'set_1',
+            'type' => 'set_state',
+            'title' => 'Reply copy',
+            'position' => ['x' => 300, 'y' => 200],
+            'data' => ['key' => 'foo', 'value' => 'bar'],
+        ];
+
+        Livewire::test(Editor::class)
+            ->call('applyImportedGraph', $graph)
+            ->assertSet('graph.nodes.2.title', 'Reply copy');
     }
 }

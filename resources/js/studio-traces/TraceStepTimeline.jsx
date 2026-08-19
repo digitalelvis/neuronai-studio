@@ -23,7 +23,9 @@ export default function TraceStepTimeline({ steps = [], selectedStepId, onSelect
                             >
                                 <span>
                                     <span className="font-medium">{step.node_type}</span>
-                                    <span className="ml-2 text-xs text-muted-foreground">{step.node_id}</span>
+                                    <span className="ml-2 text-xs text-muted-foreground">
+                                        {step.node_title || step.node_id}
+                                    </span>
                                 </span>
                                 <span className="flex flex-col items-end text-xs text-muted-foreground">
                                     {step.duration_ms != null && <span>{formatDuration(step.duration_ms)}</span>}

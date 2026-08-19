@@ -134,12 +134,14 @@ function normalizeStep(step) {
     const raw = step && typeof step === 'object' ? /** @type {Record<string, unknown>} */ (step) : {};
     const nodeId = typeof raw.node_id === 'string' ? raw.node_id : String(raw.node_id ?? 'unknown');
     const nodeType = typeof raw.node_type === 'string' ? raw.node_type : String(raw.node_type ?? 'unknown');
+    const nodeTitle =
+        typeof raw.node_title === 'string' && raw.node_title.trim() !== '' ? raw.node_title.trim() : null;
     const stateSnapshot =
         raw.state_snapshot && typeof raw.state_snapshot === 'object' && !Array.isArray(raw.state_snapshot)
             ? /** @type {Record<string, unknown>} */ (raw.state_snapshot)
             : {};
 
-    return { nodeId, nodeType, stateSnapshot };
+    return { nodeId, nodeType, nodeTitle, stateSnapshot };
 }
 
 /**
@@ -184,7 +186,7 @@ export function buildInspectTree(source = {}) {
             groups.push({
                 nodeId: step.nodeId,
                 nodeType: step.nodeType,
-                label: step.nodeId,
+                label: step.nodeTitle || step.nodeId,
                 variables,
             });
         }

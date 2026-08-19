@@ -71,5 +71,7 @@
   "form.only_placeholder": "Only (comma-separated)",
   "form.exclude_placeholder": "Exclude (comma-separated)",
   "empty.no_sessions": "No sessions yet",
-  "empty.no_messages": "No messages yet"
+  "empty.no_messages": "No messages yet",
+  "inspector.node_name_placeholder": "Node name",
+  "inspector.node_name_duplicate": "This node name is already used in this workflow."
 }

@@ -103,6 +103,38 @@ class NativeWorkflowExporterTest extends TestCase
         $this->cleanupExport($exportPath);
     }
 
+    public function test_titled_node_exports_class_from_title_and_keeps_studio_node_id(): void
+    {
+        $exportPath = $this->exportPath();
+        config([
+            'neuronai-studio.export_path' => $exportPath,
+            'neuronai-studio.export_namespace' => 'App\\Neuron',
+        ]);
+
+        $graph = $this->linearGraph();
+        foreach ($graph['nodes'] as &$node) {
+            if (($node['id'] ?? '') === 'llm_1') {
+                $node['title'] = 'Qualificador de Lead';
+            }
+        }
+        unset($node);
+
+        $workflow = WorkflowDefinition::make([
+            'name' => 'Titled Flow',
+            'slug' => 'titled-flow',
+            'graph' => $graph,
+            'status' => 'draft',
+        ]);
+
+        $preview = app(NativeWorkflowExporter::class)->preview($workflow);
+
+        $this->assertStringContainsString('class QualificadorDeLeadNode extends Node', $preview);
+        $this->assertStringContainsString('class QualificadorDeLeadEvent implements Event', $preview);
+        $this->assertStringContainsString("public const STUDIO_NODE_ID = 'llm_1';", $preview);
+
+        $this->cleanupExport($exportPath);
+    }
+
     public function test_condition_graph_generates_branching_node(): void
     {
         $exportPath = $this->exportPath();

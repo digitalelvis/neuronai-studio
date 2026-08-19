@@ -24,6 +24,7 @@ import {
     buildFlowEdge,
     buildFlowNode,
     canSpliceNodeType,
+    collectNodeTitles,
     createNodeId,
     dropFlowPosition,
     edgeMidpoint,
@@ -34,12 +35,14 @@ import {
     intentIdsFromConfig,
     switchCaseIdsFromConfig,
     isToolBindingEdge,
+    normalizeNodeTitle,
     pruneOrphanNamedHandleEdges,
     spliceNodeIntoEdge,
     syncNamedSourceHandleEdges,
     toFlowEdges,
     toFlowNodes,
     toPackageGraph,
+    uniqueNodeTitle,
 } from './graph';
 import './canvas.css';
 import { isToolModeEnabled } from './inspector/nodeUtils';
@@ -279,7 +282,17 @@ function WorkflowCanvasInner({
                 ? {
                       id: node.id,
                       type: nodeType,
-                      position: node.position,
+                      title: normalizeNodeTitle(node.data.title),
+                      typeLabel: node.data.label || nodeType,
+                      existingTitles: nodeList
+                          .filter(
+                              (item) =>
+                                  item.id !== node.id &&
+                                  item.data?.nodeType !== 'note' &&
+                                  item.type !== 'stickyNote',
+                          )
+                          .map((item) => item.data?.title)
+                          .filter(Boolean),
                       data: node.data.config || {},
                       silent,
                   }
@@ -555,10 +568,19 @@ function WorkflowCanvasInner({
                                 ? { text: '' }
                                 : {};
 
-            const node = buildFlowNode(type, nodePosition, nodeTypesMeta, {
-                ...defaultConfig,
-                ...seedConfig,
-            });
+            const node = buildFlowNode(
+                type,
+                nodePosition,
+                nodeTypesMeta,
+                {
+                    ...defaultConfig,
+                    ...seedConfig,
+                },
+                uniqueNodeTitle(
+                    (nodeTypesMeta[type] || {}).label || type,
+                    collectNodeTitles(currentNodes),
+                ),
+            );
             const nextNodes = [...currentNodes, node];
 
             setNodes(nextNodes);
@@ -570,6 +592,36 @@ function WorkflowCanvasInner({
             syncSelection(node.id, nextNodes);
         },
         [getEdges, getNodes, nodeTypesMeta, readOnly, setEdges, setNodes, syncSelection, defaultProvider, defaultModel],
+    );
+
+    const updateNodeTitle = useCallback(
+        (nodeId, title) => {
+            const normalized = normalizeNodeTitle(title);
+
+            setNodes((current) => {
+                const next = current.map((node) => {
+                    if (node.id !== nodeId) {
+                        return node;
+                    }
+
+                    const data = { ...node.data };
+                    if (normalized) {
+                        data.title = normalized;
+                    } else {
+                        delete data.title;
+                    }
+
+                    return { ...node, data };
+                });
+
+                window.requestAnimationFrame(() => {
+                    syncSelection(nodeId, next, { silent: true });
+                });
+
+                return next;
+            });
+        },
+        [setNodes, syncSelection],
     );
 
     const updateNodeData = useCallback(
@@ -695,6 +747,12 @@ function WorkflowCanvasInner({
                 selected: true,
                 data: {
                     ...source.data,
+                    title: uniqueNodeTitle(
+                        normalizeNodeTitle(source.data.title) ||
+                            source.data.label ||
+                            source.data.nodeType,
+                        collectNodeTitles(current.filter((node) => node.id !== source.id)),
+                    ),
                     config: { ...(source.data.config || {}) },
                     executionStatus: null,
                 },
@@ -760,6 +818,11 @@ function WorkflowCanvasInner({
         const onNodeUpdated = (event) => {
             if (event.detail?.id) {
                 updateNodeData(event.detail.id, event.detail.data || {});
+            }
+        };
+        const onNodeTitleUpdated = (event) => {
+            if (event.detail?.id) {
+                updateNodeTitle(event.detail.id, event.detail.title);
             }
         };
         const onRemoveNode = (event) => removeSelectedNode(event.detail?.id);
@@ -881,6 +944,7 @@ function WorkflowCanvasInner({
         };
 
         window.addEventListener('canvas-node-updated', onNodeUpdated);
+        window.addEventListener('canvas-node-title-updated', onNodeTitleUpdated);
         window.addEventListener('canvas-remove-node', onRemoveNode);
         window.addEventListener('canvas-duplicate-node', onDuplicateNode);
         window.addEventListener('canvas-auto-layout', onAutoLayout);
@@ -895,6 +959,7 @@ function WorkflowCanvasInner({
 
         return () => {
             window.removeEventListener('canvas-node-updated', onNodeUpdated);
+            window.removeEventListener('canvas-node-title-updated', onNodeTitleUpdated);
             window.removeEventListener('canvas-remove-node', onRemoveNode);
             window.removeEventListener('canvas-duplicate-node', onDuplicateNode);
             window.removeEventListener('canvas-auto-layout', onAutoLayout);
@@ -922,6 +987,7 @@ function WorkflowCanvasInner({
         setNodes,
         syncSelection,
         updateNodeData,
+        updateNodeTitle,
     ]);
 
     useEffect(() => {

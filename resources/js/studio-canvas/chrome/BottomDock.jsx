@@ -104,11 +104,15 @@ export default function BottomDock({
 
         const onExecution = (event) => {
             const detail = event.detail || {};
+            const stepLabel =
+                typeof detail.node_title === 'string' && detail.node_title.trim() !== ''
+                    ? detail.node_title.trim()
+                    : detail.node_id || 'node';
             const text =
                 detail.event === 'step_started'
-                    ? `Started ${detail.node_id || 'node'}`
+                    ? `Started ${stepLabel}`
                     : detail.event === 'step_completed'
-                      ? `Completed ${detail.node_id || 'node'}`
+                      ? `Completed ${stepLabel}`
                       : detail.event === 'trace_failed'
                         ? 'Run failed'
                         : detail.event === 'trace_completed'

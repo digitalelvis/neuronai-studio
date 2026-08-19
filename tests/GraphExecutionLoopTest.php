@@ -112,6 +112,41 @@ class GraphExecutionLoopTest extends TestCase
         $this->assertSame(10, $completed['total_tokens']);
     }
 
+    public function test_step_records_node_title_snapshot(): void
+    {
+        $graph = [
+            'nodes' => [
+                [
+                    'id' => 'llm_1',
+                    'type' => 'llm',
+                    'title' => 'Qualificador de Lead',
+                    'data' => [],
+                ],
+                ['id' => 'stop_1', 'type' => 'stop', 'data' => []],
+            ],
+            'edges' => [
+                ['source' => 'llm_1', 'target' => 'stop_1', 'sourceHandle' => 'default'],
+            ],
+        ];
+        $context = new GraphContext($graph['nodes'], $graph['edges']);
+        $state = new BuilderWorkflowState($context, 1);
+
+        $registry = new NodeExecutorRegistry;
+        $registry->register('llm', new class implements NodeExecutorInterface
+        {
+            public function execute(array $nodeConfig, WorkflowState $state, GraphContext $context): string
+            {
+                return 'default';
+            }
+        });
+        $registry->register('stop', new StopNodeExecutor);
+
+        (new GraphExecutionLoop($registry))->runFromNode('llm_1', $context, $state);
+
+        $step = $state->get('__steps')[0];
+        $this->assertSame('Qualificador de Lead', $step['node_title'] ?? null);
+    }
+
     /** @return array<string, mixed> */
     protected function simpleLoopGraph(): array
     {
