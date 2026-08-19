@@ -35,8 +35,8 @@ PHP;
             $threadKey = 'is_string($state->get(\'__studio_thread_id\')) ? $state->get(\'__studio_thread_id\') : null';
             $canvasTools = $this->exportToolsExpression(is_array($data['canvas_tools'] ?? null) ? $data['canvas_tools'] : []);
             $toolsExpr = $canvasTools['code'] === '[]'
-                ? '\$agent->tools ?? []'
-                : 'array_values(array_merge(\$agent->tools ?? [], '.$canvasTools['code'].'))';
+                ? '$agent->tools ?? []'
+                : 'array_values(array_merge($agent->tools ?? [], '.$canvasTools['code'].'))';
 
             if ($structured) {
                 $body = <<<PHP

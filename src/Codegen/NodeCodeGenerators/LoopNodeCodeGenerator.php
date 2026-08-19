@@ -43,7 +43,7 @@ class LoopNodeCodeGenerator implements NodeCodeGeneratorInterface
         );
 
         $body = <<<PHP
-        \$iterationKey = "__loop_iterations.{$nodeId}";
+        \$iterationKey = '__loop_iterations.' . {$nodeId};
         \$iterations = (int) \$state->get(\$iterationKey, 0) + 1;
         \$maxSteps = {$maxStepsExpr};
 

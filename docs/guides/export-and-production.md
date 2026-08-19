@@ -70,6 +70,8 @@ The workflow editor includes a live **Code** panel showing the PHP class that wo
 
 ![Workflow code panel](../assets/screenshots/workflows-code-panel.png)
 
+**Native node class names:** when a canvas node has a **node name**, exported PHP uses `{Slug}Node` / `{Slug}Event` derived from that title. Untitled nodes keep the historical `Str::studly(id)` naming (for example `Llm1Node`). The generated constant `STUDIO_NODE_ID` always matches the graph node `id`, not the display name.
+
 ## Import from PHP
 
 Workflows defined as PHP classes implementing `StudioWorkflow` can be imported into the studio (requires `codegen.enabled`):

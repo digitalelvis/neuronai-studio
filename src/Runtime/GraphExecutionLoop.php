@@ -37,6 +37,7 @@ class GraphExecutionLoop
 
             $nodeConfig['id'] = $nodeId;
             $nodeType = (string) ($nodeConfig['type'] ?? 'unknown');
+            $nodeTitle = $graphContext->nodeTitle($nodeId);
             $startedAt = microtime(true);
 
             $iteration = null;
@@ -47,6 +48,7 @@ class GraphExecutionLoop
             $state->emitStep('step_started', [
                 'node_id' => $nodeId,
                 'node_type' => $nodeType,
+                'node_title' => $nodeTitle,
                 'iteration' => $iteration,
             ]);
 
@@ -58,6 +60,7 @@ class GraphExecutionLoop
                 $state->emitStep('step_completed', [
                     'node_id' => $nodeId,
                     'node_type' => $nodeType,
+                    'node_title' => $nodeTitle,
                     'handle' => 'failed',
                     'duration_ms' => $durationMs,
                     'validation_errors' => $exception->validationErrors,
@@ -72,11 +75,12 @@ class GraphExecutionLoop
             $usage = is_array($usage) ? $usage : [];
             $state->delete('__step_usage');
 
-            $this->recordStep($state, $nodeId, $nodeType, $startedAt, $usage);
+            $this->recordStep($state, $nodeId, $nodeType, $nodeTitle, $startedAt, $usage);
 
             $completedPayload = [
                 'node_id' => $nodeId,
                 'node_type' => $nodeType,
+                'node_title' => $nodeTitle,
                 'handle' => $handle,
                 'duration_ms' => $durationMs,
             ] + $usage;
@@ -104,6 +108,7 @@ class GraphExecutionLoop
         BuilderWorkflowState $state,
         string $nodeId,
         string $nodeType,
+        ?string $nodeTitle,
         float $startedAt,
         array $usage = [],
     ): void
@@ -112,6 +117,7 @@ class GraphExecutionLoop
         $steps[] = [
             'node_id' => $nodeId,
             'node_type' => $nodeType,
+            'node_title' => $nodeTitle,
             'state_snapshot' => $state->all(),
             'duration_ms' => (int) ((microtime(true) - $startedAt) * 1000),
         ] + $usage;

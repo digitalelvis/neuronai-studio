@@ -1,4 +1,12 @@
 const INTERNAL_KEYS = ['__steps', '__current_node_id', '__workflow_trace_id'];
+
+function stepDisplayLabel(step) {
+    if (typeof step?.node_title === 'string' && step.node_title.trim() !== '') {
+        return step.node_title.trim();
+    }
+
+    return step?.node_id ?? step?.node_type ?? 'node';
+}
 const CONTENT_NODE_TYPES = new Set(['llm', 'agent', 'human', 'tool', 'mcp', 'rag']);
 const SKIP_NODE_TYPES = new Set(['set_state', 'condition', 'stop', 'delay']);
 const METADATA_OUTPUT_KEYS = new Set(['input', 'attachments', '__studio_thread_id', '__studio_current_step', '__workflowId']);
@@ -128,7 +136,7 @@ function stepUsage(step) {
  * @param {number} [depth]
  * @returns {array|null}
  */
-function expandNestedWorkflowEntries(value, parentNodeId, stepMeta = {}, depth = 0) {
+function expandNestedWorkflowEntries(value, parentNodeId, parentLabel, stepMeta = {}, depth = 0) {
     const nested = tryParseJsonStructure(value);
     if (!nested || !looksLikeNestedWorkflowOutput(nested)) {
         return null;
@@ -141,10 +149,12 @@ function expandNestedWorkflowEntries(value, parentNodeId, stepMeta = {}, depth =
         return null;
     }
 
+    const prefix = parentLabel || parentNodeId;
+
     return contentEntries.map((entry) => ({
         ...entry,
         nodeId: `${parentNodeId}/${entry.nodeId}`,
-        label: `${parentNodeId} › ${entry.label}`,
+        label: `${prefix} › ${entry.label}`,
         durationMs: entry.durationMs ?? stepMeta.durationMs ?? null,
         usage: entry.usage ?? stepMeta.usage ?? null,
     }));
@@ -240,7 +250,7 @@ export function buildWorkflowOutputFallback(output, userMessage = '', depth = 0)
         }
 
         if (depth < MAX_NESTED_PRETTY_DEPTH) {
-            const expanded = expandNestedWorkflowEntries(value, key, {}, depth);
+            const expanded = expandNestedWorkflowEntries(value, key, key, {}, depth);
             if (expanded?.length) {
                 thread.push(...expanded);
                 continue;
@@ -322,7 +332,13 @@ export function buildWorkflowPrettyThread(output, userMessage = '', depth = 0) {
             };
 
             for (const diff of diffs) {
-                const expanded = expandNestedWorkflowEntries(diff.raw, nodeId, meta, depth);
+                const expanded = expandNestedWorkflowEntries(
+                    diff.raw,
+                    nodeId,
+                    stepDisplayLabel(step),
+                    meta,
+                    depth,
+                );
                 if (expanded?.length) {
                     thread.push(...expanded);
                     continue;
@@ -332,7 +348,7 @@ export function buildWorkflowPrettyThread(output, userMessage = '', depth = 0) {
                     thread.push({
                         nodeId,
                         nodeType,
-                        label: nodeId,
+                        label: stepDisplayLabel(step),
                         content: diff.content,
                         key: diff.key,
                         durationMs: meta.durationMs,
@@ -352,7 +368,7 @@ export function buildWorkflowPrettyThread(output, userMessage = '', depth = 0) {
                 thread.push({
                     nodeId,
                     nodeType,
-                    label: nodeId,
+                    label: stepDisplayLabel(step),
                     content: diff.content,
                     key: diff.key,
                     durationMs: step.duration_ms ?? null,

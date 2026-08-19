@@ -209,4 +209,61 @@ JS;
 
         $this->assertSame(0, $exitCode, implode("\n", $output));
     }
+
+    public function test_pretty_thread_prefers_node_title_when_present(): void
+    {
+        $projectRoot = dirname(__DIR__);
+        $script = <<<'JS'
+import { buildWorkflowPrettyThread } from './resources/js/studio-chat/utils/workflowOutput.js';
+
+const output = {
+    input: 'Hello',
+    __steps: [{
+        node_id: 'agent_1',
+        node_type: 'agent',
+        node_title: 'Qualificador de Lead',
+        state_snapshot: { input: 'Hello', agent_response: 'Hi' },
+    }],
+};
+
+const thread = buildWorkflowPrettyThread(output, 'Hello');
+const entry = thread.find((item) => item.nodeId === 'agent_1');
+process.exit(entry?.label === 'Qualificador de Lead' ? 0 : 1);
+JS;
+
+        $command = 'cd '.escapeshellarg($projectRoot).' && node --input-type=module -e '.escapeshellarg($script);
+        $output = [];
+        $exitCode = 0;
+        exec($command.' 2>&1', $output, $exitCode);
+
+        $this->assertSame(0, $exitCode, implode("\n", $output));
+    }
+
+    public function test_pretty_thread_falls_back_to_node_id_without_title(): void
+    {
+        $projectRoot = dirname(__DIR__);
+        $script = <<<'JS'
+import { buildWorkflowPrettyThread } from './resources/js/studio-chat/utils/workflowOutput.js';
+
+const output = {
+    input: 'Hello',
+    __steps: [{
+        node_id: 'agent_1',
+        node_type: 'agent',
+        state_snapshot: { input: 'Hello', agent_response: 'Hi' },
+    }],
+};
+
+const thread = buildWorkflowPrettyThread(output, 'Hello');
+const entry = thread.find((item) => item.nodeId === 'agent_1');
+process.exit(entry?.label === 'agent_1' ? 0 : 1);
+JS;
+
+        $command = 'cd '.escapeshellarg($projectRoot).' && node --input-type=module -e '.escapeshellarg($script);
+        $output = [];
+        $exitCode = 0;
+        exec($command.' 2>&1', $output, $exitCode);
+
+        $this->assertSame(0, $exitCode, implode("\n", $output));
+    }
 }

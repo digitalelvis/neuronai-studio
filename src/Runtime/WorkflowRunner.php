@@ -895,7 +895,10 @@ class WorkflowRunner
                 'type' => 'node',
                 'status' => 'completed',
                 'input' => null,
-                'output' => ['state_snapshot' => $step['state_snapshot'] ?? null],
+                'output' => [
+                    'state_snapshot' => $step['state_snapshot'] ?? null,
+                    'node_title' => $step['node_title'] ?? null,
+                ],
                 'duration_ms' => $step['duration_ms'] ?? null,
                 'started_at' => now(),
                 'finished_at' => now(),

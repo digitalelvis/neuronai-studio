@@ -31,13 +31,15 @@ class HumanNodeCodeGenerator implements NodeCodeGeneratorInterface
             \$state->set({$outputKey}, null);
         }
 
+        \$prompt = \\DigitalElvis\\NeuronAIStudio\\Runtime\\StateTemplateInterpolator::interpolate({$prompt}, \$state);
+
         \$this->interrupt(new ApprovalRequest(
-            {$prompt},
+            \$prompt,
             [
                 new Action(
                     id: 'submit',
                     name: 'Submit',
-                    description: {$prompt},
+                    description: \$prompt,
                 ),
             ],
         ));

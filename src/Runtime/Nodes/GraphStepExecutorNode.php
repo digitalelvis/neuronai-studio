@@ -26,6 +26,7 @@ class GraphStepExecutorNode extends Node
         $nodeConfig = $this->graphContext->nodeConfig($nodeId);
         $nodeConfig['id'] = $nodeId;
         $nodeType = $nodeConfig['type'] ?? 'unknown';
+        $nodeTitle = $this->graphContext->nodeTitle($nodeId);
 
         $startedAt = microtime(true);
 
@@ -33,18 +34,20 @@ class GraphStepExecutorNode extends Node
             $state->emitStep('step_started', [
                 'node_id' => $nodeId,
                 'node_type' => $nodeType,
+                'node_title' => $nodeTitle,
             ]);
         }
 
         if ($nodeType === 'stop') {
             $this->executors->execute($nodeType, $nodeConfig, $state, $this->graphContext);
             $durationMs = (int) ((microtime(true) - $startedAt) * 1000);
-            $this->recordStep($state, $nodeId, $nodeType, $startedAt);
+            $this->recordStep($state, $nodeId, $nodeType, $nodeTitle, $startedAt);
 
             if ($state instanceof BuilderWorkflowState) {
                 $state->emitStep('step_completed', [
                     'node_id' => $nodeId,
                     'node_type' => $nodeType,
+                    'node_title' => $nodeTitle,
                     'handle' => 'default',
                     'duration_ms' => $durationMs,
                 ]);
@@ -62,6 +65,7 @@ class GraphStepExecutorNode extends Node
                 $state->emitStep('step_completed', [
                     'node_id' => $nodeId,
                     'node_type' => $nodeType,
+                    'node_title' => $nodeTitle,
                     'handle' => 'failed',
                     'duration_ms' => $durationMs,
                     'validation_errors' => $exception->validationErrors,
@@ -74,12 +78,13 @@ class GraphStepExecutorNode extends Node
 
         $durationMs = (int) ((microtime(true) - $startedAt) * 1000);
 
-        $this->recordStep($state, $nodeId, $nodeType, $startedAt);
+        $this->recordStep($state, $nodeId, $nodeType, $nodeTitle, $startedAt);
 
         if ($state instanceof BuilderWorkflowState) {
             $state->emitStep('step_completed', [
                 'node_id' => $nodeId,
                 'node_type' => $nodeType,
+                'node_title' => $nodeTitle,
                 'handle' => $handle,
                 'duration_ms' => $durationMs,
             ]);
@@ -96,7 +101,7 @@ class GraphStepExecutorNode extends Node
         return new GraphStepEvent($nextNodeId);
     }
 
-    protected function recordStep(WorkflowState $state, string $nodeId, string $nodeType, float $startedAt): void
+    protected function recordStep(WorkflowState $state, string $nodeId, string $nodeType, ?string $nodeTitle, float $startedAt): void
     {
         if (! $state instanceof BuilderWorkflowState) {
             return;
@@ -106,6 +111,7 @@ class GraphStepExecutorNode extends Node
         $steps[] = [
             'node_id' => $nodeId,
             'node_type' => $nodeType,
+            'node_title' => $nodeTitle,
             'state_snapshot' => $state->all(),
             'duration_ms' => (int) ((microtime(true) - $startedAt) * 1000),
         ];

@@ -4,11 +4,15 @@ namespace DigitalElvis\NeuronAIStudio\Codegen;
 
 use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\SwitchNodeExecutor;
+use DigitalElvis\NeuronAIStudio\Support\NodeTitle;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
 class GraphTranspiler
 {
+    /** @var array<string, array<string, mixed>> */
+    protected array $nodeById = [];
+
     /**
      * @param  array{version?: int, nodes?: array<int, array<string, mixed>>, edges?: array<int, array<string, mixed>>, viewport?: array<string, float|int>}  $graph
      * @return array{
@@ -31,6 +35,8 @@ class GraphTranspiler
                 $nodeById[$id] = $node;
             }
         }
+
+        $this->nodeById = $nodeById;
 
         $startTargetId = null;
         foreach ($nodes as $node) {
@@ -489,12 +495,26 @@ class GraphTranspiler
 
     public function nodeClassName(string $nodeId): string
     {
-        return Str::studly($nodeId).'Node';
+        return $this->slugForNode($nodeId).'Node';
     }
 
     public function eventClassName(string $nodeId): string
     {
-        return Str::studly($nodeId).'Event';
+        return $this->slugForNode($nodeId).'Event';
+    }
+
+    protected function slugForNode(string $nodeId): string
+    {
+        $node = $this->nodeById[$nodeId] ?? null;
+
+        if ($node === null) {
+            return Str::studly($nodeId);
+        }
+
+        $title = isset($node['title']) ? (string) $node['title'] : null;
+        $type = (string) ($node['type'] ?? '');
+
+        return NodeTitle::slug($title, $type, $nodeId);
     }
 
     /**

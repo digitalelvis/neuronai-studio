@@ -36,7 +36,7 @@ export default function WorkflowEditorShell({ config }) {
     const readOnly = config.readOnly ?? false;
     const nodeTypesMeta = config.nodeTypes || {};
     const inspectorDefaultSize = useMemo(() => getStoredInspectorSize(28), []);
-    const { editingNode, section, syncNode, removeNode, closeNodeEditor } = useNodeEditor();
+    const { editingNode, section, syncNode, syncNodeTitle, removeNode, closeNodeEditor } = useNodeEditor();
     const showInspector = Boolean(editingNode);
 
     useEffect(() => {
@@ -254,6 +254,7 @@ export default function WorkflowEditorShell({ config }) {
                                     section={section}
                                     onClose={closeNodeEditor}
                                     onUpdate={syncNode}
+                                    onTitleChange={syncNodeTitle}
                                     onRemove={removeNode}
                                     agents={config.agents || []}
                                     workflows={config.workflows || []}

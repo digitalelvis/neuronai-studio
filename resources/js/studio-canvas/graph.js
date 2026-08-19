@@ -337,9 +337,59 @@ export function buildFlowEdge(connectionOrEdge) {
     };
 }
 
+export function normalizeNodeTitle(title) {
+    if (typeof title !== 'string') {
+        return null;
+    }
+
+    const trimmed = title.trim();
+
+    return trimmed === '' ? null : trimmed;
+}
+
+export function nodeTitleUniquenessKey(title) {
+    const normalized = normalizeNodeTitle(title);
+
+    return normalized === null ? null : normalized.toLowerCase();
+}
+
+/**
+ * @param {string} base
+ * @param {Array<string|null|undefined>} existingTitles
+ */
+export function uniqueNodeTitle(base, existingTitles = []) {
+    const keys = new Set(
+        existingTitles.map((title) => nodeTitleUniquenessKey(title)).filter(Boolean),
+    );
+    const candidate = (base || '').trim();
+
+    if (!keys.has(nodeTitleUniquenessKey(candidate))) {
+        return candidate;
+    }
+
+    let suffix = 2;
+
+    while (keys.has(nodeTitleUniquenessKey(`${candidate} ${suffix}`))) {
+        suffix += 1;
+    }
+
+    return `${candidate} ${suffix}`;
+}
+
+/**
+ * @param {Array<{ data?: { title?: string, nodeType?: string }, type?: string }>} nodes
+ */
+export function collectNodeTitles(nodes = []) {
+    return nodes
+        .filter((node) => node.data?.nodeType !== 'note' && node.type !== 'stickyNote')
+        .map((node) => node.data?.title)
+        .filter((title) => typeof title === 'string' && title.trim() !== '');
+}
+
 export function toFlowNodes(packageNodes, nodeTypesMeta, annotations = []) {
     const workflowNodes = (packageNodes || []).map((node) => {
         const meta = nodeTypesMeta[node.type] || {};
+        const title = normalizeNodeTitle(typeof node.title === 'string' ? node.title : null);
 
         return {
             id: node.id,
@@ -351,6 +401,7 @@ export function toFlowNodes(packageNodes, nodeTypesMeta, annotations = []) {
             data: {
                 nodeType: node.type,
                 label: meta.label || node.type,
+                ...(title ? { title } : {}),
                 category: meta.category || 'flow',
                 icon: meta.icon || 'circle',
                 config: normalizeNodeData(node.data),
@@ -404,6 +455,7 @@ export function toPackageGraph(nodes, edges, viewport) {
             id: node.id,
             type: node.data.nodeType,
             position: { x: node.position.x, y: node.position.y },
+            ...(normalizeNodeTitle(node.data.title) ? { title: normalizeNodeTitle(node.data.title) } : {}),
             data: node.data.config || {},
         });
     }
@@ -450,8 +502,9 @@ export function createNodeId(type) {
     return `${type}_${Date.now()}`;
 }
 
-export function buildFlowNode(type, position, nodeTypesMeta, config = {}) {
+export function buildFlowNode(type, position, nodeTypesMeta, config = {}, title = null) {
     const meta = nodeTypesMeta[type] || {};
+    const normalizedTitle = normalizeNodeTitle(title);
 
     if (type === 'note') {
         return {
@@ -476,6 +529,7 @@ export function buildFlowNode(type, position, nodeTypesMeta, config = {}) {
         data: {
             nodeType: type,
             label: meta.label || type,
+            ...(normalizedTitle ? { title: normalizedTitle } : {}),
             category: meta.category || 'flow',
             icon: meta.icon || 'circle',
             config,
