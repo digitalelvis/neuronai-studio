@@ -1,5 +1,12 @@
 # Changelog
 
+# [3.7.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.6.0...v3.7.0) (2026-08-19)
+
+
+### Features
+
+* **canvas:** add editable node names for canvas nodes ([cc7270c](https://github.com/digitalelvis/neuronai-studio/commit/cc7270c43de05304378b2f23aabdeb00565387bc))
+
 # [3.6.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.5.0...v3.6.0) (2026-08-18)
 
 
