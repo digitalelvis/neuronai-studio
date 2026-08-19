@@ -427,7 +427,7 @@ export default function WorkflowNode({ id, data, selected }) {
                 </span>
                 <div className="min-w-0 flex-1">
                     <div className="ab-flow-node-type">{data.nodeType}</div>
-                    <div className="ab-flow-node-label">{data.label}</div>
+                    <div className="ab-flow-node-label">{data.title?.trim() || data.label}</div>
                 </div>
             </div>
 

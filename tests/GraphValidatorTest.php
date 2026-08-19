@@ -732,4 +732,65 @@ class GraphValidatorTest extends TestCase
             ],
         ];
     }
+
+    public function test_rejects_duplicate_node_titles_case_insensitive(): void
+    {
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate([
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                ['id' => 'agent_1', 'type' => 'agent', 'title' => 'Agent', 'position' => ['x' => 100, 'y' => 0], 'data' => []],
+                ['id' => 'agent_2', 'type' => 'agent', 'title' => 'agent', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 300, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'agent_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'agent_1', 'target' => 'agent_2', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ['id' => 'e3', 'source' => 'agent_2', 'target' => 'stop_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+            ],
+        ]);
+
+        $this->assertFalse($result['valid']);
+        $this->assertNotEmpty($result['errors']);
+    }
+
+    public function test_rejects_duplicate_codegen_slugs_from_distinct_titles(): void
+    {
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate([
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                ['id' => 'agent_1', 'type' => 'agent', 'title' => 'Foo Bar', 'position' => ['x' => 100, 'y' => 0], 'data' => []],
+                ['id' => 'agent_2', 'type' => 'agent', 'title' => 'Foo-Bar', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 300, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'agent_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'agent_1', 'target' => 'agent_2', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ['id' => 'e3', 'source' => 'agent_2', 'target' => 'stop_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+            ],
+        ]);
+
+        $this->assertFalse($result['valid']);
+    }
+
+    public function test_ignores_title_inside_node_data_config(): void
+    {
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate([
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                ['id' => 'set_1', 'type' => 'set_state', 'position' => ['x' => 100, 'y' => 0], 'data' => ['title' => 'Shadow', 'key' => 'a', 'value' => '1']],
+                ['id' => 'set_2', 'type' => 'set_state', 'position' => ['x' => 200, 'y' => 0], 'data' => ['title' => 'Shadow', 'key' => 'b', 'value' => '2']],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 300, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'set_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'set_1', 'target' => 'set_2', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ['id' => 'e3', 'source' => 'set_2', 'target' => 'stop_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+            ],
+        ]);
+
+        $this->assertTrue($result['valid']);
+    }
 }

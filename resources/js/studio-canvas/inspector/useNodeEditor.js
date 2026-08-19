@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { normalizeNodeForEdit } from './nodeUtils';
+import { normalizeNodeTitle } from '../graph';
 
 const INSPECTOR_WIDTH_KEY = 'ab-inspector-width';
 
@@ -44,7 +45,14 @@ export function useNodeEditor() {
             return;
         }
 
-        setEditingNode(normalized);
+        setEditingNode({
+            id: node.id,
+            type: node.type,
+            title: normalizeNodeTitle(node.title),
+            typeLabel: node.typeLabel || node.type,
+            existingTitles: node.existingTitles || [],
+            data: normalized,
+        });
         setSection(nextSection);
     }, []);
 
@@ -53,6 +61,32 @@ export function useNodeEditor() {
         setSection('all');
         window.dispatchEvent(new CustomEvent('canvas-clear-selection'));
     }, []);
+
+    const syncNodeTitle = useCallback(
+        (title) => {
+            if (!editingNode) {
+                return;
+            }
+
+            const normalized = normalizeNodeTitle(title);
+
+            setEditingNode((current) =>
+                current
+                    ? {
+                          ...current,
+                          title: normalized,
+                      }
+                    : current,
+            );
+
+            window.dispatchEvent(
+                new CustomEvent('canvas-node-title-updated', {
+                    detail: { id: editingNode.id, title: normalized, source: 'inspector' },
+                }),
+            );
+        },
+        [editingNode],
+    );
 
     const syncNode = useCallback(
         (data) => {
@@ -102,6 +136,9 @@ export function useNodeEditor() {
 
                     return {
                         ...current,
+                        title: detail.title !== undefined ? normalizeNodeTitle(detail.title) : current.title,
+                        typeLabel: detail.typeLabel ?? current.typeLabel,
+                        existingTitles: detail.existingTitles ?? current.existingTitles,
                         data: { ...current.data, ...(detail.data || {}) },
                     };
                 });
@@ -124,6 +161,9 @@ export function useNodeEditor() {
                 {
                     id: detail.id,
                     type: detail.type,
+                    title: detail.title,
+                    typeLabel: detail.typeLabel,
+                    existingTitles: detail.existingTitles,
                     data: detail.data || {},
                 },
                 'all',
@@ -191,6 +231,7 @@ export function useNodeEditor() {
         openNodeEditor,
         closeNodeEditor,
         syncNode,
+        syncNodeTitle,
         removeNode,
     };
 }

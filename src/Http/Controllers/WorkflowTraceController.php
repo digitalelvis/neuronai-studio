@@ -48,6 +48,7 @@ class WorkflowTraceController
                 'id' => $span->id,
                 'node_type' => $span->type,
                 'node_id' => $span->name,
+                'node_title' => is_array($span->output) ? ($span->output['node_title'] ?? null) : null,
                 'duration_ms' => $span->duration_ms,
                 'state_snapshot' => $span->output['state_snapshot'] ?? null,
                 'prompt_tokens' => $span->prompt_tokens,

@@ -7,6 +7,8 @@ use DigitalElvis\NeuronAIStudio\Registry\NodeTypeRegistry;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\IntentClassifierNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\InvokeNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\SwitchNodeExecutor;
+use DigitalElvis\NeuronAIStudio\Support\NodeTitle;
+use DigitalElvis\NeuronAIStudio\Support\StudioTranslator;
 use InvalidArgumentException;
 
 class GraphValidator
@@ -98,6 +100,7 @@ class GraphValidator
         $errors = array_merge($errors, $this->validateIntentClassifierNodes($nodes, $controlEdges));
         $errors = array_merge($errors, $this->validateSwitchNodes($nodes, $controlEdges));
         $errors = array_merge($errors, $this->validateDuplicateHandles($nodes, $controlEdges));
+        $errors = array_merge($errors, $this->validateNodeTitles($nodes));
         $warnings = array_merge($warnings, $this->validateReplyContractWarnings($nodes, $controlEdges));
 
         if (empty($errors) && ! empty($startNodes)) {
@@ -954,6 +957,67 @@ class GraphValidator
         }
 
         return $limits;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $nodes
+     * @return array<int, string>
+     */
+    protected function validateNodeTitles(array $nodes): array
+    {
+        $errors = [];
+        $titleKeys = [];
+        $slugKeys = [];
+
+        foreach ($nodes as $node) {
+            if (($node['type'] ?? '') === 'note') {
+                continue;
+            }
+
+            $id = (string) ($node['id'] ?? 'unknown');
+            $type = (string) ($node['type'] ?? 'node');
+            $title = NodeTitle::normalize(isset($node['title']) ? (string) $node['title'] : null);
+
+            if ($title === null) {
+                continue;
+            }
+
+            if (mb_strlen($title) > NodeTitle::MAX_LENGTH) {
+                $errors[] = StudioTranslator::get(
+                    'validation.node_title_max',
+                    'Node name must be at most :max characters.',
+                    ['max' => NodeTitle::MAX_LENGTH, 'node' => $id],
+                );
+
+                continue;
+            }
+
+            $key = NodeTitle::uniquenessKey($title);
+
+            if ($key !== null && isset($titleKeys[$key])) {
+                $errors[] = StudioTranslator::get(
+                    'validation.node_title_unique',
+                    'Node names must be unique in this workflow (case-insensitive).',
+                    ['node' => $id, 'title' => $title],
+                );
+            } elseif ($key !== null) {
+                $titleKeys[$key] = $id;
+            }
+
+            $slug = NodeTitle::slug($title, $type, $id);
+
+            if (isset($slugKeys[$slug])) {
+                $errors[] = StudioTranslator::get(
+                    'validation.node_title_slug_unique',
+                    'Node names produce duplicate export class names. Choose different names.',
+                    ['node' => $id, 'title' => $title],
+                );
+            } else {
+                $slugKeys[$slug] = $id;
+            }
+        }
+
+        return $errors;
     }
 
     public function assertValid(array $graph, ?int $currentWorkflowId = null): void

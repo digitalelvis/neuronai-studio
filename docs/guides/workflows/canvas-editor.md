@@ -115,6 +115,25 @@ Control-flow stays `Start → supervisor → Stop`. Agents resolve via `NodeAsTo
 | `⌘/Ctrl+Shift+Z` | Redo |
 | `Escape` | Clear selection |
 
+## Node names
+
+Each executable node can have an optional **node name** (`title` in graph JSON). The graph **`id` stays immutable** — edges, tool bindings, checkpoints, and traces keep using it.
+
+| Surface | Shows |
+|---------|--------|
+| Canvas card | Node name (or type label when untitled) |
+| Inspector header | Editable node name (Dify-style) |
+| Logs / traces / playground | Node name when set; otherwise `node_id` |
+| Variable picker | Node name as the source group label |
+| Native PHP export | Class/event names from a slug of the title; `STUDIO_NODE_ID` remains the graph `id` |
+
+**Authoring rules**
+
+- Clearing the inspector name field on blur **does not** wipe the previous name — it reverts.
+- Names must be **unique per workflow** (case-insensitive). Duplicate export slugs block save/validate.
+- New drops default to the type label (`Agent`, `Agent 2`, …). Duplicates get `{name} 2`, etc.
+- Legacy graphs without `title` are unchanged until you commit a name (no automatic backfill).
+
 ## Preview mode
 
 Read-only preview for code-sourced workflows:

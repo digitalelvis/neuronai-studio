@@ -323,9 +323,17 @@ export function getFlowNodeLabel(node) {
         return 'Node';
     }
 
+    if (typeof node.title === 'string' && node.title.trim() !== '') {
+        return node.title.trim();
+    }
+
     const data = node.data;
     if (data && typeof data === 'object' && !Array.isArray(data)) {
         const nested = /** @type {Record<string, unknown>} */ (data);
+        if (typeof nested.title === 'string' && nested.title.trim() !== '') {
+            return nested.title.trim();
+        }
+
         if (typeof nested.label === 'string' && nested.label.trim() !== '') {
             return nested.label.trim();
         }
