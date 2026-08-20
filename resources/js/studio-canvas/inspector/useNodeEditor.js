@@ -51,7 +51,7 @@ export function useNodeEditor() {
             title: normalizeNodeTitle(node.title),
             typeLabel: node.typeLabel || node.type,
             existingTitles: node.existingTitles || [],
-            data: normalized,
+            data: normalized.data,
         });
         setSection(nextSection);
     }, []);
