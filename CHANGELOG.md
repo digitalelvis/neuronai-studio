@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.7.1](https://github.com/digitalelvis/neuronai-studio/compare/v3.7.0...v3.7.1) (2026-08-20)
+
+
+### Bug Fixes
+
+* **canvas:** restore Switch cases in node inspector ([73378a8](https://github.com/digitalelvis/neuronai-studio/commit/73378a8088c2b54fd23230a8775e700559b26418))
+
 # [3.7.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.6.0...v3.7.0) (2026-08-19)
 
 
