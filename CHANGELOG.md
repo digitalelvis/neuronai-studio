@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.7.2](https://github.com/digitalelvis/neuronai-studio/compare/v3.7.1...v3.7.2) (2026-08-25)
+
+
+### Bug Fixes
+
+* **runtime:** stop exponential __steps nesting in workflow snapshots ([649325b](https://github.com/digitalelvis/neuronai-studio/commit/649325b9d2344575d7ff7ab571da380fe9845ef8))
+
 ## [3.7.1](https://github.com/digitalelvis/neuronai-studio/compare/v3.7.0...v3.7.1) (2026-08-20)
 
 
