@@ -21,7 +21,7 @@ class BuilderWorkflowState extends WorkflowState
     {
         if ($this->stepEmitter !== null) {
             if ($event === 'step_completed' && ! array_key_exists('state', $data)) {
-                $data['state'] = $this->all();
+                $data['state'] = WorkflowStateSnapshot::forTrace($this);
             }
 
             ($this->stepEmitter)($event, $data);

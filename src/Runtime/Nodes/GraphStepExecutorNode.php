@@ -4,6 +4,7 @@ namespace DigitalElvis\NeuronAIStudio\Runtime\Nodes;
 
 use DigitalElvis\NeuronAIStudio\Runtime\BuilderWorkflowState;
 use DigitalElvis\NeuronAIStudio\Runtime\GraphContext;
+use DigitalElvis\NeuronAIStudio\Runtime\WorkflowStateSnapshot;
 use DigitalElvis\NeuronAIStudio\Runtime\Events\GraphStepEvent;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\StructuredOutputValidationException;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorRegistry;
@@ -112,7 +113,7 @@ class GraphStepExecutorNode extends Node
             'node_id' => $nodeId,
             'node_type' => $nodeType,
             'node_title' => $nodeTitle,
-            'state_snapshot' => $state->all(),
+            'state_snapshot' => WorkflowStateSnapshot::forTrace($state),
             'duration_ms' => (int) ((microtime(true) - $startedAt) * 1000),
         ];
         $state->set('__steps', $steps);
