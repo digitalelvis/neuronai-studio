@@ -557,6 +557,11 @@ return [
             'icon' => 'wrench',
             'category' => 'ai',
         ],
+        'skill' => [
+            'label' => 'Skill',
+            'icon' => 'book-open',
+            'category' => 'ai',
+        ],
         'rag' => [
             'label' => 'RAG',
             'icon' => 'search',
@@ -862,6 +867,47 @@ return [
             'video/webm',
             'application/pdf',
             'text/plain',
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Agent Skills (agentskills.io)
+    |--------------------------------------------------------------------------
+    */
+
+    'skills' => [
+        'cover_disk' => env('NEURONAI_STUDIO_SKILLS_COVER_DISK', 'public'),
+        'categories' => [
+            'programming' => 'Programming',
+            'data' => 'Data',
+            'automation' => 'Automation',
+            'business' => 'Business',
+            'design' => 'Design',
+            'media' => 'Media',
+            'content' => 'Content',
+        ],
+        'import' => [
+            'max_files' => (int) env('NEURONAI_STUDIO_SKILLS_MAX_FILES', 200),
+            'max_file_bytes' => (int) env('NEURONAI_STUDIO_SKILLS_MAX_FILE_BYTES', 512_000),
+            'max_total_bytes' => (int) env('NEURONAI_STUDIO_SKILLS_MAX_TOTAL_BYTES', 5_000_000),
+            'binary_extensions' => ['png', 'jpg', 'jpeg', 'gif', 'webp', 'ico', 'pdf', 'woff', 'woff2'],
+        ],
+        'github' => [
+            'token' => env('NEURONAI_STUDIO_GITHUB_TOKEN', env('GITHUB_TOKEN')),
+            'user_agent' => 'NeuronAI-Studio',
+        ],
+        'execution' => [
+            'enabled' => env('NEURONAI_STUDIO_SKILLS_EXECUTION', env('APP_ENV') === 'local'),
+            'timeout_seconds' => (int) env('NEURONAI_STUDIO_SKILLS_EXEC_TIMEOUT', 30),
+            'max_output_bytes' => (int) env('NEURONAI_STUDIO_SKILLS_EXEC_MAX_OUTPUT', 65_536),
+            'interpreters' => [
+                'sh' => env('NEURONAI_STUDIO_SKILLS_BASH', 'bash'),
+                'py' => env('NEURONAI_STUDIO_SKILLS_PYTHON', 'python3'),
+                'js' => env('NEURONAI_STUDIO_SKILLS_NODE', 'node'),
+            ],
+            'extensions' => ['sh', 'py', 'js'],
+            'require_tool_approval' => (bool) env('NEURONAI_STUDIO_SKILLS_EXEC_APPROVAL', true),
         ],
     ],
 

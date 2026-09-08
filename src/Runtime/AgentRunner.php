@@ -17,7 +17,7 @@ use DigitalElvis\NeuronAIStudio\Support\ThreadOwner;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\StructuredOutputValidationException;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ToolApprovalRequiredException;
 use DigitalElvis\NeuronAIStudio\Runtime\Memory\MemoryConfig;
-use DigitalElvis\NeuronAIStudio\Runtime\Tools\ToolContext;
+use DigitalElvis\NeuronAIStudio\Runtime\Skills\StudioSkillRuntime;
 use DigitalElvis\NeuronAIStudio\Runtime\Tools\ToolContextInjector;
 use DigitalElvis\NeuronAIStudio\Usage\UsageRecorder;
 use Illuminate\Support\Str;
@@ -66,6 +66,7 @@ class AgentRunner
             'model' => $definition->model,
             'instructions' => $definition->instructions,
             'tools' => $definition->tools ?? [],
+            'skills' => $definition->skills ?? [],
             'require_tool_approval' => (bool) $definition->require_tool_approval,
             ...$this->toolControlConfigFromDefinition($definition),
         ], $message, $definition, $threadKey, fake: $fake, sessionInput: array_intersect_key($options, array_flip([
@@ -98,6 +99,7 @@ class AgentRunner
             'api_key' => $definition->api_key,
             'instructions' => $definition->instructions,
             'tools' => $definition->tools ?? [],
+            'skills' => $definition->skills ?? [],
             'require_tool_approval' => (bool) $definition->require_tool_approval,
             ...$this->toolControlConfigFromDefinition($definition),
         ]);
@@ -783,6 +785,7 @@ class AgentRunner
             'model' => $definition->model,
             'instructions' => PlaygroundContext::augmentInstructions($instructions, $context),
             'tools' => $definition->tools ?? [],
+            'skills' => $definition->skills ?? [],
             'parameters' => $parameters,
             'tool_context' => $toolContext,
         ];
@@ -826,9 +829,17 @@ class AgentRunner
                 $tools[] = ToolContextInjector::apply($resolved, $toolContext);
             }
         }
+
+        $skillRuntime = app(StudioSkillRuntime::class);
+        $skillCatalog = $skillRuntime->resolveCatalog($config['skills'] ?? []);
+        foreach ($skillRuntime->runtimeTools($skillCatalog) as $skillTool) {
+            $tools[] = $skillTool;
+        }
+
         $memory = $this->resolveMemoryConfig($definition, $config);
 
         $instructions = (string) ($config['instructions'] ?? 'You are a helpful AI assistant.');
+        $instructions = $skillRuntime->augmentInstructions($instructions, $skillCatalog);
         $instructions = $this->interpolateVariablePlaceholders($instructions);
 
         $agent = new DynamicAgent(

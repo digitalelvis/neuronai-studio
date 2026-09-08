@@ -333,8 +333,11 @@ class AgentNodeExecutor implements NodeExecutorInterface
             $context->toolBindingsFor($nodeId),
             $state,
         );
+        $canvasSkillBindings = $context->skillBindingsFor($nodeId);
         $definitionTools = $definition !== null && is_array($definition->tools) ? $definition->tools : [];
+        $definitionSkills = $definition !== null && is_array($definition->skills) ? $definition->skills : [];
         $tools = array_values(array_merge($definitionTools, $canvasBindings));
+        $skills = array_values(array_merge($definitionSkills, $canvasSkillBindings));
         $toolContext = ToolContext::fromWorkflowState($state);
 
         if ($definition !== null) {
@@ -343,6 +346,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
                 'model' => $definition->model,
                 'instructions' => $definition->instructions,
                 'tools' => $tools,
+                'skills' => $skills,
                 'tool_context' => $toolContext,
                 ...$this->toolControlConfig($data, $definition),
                 ...$this->memoryOverrideConfig($data, $definition),
@@ -352,6 +356,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
 
         $config = array_merge($data, [
             'tools' => $tools,
+            'skills' => $skills,
             'tool_context' => $toolContext,
             ...$this->toolControlConfig($data, null),
             ...$this->memoryOverrideConfig($data, null),

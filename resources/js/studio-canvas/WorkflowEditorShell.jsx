@@ -164,6 +164,7 @@ export default function WorkflowEditorShell({ config }) {
                         <NodePalette
                             nodeTypes={config.nodeTypes || {}}
                             tools={toolsCatalog}
+                            skills={config.skills || []}
                             mcpServers={config.mcpServers || []}
                             readOnly={readOnly}
                         />
@@ -181,6 +182,7 @@ export default function WorkflowEditorShell({ config }) {
                                     agents={config.agents || []}
                                     workflows={config.workflows || []}
                                     tools={toolsCatalog}
+                                    skills={config.skills || []}
                                     mcpServers={config.mcpServers || []}
                                     knowledgeBases={config.knowledgeBases || []}
                                     ragSearchUrlTemplate={config.ragSearchUrlTemplate ?? ''}
@@ -259,6 +261,7 @@ export default function WorkflowEditorShell({ config }) {
                                     agents={config.agents || []}
                                     workflows={config.workflows || []}
                                     tools={toolsCatalog}
+                                    skills={config.skills || []}
                                     mcpServers={config.mcpServers || []}
                                     knowledgeBases={config.knowledgeBases || []}
                                     ragSearchUrlTemplate={config.ragSearchUrlTemplate ?? ''}

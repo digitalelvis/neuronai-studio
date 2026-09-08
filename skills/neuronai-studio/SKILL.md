@@ -1,12 +1,13 @@
 ---
 name: neuronai-studio
 description: >
-  Build and configure NeuronAI Studio (Laravel) — agents, workflows, tools, MCP,
+  Build and configure NeuronAI Studio (Laravel) — agents, workflows, tools, skills, MCP,
   knowledge bases, export to production PHP, and package setup. Use when working
   with NeuronAI Studio, neuronai-studio routes/config, studio canvas, playground,
-  agent definitions, workflow graphs, builder/webhook tools, RAG knowledge bases,
-  MCP servers in the studio, or exporting App\Neuron classes. For pure Neuron AI
-  PHP agents/workflows outside the studio UI, use vendor/neuron-core/neuron-ai/skills/.
+  agent definitions, workflow graphs, builder/webhook tools, agent skills (runtime),
+  RAG knowledge bases, MCP servers in the studio, or exporting App\Neuron classes.
+  For pure Neuron AI PHP agents/workflows outside the studio UI, use vendor/neuron-core/neuron-ai/skills/.
+  For Cursor/Claude coding skills only, see install hint — not the same as runtime agent skills.
 ---
 
 # NeuronAI Studio
@@ -24,6 +25,7 @@ Visual AI agent builder for Laravel. Definitions live in the DB; runtime hydrate
 | Task | Action |
 |------|--------|
 | Studio UI, install, config, DB definitions, canvas, playground, export | This skill + references |
+| **Runtime agent skills** (CRUD, bind, activate_skill) | [references/skills.md](references/skills.md) + docs/guides/agents/skills.md |
 | Pure Neuron PHP (`Agent`, `Workflow`, tools) without Studio | `vendor/neuron-core/neuron-ai/skills/` (e.g. `neuron-agent-builder`) |
 | Both (export then customize PHP) | Studio export ref first, then Neuron skills |
 
@@ -33,6 +35,7 @@ Visual AI agent builder for Laravel. Definitions live in the DB; runtime hydrate
 |------|------|
 | Install, config, publish tags, env, demo app | [references/setup.md](references/setup.md) |
 | Agents, playground, threads, evals, attachments | [references/agents.md](references/agents.md) |
+| Agent skills (runtime catalog, progressive disclosure) | [references/skills.md](references/skills.md) |
 | Workflow canvas, nodes, state, HITL, traces | [references/workflows.md](references/workflows.md) |
 | Builder/webhook/RAG tools, registry, codegen CLI | [references/tools.md](references/tools.md) |
 | Knowledge bases, ingest, vector stores, RAG | [references/knowledge.md](references/knowledge.md) |

@@ -793,4 +793,40 @@ class GraphValidatorTest extends TestCase
 
         $this->assertTrue($result['valid']);
     }
+
+    public function test_rejects_skills_edge_with_non_skill_source(): void
+    {
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate([
+            'nodes' => [
+                ['id' => 'tool_1', 'type' => 'tool', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                ['id' => 'agent_1', 'type' => 'agent', 'position' => ['x' => 100, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'tool_1', 'target' => 'agent_1', 'sourceHandle' => 'default', 'targetHandle' => 'skills'],
+            ],
+        ]);
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('Skills edge source must be a skill node', implode(' ', $result['errors']));
+    }
+
+    public function test_rejects_skill_node_in_control_flow(): void
+    {
+        $validator = app(GraphValidator::class);
+        $result = $validator->validate([
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                ['id' => 'skill_1', 'type' => 'skill', 'position' => ['x' => 100, 'y' => 0], 'data' => []],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'skill_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'skill_1', 'target' => 'stop_1', 'sourceHandle' => 'default', 'targetHandle' => 'default'],
+            ],
+        ]);
+
+        $this->assertFalse($result['valid']);
+        $this->assertStringContainsString('cannot participate in workflow control flow', implode(' ', $result['errors']));
+    }
 }

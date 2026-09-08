@@ -71,6 +71,7 @@ export default function NodePreviewBody({
     agents = [],
     workflows = [],
     tools = [],
+    skills = [],
     knowledgeBases = [],
     mcpServers = [],
     loopIteration = null,
@@ -105,6 +106,11 @@ export default function NodePreviewBody({
                             className="ab-flow-handle-label-tools"
                         />
                         <PreviewRow
+                            anchor="skills"
+                            label="skills"
+                            className="ab-flow-handle-label-skills"
+                        />
+                        <PreviewRow
                             anchor="toolset"
                             label="toolset"
                             className="ab-flow-handle-label-toolset"
@@ -117,6 +123,11 @@ export default function NodePreviewBody({
                             anchor="tools"
                             label="tools"
                             className="ab-flow-handle-label-tools"
+                        />
+                        <PreviewRow
+                            anchor="skills"
+                            label="skills"
+                            className="ab-flow-handle-label-skills"
                         />
                         <PreviewRow anchor="response" label="response" />
                     </>
@@ -254,6 +265,11 @@ export default function NodePreviewBody({
     if (nodeType === 'tool') {
         const tool = tools.find((item) => item.ref === config.tool_ref);
         return config.tool_ref ? <PreviewBadge>{tool?.label || config.tool_ref}</PreviewBadge> : null;
+    }
+
+    if (nodeType === 'skill') {
+        const skill = skills.find((item) => item.ref === config.skill_ref);
+        return config.skill_ref ? <PreviewBadge>{skill?.label || config.skill_ref}</PreviewBadge> : null;
     }
 
     if (nodeType === 'mcp') {

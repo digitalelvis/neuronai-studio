@@ -46,6 +46,18 @@ use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\McpNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\RagNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\RunWorkflowNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\SetStateNodeExecutor;
+use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\SkillNodeExecutor;
+use DigitalElvis\NeuronAIStudio\Runtime\Skills\SkillArchiveImporter;
+use DigitalElvis\NeuronAIStudio\Runtime\Skills\SkillCatalogInjector;
+use DigitalElvis\NeuronAIStudio\Runtime\Skills\SkillFileReader;
+use DigitalElvis\NeuronAIStudio\Runtime\Skills\SkillGitHubImporter;
+use DigitalElvis\NeuronAIStudio\Runtime\Skills\SkillParser;
+use DigitalElvis\NeuronAIStudio\Runtime\Skills\SkillPathPolicy;
+use DigitalElvis\NeuronAIStudio\Runtime\Skills\SkillRepository;
+use DigitalElvis\NeuronAIStudio\Runtime\Skills\SkillResolver;
+use DigitalElvis\NeuronAIStudio\Runtime\Skills\SkillRuntime;
+use DigitalElvis\NeuronAIStudio\Runtime\Skills\SkillScriptSandbox;
+use DigitalElvis\NeuronAIStudio\Runtime\Skills\StudioSkillRuntime;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\StartNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\StopNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\SwitchNodeExecutor;
@@ -162,6 +174,18 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
 
             return new NullTenantResolver;
         });
+
+        $this->app->singleton(SkillParser::class);
+        $this->app->singleton(SkillRepository::class);
+        $this->app->singleton(SkillResolver::class);
+        $this->app->singleton(SkillCatalogInjector::class);
+        $this->app->singleton(SkillPathPolicy::class);
+        $this->app->singleton(SkillFileReader::class);
+        $this->app->singleton(SkillScriptSandbox::class);
+        $this->app->singleton(SkillArchiveImporter::class);
+        $this->app->singleton(SkillGitHubImporter::class);
+        $this->app->singleton(SkillRuntime::class, StudioSkillRuntime::class);
+        $this->app->singleton(StudioSkillRuntime::class);
     }
 
     public function boot(): void
@@ -276,6 +300,7 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
             'invoke' => InvokeNodeExecutor::class,
             'run_workflow' => RunWorkflowNodeExecutor::class,
             'tool' => ToolNodeExecutor::class,
+            'skill' => SkillNodeExecutor::class,
             'rag' => RagNodeExecutor::class,
             'delay' => DelayNodeExecutor::class,
             'mcp' => McpNodeExecutor::class,
@@ -313,6 +338,9 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
         Livewire::component('neuronai-studio.tools.edit', Http\Livewire\Tools\Edit::class);
         Livewire::component('neuronai-studio.tools.show', Http\Livewire\Tools\Show::class);
         Livewire::component('neuronai-studio.tools.registry', Http\Livewire\Tools\RegistryShow::class);
+        Livewire::component('neuronai-studio.skills.index', Http\Livewire\Skills\Index::class);
+        Livewire::component('neuronai-studio.skills.edit', Http\Livewire\Skills\Edit::class);
+        Livewire::component('neuronai-studio.skills.show', Http\Livewire\Skills\Show::class);
         Livewire::component('neuronai-studio.knowledge-bases.index', Http\Livewire\KnowledgeBases\Index::class);
         Livewire::component('neuronai-studio.knowledge-bases.edit', Http\Livewire\KnowledgeBases\Edit::class);
         Livewire::component('neuronai-studio.mcp-servers.index', Http\Livewire\McpServers\Index::class);

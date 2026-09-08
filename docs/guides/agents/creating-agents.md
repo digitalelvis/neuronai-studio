@@ -63,6 +63,27 @@ Each binding references a tool by `ref`:
 
 Browse available tools in the [Tool Registry](../tools/registry-and-codegen.md).
 
+## Skill bindings
+
+Attach [agent skills](skills.md) to give the agent reusable instruction packages with progressive disclosure.
+
+### Binding format
+
+Each binding references a catalog skill by `ref`:
+
+```json
+{
+  "ref": "skill:db:12"
+}
+```
+
+| Prefix | Meaning | Example |
+|--------|---------|---------|
+| `skill:db:{id}` | Database skill definition | `skill:db:12` |
+| `skill:{slug}` | Resolve by slug (tenant-aware) | `skill:support-playbook` |
+
+At runtime the agent receives a short **Available skills** list in its instructions plus tools `activate_skill` and `read_skill_resource`. Canvas workflows can also bind skills via **skill → agent:skills** edges.
+
 ## Tool approval
 
 Enable **Require tool approval** on an agent to gate its tool calls behind a human decision. When on, an agent running inside a workflow pauses before executing any tool and waits for an approve/reject decision in the workflow test harness.

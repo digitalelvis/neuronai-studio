@@ -54,6 +54,7 @@
             knowledgeBases: @json($knowledgeBasesForCanvas),
             ragSearchUrlTemplate: @json(route('neuronai-studio.knowledge-bases.search', ['knowledgeBase' => '__KB__'])),
             tools: @json($toolsForCanvas),
+            skills: @json($skillsForCanvas),
             mcpServers: @json($mcpServersForCanvas),
             outputClasses: @json($outputClassesForCanvas),
             providers: @json($providers),

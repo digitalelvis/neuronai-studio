@@ -14,6 +14,7 @@ return [
     'run_workflow' => 'Executar Workflow',
     'run_workflow_tool_description' => 'Execute outro workflow neste projeto.',
     'tool' => 'Ferramenta',
+    'skill' => 'Skill',
     'rag' => 'RAG',
     'delay' => 'Atraso',
     'mcp' => 'MCP',

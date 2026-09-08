@@ -14,6 +14,7 @@ return [
     'run_workflow' => 'Run Workflow',
     'run_workflow_tool_description' => 'Execute another workflow in this project.',
     'tool' => 'Tool',
+    'skill' => 'Skill',
     'rag' => 'RAG',
     'delay' => 'Delay',
     'mcp' => 'MCP',

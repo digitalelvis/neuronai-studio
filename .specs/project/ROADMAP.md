@@ -218,6 +218,20 @@ Isolamento opt-in de authoring e runtime: `tenant_id` em banco compartilhado + `
 
 **Linha:** Execute → `v3.1.x` (branch `feat/optional-multi-tenancy`).
 
+### M19 — Agent Skills (P1) `in progress`
+
+Runtime Agent Skills (agentskills.io): CRUD, canvas bind, progressive disclosure via Studio-owned tools until Neuron AI ships native Skills API.
+
+**Escopo (AD-037):** [agent-skills](../features/agent-skills/spec.md) · [context](../features/agent-skills/context.md) · [design](../features/agent-skills/design.md) · [tasks](../features/agent-skills/tasks.md)
+
+| Ordem | Feature | Status | Spec |
+|-------|---------|--------|------|
+| 37 | `agent-skills` | **in progress** | [spec](../features/agent-skills/spec.md) |
+
+**Critério de conclusão M19:** Author creates skill → binds on Agent/canvas → playground run activates skill via tool; export snapshots SKILL.md; tenancy isolated.
+
+**Linha:** Execute → `v3.1.x` (branch `feat/agent-skills`).
+
 ---
 
 ## Próximas tarefas (ordem de execução)

@@ -142,6 +142,12 @@ export default function AgentNodeFields({
                                         : ''}
                                 </p>
                             </div>
+                            <div className="space-y-1" data-ab-handle-anchor="skills">
+                                <Label>Skills</Label>
+                                <p className="text-xs text-muted-foreground">
+                                    Connect Skill nodes to the violet skills handle for progressive-disclosure instructions.
+                                </p>
+                            </div>
                             {!toolMode && (
                                 <div className="space-y-2" data-ab-handle-anchor="input">
                                     <Label>Message override</Label>
@@ -196,6 +202,12 @@ export default function AgentNodeFields({
                                     {toolMode
                                         ? ' Connect the amber toolset handle to a supervisor tools pin.'
                                         : ''}
+                                </p>
+                            </div>
+                            <div className="space-y-1" data-ab-handle-anchor="skills">
+                                <Label>Skills</Label>
+                                <p className="text-xs text-muted-foreground">
+                                    Connect Skill nodes to the violet skills handle for progressive-disclosure instructions.
                                 </p>
                             </div>
                             {!toolMode && (
