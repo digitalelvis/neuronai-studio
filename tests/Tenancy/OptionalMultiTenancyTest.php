@@ -37,6 +37,7 @@ class OptionalMultiTenancyTest extends TestCase
             'workflow_definitions',
             'knowledge_bases',
             'tool_definitions',
+            'skill_definitions',
             'mcp_servers',
             'mcp_endpoints',
             'variables',

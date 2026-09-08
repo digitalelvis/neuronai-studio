@@ -2,12 +2,12 @@
 
 ## What
 
-DB `agent_definitions` (prefixed, e.g. `neuronai_studio_agent_definitions`): provider, model, instructions, tool/MCP bindings, optional memory. Run via Playground or as workflow **agent** nodes. Runtime: `AgentRunner` → dynamic Neuron agent.
+DB `agent_definitions` (prefixed, e.g. `neuronai_studio_agent_definitions`): provider, model, instructions, tool/MCP/skill bindings, optional memory. Run via Playground or as workflow **agent** nodes. Runtime: `AgentRunner` → dynamic Neuron agent.
 
 ## Workflow
 
 1. Create/edit agent in Studio (`/neuronai-studio/agents`)
-2. Bind tools / MCP / RAG tool as needed
+2. Bind tools / MCP / skills / RAG tool as needed
 3. Test in Playground (threads)
 4. Optional: evaluations suite
 5. Optional: export PHP — see [export.md](export.md)
@@ -33,6 +33,7 @@ DB `agent_definitions` (prefixed, e.g. `neuronai_studio_agent_definitions`): pro
 
 - [Overview](../../../docs/guides/agents/overview.md)
 - [Creating Agents](../../../docs/guides/agents/creating-agents.md)
+- [Agent Skills](../../../docs/guides/agents/skills.md)
 - [Playground & Threads](../../../docs/guides/agents/playground-and-threads.md)
 - [Evaluations](../../../docs/guides/agents/evaluations.md)
 - [Attachments](../../../docs/guides/agents/attachments.md)

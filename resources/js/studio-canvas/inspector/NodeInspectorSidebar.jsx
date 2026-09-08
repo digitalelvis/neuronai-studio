@@ -17,6 +17,7 @@ export default function NodeInspectorSidebar({
     agents = [],
     workflows = [],
     tools = [],
+    skills = [],
     mcpServers = [],
     knowledgeBases = [],
     ragSearchUrlTemplate = '',
@@ -147,6 +148,7 @@ export default function NodeInspectorSidebar({
                         agents={agents}
                         workflows={workflows}
                         tools={tools}
+                        skills={skills}
                         mcpServers={mcpServers}
                         knowledgeBases={knowledgeBases}
                         ragSearchUrlTemplate={ragSearchUrlTemplate}

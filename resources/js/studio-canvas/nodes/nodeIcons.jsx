@@ -1,4 +1,5 @@
 import {
+    BookOpen,
     Bot,
     Circle,
     Clock,
@@ -30,6 +31,7 @@ const ICON_MAP = {
     database: Database,
     code: Code2,
     wrench: Wrench,
+    'book-open': BookOpen,
     search: Search,
     clock: Clock,
     repeat: Repeat,

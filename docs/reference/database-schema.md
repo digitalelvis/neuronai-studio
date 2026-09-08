@@ -17,6 +17,7 @@ Configure with `NEURONAI_STUDIO_TABLE_PREFIX` (`config('neuronai-studio.table_pr
 | `agent_definitions` | `neuronai_studio_agent_definitions` | Agent name, provider, model, instructions, tool bindings |
 | `workflow_definitions` | `neuronai_studio_workflow_definitions` | Workflow name, graph JSON, code source metadata |
 | `tool_definitions` | `neuronai_studio_tool_definitions` | Builder and webhook tool configs |
+| `skill_definitions` | `neuronai_studio_skill_definitions` | Agent skill packages (agentskills.io: body, resources tree, category, cover, source) |
 | `mcp_servers` | `neuronai_studio_mcp_servers` | MCP server transport configuration (inbound) |
 | `agent_mcp_server` | `neuronai_studio_agent_mcp_server` | Agent ↔ MCP server pivot with filters |
 | `mcp_endpoints` | `neuronai_studio_mcp_endpoints` | Outbound MCP endpoint (Studio → MCP server) |
@@ -69,6 +70,7 @@ Diagram nodes use logical names; physical tables always include the configured p
 - `api_key` — optional Studio override (`var:NAME` or empty = host `neuron.php`)
 - `instructions` — system prompt
 - `tools` — JSON tool binding array
+- `skills` — JSON skill binding array (`skill:db:{id}` refs)
 - `require_tool_approval` — pause before tool execution when true
 - `memory_config` — JSON envelope: `context_window`, `driver` (`eloquent`|`in_memory`), `summarization_enabled`, `summarization_threshold`, plus reserved budget keys for context engineering. Null = inherit global defaults.
 - `tool_max_runs`, `parallel_tool_calls` — optional tool-loop knobs

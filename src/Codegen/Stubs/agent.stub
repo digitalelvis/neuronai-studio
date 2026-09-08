@@ -4,7 +4,7 @@ namespace {{ namespace }};
 
 use NeuronAI\Agent\Agent;
 use NeuronAI\Providers\AIProviderInterface;
-{{ providerUse }}{{ mcpUse }}
+{{ providerUse }}{{ mcpUse }}{{ skillsUses }}
 class {{ className }} extends Agent
 {
     protected function provider(): AIProviderInterface
@@ -12,10 +12,7 @@ class {{ className }} extends Agent
         return {{ providerExpression }};
     }
 
-    protected function instructions(): string
-    {
-        return '{{ instructions }}';
-    }
+{{ instructionsMethod }}
 
 {{ toolsMethod }}
 }

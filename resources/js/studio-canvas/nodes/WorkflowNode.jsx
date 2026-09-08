@@ -8,8 +8,9 @@ import NodePreviewBody, { getForkBranches, getIntentIds, getSwitchCaseIds } from
 import { NodeTypeIcon } from './nodeIcons';
 
 const AGENT_HANDLE_FALLBACKS = {
-    tools: '42%',
-    input: '28%',
+    tools: '38%',
+    skills: '52%',
+    input: '24%',
     response: '72%',
     toolset: '62%',
 };
@@ -243,6 +244,13 @@ function NodeHandles({ nodeType, config, handleTops = null }) {
                         style={{ top: topFor('tools', AGENT_HANDLE_FALLBACKS.tools) }}
                     />
                     <FlowHandle
+                        type="target"
+                        position={Position.Left}
+                        id="skills"
+                        className="ab-flow-handle-skills"
+                        style={{ top: topFor('skills', AGENT_HANDLE_FALLBACKS.skills) }}
+                    />
+                    <FlowHandle
                         type="source"
                         position={Position.Right}
                         id="toolset"
@@ -267,6 +275,13 @@ function NodeHandles({ nodeType, config, handleTops = null }) {
                     id="tools"
                     className="ab-flow-handle-tools"
                     style={{ top: topFor('tools', AGENT_HANDLE_FALLBACKS.tools) }}
+                />
+                <FlowHandle
+                    type="target"
+                    position={Position.Left}
+                    id="skills"
+                    className="ab-flow-handle-skills"
+                    style={{ top: topFor('skills', AGENT_HANDLE_FALLBACKS.skills) }}
                 />
                 <FlowHandle
                     type="source"
@@ -327,9 +342,9 @@ function handleNamesForNode(nodeType, config) {
     }
     if (nodeType === 'agent') {
         if (isToolModeEnabled(config || {})) {
-            return ['tools', 'toolset'];
+            return ['tools', 'skills', 'toolset'];
         }
-        return ['input', 'tools', 'response'];
+        return ['input', 'tools', 'skills', 'response'];
     }
     if (nodeType === 'run_workflow' && isToolModeEnabled(config || {})) {
         return ['toolset'];
@@ -344,6 +359,7 @@ export default function WorkflowNode({ id, data, selected }) {
         agents = [],
         workflows = [],
         tools = [],
+        skills = [],
         mcpServers = [],
         knowledgeBases = [],
     } = canvasUi;
@@ -437,6 +453,7 @@ export default function WorkflowNode({ id, data, selected }) {
                 agents={agents}
                 workflows={workflows}
                 tools={tools}
+                skills={skills}
                 knowledgeBases={knowledgeBases}
                 mcpServers={mcpServers}
                 loopIteration={data.loopIteration}

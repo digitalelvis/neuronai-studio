@@ -8,6 +8,7 @@ use DigitalElvis\NeuronAIStudio\Codegen\WorkflowClassImporter;
 use DigitalElvis\NeuronAIStudio\Codegen\WorkflowExporter;
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use DigitalElvis\NeuronAIStudio\Models\KnowledgeBase;
+use DigitalElvis\NeuronAIStudio\Models\SkillDefinition;
 use DigitalElvis\NeuronAIStudio\Models\Variable;
 use DigitalElvis\NeuronAIStudio\Models\WorkflowDefinition;
 use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
@@ -450,6 +451,16 @@ class Editor extends Component
             'knowledgeBasesForCanvas' => KnowledgeBase::orderBy('name')->get(['id', 'name'])->values()->all(),
             'toolsForCanvas' => collect(app(ToolRegistry::class)->all())
                 ->map(fn (array $tool) => app(ToolSchemaInspector::class)->enrich($tool))
+                ->values()
+                ->all(),
+            'skillsForCanvas' => SkillDefinition::query()
+                ->orderBy('slug')
+                ->get(['id', 'slug', 'description'])
+                ->map(fn (SkillDefinition $skill) => [
+                    'ref' => $skill->bindingRef(),
+                    'label' => $skill->slug,
+                    'description' => $skill->description,
+                ])
                 ->values()
                 ->all(),
             'mcpServersForCanvas' => collect(app(McpRegistry::class)->all(includeDisabled: false))

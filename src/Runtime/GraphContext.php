@@ -57,6 +57,10 @@ class GraphContext
                 continue;
             }
 
+            if (($edge['targetHandle'] ?? 'default') === 'skills') {
+                continue;
+            }
+
             if (($edge['sourceHandle'] ?? 'default') === 'toolset') {
                 continue;
             }
@@ -138,6 +142,44 @@ class GraphContext
                 }
                 $bindings[] = $binding;
             }
+        }
+
+        return $bindings;
+    }
+
+    /**
+     * Resolve skill bindings attached to an agent via targetHandle=skills edges.
+     *
+     * @return array<int, array{ref: string}>
+     */
+    public function skillBindingsFor(string $agentNodeId): array
+    {
+        $bindings = [];
+
+        foreach ($this->incomingEdges($agentNodeId) as $edge) {
+            if (($edge['targetHandle'] ?? 'default') !== 'skills') {
+                continue;
+            }
+
+            $sourceId = (string) ($edge['source'] ?? '');
+            if ($sourceId === '') {
+                continue;
+            }
+
+            $source = $this->nodeConfig($sourceId);
+            $type = (string) ($source['type'] ?? '');
+            $data = is_array($source['data'] ?? null) ? $source['data'] : [];
+
+            if ($type !== 'skill') {
+                continue;
+            }
+
+            $ref = (string) ($data['skill_ref'] ?? '');
+            if ($ref === '') {
+                continue;
+            }
+
+            $bindings[] = ['ref' => $ref];
         }
 
         return $bindings;
