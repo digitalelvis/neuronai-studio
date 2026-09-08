@@ -1,5 +1,12 @@
 # Changelog
 
+# [3.8.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.7.2...v3.8.0) (2026-09-08)
+
+
+### Features
+
+* **skills:** add agent skills catalog and Gemini-safe script args ([18d13fa](https://github.com/digitalelvis/neuronai-studio/commit/18d13fa1ad3fabeca614ef43f2c8dcb9da50d690))
+
 ## [3.7.2](https://github.com/digitalelvis/neuronai-studio/compare/v3.7.1...v3.7.2) (2026-08-25)
 
 
