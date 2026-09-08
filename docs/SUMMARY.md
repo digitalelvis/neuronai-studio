@@ -20,6 +20,7 @@
 
 * [Overview](guides/agents/overview.md)
 * [Creating Agents](guides/agents/creating-agents.md)
+* [Agent Skills](guides/agents/skills.md)
 * [Invoking Agents](guides/agents/invoking-agents.md)
 * [Playground & Threads](guides/agents/playground-and-threads.md)
 * [Evaluations](guides/agents/evaluations.md)

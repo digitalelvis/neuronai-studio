@@ -82,6 +82,7 @@ export default function AgentForm({ config }) {
     const [instructions, setInstructions] = useState(initial.instructions ?? '');
     const [apiKey, setApiKey] = useState(initial.api_key ?? '');
     const [selectedToolRefs, setSelectedToolRefs] = useState(initial.selectedToolRefs ?? []);
+    const [selectedSkillRefs, setSelectedSkillRefs] = useState(initial.selectedSkillRefs ?? []);
     const [toolAdvanced, setToolAdvanced] = useState(initial.toolAdvanced ?? {});
     const [selectedMcpSlugs, setSelectedMcpSlugs] = useState(initial.selectedMcpSlugs ?? []);
     const [mcpAdvanced, setMcpAdvanced] = useState(initial.mcpAdvanced ?? {});
@@ -123,6 +124,7 @@ export default function AgentForm({ config }) {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [toolsSearch, setToolsSearch] = useState('');
+    const [skillsSearch, setSkillsSearch] = useState('');
     const [toolkitsSearch, setToolkitsSearch] = useState('');
     const [mcpSearch, setMcpSearch] = useState('');
     const [copiedKey, setCopiedKey] = useState(null);
@@ -158,6 +160,14 @@ export default function AgentForm({ config }) {
         );
     }, [config.mcpServers, mcpSearch]);
 
+    const skillList = config.skillList ?? [];
+
+    const filteredSkills = useMemo(() => {
+        return skillList.filter((skill) =>
+            matchesQuery([skill.label, skill.ref, skill.description], skillsSearch),
+        );
+    }, [skillList, skillsSearch]);
+
     const handleCopy = (text, key) => {
         if (!text) return;
         navigator.clipboard.writeText(text);
@@ -167,6 +177,12 @@ export default function AgentForm({ config }) {
 
     const toggleTool = (ref) => {
         setSelectedToolRefs((current) =>
+            current.includes(ref) ? current.filter((item) => item !== ref) : [...current, ref],
+        );
+    };
+
+    const toggleSkill = (ref) => {
+        setSelectedSkillRefs((current) =>
             current.includes(ref) ? current.filter((item) => item !== ref) : [...current, ref],
         );
     };
@@ -209,6 +225,7 @@ export default function AgentForm({ config }) {
                 instructions,
                 api_key: apiKey,
                 selectedToolRefs,
+                selectedSkillRefs,
                 toolAdvanced,
                 selectedMcpSlugs,
                 mcpAdvanced,
@@ -613,9 +630,10 @@ export default function AgentForm({ config }) {
                 <ResizablePanel defaultSize={45} minSize={30}>
                     <div className="flex h-full flex-col p-4">
                         <Tabs defaultValue="tools" className="flex h-full flex-col">
-                            <TabsList className="grid w-full grid-cols-4">
+                            <TabsList className="grid w-full grid-cols-5">
                                 <TabsTrigger value="tools">{t('form.tab_tools')}</TabsTrigger>
                                 <TabsTrigger value="toolkits">{t('form.tab_toolkits')}</TabsTrigger>
+                                <TabsTrigger value="skills">{t('form.tab_skills')}</TabsTrigger>
                                 <TabsTrigger value="mcp">{t('form.tab_mcp')}</TabsTrigger>
                                 <TabsTrigger value="connect">{t('form.tab_connect')}</TabsTrigger>
                             </TabsList>
@@ -662,6 +680,47 @@ export default function AgentForm({ config }) {
                                     ) : (
                                         <div className="space-y-2">
                                             {filteredToolkits.map((kit) => renderToolkitCard(kit))}
+                                        </div>
+                                    )}
+                                </ScrollArea>
+                            </TabsContent>
+
+                            <TabsContent value="skills" className="mt-3 flex flex-1 flex-col overflow-hidden">
+                                <Input
+                                    value={skillsSearch}
+                                    onChange={(e) => setSkillsSearch(e.target.value)}
+                                    placeholder={t('form.search_placeholder')}
+                                    className="mb-2 shrink-0"
+                                />
+                                <ScrollArea className="h-full flex-1 pr-2">
+                                    {skillList.length === 0 ? (
+                                        <p className="text-sm text-muted-foreground">{t('form.skills_empty')}</p>
+                                    ) : filteredSkills.length === 0 ? (
+                                        <p className="text-sm text-muted-foreground">{t('form.search_no_matches')}</p>
+                                    ) : (
+                                        <div className="space-y-2">
+                                            {filteredSkills.map((skill) => (
+                                                <div key={skill.ref} className="rounded-md border border-border p-3">
+                                                    <label className="flex cursor-pointer items-start gap-3">
+                                                        <Checkbox
+                                                            checked={selectedSkillRefs.includes(skill.ref)}
+                                                            onCheckedChange={() => toggleSkill(skill.ref)}
+                                                            className="mt-0.5"
+                                                        />
+                                                        <span className="min-w-0 flex-1">
+                                                            <span className="font-medium">{skill.label}</span>
+                                                            {skill.description && (
+                                                                <span className="mt-1 block text-xs text-muted-foreground">
+                                                                    {truncateText(skill.description)}
+                                                                </span>
+                                                            )}
+                                                            <Badge variant="outline" className="mt-1 text-[10px]">
+                                                                {skill.ref}
+                                                            </Badge>
+                                                        </span>
+                                                    </label>
+                                                </div>
+                                            ))}
                                         </div>
                                     )}
                                 </ScrollArea>

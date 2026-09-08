@@ -96,6 +96,8 @@ class GraphValidator
         $errors = array_merge($errors, $this->validateToolModeNodes($nodes));
         $errors = array_merge($errors, $this->validateToolModeControlFlow($nodes, $edges));
         $errors = array_merge($errors, $this->validateToolBindingEdges($nodes, $edges));
+        $errors = array_merge($errors, $this->validateSkillBindingEdges($nodes, $edges));
+        $errors = array_merge($errors, $this->validateSkillFlowNodes($nodes, $edges));
         $errors = array_merge($errors, $this->validateToolsetSlugs($nodes, $edges));
         $errors = array_merge($errors, $this->validateIntentClassifierNodes($nodes, $controlEdges));
         $errors = array_merge($errors, $this->validateSwitchNodes($nodes, $controlEdges));
@@ -133,6 +135,10 @@ class GraphValidator
             $edges,
             function (array $edge) use ($toolModeIds): bool {
                 if (($edge['targetHandle'] ?? 'default') === 'tools') {
+                    return false;
+                }
+
+                if (($edge['targetHandle'] ?? 'default') === 'skills') {
                     return false;
                 }
 
@@ -595,6 +601,88 @@ class GraphValidator
         }
 
         return $errors;
+    }
+
+    /**
+     * @param  array<int, array<string, mixed>>  $nodes
+     * @param  array<int, array<string, mixed>>  $edges
+     * @return array<int, string>
+     */
+    protected function validateSkillBindingEdges(array $nodes, array $edges): array
+    {
+        $errors = [];
+        $typeById = [];
+
+        foreach ($nodes as $node) {
+            $id = (string) ($node['id'] ?? '');
+            if ($id === '') {
+                continue;
+            }
+
+            $typeById[$id] = (string) ($node['type'] ?? '');
+        }
+
+        foreach ($edges as $edge) {
+            if (($edge['targetHandle'] ?? 'default') !== 'skills') {
+                continue;
+            }
+
+            $source = (string) ($edge['source'] ?? '');
+            $target = (string) ($edge['target'] ?? '');
+            $sourceType = $typeById[$source] ?? '';
+            $targetType = $typeById[$target] ?? '';
+
+            if ($targetType !== 'agent') {
+                $errors[] = "Skills edge target must be an agent node (got {$target}).";
+
+                continue;
+            }
+
+            if ($sourceType !== 'skill') {
+                $errors[] = "Skills edge source must be a skill node (got {$sourceType} on {$source}).";
+            }
+        }
+
+        return $errors;
+    }
+
+    /**
+     * Skill nodes are binding-only and must not participate in control flow.
+     *
+     * @param  array<int, array<string, mixed>>  $nodes
+     * @param  array<int, array<string, mixed>>  $edges
+     * @return array<int, string>
+     */
+    protected function validateSkillFlowNodes(array $nodes, array $edges): array
+    {
+        $errors = [];
+        $skillIds = [];
+
+        foreach ($nodes as $node) {
+            $id = (string) ($node['id'] ?? '');
+            if ($id !== '' && ($node['type'] ?? '') === 'skill') {
+                $skillIds[$id] = true;
+            }
+        }
+
+        if ($skillIds === []) {
+            return [];
+        }
+
+        foreach ($this->controlFlowEdges($edges, $nodes) as $edge) {
+            $source = (string) ($edge['source'] ?? '');
+            $target = (string) ($edge['target'] ?? '');
+
+            if (isset($skillIds[$source])) {
+                $errors[] = "Skill node {$source} cannot participate in workflow control flow.";
+            }
+
+            if (isset($skillIds[$target])) {
+                $errors[] = "Skill node {$target} cannot participate in workflow control flow.";
+            }
+        }
+
+        return array_values(array_unique($errors));
     }
 
     /**

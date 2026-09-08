@@ -108,6 +108,10 @@
     @apply flex min-h-0 flex-1 flex-col;
 }
 
+.studio-content--flush > div:has(> .studio-product-root) {
+    @apply flex min-h-0 flex-1 flex-col;
+}
+
 .studio-flash {
     @apply shrink-0 px-4 pt-4;
 }
@@ -144,8 +148,108 @@
     @apply mx-auto max-w-7xl space-y-4;
 }
 
+.studio-page-wide {
+    @apply mx-auto max-w-[1400px] space-y-4;
+}
+
 .studio-table-row-actions {
     @apply flex items-center gap-2;
+}
+
+/* Skill markdown viewer (no @tailwindcss/typography dependency) */
+.skill-md {
+    @apply text-sm leading-relaxed text-foreground;
+}
+
+.skill-md > :first-child {
+    @apply mt-0;
+}
+
+.skill-md > :last-child {
+    @apply mb-0;
+}
+
+.skill-md h1 {
+    @apply mb-3 mt-6 text-2xl font-semibold tracking-tight;
+}
+
+.skill-md h2 {
+    @apply mb-2 mt-5 text-xl font-semibold tracking-tight;
+}
+
+.skill-md h3 {
+    @apply mb-2 mt-4 text-lg font-semibold;
+}
+
+.skill-md h4,
+.skill-md h5,
+.skill-md h6 {
+    @apply mb-2 mt-3 text-base font-semibold;
+}
+
+.skill-md p {
+    @apply my-3;
+}
+
+.skill-md ul {
+    @apply my-3 list-disc space-y-1 pl-5;
+}
+
+.skill-md ol {
+    @apply my-3 list-decimal space-y-1 pl-5;
+}
+
+.skill-md li {
+    @apply leading-relaxed;
+}
+
+.skill-md a {
+    @apply text-primary underline underline-offset-2;
+}
+
+.skill-md strong {
+    @apply font-semibold;
+}
+
+.skill-md em {
+    @apply italic;
+}
+
+.skill-md blockquote {
+    @apply my-3 border-l-2 border-border pl-4 text-muted-foreground;
+}
+
+.skill-md hr {
+    @apply my-6 border-border;
+}
+
+.skill-md code {
+    @apply rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em];
+}
+
+.skill-md pre {
+    @apply my-3 overflow-x-auto rounded-lg border border-border bg-muted/50 p-3;
+}
+
+.skill-md pre code {
+    @apply bg-transparent p-0 text-xs leading-relaxed;
+}
+
+.skill-md table {
+    @apply my-3 w-full border-collapse text-left text-sm;
+}
+
+.skill-md th,
+.skill-md td {
+    @apply border border-border px-3 py-1.5;
+}
+
+.skill-md th {
+    @apply bg-muted/50 font-medium;
+}
+
+.skill-md img {
+    @apply my-3 max-w-full rounded-md;
 }
 
 [data-separator],

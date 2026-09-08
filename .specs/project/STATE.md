@@ -1,14 +1,21 @@
 # State
 
-**Last Updated:** 2026-08-18
+**Last Updated:** 2026-09-08
 **Development line (features):** `v3.1.x`
 **Patch line:** `v3.1.x`
 **Latest published:** `v3.1.0` on Packagist / `main`
-**Current Work:** M18 `optional-multi-tenancy` — Execute on `feat/optional-multi-tenancy` → `v3.1.x`.
+**Current Work:** M21 `agent-skills` — Execute on `feat/agent-skills` → `v3.1.x`.
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-037: Agent Skills — Studio-owned runtime (2026-09-05)
+
+**Decision:** Open M21 with feature **`agent-skills`** (M19/M20 reserved for specified Parse JSON / List Operator). Store skills as `SkillDefinition` (agentskills.io SKILL.md in DB). Bind via `agent_definitions.skills` JSON + canvas `skills` handle. Runtime uses `SkillCatalogInjector` + `activate_skill` / `read_skill_resource` tools on `DynamicAgent` until Neuron AI merges PR #570. No `scripts/` execution in MVP.
+**Reason:** Authors need reusable instruction packages without bloating system prompts; Neuron native API not shipped yet.
+**Trade-off:** Studio maintains skill loader adapter; future swap via `SkillRuntime` interface.
+**Impact:** Specs in [.specs/features/agent-skills/](../features/agent-skills/). ROADMAP M21. Execute on `v3.1.x`.
 
 ### AD-036: Optional multi-tenancy — shared tenant_id + Stancl driver (2026-08-18)
 

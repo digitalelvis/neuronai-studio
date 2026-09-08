@@ -15,6 +15,7 @@ import ForkNodeFields from './node-forms/ForkNodeFields';
 import JoinNodeFields from './node-forms/JoinNodeFields';
 import DelayNodeFields from './node-forms/DelayNodeFields';
 import ToolNodeFields from './node-forms/ToolNodeFields';
+import SkillNodeFields from './node-forms/SkillNodeFields';
 import McpNodeFields from './node-forms/McpNodeFields';
 import RagNodeFields from './node-forms/RagNodeFields';
 import StopNodeFields from './node-forms/StopNodeFields';
@@ -34,6 +35,7 @@ const NODE_FIELDS = {
     join: JoinNodeFields,
     delay: DelayNodeFields,
     tool: ToolNodeFields,
+    skill: SkillNodeFields,
     mcp: McpNodeFields,
     rag: RagNodeFields,
     stop: StopNodeFields,
@@ -44,6 +46,7 @@ export default function NodeConfigForm({
     agents,
     workflows = [],
     tools,
+    skills = [],
     mcpServers,
     knowledgeBases = [],
     ragSearchUrlTemplate = '',
@@ -95,6 +98,7 @@ export default function NodeConfigForm({
                     agents={agents}
                     workflows={workflowOptions}
                     tools={tools}
+                    skills={skills}
                     mcpServers={mcpServers}
                     knowledgeBases={knowledgeBases}
                     ragSearchUrlTemplate={ragSearchUrlTemplate}

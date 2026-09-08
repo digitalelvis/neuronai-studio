@@ -24,6 +24,7 @@ class AgentDefinition extends Model
         'api_key',
         'instructions',
         'tools',
+        'skills',
         'require_tool_approval',
         'tool_max_runs',
         'parallel_tool_calls',
@@ -42,6 +43,7 @@ class AgentDefinition extends Model
     {
         return [
             'tools' => 'array',
+            'skills' => 'array',
             'require_tool_approval' => 'boolean',
             'tool_max_runs' => 'integer',
             'parallel_tool_calls' => 'boolean',

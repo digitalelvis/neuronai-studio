@@ -189,6 +189,7 @@
 .ab-flow-handle-continue { background: #3b82f6 !important; box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.3); }
 .ab-flow-handle-exit { background: #a855f7 !important; box-shadow: 0 0 0 1px rgba(168, 85, 247, 0.3); }
 .ab-flow-handle-tools { background: #22d3ee !important; box-shadow: 0 0 0 1px rgba(34, 211, 238, 0.3); }
+.ab-flow-handle-skills { background: #a78bfa !important; box-shadow: 0 0 0 1px rgba(167, 139, 250, 0.3); }
 .ab-flow-handle-toolset { background: #f59e0b !important; box-shadow: 0 0 0 1px rgba(245, 158, 11, 0.3); }
 
 .ab-flow-agent-response-row {

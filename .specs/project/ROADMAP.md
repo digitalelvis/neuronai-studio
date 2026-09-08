@@ -5,8 +5,8 @@
 **Development line (features):** `v3.1.x`  
 **Patch line:** `v3.1.x` (until next minor opens)  
 **Latest published:** `v3.1.0` on Packagist / `main`  
-**Última atualização:** 2026-08-18  
-**Etapa atual:** M18 `optional-multi-tenancy` Execute on `feat/optional-multi-tenancy` → `v3.1.x`.
+**Última atualização:** 2026-09-08  
+**Etapa atual:** M21 `agent-skills` Execute on `feat/agent-skills` → `v3.1.x`.
 ---
 
 ## Milestones
@@ -218,6 +218,44 @@ Isolamento opt-in de authoring e runtime: `tenant_id` em banco compartilhado + `
 
 **Linha:** Execute → `v3.1.x` (branch `feat/optional-multi-tenancy`).
 
+### M19 — Parse JSON (P2) `specified`
+
+Nó Logic `parse_json`: decode de JSON string (tool result) → path/filter/pick → chaves planas no state.
+
+**Escopo (AD-033):** [parse-json](../features/parse-json/spec.md) · [context](../features/parse-json/context.md)
+
+| Ordem | Feature | Status | Spec |
+|-------|---------|--------|------|
+| 38 | `parse-json` | **specified** | [spec](../features/parse-json/spec.md) |
+
+**Linha:** Specify → `v3.1.x` (`docs/parse-json-list-operator`).
+
+### M20 — List Operator (P2) `specified`
+
+Nó Logic `list_operator`: filter/sort/limit em listas do state, escreve o array resultante.
+
+**Escopo (AD-032):** [list-operator](../features/list-operator/spec.md) · [context](../features/list-operator/context.md)
+
+| Ordem | Feature | Status | Spec |
+|-------|---------|--------|------|
+| 39 | `list-operator` | **specified** | [spec](../features/list-operator/spec.md) |
+
+**Linha:** Specify → `v3.1.x` (`docs/parse-json-list-operator`).
+
+### M21 — Agent Skills (P1) `in progress`
+
+Runtime Agent Skills (agentskills.io): CRUD, canvas bind, progressive disclosure via Studio-owned tools until Neuron AI ships native Skills API.
+
+**Escopo (AD-037):** [agent-skills](../features/agent-skills/spec.md) · [context](../features/agent-skills/context.md) · [design](../features/agent-skills/design.md) · [tasks](../features/agent-skills/tasks.md)
+
+| Ordem | Feature | Status | Spec |
+|-------|---------|--------|------|
+| 40 | `agent-skills` | **in progress** | [spec](../features/agent-skills/spec.md) |
+
+**Critério de conclusão M21:** Author creates skill → binds on Agent/canvas → playground run activates skill via tool; export snapshots SKILL.md; tenancy isolated.
+
+**Linha:** Execute → `v3.1.x` (branch `feat/agent-skills`).
+
 ---
 
 ## Próximas tarefas (ordem de execução)
@@ -403,6 +441,12 @@ Mapeamento feature → arquivos `docs/` a criar/atualizar na implementação.
 | Feature | Documentos (expected) |
 |---------|------------------------|
 | `agui-native-protocol` | `guides/integration/ag-ui.md`, Connect Panel AG-UI snippet |
+
+### M21
+
+| Feature | Documentos |
+|---------|------------|
+| `agent-skills` | `guides/agents/skills.md`, `guides/agents/creating-agents.md`, `reference/database-schema.md` |
 
 ---
 

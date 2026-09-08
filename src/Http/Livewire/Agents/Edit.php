@@ -4,6 +4,7 @@ namespace DigitalElvis\NeuronAIStudio\Http\Livewire\Agents;
 
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use DigitalElvis\NeuronAIStudio\Models\AgentMcpServer;
+use DigitalElvis\NeuronAIStudio\Models\SkillDefinition;
 use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\ToolRegistry;
@@ -33,6 +34,9 @@ class Edit extends Component
 
     /** @var array<int, string> */
     public array $selectedToolRefs = [];
+
+    /** @var array<int, string> */
+    public array $selectedSkillRefs = [];
 
     /** @var array<string, array{only: string, exclude: string}> */
     public array $toolAdvanced = [];
@@ -78,6 +82,7 @@ class Edit extends Component
             $this->parallel_tool_calls = $agent->parallel_tool_calls;
             $this->hydrateMemoryFromConfig($agent->memory_config);
             $this->loadToolsFromAgent($agent->tools ?? []);
+            $this->loadSkillsFromAgent($agent->skills ?? []);
             $this->loadMcpFromAgent($agent);
         } else {
             $models = config('neuronai-studio.providers.'.$this->provider.'.models', []);
@@ -100,6 +105,18 @@ class Edit extends Component
         $this->memory_budget_rag = $memory->budgetRag();
         $this->memory_budget_tool_results = $memory->budgetToolResults();
         $this->memory_budget_state = $memory->budgetState();
+    }
+
+    /** @param  array<int, array<string, mixed>>  $skills */
+    protected function loadSkillsFromAgent(array $skills): void
+    {
+        foreach ($skills as $skill) {
+            if (empty($skill['ref'])) {
+                continue;
+            }
+
+            $this->selectedSkillRefs[] = $skill['ref'];
+        }
     }
 
     /** @param  array<int, array<string, mixed>>  $tools */
@@ -152,6 +169,7 @@ class Edit extends Component
         $this->instructions = (string) ($payload['instructions'] ?? '');
         $this->api_key = (string) ($payload['api_key'] ?? '');
         $this->selectedToolRefs = $payload['selectedToolRefs'] ?? [];
+        $this->selectedSkillRefs = $payload['selectedSkillRefs'] ?? [];
         $this->toolAdvanced = $payload['toolAdvanced'] ?? [];
         $this->selectedMcpSlugs = $payload['selectedMcpSlugs'] ?? [];
         $this->mcpAdvanced = $payload['mcpAdvanced'] ?? [];
@@ -207,6 +225,8 @@ class Edit extends Component
             'memory_budget_state' => 'nullable|integer|min:1',
             'selectedToolRefs' => 'array',
             'selectedToolRefs.*' => 'string',
+            'selectedSkillRefs' => 'array',
+            'selectedSkillRefs.*' => 'string',
             'selectedMcpSlugs' => 'array',
             'selectedMcpSlugs.*' => 'string',
         ]);
@@ -222,6 +242,7 @@ class Edit extends Component
             'instructions' => $validated['instructions'] ?? null,
             'slug' => Str::slug($this->name),
             'tools' => $this->buildToolsPayload(),
+            'skills' => $this->buildSkillsPayload(),
             'tool_max_runs' => $this->tool_max_runs,
             'parallel_tool_calls' => $this->parallel_tool_calls,
             'memory_config' => $memoryConfig,
@@ -300,6 +321,18 @@ class Edit extends Component
         return $tools;
     }
 
+    /** @return array<int, array<string, mixed>> */
+    protected function buildSkillsPayload(): array
+    {
+        $skills = [];
+
+        foreach ($this->selectedSkillRefs as $ref) {
+            $skills[] = ['ref' => $ref];
+        }
+
+        return $skills;
+    }
+
     protected function syncMcpBindings(AgentDefinition $agent): void
     {
         $registry = app(McpRegistry::class);
@@ -371,6 +404,16 @@ class Edit extends Component
             'providers' => app(ProviderRegistry::class)->labels(),
             'models' => config('neuronai-studio.providers.'.$this->provider.'.models', []),
             'toolList' => $toolList,
+            'skillList' => SkillDefinition::query()
+                ->orderBy('slug')
+                ->get(['id', 'slug', 'description'])
+                ->map(fn (SkillDefinition $skill) => [
+                    'ref' => $skill->bindingRef(),
+                    'label' => $skill->slug,
+                    'description' => $skill->description,
+                ])
+                ->values()
+                ->all(),
             'mcpServers' => app(McpRegistry::class)->labels(includeDisabled: false),
             'variables' => \DigitalElvis\NeuronAIStudio\Models\Variable::query()
                 ->orderBy('name')

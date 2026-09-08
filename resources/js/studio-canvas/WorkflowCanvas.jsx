@@ -85,6 +85,7 @@ function WorkflowCanvasInner({
     agents = [],
     workflows = [],
     tools = [],
+    skills = [],
     mcpServers = [],
     knowledgeBases = [],
     ragSearchUrlTemplate = '',
@@ -359,19 +360,27 @@ function WorkflowCanvasInner({
             const sourceToolMode = isToolModeEnabled(source.data?.config || {});
             const targetToolMode = isToolModeEnabled(target.data?.config || {});
 
-            if (targetHandle === 'tools' || sourceHandle === 'toolset') {
-                if (target.data?.nodeType !== 'agent' || targetHandle !== 'tools') {
+            if (targetHandle === 'tools' || targetHandle === 'skills' || sourceHandle === 'toolset') {
+                if (target.data?.nodeType !== 'agent') {
                     return false;
                 }
 
-                if (sourceHandle === 'toolset') {
-                    return (
-                        (source.data?.nodeType === 'agent' || source.data?.nodeType === 'run_workflow') &&
-                        sourceToolMode
-                    );
+                if (targetHandle === 'tools') {
+                    if (sourceHandle === 'toolset') {
+                        return (
+                            (source.data?.nodeType === 'agent' || source.data?.nodeType === 'run_workflow') &&
+                            sourceToolMode
+                        );
+                    }
+
+                    return source.data?.nodeType === 'tool' || source.data?.nodeType === 'mcp';
                 }
 
-                return source.data?.nodeType === 'tool' || source.data?.nodeType === 'mcp';
+                if (targetHandle === 'skills') {
+                    return source.data?.nodeType === 'skill';
+                }
+
+                return false;
             }
 
             // Control-flow edges cannot touch Tool Mode nodes.
@@ -800,6 +809,8 @@ function WorkflowCanvasInner({
                     const payload = JSON.parse(rawConfig);
                     if (payload?.toolRef) {
                         seedConfig = { tool_ref: payload.toolRef, output_key: 'tool_result' };
+                    } else if (payload?.skillRef) {
+                        seedConfig = { skill_ref: payload.skillRef };
                     } else if (payload?.mcpServer) {
                         seedConfig = { mcp_server: payload.mcpServer, output_key: 'mcp_result' };
                     }
@@ -1036,6 +1047,7 @@ function WorkflowCanvasInner({
             agents={agents}
             workflows={workflows}
             tools={tools}
+            skills={skills}
             mcpServers={mcpServers}
             knowledgeBases={knowledgeBases}
             ragSearchUrlTemplate={ragSearchUrlTemplate}

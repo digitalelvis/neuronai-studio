@@ -166,6 +166,7 @@ function bindPaletteDrag() {
         const payload = {
             type,
             toolRef: item.dataset.toolRef || null,
+            skillRef: item.dataset.skillRef || null,
             mcpServer: item.dataset.mcpServer || null,
         };
 

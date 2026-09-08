@@ -13,6 +13,7 @@ class StudioTables
         'agent_definitions',
         'workflow_definitions',
         'tool_definitions',
+        'skill_definitions',
         'mcp_servers',
         'agent_mcp_server',
         'mcp_endpoints',
