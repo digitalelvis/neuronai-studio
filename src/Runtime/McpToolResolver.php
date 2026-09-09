@@ -17,8 +17,13 @@ class McpToolResolver
     public function toolsForAgent(AgentDefinition $agent): array
     {
         $tools = [];
+        $gate = app(\DigitalElvis\NeuronAIStudio\Plugins\PluginMcpGate::class);
 
         foreach ($agent->mcpBindings as $binding) {
+            if ($gate->shouldSkipBinding($agent, $binding->mcp_server_slug)) {
+                continue;
+            }
+
             foreach ($this->toolsForBinding($binding->mcp_server_slug, [
                 'only' => $this->parseOnlyTools($binding->only_tools),
                 'exclude' => $binding->exclude_tools ?? [],

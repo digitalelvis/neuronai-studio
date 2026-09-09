@@ -70,4 +70,9 @@ class AgentDefinition extends Model
     {
         return $this->hasMany(EvalSuite::class);
     }
+
+    public function pluginBindings(): HasMany
+    {
+        return $this->hasMany(AgentPluginBinding::class, 'agent_definition_id');
+    }
 }

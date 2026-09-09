@@ -4,7 +4,6 @@ namespace DigitalElvis\NeuronAIStudio\Http\Livewire\Skills;
 
 use DigitalElvis\NeuronAIStudio\Models\SkillDefinition;
 use DigitalElvis\NeuronAIStudio\Runtime\Skills\SkillArchiveImporter;
-use DigitalElvis\NeuronAIStudio\Runtime\Skills\SkillGitHubImporter;
 use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Component;
@@ -37,7 +36,15 @@ class Index extends Component
 
     public function delete(int $id): void
     {
-        SkillDefinition::findOrFail($id)->delete();
+        $skill = SkillDefinition::findOrFail($id);
+
+        if ($skill->isLockedByPlugin()) {
+            session()->flash('error', __('neuronai-studio::skills.locked_by_plugin'));
+
+            return;
+        }
+
+        $skill->delete();
         session()->flash('success', __('neuronai-studio::flash.skill_deleted'));
     }
 

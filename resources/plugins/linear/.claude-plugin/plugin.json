@@ -1,0 +1,8 @@
+{
+  "name": "linear",
+  "version": "1.0.0",
+  "description": "Linear issues, projects, and comments via remote MCP.",
+  "author": {
+    "name": "NeuronAI Studio"
+  }
+}
