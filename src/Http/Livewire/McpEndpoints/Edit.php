@@ -202,7 +202,7 @@ class Edit extends Component
         session()->flash('success', __('neuronai-studio::flash.mcp_endpoint_saved'));
 
         if ($this->embedded) {
-            $this->dispatch('connector-saved', ref: 'endpoint:'.$this->endpoint->id);
+            $this->dispatch('connector-saved', connectorRef: 'endpoint:'.$this->endpoint->id);
 
             return;
         }

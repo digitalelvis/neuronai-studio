@@ -8,6 +8,7 @@ use DigitalElvis\NeuronAIStudio\Http\Controllers\AttachmentController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\WorkflowChatThreadController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\WorkflowChatThreadIndexController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\KnowledgeBaseSearchController;
+use DigitalElvis\NeuronAIStudio\Http\Controllers\PluginOAuthController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\WorkflowRunController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\WorkflowStreamController;
 use DigitalElvis\NeuronAIStudio\Http\Controllers\WorkflowTraceController;
@@ -84,6 +85,8 @@ Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
 
         Route::prefix('plugins')->name('plugins.')->group(function () {
             Route::get('/', PluginsIndex::class)->name('index');
+            Route::get('/oauth/callback', [PluginOAuthController::class, 'callback'])->name('oauth.callback');
+            Route::get('/oauth/{slug}/authorize', [PluginOAuthController::class, 'authorize'])->name('oauth.authorize');
             Route::get('/{install}', PluginsShow::class)->name('show');
         });
 

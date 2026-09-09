@@ -268,6 +268,8 @@ Closed-catalog connector packs (Claude plugin.json + skills + MCP): host policy,
 
 **Critério de conclusão M22 P1:** Host `closed` installs `demo-assistant` → account vault mapping → agent plugin bind syncs skills; `plugins.enabled=false` hides surface; stdio MCP blocked unless host allows.
 
+**Add-on (2026-09-08):** Official HTTP MCP packs (`linear`, `stripe`, `hubspot`, `canva`, `mercadopago`) in package catalog; per-tenant install + vault. Spec: [official-mcp-connectors](../features/official-mcp-connectors/spec.md).
+
 **Linha:** Execute → `v3.1.x`.
 
 ---

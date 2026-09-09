@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "linear": {
+      "url": "https://mcp.linear.app/mcp",
+      "token_env": "LINEAR_API_KEY",
+      "auth": "oauth_or_token",
+      "timeout": 30
+    }
+  }
+}

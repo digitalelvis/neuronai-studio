@@ -77,7 +77,9 @@ class PluginMaterializer
                 $credentialHints[$tokenKey] = 'var:'.$varName;
             }
 
-            $server = McpServer::query()->where('slug', $slug)->first();
+            $server = $this->findMcpServerForInstall($install, $slug);
+
+            $authMode = (string) ($config['auth'] ?? 'token');
 
             $payload = [
                 'name' => Str::headline($connectorKey).' ('.$install->name.')',
@@ -97,6 +99,7 @@ class PluginMaterializer
                     'plugin_slug' => $install->slug,
                     'connector_key' => $connectorKey,
                     'credential_hints' => $credentialHints,
+                    'auth' => $authMode !== '' ? $authMode : 'token',
                 ],
             ];
 
@@ -118,6 +121,17 @@ class PluginMaterializer
     public function mcpSlugFor(PluginInstall $install, string $connectorKey): string
     {
         return Str::slug($install->slug.'-'.$connectorKey);
+    }
+
+    protected function findMcpServerForInstall(PluginInstall $install, string $slug): ?McpServer
+    {
+        $query = McpServer::query()->where('slug', $slug);
+
+        if ($install->tenant_id !== null && $install->tenant_id !== '') {
+            return $query->where('tenant_id', $install->tenant_id)->first();
+        }
+
+        return $query->whereNull('tenant_id')->first();
     }
 
     protected function suggestVariableName(PluginInstall $install, string $envKey): string

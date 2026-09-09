@@ -452,6 +452,56 @@ return [
         'catalog_paths' => [],
         'catalog' => [],
         'github_hosts' => ['github.com'],
+
+        'oauth' => [
+            'providers' => [
+                'linear' => [
+                    'authorization_url' => 'https://linear.app/oauth/authorize',
+                    'token_url' => 'https://api.linear.app/oauth/token',
+                    'client_id' => env('NEURONAI_STUDIO_OAUTH_LINEAR_CLIENT_ID'),
+                    'client_secret' => env('NEURONAI_STUDIO_OAUTH_LINEAR_CLIENT_SECRET'),
+                    'access_token_env' => 'LINEAR_API_KEY',
+                    'scopes' => ['read', 'write', 'issues:create', 'comments:create'],
+                    'pkce' => false,
+                ],
+                'stripe' => [
+                    'authorization_url' => 'https://connect.stripe.com/oauth/authorize',
+                    'token_url' => 'https://connect.stripe.com/oauth/token',
+                    'client_id' => env('NEURONAI_STUDIO_OAUTH_STRIPE_CLIENT_ID'),
+                    'client_secret' => env('NEURONAI_STUDIO_OAUTH_STRIPE_CLIENT_SECRET'),
+                    'access_token_env' => 'STRIPE_API_KEY',
+                    'scopes' => ['read_write'],
+                    'pkce' => false,
+                ],
+                'hubspot' => [
+                    'authorization_url' => 'https://app.hubspot.com/oauth/authorize',
+                    'token_url' => 'https://api.hubapi.com/oauth/v1/token',
+                    'client_id' => env('NEURONAI_STUDIO_OAUTH_HUBSPOT_CLIENT_ID'),
+                    'client_secret' => env('NEURONAI_STUDIO_OAUTH_HUBSPOT_CLIENT_SECRET'),
+                    'access_token_env' => 'HUBSPOT_ACCESS_TOKEN',
+                    'scopes' => [],
+                    'pkce' => true,
+                ],
+                'canva' => [
+                    'authorization_url' => 'https://mcp.canva.com/authorize',
+                    'token_url' => 'https://mcp.canva.com/token',
+                    'client_id' => env('NEURONAI_STUDIO_OAUTH_CANVA_CLIENT_ID'),
+                    'client_secret' => env('NEURONAI_STUDIO_OAUTH_CANVA_CLIENT_SECRET'),
+                    'access_token_env' => 'CANVA_ACCESS_TOKEN',
+                    'scopes' => [],
+                    'pkce' => true,
+                ],
+                'mercadopago' => [
+                    'authorization_url' => 'https://auth.mercadopago.com/authorization',
+                    'token_url' => 'https://api.mercadopago.com/oauth/token',
+                    'client_id' => env('NEURONAI_STUDIO_OAUTH_MERCADOPAGO_CLIENT_ID'),
+                    'client_secret' => env('NEURONAI_STUDIO_OAUTH_MERCADOPAGO_CLIENT_SECRET'),
+                    'access_token_env' => 'MERCADOPAGO_ACCESS_TOKEN',
+                    'scopes' => [],
+                    'pkce' => false,
+                ],
+            ],
+        ],
     ],
 
     /*

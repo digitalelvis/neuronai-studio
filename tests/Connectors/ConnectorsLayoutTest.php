@@ -94,6 +94,15 @@ class ConnectorsLayoutTest extends TestCase
             ->assertSee('demo-assistant');
     }
 
+    public function test_catalog_open_detail_dispatches_connector_ref(): void
+    {
+        config(['neuronai-studio.plugins.enabled' => true]);
+
+        Livewire::test(Catalog::class)
+            ->call('openDetail', 'plugin:linear')
+            ->assertDispatched('connector-open-detail', connectorRef: 'plugin:linear');
+    }
+
     public function test_manage_open_detail_opens_installed_connector(): void
     {
         config(['neuronai-studio.plugins.enabled' => true]);
@@ -102,7 +111,7 @@ class ConnectorsLayoutTest extends TestCase
         $ref = 'plugin_install:'.$install->id;
 
         Livewire::test(Detail::class)
-            ->dispatch('connector-open-detail', ref: $ref)
+            ->dispatch('connector-open-detail', connectorRef: $ref)
             ->assertSet('ref', $ref)
             ->assertSee($install->name);
     }

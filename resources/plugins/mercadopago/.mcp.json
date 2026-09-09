@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "mercadopago": {
+      "url": "https://mcp.mercadopago.com/mcp",
+      "token_env": "MERCADOPAGO_ACCESS_TOKEN",
+      "auth": "oauth_or_token",
+      "timeout": 30
+    }
+  }
+}

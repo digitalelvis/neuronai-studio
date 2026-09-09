@@ -152,7 +152,7 @@ class Edit extends Component
             session()->flash('success', __('neuronai-studio::flash.kb_updated'));
 
             if ($this->embedded) {
-                $this->dispatch('connector-saved', ref: 'rag:'.$this->knowledgeBase->id);
+                $this->dispatch('connector-saved', connectorRef: 'rag:'.$this->knowledgeBase->id);
 
                 return;
             }
@@ -164,7 +164,7 @@ class Edit extends Component
         session()->flash('success', __('neuronai-studio::flash.kb_created'));
 
         if ($this->embedded) {
-            $this->dispatch('connector-saved', ref: 'rag:'.$this->knowledgeBase->id);
+            $this->dispatch('connector-saved', connectorRef: 'rag:'.$this->knowledgeBase->id);
 
             return;
         }

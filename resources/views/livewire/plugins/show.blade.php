@@ -35,7 +35,7 @@
                             <p class="text-sm text-muted-foreground">{{ __('neuronai-studio::plugins.no_credentials') }}</p>
                         @endforelse
                         @if ($credentialMap !== [])
-                            <x-neuronai-studio::ui.button class="mt-3" size="sm" wire:click="saveCredentials">{{ __('neuronai-studio::plugins.authenticate') }}</x-neuronai-studio::ui.button>
+                            <x-neuronai-studio::ui.button class="mt-3" size="sm" wire:click="saveCredentials">{{ __('neuronai-studio::plugins.save_credentials') }}</x-neuronai-studio::ui.button>
                         @endif
                     @endif
                 </div>

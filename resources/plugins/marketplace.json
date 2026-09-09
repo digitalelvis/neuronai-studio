@@ -6,10 +6,56 @@
   "plugins": [
     {
       "name": "demo-assistant",
+      "title": "Demo Assistant",
       "source": "./demo-assistant",
       "description": "Official demo pack with a sample skill for agent onboarding.",
       "categories": ["Featured"],
       "featured": true,
+      "version": "1.0.0"
+    },
+    {
+      "name": "linear",
+      "title": "Linear",
+      "source": "./linear",
+      "description": "Issues, projects, and cycles in Linear via MCP.",
+      "categories": ["Productivity"],
+      "featured": false,
+      "version": "1.0.0"
+    },
+    {
+      "name": "stripe",
+      "title": "Stripe",
+      "source": "./stripe",
+      "description": "Payments, billing, and Stripe API tools via MCP.",
+      "categories": ["Payments"],
+      "featured": false,
+      "version": "1.0.0"
+    },
+    {
+      "name": "hubspot",
+      "title": "HubSpot",
+      "source": "./hubspot",
+      "description": "CRM, marketing, and content in HubSpot via MCP (OAuth).",
+      "categories": ["CRM"],
+      "featured": false,
+      "version": "1.0.0"
+    },
+    {
+      "name": "canva",
+      "title": "Canva",
+      "source": "./canva",
+      "description": "Design creation, search, and export in Canva via MCP (OAuth).",
+      "categories": ["Design"],
+      "featured": false,
+      "version": "1.0.0"
+    },
+    {
+      "name": "mercadopago",
+      "title": "Mercado Pago",
+      "source": "./mercadopago",
+      "description": "Mercado Pago docs and integration validation via MCP.",
+      "categories": ["Payments"],
+      "featured": false,
       "version": "1.0.0"
     }
   ]

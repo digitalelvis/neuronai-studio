@@ -14,7 +14,7 @@
 
 **Decision:** Open M22 **`plugin-system`**: Claude-compatible packs as install unit; materialize `SkillDefinition` + `McpServer`; `plugin_accounts` with vault `var:` mapping; agent bind via `PluginAgentBinder`; `PluginMcpGate` skips MCP when `needs_auth`. Host policy: `plugins.enabled`, `mode=closed|allowlist`, `stdio` off by default. No open marketplace in P1.
 **Reason:** Hosts need one Add for Calendar/Slack-like connectors without a third-party store; reuses M21 skills + existing MCP inbound.
-**Impact:** Specs in [.specs/features/plugin-system/](../features/plugin-system/). ROADMAP M22. Docs [docs/guides/plugins/README.md](../docs/guides/plugins/README.md).
+**Impact:** Specs in [.specs/features/plugin-system/](../features/plugin-system/). Official MCP examples: [.specs/features/official-mcp-connectors/](../features/official-mcp-connectors/). ROADMAP M22. Docs [docs/guides/plugins/README.md](../docs/guides/plugins/README.md).
 
 ### AD-037: Agent Skills — Studio-owned runtime (2026-09-05)
 

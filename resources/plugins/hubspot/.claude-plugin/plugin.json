@@ -1,0 +1,8 @@
+{
+  "name": "hubspot",
+  "version": "1.0.0",
+  "description": "HubSpot CRM, marketing, and content via remote MCP.",
+  "author": {
+    "name": "NeuronAI Studio"
+  }
+}

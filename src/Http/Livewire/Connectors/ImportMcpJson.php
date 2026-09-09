@@ -32,7 +32,7 @@ class ImportMcpJson extends Component
             session()->flash('success', __('neuronai-studio::connectors.mcp_json_success', ['count' => count($servers)]));
 
             if ($this->embedded) {
-                $this->dispatch('connector-saved', ref: 'mcp:'.($servers[0]->slug ?? ''));
+                $this->dispatch('connector-saved', connectorRef: 'mcp:'.($servers[0]->slug ?? ''));
                 $this->dispatch('connector-catalog-refresh');
 
                 return;

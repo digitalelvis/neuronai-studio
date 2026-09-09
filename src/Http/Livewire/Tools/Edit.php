@@ -330,7 +330,7 @@ class Edit extends Component
         session()->flash('success', __('neuronai-studio::flash.webhook_tool_saved'));
 
         if ($this->embedded) {
-            $this->dispatch('connector-saved', ref: 'api:'.$this->tool->id);
+            $this->dispatch('connector-saved', connectorRef: 'api:'.$this->tool->id);
 
             return;
         }
@@ -387,7 +387,7 @@ class Edit extends Component
         session()->flash('success', __('neuronai-studio::flash.rag_tool_saved'));
 
         if ($this->embedded) {
-            $this->dispatch('connector-saved', ref: 'rag_tool:'.$this->tool->id);
+            $this->dispatch('connector-saved', connectorRef: 'rag_tool:'.$this->tool->id);
 
             return;
         }

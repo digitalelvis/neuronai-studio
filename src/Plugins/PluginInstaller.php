@@ -6,6 +6,7 @@ use DigitalElvis\NeuronAIStudio\Models\PluginAccount;
 use DigitalElvis\NeuronAIStudio\Models\PluginInstall;
 use DigitalElvis\NeuronAIStudio\Registry\PluginCatalogRegistry;
 use DigitalElvis\NeuronAIStudio\Runtime\Skills\SkillGitHubImporter;
+use DigitalElvis\NeuronAIStudio\Tenancy\StudioTenancy;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -60,7 +61,7 @@ class PluginInstaller
             'source_path' => $real,
         ]);
 
-        $existing = PluginInstall::query()->where('slug', $slug)->first();
+        $existing = $this->findExistingInstall($slug);
 
         if ($existing !== null && ! ($context['overwrite'] ?? false)) {
             if ($existing->isInstalled()) {
@@ -74,7 +75,7 @@ class PluginInstaller
         }
 
         $install = PluginInstall::updateOrCreate(
-            ['slug' => $slug],
+            $this->installUniqueKeys($slug),
             [
                 'name' => (string) ($parsed->manifest['name'] ?? Str::headline($slug)),
                 'version' => $parsed->version(),
@@ -205,6 +206,40 @@ class PluginInstaller
         }
 
         throw new InvalidArgumentException('Plugin manifest not found in archive.');
+    }
+
+    protected function findExistingInstall(string $slug): ?PluginInstall
+    {
+        $query = PluginInstall::query()->where('slug', $slug);
+
+        if ($this->installsAreTenantScoped()) {
+            return $query->inCurrentTenant()->first();
+        }
+
+        return $query->whereNull('tenant_id')->first();
+    }
+
+    /** @return array{tenant_scope: string, slug: string} */
+    protected function installUniqueKeys(string $slug): array
+    {
+        if ($this->installsAreTenantScoped()) {
+            return [
+                'tenant_scope' => (string) StudioTenancy::id(),
+                'slug' => $slug,
+            ];
+        }
+
+        return [
+            'tenant_scope' => '',
+            'slug' => $slug,
+        ];
+    }
+
+    protected function installsAreTenantScoped(): bool
+    {
+        return StudioTenancy::scopesShared()
+            && ! StudioTenancy::isCentral()
+            && StudioTenancy::id() !== null;
     }
 
     /**

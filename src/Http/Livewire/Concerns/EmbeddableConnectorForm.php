@@ -13,7 +13,7 @@ trait EmbeddableConnectorForm
         }
 
         if ($this->embedded) {
-            $this->dispatch('connector-saved', ref: $ref);
+            $this->dispatch('connector-saved', connectorRef: $ref);
 
             return;
         }

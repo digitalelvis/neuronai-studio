@@ -6,10 +6,13 @@ use DigitalElvis\NeuronAIStudio\Models\McpServer;
 use DigitalElvis\NeuronAIStudio\Models\PluginAccount;
 use DigitalElvis\NeuronAIStudio\Models\PluginInstall;
 use DigitalElvis\NeuronAIStudio\Models\SkillDefinition;
+use DigitalElvis\NeuronAIStudio\Plugins\OAuth\PluginOAuthRegistry;
 use DigitalElvis\NeuronAIStudio\Plugins\PluginInstaller;
+use DigitalElvis\NeuronAIStudio\Plugins\PluginManifestParser;
 use Illuminate\Support\Str;
 use DigitalElvis\NeuronAIStudio\Registry\ConnectorCatalog;
 use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
+use DigitalElvis\NeuronAIStudio\Registry\PluginCatalogRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\ToolRegistry;
 use Livewire\Attributes\On;
 use Livewire\Component;
@@ -38,9 +41,9 @@ class Detail extends Component
     }
 
     #[On('connector-open-detail')]
-    public function open(string $ref): void
+    public function open(string $connectorRef): void
     {
-        $this->ref = $ref;
+        $this->ref = $connectorRef;
         $this->loadEntry();
     }
 
@@ -86,9 +89,33 @@ class Detail extends Component
         $this->dispatch('connector-catalog-refresh');
     }
 
+    #[On('connector-catalog-refresh')]
+    public function refreshEntry(): void
+    {
+        if ($this->ref !== null) {
+            $this->loadEntry();
+        }
+    }
+
+    public function startOAuth(int $accountId): void
+    {
+        $slug = (string) ($this->entry['slug'] ?? '');
+        $installId = (int) ($this->entry['install_id'] ?? $this->entry['entity_id'] ?? 0);
+
+        if ($slug === '' || $installId <= 0 || $accountId <= 0) {
+            return;
+        }
+
+        $this->redirectRoute('neuronai-studio.plugins.oauth.authorize', [
+            'slug' => $slug,
+            'install' => $installId,
+            'account' => $accountId,
+        ]);
+    }
+
     public function openCredentials(?string $accountLabel = null): void
     {
-        $this->dispatch('connector-open-credentials', ref: $this->ref, accountLabel: $accountLabel ?? 'default');
+        $this->dispatch('connector-open-credentials', connectorRef: $this->ref, accountLabel: $accountLabel ?? 'default');
     }
 
     public function openEdit(): void
@@ -140,7 +167,9 @@ class Detail extends Component
         $type = (string) ($this->entry['type'] ?? '');
 
         if ($type === 'plugin') {
+            $slug = (string) ($this->entry['slug'] ?? '');
             $installId = (int) ($this->entry['install_id'] ?? $this->entry['entity_id'] ?? 0);
+            $install = null;
 
             if ($installId <= 0 && str_starts_with((string) $this->ref, 'plugin:')) {
                 $slug = Str::after((string) $this->ref, 'plugin:');
@@ -160,6 +189,12 @@ class Detail extends Component
                 $install = PluginInstall::query()->find($installId);
 
                 if ($install !== null) {
+                    $slug = (string) ($this->entry['slug'] ?? $install->slug);
+                    $this->entry['auth_mode'] = $this->resolvePluginAuthMode($install, $slug);
+                    $authMode = (string) ($this->entry['auth_mode'] ?? 'token');
+                    $oauthConfigured = app(PluginOAuthRegistry::class)->isConfigured($slug);
+                    $this->entry['oauth_configured'] = $oauthConfigured;
+
                     $this->skills = SkillDefinition::query()
                         ->whereIn('id', $install->materializedSkillIds())
                         ->orderBy('slug')
@@ -186,11 +221,18 @@ class Detail extends Component
                         ->orderBy('label')
                         ->get()
                         ->map(fn (PluginAccount $account) => [
+                            'id' => $account->id,
                             'label' => $account->label,
                             'connected' => $account->isConnected(),
+                            'supports_oauth' => in_array($authMode, ['oauth', 'oauth_or_token'], true),
+                            'supports_manual_auth' => in_array($authMode, ['token', 'oauth_or_token'], true),
                         ])
                         ->all();
                 }
+            }
+
+            if (! isset($this->entry['auth_mode'])) {
+                $this->entry['auth_mode'] = $this->resolvePluginAuthMode($install, $slug);
             }
         }
 
@@ -201,6 +243,8 @@ class Detail extends Component
             if ($server !== null) {
                 $this->entry['transport'] = (string) ($server['transport'] ?? '');
                 $this->entry['needs_auth'] = ! empty($server['token_env']) || ! empty($server['env']);
+                $metadata = is_array($server['metadata'] ?? null) ? $server['metadata'] : [];
+                $this->entry['auth_mode'] = (string) ($metadata['auth'] ?? 'token');
             }
         }
 
@@ -220,5 +264,48 @@ class Detail extends Component
         return view('neuronai-studio::livewire.connectors.detail', [
             'isOpen' => $this->ref !== null && $this->entry !== [],
         ]);
+    }
+
+    protected function resolvePluginAuthMode(?PluginInstall $install, string $slug): string
+    {
+        if ($install !== null) {
+            $modes = McpServer::query()
+                ->whereIn('slug', $install->materializedMcpSlugs())
+                ->get()
+                ->map(fn (McpServer $server) => (string) (($server->metadata ?? [])['auth'] ?? 'token'))
+                ->filter()
+                ->unique()
+                ->values();
+
+            if ($modes->contains('oauth')) {
+                return 'oauth';
+            }
+
+            if ($modes->contains('oauth_or_token')) {
+                return 'oauth_or_token';
+            }
+        }
+
+        if ($slug === '') {
+            return 'token';
+        }
+
+        $listing = app(PluginCatalogRegistry::class)->find($slug);
+
+        if (! is_array($listing) || empty($listing['path']) || ! is_dir($listing['path'])) {
+            return 'token';
+        }
+
+        try {
+            $parsed = app(PluginManifestParser::class)->parseRoot((string) $listing['path']);
+
+            foreach ($parsed->mcpServers as $config) {
+                return (string) ($config['auth'] ?? 'token');
+            }
+        } catch (\Throwable) {
+            return 'token';
+        }
+
+        return 'token';
     }
 }

@@ -48,7 +48,7 @@ class Index extends Component
         }
 
         if ($this->connector !== null) {
-            $this->dispatch('connector-open-detail', ref: $this->connector)->to(Detail::class);
+            $this->dispatch('connector-open-detail', connectorRef: $this->connector)->to(Detail::class);
         }
     }
 
@@ -65,7 +65,7 @@ class Index extends Component
             $install = app(PluginInstaller::class)->installFromCatalogSlug($slug);
             session()->flash('success', __('neuronai-studio::plugins.installed', ['name' => $slug]));
             $this->dispatch('connector-catalog-refresh');
-            $this->dispatch('connector-open-detail', ref: 'plugin_install:'.$install->id)->to(Detail::class);
+            $this->dispatch('connector-open-detail', connectorRef: 'plugin_install:'.$install->id)->to(Detail::class);
         } catch (Throwable $e) {
             session()->flash('error', $e->getMessage());
         }
@@ -81,13 +81,13 @@ class Index extends Component
     }
 
     #[On('connector-saved')]
-    public function onConnectorSaved(?string $ref = null): void
+    public function onConnectorSaved(?string $connectorRef = null): void
     {
         $this->closeCreateModal();
         $this->dispatch('connector-catalog-refresh');
 
-        if ($ref !== null) {
-            $this->dispatch('connector-open-detail', ref: $ref)->to(Detail::class);
+        if ($connectorRef !== null) {
+            $this->dispatch('connector-open-detail', connectorRef: $connectorRef)->to(Detail::class);
         }
     }
 

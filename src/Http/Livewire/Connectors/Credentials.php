@@ -5,7 +5,6 @@ namespace DigitalElvis\NeuronAIStudio\Http\Livewire\Connectors;
 use DigitalElvis\NeuronAIStudio\Models\McpServer;
 use DigitalElvis\NeuronAIStudio\Models\PluginAccount;
 use DigitalElvis\NeuronAIStudio\Models\PluginInstall;
-use DigitalElvis\NeuronAIStudio\Models\Variable;
 use DigitalElvis\NeuronAIStudio\Plugins\PluginAccountService;
 use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
 use Livewire\Attributes\On;
@@ -24,19 +23,22 @@ class Credentials extends Component
 
     public string $mode = 'plugin';
 
+    public string $authMode = 'token';
+
     #[On('connector-open-credentials')]
-    public function open(string $ref, ?string $accountLabel = null): void
+    public function open(string $connectorRef, ?string $accountLabel = null): void
     {
-        $this->ref = $ref;
+        $this->ref = $connectorRef;
         $this->accountLabel = $accountLabel ?? 'default';
         $this->credentialMap = [];
         $this->tokenEnv = '';
         $this->mode = 'plugin';
+        $this->authMode = 'token';
 
-        if (str_starts_with($ref, 'plugin_install:') || str_starts_with($ref, 'plugin:')) {
-            $this->loadPluginCredentials($ref);
-        } elseif (str_starts_with($ref, 'mcp:')) {
-            $this->loadMcpCredentials($ref);
+        if (str_starts_with($connectorRef, 'plugin_install:') || str_starts_with($connectorRef, 'plugin:')) {
+            $this->loadPluginCredentials($connectorRef);
+        } elseif (str_starts_with($connectorRef, 'mcp:')) {
+            $this->loadMcpCredentials($connectorRef);
         }
     }
 
@@ -45,6 +47,7 @@ class Credentials extends Component
         $this->ref = null;
         $this->credentialMap = [];
         $this->tokenEnv = '';
+        $this->authMode = 'token';
     }
 
     public function save(): void
@@ -70,6 +73,29 @@ class Credentials extends Component
         if ($account !== null) {
             $this->credentialMap = is_array($account->credential_map) ? $account->credential_map : [];
         }
+
+        $this->authMode = $this->resolvePluginAuthMode($install);
+    }
+
+    protected function resolvePluginAuthMode(PluginInstall $install): string
+    {
+        $modes = McpServer::query()
+            ->whereIn('slug', $install->materializedMcpSlugs())
+            ->get()
+            ->map(fn (McpServer $server) => (string) (($server->metadata ?? [])['auth'] ?? 'token'))
+            ->filter()
+            ->unique()
+            ->values();
+
+        if ($modes->contains('oauth')) {
+            return 'oauth';
+        }
+
+        if ($modes->contains('oauth_or_token')) {
+            return 'oauth_or_token';
+        }
+
+        return 'token';
     }
 
     protected function loadMcpCredentials(string $ref): void
@@ -81,11 +107,15 @@ class Credentials extends Component
         if ($server === null) {
             $config = app(McpRegistry::class)->find($slug);
             $this->tokenEnv = (string) ($config['token_env'] ?? '');
+            $metadata = is_array($config['metadata'] ?? null) ? $config['metadata'] : [];
+            $this->authMode = (string) ($metadata['auth'] ?? 'token');
 
             return;
         }
 
         $this->tokenEnv = (string) ($server->token_env ?? '');
+        $metadata = is_array($server->metadata ?? null) ? $server->metadata : [];
+        $this->authMode = (string) ($metadata['auth'] ?? 'token');
     }
 
     protected function savePluginCredentials(): void
@@ -107,7 +137,7 @@ class Credentials extends Component
         session()->flash('success', __('neuronai-studio::plugins.credentials_saved'));
         $this->close();
         $this->dispatch('connector-catalog-refresh');
-        $this->dispatch('connector-open-detail', ref: 'plugin_install:'.$install->id)->to(Detail::class);
+        $this->dispatch('connector-open-detail', connectorRef: 'plugin_install:'.$install->id)->to(Detail::class);
     }
 
     protected function saveMcpCredentials(): void
@@ -124,7 +154,7 @@ class Credentials extends Component
         session()->flash('success', __('neuronai-studio::plugins.credentials_saved'));
         $this->close();
         $this->dispatch('connector-catalog-refresh');
-        $this->dispatch('connector-open-detail', ref: 'mcp:'.$slug)->to(Detail::class);
+        $this->dispatch('connector-open-detail', connectorRef: 'mcp:'.$slug)->to(Detail::class);
     }
 
     protected function resolvePluginInstall(string $ref): ?PluginInstall
@@ -151,7 +181,6 @@ class Credentials extends Component
     {
         return view('neuronai-studio::livewire.connectors.credentials', [
             'isOpen' => $this->ref !== null,
-            'variables' => Variable::query()->orderBy('name')->pluck('name')->all(),
         ]);
     }
 }

@@ -146,7 +146,7 @@ class ConnectorCatalog
                 'ref' => 'plugin:'.$slug,
                 'type' => 'plugin',
                 'slug' => $slug,
-                'name' => (string) ($listing['name'] ?? Str::headline($slug)),
+                'name' => (string) ($listing['title'] ?? $listing['name'] ?? Str::headline($slug)),
                 'description' => (string) ($listing['description'] ?? ''),
                 'featured' => (bool) ($listing['featured'] ?? false),
                 'installed' => $install !== null,

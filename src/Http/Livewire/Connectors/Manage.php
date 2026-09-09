@@ -14,7 +14,7 @@ class Manage extends Component
 
     public function openDetail(string $ref): void
     {
-        $this->dispatch('connector-open-detail', ref: $ref)->to(Detail::class);
+        $this->dispatch('connector-open-detail', connectorRef: $ref)->to(Detail::class);
     }
 
     public function browseCatalog(): void

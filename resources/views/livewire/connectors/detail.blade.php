@@ -24,17 +24,8 @@
 
                 <div class="flex flex-wrap justify-center gap-2">
                     @if ($type === 'plugin' && ! ($entry['installed'] ?? false))
-                        <x-neuronai-studio::ui.button wire:click="installPlugin">{{ __('neuronai-studio::connectors.connect') }}</x-neuronai-studio::ui.button>
+                        <x-neuronai-studio::ui.button wire:click="installPlugin">{{ __('neuronai-studio::plugins.install') }}</x-neuronai-studio::ui.button>
                     @elseif ($type === 'plugin' && ($entry['installed'] ?? false))
-                        @if ($accounts !== [])
-                            @foreach ($accounts as $account)
-                                <x-neuronai-studio::ui.button wire:click="openCredentials('{{ $account['label'] }}')">
-                                    {{ $account['connected'] ? __('neuronai-studio::connectors.configure') : __('neuronai-studio::connectors.connect') }}
-                                </x-neuronai-studio::ui.button>
-                            @endforeach
-                        @else
-                            <x-neuronai-studio::ui.button wire:click="openCredentials">{{ __('neuronai-studio::connectors.try_it') }}</x-neuronai-studio::ui.button>
-                        @endif
                         <x-neuronai-studio::ui.button variant="destructive" wire:click="uninstallPlugin" wire:confirm="{{ __('neuronai-studio::plugins.uninstall_confirm') }}">{{ __('neuronai-studio::plugins.uninstall') }}</x-neuronai-studio::ui.button>
                     @elseif (in_array($type, ['mcp', 'api', 'rag', 'rag_tool', 'endpoint'], true))
                         <x-neuronai-studio::ui.button wire:click="openEdit">{{ __('neuronai-studio::connectors.configure') }}</x-neuronai-studio::ui.button>
@@ -51,13 +42,24 @@
                         <h3 class="mb-2 text-sm font-semibold">{{ __('neuronai-studio::plugins.accounts') }}</h3>
                         <div class="space-y-2">
                             @foreach ($accounts as $account)
-                                <div class="flex items-center justify-between rounded-md border border-border p-3 text-sm">
+                                <div class="flex items-center justify-between gap-3 rounded-md border border-border p-3 text-sm">
                                     <span>{{ $account['label'] }}</span>
-                                    @if ($account['connected'])
-                                        <x-neuronai-studio::ui.badge variant="published">{{ __('neuronai-studio::plugins.connected') }}</x-neuronai-studio::ui.badge>
-                                    @else
-                                        <x-neuronai-studio::ui.badge variant="draft">{{ __('neuronai-studio::plugins.needs_auth') }}</x-neuronai-studio::ui.badge>
-                                    @endif
+                                    <div class="flex flex-wrap items-center justify-end gap-2">
+                                        @if ($account['connected'])
+                                            <x-neuronai-studio::ui.badge variant="published">{{ __('neuronai-studio::plugins.connected') }}</x-neuronai-studio::ui.badge>
+                                            @if ($account['supports_manual_auth'] ?? false)
+                                                <x-neuronai-studio::ui.button size="sm" variant="outline" wire:click="openCredentials('{{ $account['label'] }}')">{{ __('neuronai-studio::connectors.configure') }}</x-neuronai-studio::ui.button>
+                                            @endif
+                                        @else
+                                            <x-neuronai-studio::ui.badge variant="draft">{{ __('neuronai-studio::plugins.needs_auth') }}</x-neuronai-studio::ui.badge>
+                                            @if (($account['supports_oauth'] ?? false) && ($entry['oauth_configured'] ?? false))
+                                                <x-neuronai-studio::ui.button size="sm" wire:click="startOAuth({{ $account['id'] }})">{{ __('neuronai-studio::plugins.authenticate') }}</x-neuronai-studio::ui.button>
+                                            @endif
+                                            @if ($account['supports_manual_auth'] ?? false)
+                                                <x-neuronai-studio::ui.button size="sm" variant="outline" wire:click="openCredentials('{{ $account['label'] }}')">{{ __('neuronai-studio::plugins.save_credentials') }}</x-neuronai-studio::ui.button>
+                                            @endif
+                                        @endif
+                                    </div>
                                 </div>
                             @endforeach
                         </div>
@@ -114,6 +116,12 @@
                             <div>
                                 <dt class="text-muted-foreground">{{ __('neuronai-studio::plugins.version') }}</dt>
                                 <dd class="font-medium">{{ $entry['version'] }}</dd>
+                            </div>
+                        @endif
+                        @if (! empty($entry['auth_mode']))
+                            <div class="sm:col-span-2">
+                                <dt class="text-muted-foreground">{{ __('neuronai-studio::connectors.detail_auth') }}</dt>
+                                <dd class="font-medium">{{ __('neuronai-studio::connectors.auth_modes.'.$entry['auth_mode']) }}</dd>
                             </div>
                         @endif
                     </dl>

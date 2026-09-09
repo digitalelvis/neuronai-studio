@@ -68,6 +68,7 @@ class PluginCatalogRegistry
 
                 $merged[$slug] = [
                     'slug' => $slug,
+                    'title' => (string) ($entry['title'] ?? $entry['name'] ?? Str::headline($slug)),
                     'name' => (string) ($entry['name'] ?? Str::headline($slug)),
                     'description' => (string) ($entry['description'] ?? ''),
                     'version' => (string) ($entry['version'] ?? ''),
@@ -94,6 +95,7 @@ class PluginCatalogRegistry
 
             $merged[$slug] = [
                 'slug' => $slug,
+                'title' => (string) ($entry['title'] ?? $entry['name'] ?? Str::headline($slug)),
                 'name' => (string) ($entry['name'] ?? Str::headline($slug)),
                 'description' => (string) ($entry['description'] ?? ''),
                 'version' => (string) ($entry['version'] ?? ''),

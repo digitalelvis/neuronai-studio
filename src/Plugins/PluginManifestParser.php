@@ -175,6 +175,7 @@ class PluginManifestParser
                 return is_string($value) ? $this->expandPluginRoot($root, $value) : $value;
             }, $env),
             'token_env' => isset($config['token_env']) ? (string) $config['token_env'] : null,
+            'auth' => isset($config['auth']) ? (string) $config['auth'] : null,
             'timeout' => isset($config['timeout']) ? (int) $config['timeout'] : 30,
         ];
     }
