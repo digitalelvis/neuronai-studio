@@ -10,6 +10,12 @@
 
 ## Recent Decisions (Last 60 days)
 
+### AD-038: Plugin System — closed catalog packs (2026-09-08)
+
+**Decision:** Open M22 **`plugin-system`**: Claude-compatible packs as install unit; materialize `SkillDefinition` + `McpServer`; `plugin_accounts` with vault `var:` mapping; agent bind via `PluginAgentBinder`; `PluginMcpGate` skips MCP when `needs_auth`. Host policy: `plugins.enabled`, `mode=closed|allowlist`, `stdio` off by default. No open marketplace in P1.
+**Reason:** Hosts need one Add for Calendar/Slack-like connectors without a third-party store; reuses M21 skills + existing MCP inbound.
+**Impact:** Specs in [.specs/features/plugin-system/](../features/plugin-system/). ROADMAP M22. Docs [docs/guides/plugins/README.md](../docs/guides/plugins/README.md).
+
 ### AD-037: Agent Skills — Studio-owned runtime (2026-09-05)
 
 **Decision:** Open M21 with feature **`agent-skills`** (M19/M20 reserved for specified Parse JSON / List Operator). Store skills as `SkillDefinition` (agentskills.io SKILL.md in DB). Bind via `agent_definitions.skills` JSON + canvas `skills` handle. Runtime uses `SkillCatalogInjector` + `activate_skill` / `read_skill_resource` tools on `DynamicAgent` until Neuron AI merges PR #570. No `scripts/` execution in MVP.
