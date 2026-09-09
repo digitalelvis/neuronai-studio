@@ -1,14 +1,20 @@
 # State
 
-**Last Updated:** 2026-09-08
+**Last Updated:** 2026-09-09
 **Development line (features):** `v3.1.x`
 **Patch line:** `v3.1.x`
 **Latest published:** `v3.1.0` on Packagist / `main`
-**Current Work:** M21 `agent-skills` — Execute on `feat/agent-skills` → `v3.1.x`.
+**Current Work:** M23 `shared-plugin-packages` — Execute on `feat/shared-plugin-packages` → `v3.1.x` (P1 implemented; PR pending).
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-039: Shared plugin packages — no per-tenant skill clones (2026-09-09)
+
+**Decision:** Catalog plugin skills live once in global `plugin_packages` / `plugin_package_skills`. Tenant installs are thin (`package_id` + accounts + MCP). Runtime refs `skill:pkg:{packageId}:{skillSlug}` via `SkillContent`. Allowlist zip/GitHub stay tenant-owned. GitHub catalog sources + M22 clone migration = P2.
+**Reason:** SaaS scale — 5k tenants × 15 skills must not create 75k skill bodies.
+**Impact:** Specs/design/tasks in [.specs/features/shared-plugin-packages/](../features/shared-plugin-packages/). Supersedes M22 PLG-04 for catalog installs.
 
 ### AD-038: Plugin System — closed catalog packs (2026-09-08)
 

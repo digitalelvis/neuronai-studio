@@ -101,6 +101,14 @@ class SkillArchiveImporter
         return SkillDefinition::create($payload);
     }
 
+    /**
+     * @return array<string, string>
+     */
+    public function collectResourcesFromRoot(string $root): array
+    {
+        return $this->collectResources($root);
+    }
+
     protected function extractArchive(string $archivePath): string
     {
         $zip = new ZipArchive;

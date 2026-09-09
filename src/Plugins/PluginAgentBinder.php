@@ -80,12 +80,28 @@ class PluginAgentBinder
             ->all();
 
         $skills = is_array($agent->skills) ? $agent->skills : [];
-        $skills = array_values(array_filter($skills, function ($skill) use ($boundInstallIds) {
+        $boundPackageIds = [];
+
+        foreach ($agent->pluginBindings as $binding) {
+            $packageId = $binding->install?->package_id;
+            if ($packageId !== null) {
+                $boundPackageIds[(int) $packageId] = true;
+            }
+        }
+
+        $skills = array_values(array_filter($skills, function ($skill) use ($boundInstallIds, $boundPackageIds) {
             if (! is_array($skill) || empty($skill['ref'])) {
                 return false;
             }
 
             $ref = (string) $skill['ref'];
+
+            if (str_starts_with($ref, 'skill:pkg:')) {
+                $remainder = substr($ref, strlen('skill:pkg:'));
+                $packageId = (int) explode(':', $remainder, 2)[0];
+
+                return isset($boundPackageIds[$packageId]);
+            }
 
             if (! str_starts_with($ref, 'skill:db:')) {
                 return true;
@@ -107,6 +123,10 @@ class PluginAgentBinder
 
             if ($install === null) {
                 continue;
+            }
+
+            foreach ($install->materializedSkillRefs() as $ref) {
+                $skills[] = ['ref' => $ref];
             }
 
             foreach ($install->materializedSkillIds() as $skillId) {
