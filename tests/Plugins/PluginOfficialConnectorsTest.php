@@ -153,6 +153,39 @@ class PluginOfficialConnectorsTest extends TestCase
         app(VariableRepository::class)->resolveValue('LINEAR_LINEAR_API_KEY');
     }
 
+    public function test_disconnect_clears_vault_credentials_and_marks_needs_auth(): void
+    {
+        config([
+            'neuronai-studio.plugins.enabled' => true,
+            'neuronai-studio.plugins.mode' => 'closed',
+        ]);
+
+        $install = app(PluginInstaller::class)->installFromCatalogSlug('linear');
+        $account = $install->accounts()->first();
+        $this->assertNotNull($account);
+
+        Variable::create([
+            'name' => 'LINEAR_LINEAR_API_KEY',
+            'type' => Variable::TYPE_CREDENTIAL,
+            'value' => 'secret-key',
+        ]);
+
+        app(PluginAccountService::class)->refreshAuthStatus($account->fresh());
+        $this->assertSame('connected', $account->fresh()->auth_status);
+
+        app(PluginAccountService::class)->disconnect($account->fresh());
+
+        $account = $account->fresh();
+        $this->assertSame('needs_auth', $account->auth_status);
+
+        $variable = Variable::query()->where('name', 'LINEAR_LINEAR_API_KEY')->first();
+        $this->assertNotNull($variable);
+        $this->assertSame('', $variable->value);
+
+        $this->expectException(VariableResolutionException::class);
+        app(VariableRepository::class)->resolveValue('LINEAR_LINEAR_API_KEY');
+    }
+
     public function test_tenant_install_does_not_mutate_global_install(): void
     {
         config([

@@ -5,10 +5,15 @@
             <h2 class="text-lg font-semibold">{{ __('neuronai-studio::connectors.credentials_title') }}</h2>
         </x-slot:header>
 
-        @if (in_array($authMode, ['oauth', 'oauth_or_token'], true))
+        @if ($mode === 'plugin' && in_array($authMode, ['oauth', 'oauth_or_token'], true))
             <div class="mb-4 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">
                 <p class="font-medium text-foreground">{{ __('neuronai-studio::connectors.auth_modes.'.$authMode) }}</p>
                 <p class="mt-1">{{ __('neuronai-studio::connectors.oauth_hint') }}</p>
+                @if ($oauthConfigured)
+                    <x-neuronai-studio::ui.button class="mt-3" size="sm" wire:click="startOAuth">{{ __('neuronai-studio::plugins.authenticate') }}</x-neuronai-studio::ui.button>
+                @else
+                    <p class="mt-2 text-xs">{{ __('neuronai-studio::connectors.oauth_host_setup') }}</p>
+                @endif
             </div>
         @endif
 
@@ -41,7 +46,11 @@
         <x-slot:footer>
             <div class="flex justify-end gap-2">
                 <x-neuronai-studio::ui.button variant="outline" wire:click="close">{{ __('neuronai-studio::ui.actions.cancel') }}</x-neuronai-studio::ui.button>
-                <x-neuronai-studio::ui.button wire:click="save">{{ __('neuronai-studio::connectors.connect') }}</x-neuronai-studio::ui.button>
+                @if ($mode === 'plugin' && $credentialMap !== [])
+                    <x-neuronai-studio::ui.button wire:click="save">{{ __('neuronai-studio::plugins.save_credentials') }}</x-neuronai-studio::ui.button>
+                @elseif ($mode !== 'plugin')
+                    <x-neuronai-studio::ui.button wire:click="save">{{ __('neuronai-studio::connectors.connect') }}</x-neuronai-studio::ui.button>
+                @endif
             </div>
         </x-slot:footer>
     </x-neuronai-studio::ui.modal>

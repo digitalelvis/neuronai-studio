@@ -6,7 +6,7 @@
 **Patch line:** `v3.1.x` (until next minor opens)  
 **Latest published:** `v3.1.0` on Packagist / `main`  
 **Última atualização:** 2026-09-08  
-**Etapa atual:** M21 `agent-skills` Execute on `feat/agent-skills` → `v3.1.x`.
+**Etapa atual:** M23 `shared-plugin-packages` Execute on `feat/shared-plugin-packages` → `v3.1.x`.
 ---
 
 ## Milestones
@@ -271,6 +271,20 @@ Closed-catalog connector packs (Claude plugin.json + skills + MCP): host policy,
 **Add-on (2026-09-08):** Official HTTP MCP packs (`linear`, `stripe`, `hubspot`, `canva`, `mercadopago`) in package catalog; per-tenant install + vault. Spec: [official-mcp-connectors](../features/official-mcp-connectors/spec.md).
 
 **Linha:** Execute → `v3.1.x`.
+
+### M23 — Shared Plugin Packages (P1) `in progress`
+
+Stop cloning catalog skill bodies per tenant. Global package store + thin installs; runtime resolves `skill:pkg:` refs.
+
+**Escopo (AD-039):** [shared-plugin-packages](../features/shared-plugin-packages/spec.md) · [context](../features/shared-plugin-packages/context.md) · [design](../features/shared-plugin-packages/design.md) · [tasks](../features/shared-plugin-packages/tasks.md)
+
+| Ordem | Feature | Status | Spec |
+|-------|---------|--------|------|
+| 42 | `shared-plugin-packages` | **in progress** (P1 Execute) | [spec](../features/shared-plugin-packages/spec.md) |
+
+**Critério de conclusão M23 P1:** N tenants × K catalog skills ⇒ O(K) shared skill rows; thin installs; activate_skill from package; custom skills unchanged.
+
+**Linha:** `feat/shared-plugin-packages` → `v3.1.x`.
 
 ---
 

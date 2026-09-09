@@ -47,11 +47,10 @@ class PluginSystemTest extends TestCase
         $install = app(PluginInstaller::class)->installFromCatalogSlug('demo-assistant');
 
         $this->assertSame('demo-assistant', $install->slug);
-        $this->assertNotEmpty($install->materializedSkillIds());
+        $this->assertNotEmpty($install->materializedSkillRefs());
+        $this->assertNotNull($install->package_id);
         $this->assertCount(1, $install->accounts);
-
-        $skill = SkillDefinition::query()->find($install->materializedSkillIds()[0]);
-        $this->assertSame(SkillDefinition::SOURCE_PLUGIN, $skill->source);
+        $this->assertSame(0, SkillDefinition::query()->where('source', SkillDefinition::SOURCE_PLUGIN)->count());
     }
 
     public function test_closed_mode_rejects_unknown_slug_on_install_path(): void
@@ -88,7 +87,7 @@ class PluginSystemTest extends TestCase
         $agent->refresh();
 
         $refs = collect($agent->skills)->pluck('ref')->all();
-        $this->assertContains('skill:db:'.$install->materializedSkillIds()[0], $refs);
+        $this->assertContains($install->materializedSkillRefs()[0], $refs);
     }
 
     public function test_mcp_gate_skips_plugin_tools_when_account_needs_auth(): void

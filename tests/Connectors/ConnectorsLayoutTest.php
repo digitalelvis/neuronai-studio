@@ -149,11 +149,31 @@ JSON;
             ->assertDispatched('connector-saved');
     }
 
-    public function test_plugin_skill_cannot_be_deleted_while_plugin_installed(): void
+    public function test_catalog_plugin_skills_are_not_tenant_skill_definitions(): void
     {
         config(['neuronai-studio.plugins.enabled' => true]);
 
         $install = app(PluginInstaller::class)->installFromCatalogSlug('demo-assistant');
+
+        $this->assertNotEmpty($install->materializedSkillRefs());
+        $this->assertEmpty($install->materializedSkillIds());
+        $this->assertSame(0, SkillDefinition::query()->where('source', SkillDefinition::SOURCE_PLUGIN)->count());
+    }
+
+    public function test_owned_plugin_skill_cannot_be_deleted_while_plugin_installed(): void
+    {
+        config([
+            'neuronai-studio.plugins.enabled' => true,
+            'neuronai-studio.plugins.mode' => 'allowlist',
+            'neuronai-studio.plugins.allowlist' => ['demo-assistant'],
+        ]);
+
+        $root = dirname(__DIR__, 2).'/resources/plugins/demo-assistant';
+        $install = app(PluginInstaller::class)->installFromPath($root, [
+            'slug' => 'demo-assistant',
+            'source' => 'upload',
+            'shared_package' => false,
+        ]);
         $skillId = $install->materializedSkillIds()[0];
 
         Livewire::test(SkillsIndex::class)
@@ -163,11 +183,20 @@ JSON;
         $this->assertNotNull(SkillDefinition::query()->find($skillId));
     }
 
-    public function test_is_locked_by_plugin_when_install_active(): void
+    public function test_is_locked_by_plugin_when_owned_install_active(): void
     {
-        config(['neuronai-studio.plugins.enabled' => true]);
+        config([
+            'neuronai-studio.plugins.enabled' => true,
+            'neuronai-studio.plugins.mode' => 'allowlist',
+            'neuronai-studio.plugins.allowlist' => ['demo-assistant'],
+        ]);
 
-        $install = app(PluginInstaller::class)->installFromCatalogSlug('demo-assistant');
+        $root = dirname(__DIR__, 2).'/resources/plugins/demo-assistant';
+        $install = app(PluginInstaller::class)->installFromPath($root, [
+            'slug' => 'demo-assistant',
+            'source' => 'upload',
+            'shared_package' => false,
+        ]);
         $skill = SkillDefinition::query()->find($install->materializedSkillIds()[0]);
 
         $this->assertNotNull($skill);
@@ -176,9 +205,18 @@ JSON;
 
     public function test_orphan_plugin_skill_can_be_deleted(): void
     {
-        config(['neuronai-studio.plugins.enabled' => true]);
+        config([
+            'neuronai-studio.plugins.enabled' => true,
+            'neuronai-studio.plugins.mode' => 'allowlist',
+            'neuronai-studio.plugins.allowlist' => ['demo-assistant'],
+        ]);
 
-        $install = app(PluginInstaller::class)->installFromCatalogSlug('demo-assistant');
+        $root = dirname(__DIR__, 2).'/resources/plugins/demo-assistant';
+        $install = app(PluginInstaller::class)->installFromPath($root, [
+            'slug' => 'demo-assistant',
+            'source' => 'upload',
+            'shared_package' => false,
+        ]);
         $skill = SkillDefinition::query()->findOrFail($install->materializedSkillIds()[0]);
 
         $install->update(['status' => PluginInstall::STATUS_UNINSTALLED]);

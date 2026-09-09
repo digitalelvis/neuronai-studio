@@ -2,6 +2,12 @@
 
 NeuronAI Studio supports **host-controlled connector packs** in Claude plugin format (`.claude-plugin/plugin.json`, `skills/`, optional `.mcp.json`).
 
+## Shared packages (scale)
+
+Catalog installs **do not clone** skill bodies per tenant. The host upserts a global `plugin_packages` + `plugin_package_skills` row set once per `(slug, version)`. Each tenant keeps a thin `plugin_installs` row (`package_id`), accounts/credentials, and MCP server rows. Agents bind `skill:pkg:{packageId}:{skillSlug}` refs.
+
+Allowlist zip / ad-hoc GitHub installs still materialize tenant-owned `skill_definitions` (unreviewed packs stay out of the global store).
+
 ## Host policy
 
 Configure in `config/neuronai-studio.php` or `.env`:
@@ -61,12 +67,24 @@ Shipped in `resources/plugins/marketplace.json`. All use **HTTP** transport (no 
 | Linear | `https://mcp.linear.app/mcp` | API key Bearer | OAuth 2.1 or API key | [Linear MCP](https://linear.app/docs/mcp) — OAuth per tenant |
 | Stripe | `https://mcp.stripe.com` | Restricted API key | OAuth or API key | [Stripe MCP](https://docs.stripe.com/mcp) |
 | HubSpot | `https://mcp.hubspot.com` | Access token | OAuth **PKCE** + MCP Auth App | One OAuth app per host; tokens per tenant portal |
-| Canva | `https://mcp.canva.com/mcp` | Access token | CIMD / OAuth | Embedded products need redirect URI waitlist |
+| Canva | `https://mcp.canva.com/mcp` | MCP access token | MCP OAuth (PKCE) | **Not** Connect API (`OC-…`). Register MCP client → authorize `https://mcp.canva.com/authorize`, token `https://mcp.canva.com/token`. Redirect: `{APP_URL}/{route_prefix}/plugins/oauth/callback` |
 | Mercado Pago | `https://mcp.mercadopago.com/mcp` | Access token | OAuth or Bearer | App-management tools require OAuth |
 
 P1: authors paste API keys or access tokens into tenant **Variables** referenced by the plugin account.
 
-P3 (host adapter): implement OAuth 2.1 client flows; store `access_token` / `refresh_token` in the **current tenant's** vault only; never share OAuth sessions across tenants. HubSpot requires PKCE. Canva recommends CIMD for public clients.
+Full OAuth host setup (redirect URI, env vars, Canva MCP registration, refresh tokens): [oauth-setup.md](./oauth-setup.md).
+
+OAuth (Studio **Authenticate** button): configure `plugins.oauth.providers` in `config/neuronai-studio.php`. All providers share one redirect URI:
+
+```
+{APP_URL}/{route_prefix}/plugins/oauth/callback
+```
+
+Access tokens that expire are refreshed automatically before MCP tool resolution when a refresh token is stored. Failed refresh disconnects the account.
+
+**Canva (important):** the plugin talks to `https://mcp.canva.com/mcp`. Tokens from the [Canva Connect API](https://www.canva.dev/docs/connect/authentication/) (`OC-…` Developer Portal apps) **do not work** on the MCP server. See [oauth-setup.md](./oauth-setup.md) for MCP client registration.
+
+Store `access_token` / `refresh_token` in the **current tenant's** vault only; never share OAuth sessions across tenants. HubSpot requires PKCE.
 
 ## Package catalog
 

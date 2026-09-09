@@ -5,6 +5,7 @@ namespace DigitalElvis\NeuronAIStudio\Models;
 use DigitalElvis\NeuronAIStudio\Support\StudioTables;
 use DigitalElvis\NeuronAIStudio\Tenancy\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PluginInstall extends Model
@@ -18,6 +19,7 @@ class PluginInstall extends Model
     protected $table;
 
     protected $fillable = [
+        'package_id',
         'slug',
         'name',
         'version',
@@ -45,6 +47,11 @@ class PluginInstall extends Model
         ];
     }
 
+    public function package(): BelongsTo
+    {
+        return $this->belongsTo(PluginPackage::class, 'package_id');
+    }
+
     public function accounts(): HasMany
     {
         return $this->hasMany(PluginAccount::class);
@@ -60,12 +67,29 @@ class PluginInstall extends Model
         return $this->status === self::STATUS_INSTALLED;
     }
 
+    public function usesSharedPackage(): bool
+    {
+        return $this->package_id !== null;
+    }
+
     /** @return array<int, int> */
     public function materializedSkillIds(): array
     {
         $ids = $this->materialized['skill_ids'] ?? [];
 
         return is_array($ids) ? array_values(array_map('intval', $ids)) : [];
+    }
+
+    /** @return array<int, string> */
+    public function materializedSkillRefs(): array
+    {
+        $refs = $this->materialized['skill_refs'] ?? [];
+
+        if (! is_array($refs)) {
+            return [];
+        }
+
+        return array_values(array_filter(array_map('strval', $refs)));
     }
 
     /** @return array<int, string> */

@@ -20,6 +20,7 @@ class PluginInstaller
         protected PluginManifestParser $parser,
         protected PluginMaterializer $materializer,
         protected PluginAccountService $accounts,
+        protected PluginPackageRegistry $packages,
     ) {}
 
     public function installFromCatalogSlug(string $slug): PluginInstall
@@ -36,12 +37,13 @@ class PluginInstaller
                 'slug' => $slug,
                 'source' => 'catalog',
                 'source_path' => (string) $listing['path'],
+                'shared_package' => true,
             ],
         );
     }
 
     /**
-     * @param  array{slug?: string, source?: string, source_url?: ?string, source_path?: ?string, overwrite?: bool}  $context
+     * @param  array{slug?: string, source?: string, source_url?: ?string, source_path?: ?string, overwrite?: bool, shared_package?: bool}  $context
      */
     public function installFromPath(string $path, array $context = []): PluginInstall
     {
@@ -53,10 +55,12 @@ class PluginInstaller
 
         $parsed = $this->parser->parseRoot($real);
         $slug = (string) ($context['slug'] ?? $parsed->slug());
+        $source = (string) ($context['source'] ?? 'catalog');
+        $useShared = (bool) ($context['shared_package'] ?? ($source === 'catalog'));
 
         $this->policy->assertSourceAllowed([
             'slug' => $slug,
-            'source' => (string) ($context['source'] ?? 'catalog'),
+            'source' => $source,
             'source_url' => $context['source_url'] ?? null,
             'source_path' => $real,
         ]);
@@ -74,27 +78,40 @@ class PluginInstaller
             $existing->accounts()->delete();
         }
 
+        $package = null;
+
+        if ($useShared) {
+            $package = $this->packages->ensureFromParsed($parsed, [
+                'source' => $source,
+                'source_url' => $context['source_url'] ?? null,
+                'source_path' => $real,
+            ]);
+        }
+
         $install = PluginInstall::updateOrCreate(
             $this->installUniqueKeys($slug),
             [
+                'package_id' => $package?->id,
                 'name' => (string) ($parsed->manifest['name'] ?? Str::headline($slug)),
-                'version' => $parsed->version(),
+                'version' => $package?->version ?? $parsed->version(),
                 'description' => $parsed->description(),
                 'manifest' => $parsed->manifest,
-                'source' => (string) ($context['source'] ?? 'catalog'),
+                'source' => $source,
                 'source_url' => $context['source_url'] ?? null,
                 'source_path' => $real,
                 'status' => PluginInstall::STATUS_INSTALLED,
             ],
         );
 
-        $materialized = $this->materializer->materialize($install, $parsed);
+        $materialized = $useShared && $package !== null
+            ? $this->materializer->materializeCatalog($install, $package)
+            : $this->materializer->materializeOwned($install, $parsed);
 
         $install->update(['materialized' => $materialized]);
 
         $this->accounts->createDefaultAccount($install, $parsed->requiredEnvKeys, $parsed->mcpServers);
 
-        return $install->fresh(['accounts']);
+        return $install->fresh(['accounts', 'package']);
     }
 
     public function installFromArchive(string $archivePath, array $context = []): PluginInstall
@@ -108,6 +125,7 @@ class PluginInstaller
             return $this->installFromPath($root, array_merge($context, [
                 'slug' => $context['slug'] ?? $parsed->slug(),
                 'source' => $context['source'] ?? 'upload',
+                'shared_package' => false,
             ]));
         } finally {
             if (is_dir($tmpDir)) {
@@ -132,6 +150,7 @@ class PluginInstaller
                 'slug' => $context['slug'] ?? $parsed->slug(),
                 'source' => 'github',
                 'source_url' => $url,
+                'shared_package' => false,
             ]));
         } catch (\Throwable $e) {
             if (is_dir($tmpDir)) {

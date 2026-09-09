@@ -128,6 +128,154 @@ class PluginOAuthTest extends TestCase
         $response->assertSessionHas('success');
     }
 
+    public function test_canva_oauth_uses_mcp_endpoints(): void
+    {
+        config([
+            'neuronai-studio.plugins.enabled' => true,
+            'neuronai-studio.plugins.oauth.providers.canva.client_id' => 'mcp-canva-client',
+            'neuronai-studio.plugins.oauth.providers.canva.client_secret' => 'canva-secret',
+        ]);
+
+        Http::fake([
+            'mcp.canva.com/token' => Http::response([
+                'access_token' => 'canva-mcp-access-token',
+                'refresh_token' => 'canva-mcp-refresh-token',
+            ], 200),
+        ]);
+
+        $install = app(PluginInstaller::class)->installFromCatalogSlug('canva');
+        $account = $install->accounts()->first();
+        $this->assertNotNull($account);
+
+        $oauth = app(PluginOAuthService::class);
+        $authorizationUrl = $oauth->authorizationUrl($install, $account);
+        parse_str((string) parse_url($authorizationUrl, PHP_URL_QUERY), $query);
+
+        $this->assertStringStartsWith('https://mcp.canva.com/authorize?', $authorizationUrl);
+        $this->assertArrayNotHasKey('scope', $query);
+
+        $oauth->handleCallback((string) $query['state'], 'canva-auth-code');
+
+        Http::assertSent(function ($request) {
+            return $request->url() === 'https://mcp.canva.com/token'
+                && $request['grant_type'] === 'authorization_code'
+                && $request['code'] === 'canva-auth-code'
+                && $request['client_id'] === 'mcp-canva-client';
+        });
+
+        $this->assertSame(PluginAccount::AUTH_CONNECTED, $account->fresh()->auth_status);
+    }
+
+    public function test_refresh_access_token_updates_vault_and_expiry(): void
+    {
+        config([
+            'neuronai-studio.plugins.enabled' => true,
+            'neuronai-studio.plugins.oauth.providers.canva.client_id' => 'mcp-canva-client',
+            'neuronai-studio.plugins.oauth.providers.canva.client_secret' => 'canva-secret',
+        ]);
+
+        Http::fake([
+            'mcp.canva.com/token' => Http::sequence()
+                ->push([
+                    'access_token' => 'initial-access',
+                    'refresh_token' => 'initial-refresh',
+                    'expires_in' => 3600,
+                ], 200)
+                ->push([
+                    'access_token' => 'refreshed-access',
+                    'refresh_token' => 'rotated-refresh',
+                    'expires_in' => 7200,
+                ], 200),
+        ]);
+
+        $install = app(PluginInstaller::class)->installFromCatalogSlug('canva');
+        $account = $install->accounts()->first();
+        $this->assertNotNull($account);
+
+        $oauth = app(PluginOAuthService::class);
+        $authorizationUrl = $oauth->authorizationUrl($install, $account);
+        parse_str((string) parse_url($authorizationUrl, PHP_URL_QUERY), $query);
+        $oauth->handleCallback((string) $query['state'], 'auth-code');
+
+        $account = $account->fresh();
+        $this->assertNotNull($account->token_expires_at);
+        $account->update(['token_expires_at' => now()->subMinute()]);
+
+        $oauth->ensureFreshAccessToken($account->fresh());
+
+        $account = $account->fresh();
+        $this->assertSame(PluginAccount::AUTH_CONNECTED, $account->auth_status);
+        $this->assertTrue($account->token_expires_at?->greaterThan(now()->addHour()) ?? false);
+
+        $access = Variable::query()->where('name', 'CANVA_CANVA_ACCESS_TOKEN')->first();
+        $refresh = Variable::query()->where('name', 'CANVA_CANVA_REFRESH_TOKEN')->first();
+        $this->assertNotNull($access);
+        $this->assertNotNull($refresh);
+        $this->assertSame('refreshed-access', $access->value);
+        $this->assertSame('rotated-refresh', $refresh->value);
+    }
+
+    public function test_failed_refresh_disconnects_account(): void
+    {
+        config([
+            'neuronai-studio.plugins.enabled' => true,
+            'neuronai-studio.plugins.oauth.providers.canva.client_id' => 'mcp-canva-client',
+            'neuronai-studio.plugins.oauth.providers.canva.client_secret' => 'canva-secret',
+        ]);
+
+        Http::fake([
+            'mcp.canva.com/token' => Http::sequence()
+                ->push([
+                    'access_token' => 'initial-access',
+                    'refresh_token' => 'initial-refresh',
+                    'expires_in' => 10,
+                ], 200)
+                ->push(['error' => 'invalid_grant'], 400),
+        ]);
+
+        $install = app(PluginInstaller::class)->installFromCatalogSlug('canva');
+        $account = $install->accounts()->first();
+        $this->assertNotNull($account);
+
+        $oauth = app(PluginOAuthService::class);
+        $authorizationUrl = $oauth->authorizationUrl($install, $account);
+        parse_str((string) parse_url($authorizationUrl, PHP_URL_QUERY), $query);
+        $oauth->handleCallback((string) $query['state'], 'auth-code');
+
+        $account = $account->fresh();
+        $account->update(['token_expires_at' => now()->subMinute()]);
+
+        $oauth->ensureFreshAccessToken($account->fresh());
+
+        $this->assertSame(PluginAccount::AUTH_NEEDS, $account->fresh()->auth_status);
+        $this->assertNull($account->fresh()->token_expires_at);
+    }
+
+    public function test_canva_oauth_rejects_connect_api_client_id(): void
+    {
+        config([
+            'neuronai-studio.plugins.enabled' => true,
+            'neuronai-studio.plugins.oauth.providers.canva.client_id' => 'OC-AaCF0dB5SEVD',
+        ]);
+
+        $install = app(PluginInstaller::class)->installFromCatalogSlug('canva');
+        $account = $install->accounts()->first();
+        $this->assertNotNull($account);
+
+        $this->withoutMiddleware(EnsureNeuronAIStudioAuthorized::class);
+
+        $response = $this->get(route('neuronai-studio.plugins.oauth.authorize', [
+            'slug' => 'canva',
+            'install' => $install->id,
+            'account' => $account->id,
+        ]));
+
+        $response->assertRedirect(route('neuronai-studio.plugins.index', [
+            'connector' => 'plugin_install:'.$install->id,
+        ]));
+        $response->assertSessionHas('error');
+    }
+
     public function test_detail_modal_shows_install_and_authenticate_actions(): void
     {
         config([

@@ -4,6 +4,8 @@ namespace DigitalElvis\NeuronAIStudio\Plugins;
 
 use DigitalElvis\NeuronAIStudio\Models\McpServer;
 use DigitalElvis\NeuronAIStudio\Models\PluginInstall;
+use DigitalElvis\NeuronAIStudio\Models\PluginPackage;
+use DigitalElvis\NeuronAIStudio\Models\PluginPackageSkill;
 use DigitalElvis\NeuronAIStudio\Models\SkillDefinition;
 use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
 use DigitalElvis\NeuronAIStudio\Runtime\Skills\SkillArchiveImporter;
@@ -19,12 +21,37 @@ class PluginMaterializer
     ) {}
 
     /**
+     * Catalog install: shared package skills + tenant MCP rows.
+     *
+     * @return array{package_id: int, skill_refs: array<int, string>, mcp_slugs: array<int, string>}
+     */
+    public function materializeCatalog(PluginInstall $install, PluginPackage $package): array
+    {
+        $skillRefs = $package->skills
+            ->map(fn (PluginPackageSkill $skill) => $skill->bindingRef())
+            ->values()
+            ->all();
+
+        $mcpSlugs = $this->materializeMcpServers(
+            $install,
+            is_array($package->mcp_templates) ? $package->mcp_templates : [],
+        );
+
+        return [
+            'package_id' => (int) $package->id,
+            'skill_refs' => $skillRefs,
+            'mcp_slugs' => $mcpSlugs,
+        ];
+    }
+
+    /**
+     * Allowlist / upload / ad-hoc GitHub: tenant-owned skill clones (legacy M22 path).
+     *
      * @return array{skill_ids: array<int, int>, mcp_slugs: array<int, string>}
      */
-    public function materialize(PluginInstall $install, ParsedPlugin $parsed): array
+    public function materializeOwned(PluginInstall $install, ParsedPlugin $parsed): array
     {
         $skillIds = [];
-        $mcpSlugs = [];
 
         foreach ($parsed->skillRoots as $skillRoot) {
             $skill = $this->skillImporter->importFromRoot($skillRoot, [
@@ -40,7 +67,37 @@ class PluginMaterializer
             $skillIds[] = $skill->id;
         }
 
-        foreach ($parsed->mcpServers as $connectorKey => $config) {
+        $mcpSlugs = $this->materializeMcpServers($install, $parsed->mcpServers);
+
+        return [
+            'skill_ids' => $skillIds,
+            'mcp_slugs' => $mcpSlugs,
+        ];
+    }
+
+    /**
+     * @deprecated Use materializeOwned() or materializeCatalog()
+     *
+     * @return array{skill_ids: array<int, int>, mcp_slugs: array<int, string>}
+     */
+    public function materialize(PluginInstall $install, ParsedPlugin $parsed): array
+    {
+        return $this->materializeOwned($install, $parsed);
+    }
+
+    /**
+     * @param  array<string, array<string, mixed>>  $mcpServers
+     * @return array<int, string>
+     */
+    protected function materializeMcpServers(PluginInstall $install, array $mcpServers): array
+    {
+        $mcpSlugs = [];
+
+        foreach ($mcpServers as $connectorKey => $config) {
+            if (! is_array($config)) {
+                continue;
+            }
+
             $transport = (string) ($config['transport'] ?? 'stdio');
 
             if ($transport === 'stdio') {
@@ -53,7 +110,7 @@ class PluginMaterializer
                 $this->mcpRegistry->assertStdioCommandAllowed($config['command'] ?? null);
             }
 
-            $slug = $this->mcpSlugFor($install, $connectorKey);
+            $slug = $this->mcpSlugFor($install, (string) $connectorKey);
 
             $env = is_array($config['env'] ?? null) ? $config['env'] : [];
             $credentialHints = [];
@@ -82,7 +139,7 @@ class PluginMaterializer
             $authMode = (string) ($config['auth'] ?? 'token');
 
             $payload = [
-                'name' => Str::headline($connectorKey).' ('.$install->name.')',
+                'name' => Str::headline((string) $connectorKey).' ('.$install->name.')',
                 'slug' => $slug,
                 'description' => 'Connector from plugin '.$install->slug,
                 'transport' => $transport,
@@ -112,10 +169,7 @@ class PluginMaterializer
             $mcpSlugs[] = $server->slug;
         }
 
-        return [
-            'skill_ids' => $skillIds,
-            'mcp_slugs' => $mcpSlugs,
-        ];
+        return $mcpSlugs;
     }
 
     public function mcpSlugFor(PluginInstall $install, string $connectorKey): string

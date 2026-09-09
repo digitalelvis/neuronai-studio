@@ -2,13 +2,14 @@
 
 namespace DigitalElvis\NeuronAIStudio\Models;
 
+use DigitalElvis\NeuronAIStudio\Runtime\Skills\SkillContent;
 use DigitalElvis\NeuronAIStudio\Runtime\Skills\SkillPathPolicy;
 use DigitalElvis\NeuronAIStudio\Support\StudioTables;
 use DigitalElvis\NeuronAIStudio\Tenancy\BelongsToTenant;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Storage;
 
-class SkillDefinition extends Model
+class SkillDefinition extends Model implements SkillContent
 {
     use BelongsToTenant;
 
@@ -58,6 +59,21 @@ class SkillDefinition extends Model
     public function bindingRef(): string
     {
         return "skill:db:{$this->id}";
+    }
+
+    public function slug(): string
+    {
+        return (string) ($this->attributes['slug'] ?? '');
+    }
+
+    public function description(): string
+    {
+        return (string) ($this->attributes['description'] ?? '');
+    }
+
+    public function body(): string
+    {
+        return (string) ($this->attributes['body'] ?? '');
     }
 
     /** @return array<string, string> */
@@ -185,7 +201,7 @@ class SkillDefinition extends Model
             'metadata' => $this->metadata,
         ], fn ($value) => $value !== null && $value !== '' && $value !== []));
 
-        return trim($frontmatter."\n\n".(string) $this->body);
+        return trim($frontmatter."\n\n".$this->body());
     }
 
     /** @return list<string> */
