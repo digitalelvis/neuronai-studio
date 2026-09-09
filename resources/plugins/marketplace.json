@@ -1,0 +1,16 @@
+{
+  "name": "neuronai-studio-plugins",
+  "owner": {
+    "name": "NeuronAI Studio"
+  },
+  "plugins": [
+    {
+      "name": "demo-assistant",
+      "source": "./demo-assistant",
+      "description": "Official demo pack with a sample skill for agent onboarding.",
+      "categories": ["Featured"],
+      "featured": true,
+      "version": "1.0.0"
+    }
+  ]
+}

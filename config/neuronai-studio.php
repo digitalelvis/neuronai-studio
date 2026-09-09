@@ -418,6 +418,44 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Connectors UI
+    |--------------------------------------------------------------------------
+    |
+    | Optional icon URLs for catalog cards (plugins can also ship icon.png).
+    |
+    */
+
+    'connectors' => [
+        'icon_disk' => env('NEURONAI_STUDIO_CONNECTOR_ICON_DISK', 'public'),
+        'icons' => [
+            'mcp' => [],
+            'tools' => [],
+            'data_sources' => [],
+        ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Plugins (closed catalog)
+    |--------------------------------------------------------------------------
+    |
+    | Host-controlled connector packs (Claude plugin.json + skills + MCP).
+    | mode: closed (package catalog + plugins.catalog only) | allowlist (+ allowlist)
+    |
+    */
+
+    'plugins' => [
+        'enabled' => env('NEURONAI_STUDIO_PLUGINS_ENABLED', true),
+        'mode' => env('NEURONAI_STUDIO_PLUGINS_MODE', 'closed'),
+        'stdio' => env('NEURONAI_STUDIO_PLUGINS_STDIO', false),
+        'allowlist' => [],
+        'catalog_paths' => [],
+        'catalog' => [],
+        'github_hosts' => ['github.com'],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | MCP Servers
     |--------------------------------------------------------------------------
     |

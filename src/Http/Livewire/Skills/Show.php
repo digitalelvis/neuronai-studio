@@ -33,6 +33,12 @@ class Show extends Component
 
     public function deleteSkill(): void
     {
+        if ($this->skill->isLockedByPlugin()) {
+            session()->flash('error', __('neuronai-studio::skills.locked_by_plugin'));
+
+            return;
+        }
+
         $this->skill->delete();
         session()->flash('success', __('neuronai-studio::flash.skill_deleted'));
         $this->redirect(route('neuronai-studio.skills.index'));

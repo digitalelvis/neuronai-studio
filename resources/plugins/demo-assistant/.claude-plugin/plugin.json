@@ -1,0 +1,8 @@
+{
+  "name": "demo-assistant",
+  "version": "1.0.0",
+  "description": "Sample connector pack with a reusable assistant skill.",
+  "author": {
+    "name": "NeuronAI Studio"
+  }
+}

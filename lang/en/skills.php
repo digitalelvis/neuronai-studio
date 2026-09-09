@@ -18,6 +18,7 @@ return [
     'github_hint' => 'Import a skill from a public GitHub repository or tree URL.',
     'github_action' => 'Import',
     'overwrite' => 'Overwrite if a skill with the same name already exists',
+    'locked_by_plugin' => 'This skill belongs to an installed plugin and cannot be deleted.',
     'description' => 'Description',
     'display_name' => 'Display name',
     'category' => 'Category',
