@@ -7,6 +7,7 @@ use DigitalElvis\NeuronAIStudio\Models\PluginAccount;
 use DigitalElvis\NeuronAIStudio\Models\PluginInstall;
 use DigitalElvis\NeuronAIStudio\Models\SkillDefinition;
 use DigitalElvis\NeuronAIStudio\Plugins\OAuth\PluginOAuthRegistry;
+use DigitalElvis\NeuronAIStudio\Plugins\PluginAccountService;
 use DigitalElvis\NeuronAIStudio\Plugins\PluginInstaller;
 use DigitalElvis\NeuronAIStudio\Plugins\PluginManifestParser;
 use Illuminate\Support\Str;
@@ -95,6 +96,30 @@ class Detail extends Component
         if ($this->ref !== null) {
             $this->loadEntry();
         }
+    }
+
+    public function disconnectAccount(int $accountId): void
+    {
+        $installId = (int) ($this->entry['install_id'] ?? $this->entry['entity_id'] ?? 0);
+
+        if ($installId <= 0 || $accountId <= 0) {
+            return;
+        }
+
+        $account = PluginAccount::query()->find($accountId);
+
+        if ($account === null || $account->plugin_install_id !== $installId || ! $account->isConnected()) {
+            return;
+        }
+
+        app(PluginAccountService::class)->disconnect($account);
+
+        session()->flash('success', __('neuronai-studio::plugins.disconnected', [
+            'name' => (string) ($this->entry['name'] ?? $account->label),
+        ]));
+
+        $this->loadEntry();
+        $this->dispatch('connector-catalog-refresh');
     }
 
     public function startOAuth(int $accountId): void

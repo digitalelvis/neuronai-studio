@@ -30,6 +30,12 @@ class PluginOAuthController extends Controller
             return $this->failureRedirect(null, __('neuronai-studio::plugins.oauth_invalid_session'));
         }
 
+        $clientId = (string) (config("neuronai-studio.plugins.oauth.providers.{$slug}.client_id") ?? '');
+
+        if ($slug === 'canva' && str_starts_with($clientId, 'OC-')) {
+            return $this->failureRedirect($install, __('neuronai-studio::plugins.oauth_canva_connect_api_mismatch'));
+        }
+
         try {
             return redirect()->away($oauth->authorizationUrl($install, $account));
         } catch (Throwable $e) {

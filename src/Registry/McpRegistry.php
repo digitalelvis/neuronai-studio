@@ -67,8 +67,11 @@ class McpRegistry
     }
 
     /** @return array<string, mixed> */
-    public function resolveConfig(string $slug): array
+    public function resolveConfig(string $slug, ?\DigitalElvis\NeuronAIStudio\Models\AgentDefinition $agent = null): array
     {
+        app(\DigitalElvis\NeuronAIStudio\Plugins\OAuth\PluginOAuthTokenRefresher::class)
+            ->prepareForMcpSlug($slug, $agent);
+
         $entry = $this->find($slug);
 
         if ($entry === null) {
