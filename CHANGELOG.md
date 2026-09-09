@@ -1,5 +1,15 @@
 # Changelog
 
+# [3.9.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.8.0...v3.9.0) (2026-09-09)
+
+
+### Features
+
+* **agents:** add plugin bindings to agent editor ([dd97088](https://github.com/digitalelvis/neuronai-studio/commit/dd97088737d1470f4d422126ea014d2166b848ce))
+* **connectors:** add Manus-style connectors hub UI ([20559c0](https://github.com/digitalelvis/neuronai-studio/commit/20559c00021344c69b8f91f662760ae22a0f82d5))
+* **plugins:** add closed-catalog plugin install system ([9b1b00e](https://github.com/digitalelvis/neuronai-studio/commit/9b1b00e8261f7f2478438434e74e7a1776a1076c))
+* **plugins:** add official MCP connectors with OAuth and tenant install ([69eea3c](https://github.com/digitalelvis/neuronai-studio/commit/69eea3c9943af38ed8b5d01ff616c473beac6f26))
+
 # [3.8.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.7.2...v3.8.0) (2026-09-08)
 
 
