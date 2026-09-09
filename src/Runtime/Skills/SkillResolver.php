@@ -31,8 +31,8 @@ class SkillResolver
 
             $seen[$ref] = true;
             $entries[] = new SkillCatalogEntry(
-                name: $definition->slug,
-                description: $definition->description,
+                name: $definition->slug(),
+                description: $definition->description(),
                 definition: $definition,
             );
         }

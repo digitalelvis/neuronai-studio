@@ -2,6 +2,12 @@
 
 NeuronAI Studio supports **host-controlled connector packs** in Claude plugin format (`.claude-plugin/plugin.json`, `skills/`, optional `.mcp.json`).
 
+## Shared packages (scale)
+
+Catalog installs **do not clone** skill bodies per tenant. The host upserts a global `plugin_packages` + `plugin_package_skills` row set once per `(slug, version)`. Each tenant keeps a thin `plugin_installs` row (`package_id`), accounts/credentials, and MCP server rows. Agents bind `skill:pkg:{packageId}:{skillSlug}` refs.
+
+Allowlist zip / ad-hoc GitHub installs still materialize tenant-owned `skill_definitions` (unreviewed packs stay out of the global store).
+
 ## Host policy
 
 Configure in `config/neuronai-studio.php` or `.env`:

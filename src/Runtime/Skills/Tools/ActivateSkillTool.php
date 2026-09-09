@@ -52,7 +52,7 @@ class ActivateSkillTool extends Tool
             return "Error: skill [{$name}] is not attached to this agent. Available: {$available}";
         }
 
-        $body = trim((string) ($entry->definition->body ?? ''));
+        $body = trim($entry->definition->body());
 
         if ($body === '') {
             return "Skill [{$name}] has no instruction body.";

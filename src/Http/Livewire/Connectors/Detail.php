@@ -220,16 +220,29 @@ class Detail extends Component
                     $oauthConfigured = app(PluginOAuthRegistry::class)->isConfigured($slug);
                     $this->entry['oauth_configured'] = $oauthConfigured;
 
-                    $this->skills = SkillDefinition::query()
-                        ->whereIn('id', $install->materializedSkillIds())
-                        ->orderBy('slug')
-                        ->get(['id', 'slug', 'display_name', 'description'])
-                        ->map(fn (SkillDefinition $skill) => [
-                            'slug' => $skill->slug,
-                            'name' => $skill->displayName(),
-                            'description' => (string) $skill->description,
-                        ])
-                        ->all();
+                    if ($install->usesSharedPackage()) {
+                        $install->loadMissing('package.skills');
+                        $this->skills = ($install->package?->skills ?? collect())
+                            ->sortBy('slug')
+                            ->values()
+                            ->map(fn ($skill) => [
+                                'slug' => $skill->slug(),
+                                'name' => $skill->slug(),
+                                'description' => $skill->description(),
+                            ])
+                            ->all();
+                    } else {
+                        $this->skills = SkillDefinition::query()
+                            ->whereIn('id', $install->materializedSkillIds())
+                            ->orderBy('slug')
+                            ->get(['id', 'slug', 'display_name', 'description'])
+                            ->map(fn (SkillDefinition $skill) => [
+                                'slug' => $skill->slug,
+                                'name' => $skill->displayName(),
+                                'description' => (string) $skill->description,
+                            ])
+                            ->all();
+                    }
 
                     $this->mcpConnectors = McpServer::query()
                         ->whereIn('slug', $install->materializedMcpSlugs())
