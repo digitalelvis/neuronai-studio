@@ -166,6 +166,91 @@ class PluginOAuthTest extends TestCase
         $this->assertSame(PluginAccount::AUTH_CONNECTED, $account->fresh()->auth_status);
     }
 
+    public function test_refresh_access_token_updates_vault_and_expiry(): void
+    {
+        config([
+            'neuronai-studio.plugins.enabled' => true,
+            'neuronai-studio.plugins.oauth.providers.canva.client_id' => 'mcp-canva-client',
+            'neuronai-studio.plugins.oauth.providers.canva.client_secret' => 'canva-secret',
+        ]);
+
+        Http::fake([
+            'mcp.canva.com/token' => Http::sequence()
+                ->push([
+                    'access_token' => 'initial-access',
+                    'refresh_token' => 'initial-refresh',
+                    'expires_in' => 3600,
+                ], 200)
+                ->push([
+                    'access_token' => 'refreshed-access',
+                    'refresh_token' => 'rotated-refresh',
+                    'expires_in' => 7200,
+                ], 200),
+        ]);
+
+        $install = app(PluginInstaller::class)->installFromCatalogSlug('canva');
+        $account = $install->accounts()->first();
+        $this->assertNotNull($account);
+
+        $oauth = app(PluginOAuthService::class);
+        $authorizationUrl = $oauth->authorizationUrl($install, $account);
+        parse_str((string) parse_url($authorizationUrl, PHP_URL_QUERY), $query);
+        $oauth->handleCallback((string) $query['state'], 'auth-code');
+
+        $account = $account->fresh();
+        $this->assertNotNull($account->token_expires_at);
+        $account->update(['token_expires_at' => now()->subMinute()]);
+
+        $oauth->ensureFreshAccessToken($account->fresh());
+
+        $account = $account->fresh();
+        $this->assertSame(PluginAccount::AUTH_CONNECTED, $account->auth_status);
+        $this->assertTrue($account->token_expires_at?->greaterThan(now()->addHour()) ?? false);
+
+        $access = Variable::query()->where('name', 'CANVA_CANVA_ACCESS_TOKEN')->first();
+        $refresh = Variable::query()->where('name', 'CANVA_CANVA_REFRESH_TOKEN')->first();
+        $this->assertNotNull($access);
+        $this->assertNotNull($refresh);
+        $this->assertSame('refreshed-access', $access->value);
+        $this->assertSame('rotated-refresh', $refresh->value);
+    }
+
+    public function test_failed_refresh_disconnects_account(): void
+    {
+        config([
+            'neuronai-studio.plugins.enabled' => true,
+            'neuronai-studio.plugins.oauth.providers.canva.client_id' => 'mcp-canva-client',
+            'neuronai-studio.plugins.oauth.providers.canva.client_secret' => 'canva-secret',
+        ]);
+
+        Http::fake([
+            'mcp.canva.com/token' => Http::sequence()
+                ->push([
+                    'access_token' => 'initial-access',
+                    'refresh_token' => 'initial-refresh',
+                    'expires_in' => 10,
+                ], 200)
+                ->push(['error' => 'invalid_grant'], 400),
+        ]);
+
+        $install = app(PluginInstaller::class)->installFromCatalogSlug('canva');
+        $account = $install->accounts()->first();
+        $this->assertNotNull($account);
+
+        $oauth = app(PluginOAuthService::class);
+        $authorizationUrl = $oauth->authorizationUrl($install, $account);
+        parse_str((string) parse_url($authorizationUrl, PHP_URL_QUERY), $query);
+        $oauth->handleCallback((string) $query['state'], 'auth-code');
+
+        $account = $account->fresh();
+        $account->update(['token_expires_at' => now()->subMinute()]);
+
+        $oauth->ensureFreshAccessToken($account->fresh());
+
+        $this->assertSame(PluginAccount::AUTH_NEEDS, $account->fresh()->auth_status);
+        $this->assertNull($account->fresh()->token_expires_at);
+    }
+
     public function test_canva_oauth_rejects_connect_api_client_id(): void
     {
         config([

@@ -59,6 +59,8 @@ class PluginAccountService
             }
         }
 
+        $account->update(['token_expires_at' => null]);
+
         return $this->refreshAuthStatus($account->fresh());
     }
 

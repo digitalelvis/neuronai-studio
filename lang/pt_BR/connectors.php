@@ -20,7 +20,8 @@ return [
     'api_key' => 'Chave de API',
     'api_key_hint' => 'Vincule uma variável do Studio (var:NOME). Tokens em texto puro nunca são armazenados.',
     'detail_auth' => 'Autenticação',
-    'oauth_hint' => 'O OAuth ainda não é iniciado pelo Studio. Conclua o OAuth no app host (por tenant) e vincule o access token a uma variável credential abaixo.',
+    'oauth_hint' => 'Use Autenticar para iniciar o OAuth do provider. Access e refresh tokens ficam no vault do tenant. Você também pode vincular variáveis manualmente abaixo.',
+    'oauth_host_setup' => 'OAuth não está configurado neste host. Defina NEURONAI_STUDIO_OAUTH_*_CLIENT_ID no .env (veja o guia de setup OAuth dos plugins).',
     'auth_modes' => [
         'token' => 'API key / access token (vault)',
         'oauth' => 'OAuth obrigatório',

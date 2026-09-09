@@ -20,6 +20,7 @@ class PluginAccount extends Model
         'label',
         'auth_status',
         'credential_map',
+        'token_expires_at',
     ];
 
     public function __construct(array $attributes = [])
@@ -33,6 +34,7 @@ class PluginAccount extends Model
     {
         return [
             'credential_map' => 'array',
+            'token_expires_at' => 'datetime',
         ];
     }
 

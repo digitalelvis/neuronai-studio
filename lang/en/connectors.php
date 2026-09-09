@@ -20,7 +20,8 @@ return [
     'api_key' => 'API key',
     'api_key_hint' => 'Bind a Studio variable (var:NAME). Raw tokens are never stored as literals.',
     'detail_auth' => 'Authentication',
-    'oauth_hint' => 'OAuth is not started from Studio yet. Complete OAuth in your host app (per tenant), then bind the access token to a credential variable below.',
+    'oauth_hint' => 'Use Authenticate to run the provider OAuth flow. Access and refresh tokens are stored in the tenant vault. You can also bind variables manually below.',
+    'oauth_host_setup' => 'OAuth is not configured on this host. Set NEURONAI_STUDIO_OAUTH_*_CLIENT_ID in .env (see plugins OAuth setup docs).',
     'auth_modes' => [
         'token' => 'API key / access token (vault)',
         'oauth' => 'OAuth required',

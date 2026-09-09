@@ -3,8 +3,8 @@
 namespace DigitalElvis\NeuronAIStudio\Http\Livewire\Connectors;
 
 use DigitalElvis\NeuronAIStudio\Models\McpServer;
-use DigitalElvis\NeuronAIStudio\Models\PluginAccount;
 use DigitalElvis\NeuronAIStudio\Models\PluginInstall;
+use DigitalElvis\NeuronAIStudio\Plugins\OAuth\PluginOAuthRegistry;
 use DigitalElvis\NeuronAIStudio\Plugins\PluginAccountService;
 use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
 use Livewire\Attributes\On;
@@ -25,6 +25,14 @@ class Credentials extends Component
 
     public string $authMode = 'token';
 
+    public ?int $accountId = null;
+
+    public ?int $installId = null;
+
+    public string $pluginSlug = '';
+
+    public bool $oauthConfigured = false;
+
     #[On('connector-open-credentials')]
     public function open(string $connectorRef, ?string $accountLabel = null): void
     {
@@ -34,6 +42,10 @@ class Credentials extends Component
         $this->tokenEnv = '';
         $this->mode = 'plugin';
         $this->authMode = 'token';
+        $this->accountId = null;
+        $this->installId = null;
+        $this->pluginSlug = '';
+        $this->oauthConfigured = false;
 
         if (str_starts_with($connectorRef, 'plugin_install:') || str_starts_with($connectorRef, 'plugin:')) {
             $this->loadPluginCredentials($connectorRef);
@@ -48,6 +60,10 @@ class Credentials extends Component
         $this->credentialMap = [];
         $this->tokenEnv = '';
         $this->authMode = 'token';
+        $this->accountId = null;
+        $this->installId = null;
+        $this->pluginSlug = '';
+        $this->oauthConfigured = false;
     }
 
     public function save(): void
@@ -57,6 +73,19 @@ class Credentials extends Component
         } elseif ($this->mode === 'mcp') {
             $this->saveMcpCredentials();
         }
+    }
+
+    public function startOAuth(): void
+    {
+        if ($this->pluginSlug === '' || $this->installId === null || $this->accountId === null) {
+            return;
+        }
+
+        $this->redirectRoute('neuronai-studio.plugins.oauth.authorize', [
+            'slug' => $this->pluginSlug,
+            'install' => $this->installId,
+            'account' => $this->accountId,
+        ]);
     }
 
     protected function loadPluginCredentials(string $ref): void
@@ -72,8 +101,12 @@ class Credentials extends Component
 
         if ($account !== null) {
             $this->credentialMap = is_array($account->credential_map) ? $account->credential_map : [];
+            $this->accountId = $account->id;
         }
 
+        $this->installId = $install->id;
+        $this->pluginSlug = (string) $install->slug;
+        $this->oauthConfigured = app(PluginOAuthRegistry::class)->isConfigured($this->pluginSlug);
         $this->authMode = $this->resolvePluginAuthMode($install);
     }
 

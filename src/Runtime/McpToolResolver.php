@@ -27,7 +27,7 @@ class McpToolResolver
             foreach ($this->toolsForBinding($binding->mcp_server_slug, [
                 'only' => $this->parseOnlyTools($binding->only_tools),
                 'exclude' => $binding->exclude_tools ?? [],
-            ]) as $tool) {
+            ], $agent) as $tool) {
                 $tools[] = $tool;
             }
         }
@@ -39,9 +39,9 @@ class McpToolResolver
      * @param  array{only?: array<int, string>, exclude?: array<int, string>}  $options
      * @return array<int, ToolInterface>
      */
-    public function toolsForBinding(string $slug, array $options = []): array
+    public function toolsForBinding(string $slug, array $options = [], ?AgentDefinition $agent = null): array
     {
-        $config = $this->registry->resolveConfig($slug);
+        $config = $this->registry->resolveConfig($slug, $agent);
         $connector = McpConnector::make($config);
 
         if (! empty($options['exclude'])) {
