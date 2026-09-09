@@ -1,5 +1,19 @@
 # Changelog
 
+# [3.10.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.9.0...v3.10.0) (2026-09-09)
+
+
+### Bug Fixes
+
+* **plugins:** align Canva OAuth with MCP server endpoints ([839ac99](https://github.com/digitalelvis/neuronai-studio/commit/839ac99b9b9f40d34693b0ca9e193111053907a0))
+
+
+### Features
+
+* **plugins:** add disconnect action for plugin accounts ([f34f1d9](https://github.com/digitalelvis/neuronai-studio/commit/f34f1d912765d1dfde7edfc1eed019c490043e41))
+* **plugins:** refresh OAuth access tokens and update auth docs ([99b624a](https://github.com/digitalelvis/neuronai-studio/commit/99b624a3079325ccb3f46885198ee3d3afee6d9d))
+* **plugins:** share catalog package skills across tenant installs ([76fee62](https://github.com/digitalelvis/neuronai-studio/commit/76fee62ed606207862d679da0a1a52d0d06aaa17))
+
 # [3.9.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.8.0...v3.9.0) (2026-09-09)
 
 
