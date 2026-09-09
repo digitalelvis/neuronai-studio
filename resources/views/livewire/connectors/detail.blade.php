@@ -50,6 +50,7 @@
                                             @if ($account['supports_manual_auth'] ?? false)
                                                 <x-neuronai-studio::ui.button size="sm" variant="outline" wire:click="openCredentials('{{ $account['label'] }}')">{{ __('neuronai-studio::connectors.configure') }}</x-neuronai-studio::ui.button>
                                             @endif
+                                            <x-neuronai-studio::ui.button size="sm" variant="destructive" wire:click="disconnectAccount({{ $account['id'] }})" wire:confirm="{{ __('neuronai-studio::plugins.disconnect_confirm') }}">{{ __('neuronai-studio::plugins.disconnect') }}</x-neuronai-studio::ui.button>
                                         @else
                                             <x-neuronai-studio::ui.badge variant="draft">{{ __('neuronai-studio::plugins.needs_auth') }}</x-neuronai-studio::ui.badge>
                                             @if (($account['supports_oauth'] ?? false) && ($entry['oauth_configured'] ?? false))

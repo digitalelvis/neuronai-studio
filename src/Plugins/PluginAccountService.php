@@ -4,6 +4,7 @@ namespace DigitalElvis\NeuronAIStudio\Plugins;
 
 use DigitalElvis\NeuronAIStudio\Models\PluginAccount;
 use DigitalElvis\NeuronAIStudio\Models\PluginInstall;
+use DigitalElvis\NeuronAIStudio\Models\Variable;
 use DigitalElvis\NeuronAIStudio\Repositories\VariableRepository;
 use Illuminate\Support\Str;
 
@@ -37,6 +38,26 @@ class PluginAccountService
     public function updateCredentialMap(PluginAccount $account, array $credentialMap): PluginAccount
     {
         $account->update(['credential_map' => $credentialMap]);
+
+        return $this->refreshAuthStatus($account->fresh());
+    }
+
+    public function disconnect(PluginAccount $account): PluginAccount
+    {
+        $map = is_array($account->credential_map) ? $account->credential_map : [];
+
+        foreach ($map as $ref) {
+            if (! is_string($ref) || ! str_starts_with($ref, 'var:')) {
+                continue;
+            }
+
+            $name = substr($ref, 4);
+            $variable = Variable::query()->inCurrentTenant()->where('name', $name)->first();
+
+            if ($variable !== null) {
+                $variable->updateTyped(Variable::TYPE_CREDENTIAL, '', keepValueIfBlank: false);
+            }
+        }
 
         return $this->refreshAuthStatus($account->fresh());
     }
