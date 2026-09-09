@@ -20,6 +20,8 @@ use DigitalElvis\NeuronAIStudio\Http\Livewire\Agents\Playground;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\Dashboard;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\KnowledgeBases\Edit as KnowledgeBasesEdit;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\KnowledgeBases\Index as KnowledgeBasesIndex;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\Plugins\Index as PluginsIndex;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\Plugins\Show as PluginsShow;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\McpEndpoints\Edit as McpEndpointsEdit;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\McpEndpoints\Index as McpEndpointsIndex;
 use DigitalElvis\NeuronAIStudio\Http\Livewire\McpServers\Edit as McpServersEdit;
@@ -78,6 +80,11 @@ Route::prefix(config('neuronai-studio.route_prefix', 'neuronai-studio'))
             Route::get('/create', SkillsEdit::class)->name('create');
             Route::get('/{skill}/edit', SkillsEdit::class)->name('edit');
             Route::get('/{skill}', SkillsShow::class)->name('show');
+        });
+
+        Route::prefix('plugins')->name('plugins.')->group(function () {
+            Route::get('/', PluginsIndex::class)->name('index');
+            Route::get('/{install}', PluginsShow::class)->name('show');
         });
 
         Route::prefix('knowledge-bases')->name('knowledge-bases.')->group(function () {

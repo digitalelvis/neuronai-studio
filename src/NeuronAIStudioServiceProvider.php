@@ -341,6 +341,13 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
         Livewire::component('neuronai-studio.skills.index', Http\Livewire\Skills\Index::class);
         Livewire::component('neuronai-studio.skills.edit', Http\Livewire\Skills\Edit::class);
         Livewire::component('neuronai-studio.skills.show', Http\Livewire\Skills\Show::class);
+        Livewire::component('neuronai-studio.plugins.index', Http\Livewire\Plugins\Index::class);
+        Livewire::component('neuronai-studio.plugins.show', Http\Livewire\Plugins\Show::class);
+        Livewire::component('neuronai-studio.connectors.catalog', Http\Livewire\Connectors\Catalog::class);
+        Livewire::component('neuronai-studio.connectors.manage', Http\Livewire\Connectors\Manage::class);
+        Livewire::component('neuronai-studio.connectors.detail', Http\Livewire\Connectors\Detail::class);
+        Livewire::component('neuronai-studio.connectors.credentials', Http\Livewire\Connectors\Credentials::class);
+        Livewire::component('neuronai-studio.connectors.import-mcp-json', Http\Livewire\Connectors\ImportMcpJson::class);
         Livewire::component('neuronai-studio.knowledge-bases.index', Http\Livewire\KnowledgeBases\Index::class);
         Livewire::component('neuronai-studio.knowledge-bases.edit', Http\Livewire\KnowledgeBases\Edit::class);
         Livewire::component('neuronai-studio.mcp-servers.index', Http\Livewire\McpServers\Index::class);

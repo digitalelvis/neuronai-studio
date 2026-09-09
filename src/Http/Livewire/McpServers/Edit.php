@@ -2,6 +2,7 @@
 
 namespace DigitalElvis\NeuronAIStudio\Http\Livewire\McpServers;
 
+use DigitalElvis\NeuronAIStudio\Http\Livewire\Concerns\EmbeddableConnectorForm;
 use DigitalElvis\NeuronAIStudio\Models\McpServer;
 use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
 use DigitalElvis\NeuronAIStudio\Support\ResolvesOptionalRouteModel;
@@ -11,6 +12,7 @@ use Livewire\Component;
 
 class Edit extends Component
 {
+    use EmbeddableConnectorForm;
     use ResolvesOptionalRouteModel;
 
     public ?McpServer $server = null;
@@ -157,6 +159,12 @@ class Edit extends Component
 
         session()->flash('success', __('neuronai-studio::flash.mcp_saved'));
 
+        if ($this->embedded) {
+            $this->dispatch('connector-saved', ref: 'mcp:'.$this->server->slug);
+
+            return;
+        }
+
         $this->redirect(route('neuronai-studio.mcp-servers.index'));
     }
 
@@ -205,8 +213,13 @@ class Edit extends Component
 
     public function render()
     {
-        return view('neuronai-studio::livewire.mcp-servers.edit')
-            ->layout('neuronai-studio::layouts.app', StudioLayout::params(
+        $view = view('neuronai-studio::livewire.mcp-servers.edit');
+
+        if ($this->embedded) {
+            return $view;
+        }
+
+        return $view->layout('neuronai-studio::layouts.app', StudioLayout::params(
                 breadcrumbs: [
                     ['label' => __('neuronai-studio::ui.breadcrumbs.mcp_servers'), 'url' => route('neuronai-studio.mcp-servers.index')],
                     ['label' => $this->server?->exists ? $this->name : __('neuronai-studio::ui.actions.new_mcp_server')],
