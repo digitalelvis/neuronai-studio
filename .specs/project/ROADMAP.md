@@ -256,6 +256,22 @@ Runtime Agent Skills (agentskills.io): CRUD, canvas bind, progressive disclosure
 
 **Linha:** Execute → `v3.1.x` (branch `feat/agent-skills`).
 
+### M22 — Plugin System (P1) `done`
+
+Closed-catalog connector packs (Claude plugin.json + skills + MCP): host policy, install, accounts, agent binding, runtime MCP gate.
+
+**Escopo (AD-038):** [plugin-system](../features/plugin-system/spec.md) · [context](../features/plugin-system/context.md) · [design](../features/plugin-system/design.md) · [tasks](../features/plugin-system/tasks.md)
+
+| Ordem | Feature | Status | Spec |
+|-------|---------|--------|------|
+| 41 | `plugin-system` | **done** (P1) | [spec](../features/plugin-system/spec.md) |
+
+**Critério de conclusão M22 P1:** Host `closed` installs `demo-assistant` → account vault mapping → agent plugin bind syncs skills; `plugins.enabled=false` hides surface; stdio MCP blocked unless host allows.
+
+**Add-on (2026-09-08):** Official HTTP MCP packs (`linear`, `stripe`, `hubspot`, `canva`, `mercadopago`) in package catalog; per-tenant install + vault. Spec: [official-mcp-connectors](../features/official-mcp-connectors/spec.md).
+
+**Linha:** Execute → `v3.1.x`.
+
 ---
 
 ## Próximas tarefas (ordem de execução)

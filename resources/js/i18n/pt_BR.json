@@ -61,6 +61,8 @@
   "form.tab_tools": "Tools",
   "form.tab_toolkits": "Tool Kits",
   "form.tab_skills": "Skills",
+  "form.tab_plugins": "Plugins",
+  "form.plugins_empty": "Nenhum plugin instalado. Adicione packs no catálogo de Plugins.",
   "form.tab_mcp": "MCP Servers",
   "form.tab_connect": "Connect",
   "form.search_placeholder": "Buscar…",

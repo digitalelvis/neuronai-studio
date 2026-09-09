@@ -76,7 +76,17 @@ class SkillArchiveImporter
             'source_meta' => $options['source_meta'] ?? null,
         ];
 
-        $existing = SkillDefinition::query()->where('slug', $parsed['slug'])->first();
+        $existing = null;
+
+        if (isset($options['source_meta']['plugin_install_id'])) {
+            $existing = SkillDefinition::query()
+                ->where('source_meta->plugin_install_id', $options['source_meta']['plugin_install_id'])
+                ->first();
+        }
+
+        if ($existing === null) {
+            $existing = SkillDefinition::query()->where('slug', $parsed['slug'])->first();
+        }
 
         if ($existing !== null) {
             if (! ($options['overwrite'] ?? false)) {

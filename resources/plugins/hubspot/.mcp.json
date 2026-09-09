@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "hubspot": {
+      "url": "https://mcp.hubspot.com",
+      "token_env": "HUBSPOT_ACCESS_TOKEN",
+      "auth": "oauth",
+      "timeout": 30
+    }
+  }
+}

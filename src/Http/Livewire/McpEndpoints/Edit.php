@@ -2,6 +2,7 @@
 
 namespace DigitalElvis\NeuronAIStudio\Http\Livewire\McpEndpoints;
 
+use DigitalElvis\NeuronAIStudio\Http\Livewire\Concerns\EmbeddableConnectorForm;
 use DigitalElvis\NeuronAIStudio\McpServer\McpToolCatalog;
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use DigitalElvis\NeuronAIStudio\Models\McpEndpoint;
@@ -15,6 +16,7 @@ use Livewire\Component;
 
 class Edit extends Component
 {
+    use EmbeddableConnectorForm;
     use ResolvesOptionalRouteModel;
 
     public ?McpEndpoint $endpoint = null;
@@ -199,6 +201,12 @@ class Edit extends Component
 
         session()->flash('success', __('neuronai-studio::flash.mcp_endpoint_saved'));
 
+        if ($this->embedded) {
+            $this->dispatch('connector-saved', connectorRef: 'endpoint:'.$this->endpoint->id);
+
+            return;
+        }
+
         $this->redirect(route('neuronai-studio.mcp-endpoints.edit', $this->endpoint));
     }
 
@@ -274,13 +282,19 @@ class Edit extends Component
 
     public function render()
     {
-        return view('neuronai-studio::livewire.mcp-endpoints.edit', [
+        $view = view('neuronai-studio::livewire.mcp-endpoints.edit', [
             'catalog' => $this->catalogOptions(),
             'previewTools' => $this->previewTools(),
             'connectUrl' => $this->connectUrl(),
             'mcpJson' => $this->mcpJsonSnippet(),
             'featureEnabled' => (bool) config('neuronai-studio.mcp_endpoints.enabled', false),
-        ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
+        ]);
+
+        if ($this->embedded) {
+            return $view;
+        }
+
+        return $view->layout('neuronai-studio::layouts.app', StudioLayout::params(
             breadcrumbs: [
                 ['label' => __('neuronai-studio::ui.breadcrumbs.mcp_endpoints'), 'url' => route('neuronai-studio.mcp-endpoints.index')],
                 ['label' => $this->endpoint?->exists ? $this->name : __('neuronai-studio::ui.actions.new_mcp_endpoint')],

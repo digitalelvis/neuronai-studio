@@ -9,6 +9,7 @@ return [
         'templates' => 'Modelos',
         'tools' => 'Ferramentas',
         'skills' => 'Skills',
+        'plugins' => 'Plugins',
         'mcp_servers' => 'Servidores MCP',
         'mcp_endpoints' => 'Endpoints MCP',
         'knowledge_bases' => 'Bases de conhecimento',

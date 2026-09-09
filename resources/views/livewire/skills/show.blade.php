@@ -25,7 +25,9 @@
             </div>
             <div class="flex shrink-0 flex-wrap gap-2">
                 <x-neuronai-studio::ui.button size="sm" variant="outline" :href="route('neuronai-studio.skills.edit', $skill)">{{ __('neuronai-studio::ui.actions.edit') }}</x-neuronai-studio::ui.button>
-                <x-neuronai-studio::ui.button size="sm" variant="ghost" class="text-destructive" wire:click="deleteSkill" wire:confirm="{{ __('neuronai-studio::ui.confirm.delete_skill') }}">{{ __('neuronai-studio::ui.actions.delete') }}</x-neuronai-studio::ui.button>
+                @unless ($skill->isLockedByPlugin())
+                    <x-neuronai-studio::ui.button size="sm" variant="ghost" class="text-destructive" wire:click="deleteSkill" wire:confirm="{{ __('neuronai-studio::ui.confirm.delete_skill') }}">{{ __('neuronai-studio::ui.actions.delete') }}</x-neuronai-studio::ui.button>
+                @endunless
                 <x-neuronai-studio::ui.button size="sm" variant="outline" :href="route('neuronai-studio.skills.index')">{{ __('neuronai-studio::ui.actions.cancel') }}</x-neuronai-studio::ui.button>
             </div>
         </div>

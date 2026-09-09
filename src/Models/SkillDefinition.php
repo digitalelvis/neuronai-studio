@@ -18,6 +18,8 @@ class SkillDefinition extends Model
 
     public const SOURCE_GITHUB = 'github';
 
+    public const SOURCE_PLUGIN = 'plugin';
+
     protected $table;
 
     protected $fillable = [
@@ -217,5 +219,22 @@ class SkillDefinition extends Model
     public function isPathReadable(string $path): bool
     {
         return app(SkillPathPolicy::class)->isReadable($path) && array_key_exists($path, $this->files());
+    }
+
+    public function isLockedByPlugin(): bool
+    {
+        if ($this->source !== self::SOURCE_PLUGIN) {
+            return false;
+        }
+
+        $installId = is_array($this->source_meta) ? ($this->source_meta['plugin_install_id'] ?? null) : null;
+
+        if ($installId === null) {
+            return false;
+        }
+
+        $install = PluginInstall::query()->find($installId);
+
+        return $install !== null && $install->isInstalled();
     }
 }

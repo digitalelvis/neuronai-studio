@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "stripe": {
+      "url": "https://mcp.stripe.com",
+      "token_env": "STRIPE_API_KEY",
+      "auth": "oauth_or_token",
+      "timeout": 30
+    }
+  }
+}

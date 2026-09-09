@@ -18,6 +18,7 @@ return [
     'github_hint' => 'Importe uma habilidade diretamente de um repositório público do GitHub.',
     'github_action' => 'Importar',
     'overwrite' => 'Substituir se já existir uma skill com o mesmo nome',
+    'locked_by_plugin' => 'Esta skill pertence a um plugin instalado e não pode ser excluída.',
     'description' => 'Descrição',
     'display_name' => 'Nome de exibição',
     'category' => 'Categoria',

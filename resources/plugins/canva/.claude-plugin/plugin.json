@@ -1,0 +1,8 @@
+{
+  "name": "canva",
+  "version": "1.0.0",
+  "description": "Canva design creation, search, and export via remote MCP.",
+  "author": {
+    "name": "NeuronAI Studio"
+  }
+}

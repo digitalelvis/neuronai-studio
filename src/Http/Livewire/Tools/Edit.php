@@ -7,6 +7,7 @@ use DigitalElvis\NeuronAIStudio\Codegen\CodegenGuard;
 use DigitalElvis\NeuronAIStudio\Codegen\ToolClassGenerator;
 use DigitalElvis\NeuronAIStudio\Codegen\ToolClassImporter;
 use DigitalElvis\NeuronAIStudio\Codegen\ToolExporter;
+use DigitalElvis\NeuronAIStudio\Http\Livewire\Concerns\EmbeddableConnectorForm;
 use DigitalElvis\NeuronAIStudio\Models\KnowledgeBase;
 use DigitalElvis\NeuronAIStudio\Models\ToolDefinition;
 use DigitalElvis\NeuronAIStudio\Support\StudioLayout;
@@ -17,11 +18,14 @@ use Livewire\Component;
 
 class Edit extends Component
 {
+    use EmbeddableConnectorForm;
     use ResolvesOptionalRouteModel;
 
     public ?ToolDefinition $tool = null;
 
     public string $toolKind = 'builder';
+
+    public ?string $forcedToolKind = null;
 
     public string $name = '';
 
@@ -53,6 +57,12 @@ class Edit extends Component
 
         if ($tool?->exists) {
             $this->loadFromDefinition($tool);
+
+            return;
+        }
+
+        if ($this->forcedToolKind !== null && $this->forcedToolKind !== '') {
+            $this->toolKind = $this->forcedToolKind;
 
             return;
         }
@@ -319,6 +329,12 @@ class Edit extends Component
 
         session()->flash('success', __('neuronai-studio::flash.webhook_tool_saved'));
 
+        if ($this->embedded) {
+            $this->dispatch('connector-saved', connectorRef: 'api:'.$this->tool->id);
+
+            return;
+        }
+
         $this->redirect(route('neuronai-studio.tools.show', $this->tool));
     }
 
@@ -370,6 +386,12 @@ class Edit extends Component
 
         session()->flash('success', __('neuronai-studio::flash.rag_tool_saved'));
 
+        if ($this->embedded) {
+            $this->dispatch('connector-saved', connectorRef: 'rag_tool:'.$this->tool->id);
+
+            return;
+        }
+
         $this->redirect(route('neuronai-studio.tools.show', $this->tool));
     }
 
@@ -419,10 +441,15 @@ class Edit extends Component
             ->orderBy('name')
             ->get(['id', 'name']);
 
-        return view('neuronai-studio::livewire.tools.edit', [
+        $view = view('neuronai-studio::livewire.tools.edit', [
             'knowledgeBases' => $knowledgeBases,
-        ])
-            ->layout('neuronai-studio::layouts.app', StudioLayout::params(
+        ]);
+
+        if ($this->embedded) {
+            return $view;
+        }
+
+        return $view->layout('neuronai-studio::layouts.app', StudioLayout::params(
                 breadcrumbs: [
                     ['label' => __('neuronai-studio::ui.breadcrumbs.tools'), 'url' => route('neuronai-studio.tools.index')],
                     ['label' => $this->tool?->exists ? $this->name : __('neuronai-studio::ui.actions.new_tool')],

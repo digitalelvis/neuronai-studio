@@ -1,0 +1,8 @@
+{
+  "name": "mercadopago",
+  "version": "1.0.0",
+  "description": "Mercado Pago docs, test users, and integration tools via remote MCP.",
+  "author": {
+    "name": "NeuronAI Studio"
+  }
+}

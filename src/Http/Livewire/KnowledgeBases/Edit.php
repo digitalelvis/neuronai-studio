@@ -2,6 +2,7 @@
 
 namespace DigitalElvis\NeuronAIStudio\Http\Livewire\KnowledgeBases;
 
+use DigitalElvis\NeuronAIStudio\Http\Livewire\Concerns\EmbeddableConnectorForm;
 use DigitalElvis\NeuronAIStudio\Models\KnowledgeBase;
 use DigitalElvis\NeuronAIStudio\Models\KnowledgeDocument;
 use DigitalElvis\NeuronAIStudio\Runtime\Rag\DocumentIngestService;
@@ -15,10 +16,13 @@ use Livewire\WithFileUploads;
 
 class Edit extends Component
 {
+    use EmbeddableConnectorForm;
     use ResolvesOptionalRouteModel;
     use WithFileUploads;
 
     public ?KnowledgeBase $knowledgeBase = null;
+
+    public ?string $forcedVectorStoreDriver = null;
 
     public string $name = '';
 
@@ -73,6 +77,9 @@ class Edit extends Component
                 ? (float) $knowledgeBase->retrieval_defaults['threshold']
                 : null;
         } else {
+            if ($this->forcedVectorStoreDriver !== null && $this->forcedVectorStoreDriver !== '') {
+                $this->vectorStoreDriver = $this->forcedVectorStoreDriver;
+            }
             $this->embeddingsModel = $this->defaultModelForProvider($this->embeddingsProvider);
         }
 
@@ -144,11 +151,23 @@ class Edit extends Component
             $this->knowledgeBase->update($payload);
             session()->flash('success', __('neuronai-studio::flash.kb_updated'));
 
+            if ($this->embedded) {
+                $this->dispatch('connector-saved', connectorRef: 'rag:'.$this->knowledgeBase->id);
+
+                return;
+            }
+
             return;
         }
 
         $this->knowledgeBase = KnowledgeBase::create($payload);
         session()->flash('success', __('neuronai-studio::flash.kb_created'));
+
+        if ($this->embedded) {
+            $this->dispatch('connector-saved', connectorRef: 'rag:'.$this->knowledgeBase->id);
+
+            return;
+        }
 
         $this->redirect(route('neuronai-studio.knowledge-bases.edit', $this->knowledgeBase));
     }
@@ -314,7 +333,7 @@ class Edit extends Component
 
         $driverMeta = (array) config("neuronai-studio.rag.vector_stores.{$this->vectorStoreDriver}", []);
 
-        return view('neuronai-studio::livewire.knowledge-bases.edit', [
+        $view = view('neuronai-studio::livewire.knowledge-bases.edit', [
             'documents' => $documents,
             'providers' => $this->translatedEmbeddings(),
             'models' => (array) config("neuronai-studio.rag.embeddings.{$this->embeddingsProvider}.models", []),
@@ -328,7 +347,13 @@ class Edit extends Component
                 KnowledgeDocument::STATUS_COMPLETED,
                 KnowledgeDocument::STATUS_FAILED,
             ],
-        ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
+        ]);
+
+        if ($this->embedded) {
+            return $view;
+        }
+
+        return $view->layout('neuronai-studio::layouts.app', StudioLayout::params(
             breadcrumbs: [
                 ['label' => __('neuronai-studio::ui.breadcrumbs.knowledge_bases'), 'url' => route('neuronai-studio.knowledge-bases.index')],
                 ['label' => $this->knowledgeBase?->exists ? $this->name : __('neuronai-studio::ui.actions.new_knowledge_base')],
