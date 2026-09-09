@@ -53,7 +53,7 @@ class PluginOAuthService
 
         if (($provider['pkce'] ?? false) === true) {
             $query['code_challenge'] = $this->codeChallenge($codeVerifier);
-            $query['code_challenge_method'] = 'S256';
+            $query['code_challenge_method'] = (string) ($provider['code_challenge_method'] ?? 'S256');
         }
 
         $separator = str_contains((string) $provider['authorization_url'], '?') ? '&' : '?';
@@ -97,26 +97,37 @@ class PluginOAuthService
     /** @param  array<string, mixed>  $provider */
     protected function exchangeCode(array $provider, string $code, string $codeVerifier): array
     {
+        $clientId = (string) ($provider['client_id'] ?? '');
+        $clientSecret = (string) ($provider['client_secret'] ?? '');
+        $tokenAuth = (string) ($provider['token_auth'] ?? 'body');
+
         $body = [
             'grant_type' => 'authorization_code',
             'code' => $code,
             'redirect_uri' => $this->redirectUri(),
-            'client_id' => (string) $provider['client_id'],
         ];
+
+        if ($tokenAuth !== 'basic') {
+            $body['client_id'] = $clientId;
+        }
 
         if (($provider['pkce'] ?? false) === true) {
             $body['code_verifier'] = $codeVerifier;
         }
 
-        $clientSecret = (string) ($provider['client_secret'] ?? '');
-
-        if ($clientSecret !== '') {
+        if ($clientSecret !== '' && $tokenAuth !== 'basic') {
             $body['client_secret'] = $clientSecret;
         }
 
-        $response = Http::asForm()
-            ->acceptJson()
-            ->post((string) $provider['token_url'], $body);
+        $request = Http::asForm()->acceptJson();
+
+        if ($tokenAuth === 'basic' && $clientId !== '' && $clientSecret !== '') {
+            $request = $request->withHeaders([
+                'Authorization' => 'Basic '.base64_encode($clientId.':'.$clientSecret),
+            ]);
+        }
+
+        $response = $request->post((string) $provider['token_url'], $body);
 
         if (! $response->successful()) {
             throw new RuntimeException('OAuth token exchange failed: '.$response->body());

@@ -61,12 +61,32 @@ Shipped in `resources/plugins/marketplace.json`. All use **HTTP** transport (no 
 | Linear | `https://mcp.linear.app/mcp` | API key Bearer | OAuth 2.1 or API key | [Linear MCP](https://linear.app/docs/mcp) — OAuth per tenant |
 | Stripe | `https://mcp.stripe.com` | Restricted API key | OAuth or API key | [Stripe MCP](https://docs.stripe.com/mcp) |
 | HubSpot | `https://mcp.hubspot.com` | Access token | OAuth **PKCE** + MCP Auth App | One OAuth app per host; tokens per tenant portal |
-| Canva | `https://mcp.canva.com/mcp` | Access token | CIMD / OAuth | Embedded products need redirect URI waitlist |
+| Canva | `https://mcp.canva.com/mcp` | MCP access token | MCP OAuth (PKCE) | **Not** Connect API (`OC-…`). Register MCP client → authorize `https://mcp.canva.com/authorize`, token `https://mcp.canva.com/token`. Redirect: `{APP_URL}/{route_prefix}/plugins/oauth/callback` |
 | Mercado Pago | `https://mcp.mercadopago.com/mcp` | Access token | OAuth or Bearer | App-management tools require OAuth |
 
 P1: authors paste API keys or access tokens into tenant **Variables** referenced by the plugin account.
 
-P3 (host adapter): implement OAuth 2.1 client flows; store `access_token` / `refresh_token` in the **current tenant's** vault only; never share OAuth sessions across tenants. HubSpot requires PKCE. Canva recommends CIMD for public clients.
+OAuth (Studio **Autenticar** button): configure `plugins.oauth.providers` in `config/neuronai-studio.php`. All providers share one redirect URI:
+
+```
+{APP_URL}/{route_prefix}/plugins/oauth/callback
+```
+
+**Canva (important):** the plugin talks to `https://mcp.canva.com/mcp`. Tokens from the [Canva Connect API](https://www.canva.dev/docs/connect/authentication/) (`OC-…` Developer Portal apps) **do not work** on the MCP server. Register an MCP OAuth client:
+
+```bash
+curl --location 'https://mcp.canva.com/register' \
+  --header 'Content-Type: application/json' \
+  --data '{
+    "client_name": "My Studio",
+    "redirect_uris": ["http://127.0.0.1:8000/neuronai-studio/plugins/oauth/callback"],
+    "grant_types": ["authorization_code"]
+  }'
+```
+
+Put the returned `client_id` / `client_secret` in `NEURONAI_STUDIO_OAUTH_CANVA_*`, then **Autenticar** again in Studio.
+
+Store `access_token` / `refresh_token` in the **current tenant's** vault only; never share OAuth sessions across tenants. HubSpot requires PKCE.
 
 ## Package catalog
 

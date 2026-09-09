@@ -30,7 +30,7 @@ return [
         'linear' => 'OAuth 2.1 (recomendado) ou API key do Linear',
         'stripe' => 'OAuth (recomendado) ou restricted API key',
         'hubspot' => 'Somente OAuth com PKCE (MCP Auth App)',
-        'canva' => 'Somente OAuth (CIMD / registro de redirect para apps embarcados)',
+        'canva' => 'OAuth MCP (registre client em mcp.canva.com/register — não use app Connect API OC-…)',
         'mercadopago' => 'OAuth no cliente ou access token Bearer',
     ],
     'details' => 'Detalhes',

@@ -483,11 +483,13 @@ return [
                     'pkce' => true,
                 ],
                 'canva' => [
+                    // MCP server OAuth (required for https://mcp.canva.com/mcp). NOT Canva Connect API (OC-… portal apps).
                     'authorization_url' => 'https://mcp.canva.com/authorize',
                     'token_url' => 'https://mcp.canva.com/token',
                     'client_id' => env('NEURONAI_STUDIO_OAUTH_CANVA_CLIENT_ID'),
                     'client_secret' => env('NEURONAI_STUDIO_OAUTH_CANVA_CLIENT_SECRET'),
                     'access_token_env' => 'CANVA_ACCESS_TOKEN',
+                    'refresh_token_env' => 'CANVA_REFRESH_TOKEN',
                     'scopes' => [],
                     'pkce' => true,
                 ],
