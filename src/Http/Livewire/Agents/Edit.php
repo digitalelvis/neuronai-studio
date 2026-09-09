@@ -4,6 +4,7 @@ namespace DigitalElvis\NeuronAIStudio\Http\Livewire\Agents;
 
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use DigitalElvis\NeuronAIStudio\Models\AgentMcpServer;
+use DigitalElvis\NeuronAIStudio\Models\McpServer;
 use DigitalElvis\NeuronAIStudio\Models\SkillDefinition;
 use DigitalElvis\NeuronAIStudio\Registry\McpRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
@@ -47,6 +48,9 @@ class Edit extends Component
     /** @var array<string, array{only: string, exclude: string}> */
     public array $mcpAdvanced = [];
 
+    /** @var array<int, int> */
+    public array $selectedPluginInstallIds = [];
+
     public ?int $tool_max_runs = null;
 
     public ?bool $parallel_tool_calls = null;
@@ -84,6 +88,7 @@ class Edit extends Component
             $this->loadToolsFromAgent($agent->tools ?? []);
             $this->loadSkillsFromAgent($agent->skills ?? []);
             $this->loadMcpFromAgent($agent);
+            $this->loadPluginsFromAgent($agent);
         } else {
             $models = config('neuronai-studio.providers.'.$this->provider.'.models', []);
             $this->model = $models[0] ?? config('neuronai-studio.default_model', 'gpt-4o-mini');
@@ -140,11 +145,27 @@ class Edit extends Component
         $agent->loadMissing('mcpBindings');
 
         foreach ($agent->mcpBindings as $binding) {
+            $server = McpServer::query()->where('slug', $binding->mcp_server_slug)->first();
+            $installId = is_array($server?->metadata) ? ($server->metadata['plugin_install_id'] ?? null) : null;
+
+            if ($installId !== null) {
+                continue;
+            }
+
             $this->selectedMcpSlugs[] = $binding->mcp_server_slug;
             $this->mcpAdvanced[$binding->mcp_server_slug] = [
                 'only' => (string) $binding->only_tools,
                 'exclude' => implode(', ', $binding->exclude_tools ?? []),
             ];
+        }
+    }
+
+    protected function loadPluginsFromAgent(AgentDefinition $agent): void
+    {
+        $agent->loadMissing('pluginBindings');
+
+        foreach ($agent->pluginBindings as $binding) {
+            $this->selectedPluginInstallIds[] = (int) $binding->plugin_install_id;
         }
     }
 
@@ -173,6 +194,7 @@ class Edit extends Component
         $this->toolAdvanced = $payload['toolAdvanced'] ?? [];
         $this->selectedMcpSlugs = $payload['selectedMcpSlugs'] ?? [];
         $this->mcpAdvanced = $payload['mcpAdvanced'] ?? [];
+        $this->selectedPluginInstallIds = array_values(array_map('intval', $payload['selectedPluginInstallIds'] ?? []));
         $this->tool_max_runs = isset($payload['tool_max_runs']) && $payload['tool_max_runs'] !== '' && $payload['tool_max_runs'] !== null
             ? (int) $payload['tool_max_runs']
             : null;
@@ -229,6 +251,8 @@ class Edit extends Component
             'selectedSkillRefs.*' => 'string',
             'selectedMcpSlugs' => 'array',
             'selectedMcpSlugs.*' => 'string',
+            'selectedPluginInstallIds' => 'array',
+            'selectedPluginInstallIds.*' => 'integer',
         ]);
 
         $memoryConfig = $this->buildMemoryConfigPayload();
@@ -255,6 +279,11 @@ class Edit extends Component
         }
 
         $this->syncMcpBindings($this->agent);
+
+        if (config('neuronai-studio.plugins.enabled')) {
+            $bindings = array_map(fn (int $installId) => ['install_id' => $installId], $this->selectedPluginInstallIds);
+            app(\DigitalElvis\NeuronAIStudio\Plugins\PluginAgentBinder::class)->syncAgent($this->agent, $bindings);
+        }
 
         session()->flash('success', __('neuronai-studio::flash.agent_saved'));
 
@@ -336,7 +365,17 @@ class Edit extends Component
     protected function syncMcpBindings(AgentDefinition $agent): void
     {
         $registry = app(McpRegistry::class);
-        $agent->mcpBindings()->delete();
+
+        $agent->mcpBindings()
+            ->get()
+            ->each(function (AgentMcpServer $binding) {
+                $server = McpServer::query()->where('slug', $binding->mcp_server_slug)->first();
+                $installId = is_array($server?->metadata) ? ($server->metadata['plugin_install_id'] ?? null) : null;
+
+                if ($installId === null) {
+                    $binding->delete();
+                }
+            });
 
         foreach ($this->selectedMcpSlugs as $slug) {
             if ($registry->find($slug) === null) {
@@ -421,6 +460,20 @@ class Edit extends Component
                 ->map(fn ($v) => ['name' => $v->name, 'type' => $v->type])
                 ->values()
                 ->all(),
+            'pluginList' => config('neuronai-studio.plugins.enabled')
+                ? \DigitalElvis\NeuronAIStudio\Models\PluginInstall::query()
+                    ->where('status', \DigitalElvis\NeuronAIStudio\Models\PluginInstall::STATUS_INSTALLED)
+                    ->orderBy('name')
+                    ->get(['id', 'slug', 'name', 'description'])
+                    ->map(fn ($plugin) => [
+                        'id' => $plugin->id,
+                        'slug' => $plugin->slug,
+                        'label' => $plugin->name,
+                        'description' => (string) ($plugin->description ?? ''),
+                    ])
+                    ->values()
+                    ->all()
+                : [],
         ])->layout('neuronai-studio::layouts.app', StudioLayout::params(
             breadcrumbs: [
                 ['label' => __('neuronai-studio::ui.breadcrumbs.agents'), 'url' => route('neuronai-studio.agents.index')],
