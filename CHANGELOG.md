@@ -1,5 +1,12 @@
 # Changelog
 
+# [3.11.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.10.0...v3.11.0) (2026-09-22)
+
+
+### Features
+
+* **studio:** expand model catalogs and add media nodes ([292ab26](https://github.com/digitalelvis/neuronai-studio/commit/292ab26bf4004b5e082fb44236bcda6769e92f80))
+
 # [3.10.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.9.0...v3.10.0) (2026-09-09)
 
 
