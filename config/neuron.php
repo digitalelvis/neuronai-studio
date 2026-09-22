@@ -92,9 +92,16 @@ return [
         /*
          * Audio providers
          */
+        'openai-image' => [
+            'key' => env('OPENAI_KEY'),
+            'model' => env('OPENAI_IMAGE_MODEL', 'gpt-image-2'),
+            'output_format' => 'png',
+            'parameters' => [],
+        ],
+
         'openai-tts' => [
             'key' => env('OPENAI_KEY'),
-            'model' => env('OPENAI_TTS_MODEL', 'gpt-5-mini'),
+            'model' => env('OPENAI_TTS_MODEL', 'gpt-4o-mini-tts'),
             'voice' => env('OPENAI_VOICE', 'alloy'),
             'parameters' => [],
         ],
@@ -106,16 +113,42 @@ return [
             'parameters' => [],
         ],
 
+        'gemini-image' => [
+            'key' => env('GEMINI_KEY'),
+            'model' => env('GEMINI_IMAGE_MODEL', 'gemini-3.1-flash-image'),
+            'parameters' => [],
+        ],
+
+        'gemini-tts' => [
+            'key' => env('GEMINI_KEY'),
+            'model' => env('GEMINI_TTS_MODEL', 'gemini-3.1-flash-tts-preview'),
+            'voice' => env('GEMINI_TTS_VOICE', 'Kore'),
+            'parameters' => [],
+        ],
+
+        'gemini-stt' => [
+            'key' => env('GEMINI_KEY'),
+            'model' => env('GEMINI_STT_MODEL', 'gemini-3.5-transcribe'),
+            'parameters' => [],
+        ],
+
+        'gemini-video' => [
+            'key' => env('GEMINI_KEY'),
+            'model' => env('GEMINI_VIDEO_MODEL', 'veo-3.1-generate-preview'),
+            'timeoutSeconds' => (int) env('GEMINI_VIDEO_TIMEOUT', 180),
+            'parameters' => [],
+        ],
+
         'elevenlabs-tts' => [
             'key' => env('ELEVENLABS_KEY'),
-            'model' => env('ELEVENLABS_TTS_MODEL', 'elevenlabs/tts-v1'),
-            'voiceId' => env('ELEVENLABS_VOICE_ID'),
+            'model' => env('ELEVENLABS_TTS_MODEL', 'eleven_multilingual_v2'),
+            'voiceId' => env('ELEVENLABS_VOICE_ID', ''),
             'parameters' => [],
         ],
 
         'elevenlabs-stt' => [
             'key' => env('ELEVENLABS_KEY'),
-            'model' => env('ELEVENLABS_STT_MODEL', 'elevenlabs/stt-v1'),
+            'model' => env('ELEVENLABS_STT_MODEL', 'scribe_v1'),
             'parameters' => [],
         ]
     ],

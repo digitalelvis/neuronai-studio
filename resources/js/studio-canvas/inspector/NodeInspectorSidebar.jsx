@@ -24,6 +24,7 @@ export default function NodeInspectorSidebar({
     outputClasses = [],
     providers = {},
     providerModels = {},
+    mediaCatalogs = {},
     variables = [],
     defaultProvider = '',
     defaultModel = '',
@@ -155,6 +156,7 @@ export default function NodeInspectorSidebar({
                         outputClasses={outputClasses}
                         providers={providers}
                         providerModels={providerModels}
+                        mediaCatalogs={mediaCatalogs}
                         variables={variables}
                         defaultProvider={defaultProvider}
                         defaultModel={defaultModel}

@@ -18,6 +18,7 @@ import ToolNodeFields from './node-forms/ToolNodeFields';
 import SkillNodeFields from './node-forms/SkillNodeFields';
 import McpNodeFields from './node-forms/McpNodeFields';
 import RagNodeFields from './node-forms/RagNodeFields';
+import MediaNodeFields from './node-forms/MediaNodeFields';
 import StopNodeFields from './node-forms/StopNodeFields';
 
 const NODE_FIELDS = {
@@ -38,6 +39,10 @@ const NODE_FIELDS = {
     skill: SkillNodeFields,
     mcp: McpNodeFields,
     rag: RagNodeFields,
+    image: MediaNodeFields,
+    speech: MediaNodeFields,
+    transcribe: MediaNodeFields,
+    video: MediaNodeFields,
     stop: StopNodeFields,
 };
 
@@ -53,6 +58,7 @@ export default function NodeConfigForm({
     outputClasses = [],
     providers = {},
     providerModels = {},
+    mediaCatalogs = {},
     variables: variablesProp,
     defaultProvider = '',
     defaultModel = '',
@@ -105,6 +111,7 @@ export default function NodeConfigForm({
                     outputClasses={outputClasses}
                     providers={providers}
                     providerModels={providerModels}
+                    mediaCatalogs={mediaCatalogs}
                     variables={variables}
                     defaultProvider={defaultProvider}
                     defaultModel={defaultModel}

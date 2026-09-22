@@ -135,6 +135,10 @@ export function normalizeNodeForEdit(node) {
         data.output_key = 'llm_response';
     }
 
+    if (['image', 'speech', 'transcribe', 'video'].includes(node.type) && !data.output_key) {
+        data.output_key = node.type === 'transcribe' ? 'transcript' : `${node.type}_result`;
+    }
+
     if (node.type === 'intent_classifier') {
         if (!data.output_key) {
             data.output_key = 'intent';
