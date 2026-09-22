@@ -1,5 +1,12 @@
 # Changelog
 
+# [3.12.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.11.0...v3.12.0) (2026-09-22)
+
+
+### Features
+
+* **classifier:** add JEV classification and optional Laya endpoint ([2a167b2](https://github.com/digitalelvis/neuronai-studio/commit/2a167b243b2832b20cfeb1029e3ce85647260790))
+
 # [3.11.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.10.0...v3.11.0) (2026-09-22)
 
 
