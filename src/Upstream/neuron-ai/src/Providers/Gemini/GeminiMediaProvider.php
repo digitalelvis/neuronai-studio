@@ -13,8 +13,10 @@ use NeuronAI\Providers\MessageMapperInterface;
 use NeuronAI\Providers\ToolMapperInterface;
 
 /**
- * Shared surface for Gemini media drivers contributed upstream.
+ * Shared surface for Gemini media drivers staged on this path while we test them.
+ *
  * Chat models stay on {@see Gemini}; these classes call other generation contracts.
+ * Upstream PR to neuron-ai comes later, once this path is working well.
  */
 abstract class GeminiMediaProvider implements AIProviderInterface
 {
