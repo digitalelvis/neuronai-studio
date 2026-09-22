@@ -9,6 +9,7 @@ use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Models\StudioTrace;
 use DigitalElvis\NeuronAIStudio\Models\StudioTraceSpan;
 use DigitalElvis\NeuronAIStudio\Observability\ObservabilityManager;
+use DigitalElvis\NeuronAIStudio\Registry\ClassifierRegistry;
 use DigitalElvis\NeuronAIStudio\Registry\ProviderRegistry;
 use DigitalElvis\NeuronAIStudio\Support\ChatThreadKey;
 use DigitalElvis\NeuronAIStudio\Support\PlaygroundContext;
@@ -17,6 +18,9 @@ use DigitalElvis\NeuronAIStudio\Support\ThreadOwner;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\StructuredOutputValidationException;
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\ToolApprovalRequiredException;
 use DigitalElvis\NeuronAIStudio\Runtime\Memory\MemoryConfig;
+use DigitalElvis\NeuronAIStudio\Runtime\Routing\RoutedProviderFactory;
+use DigitalElvis\NeuronAIStudio\Runtime\Routing\RoutingConfig;
+use DigitalElvis\NeuronAIStudio\Runtime\Routing\RoutingDecision;
 use DigitalElvis\NeuronAIStudio\Runtime\Skills\StudioSkillRuntime;
 use DigitalElvis\NeuronAIStudio\Runtime\Tools\ToolContextInjector;
 use DigitalElvis\NeuronAIStudio\Usage\UsageRecorder;
@@ -40,6 +44,8 @@ use NeuronAI\Workflow\Persistence\InMemoryPersistence;
 
 class AgentRunner
 {
+    protected ?RoutingDecision $pendingRoutingDecision = null;
+
     public function __construct(
         protected ProviderRegistry $providers,
         protected ToolResolver $toolResolver,
@@ -606,6 +612,7 @@ class AgentRunner
             'provider' => $provider,
             'model' => $model,
             'parent_run' => $parentRun,
+            'routing_decision' => $target instanceof DynamicAgent ? $target->routingDecision : null,
         ]);
     }
 
@@ -797,18 +804,7 @@ class AgentRunner
         if ($fake) {
             $provider = new FakeAIProvider(new AssistantMessage('Eval fake response'));
         } else {
-            $keyOverride = $config['api_key'] ?? $definition?->api_key;
-            $keyOverride = is_string($keyOverride) && $keyOverride !== '' ? $keyOverride : null;
-
-            $provider = $this->providers->resolve(
-                $config['provider'] ?? config('neuronai-studio.default_provider'),
-                $config['model'] ?? config('neuronai-studio.default_model'),
-                ProviderParameters::normalize(
-                    (string) ($config['provider'] ?? config('neuronai-studio.default_provider')),
-                    is_array($config['parameters'] ?? null) ? $config['parameters'] : [],
-                ),
-                $keyOverride,
-            );
+            $provider = $this->resolveChatProvider($definition, $config);
         }
 
         $toolContext = ToolContextInjector::fromConfig($config['tool_context'] ?? null);
@@ -852,6 +848,10 @@ class AgentRunner
             $memory->contextWindow(),
             $memory,
         );
+        if ($this->pendingRoutingDecision !== null) {
+            $agent->routingDecision = $this->pendingRoutingDecision;
+            $this->pendingRoutingDecision = null;
+        }
 
         if (($config['require_tool_approval'] ?? false) === true) {
             $agent->addGlobalMiddleware(new ToolApproval);
@@ -860,6 +860,58 @@ class AgentRunner
         $this->applyToolControls($agent, $config, $definition);
 
         return $agent;
+    }
+
+    /**
+     * @param  array<string, mixed>  $config
+     */
+    protected function resolveChatProvider(?AgentDefinition $definition, array $config): \NeuronAI\Providers\AIProviderInterface
+    {
+        $this->pendingRoutingDecision = null;
+        $routing = $this->routingFromConfig($definition, $config);
+        if ($routing !== null) {
+            [$provider, $decision] = (new RoutedProviderFactory(
+                $this->providers,
+                app(ClassifierRegistry::class),
+            ))->make($routing);
+            $this->pendingRoutingDecision = $decision;
+
+            return $provider;
+        }
+
+        $providerName = (string) ($config['provider'] ?? $definition?->provider ?? config('neuronai-studio.default_provider'));
+        $keyOverride = $config['api_key'] ?? $definition?->api_key;
+        $keyOverride = is_string($keyOverride) && $keyOverride !== '' ? $keyOverride : null;
+
+        return $this->providers->resolve(
+            $providerName,
+            $config['model'] ?? $definition?->model ?? config('neuronai-studio.default_model'),
+            ProviderParameters::normalize(
+                $providerName,
+                is_array($config['parameters'] ?? null) ? $config['parameters'] : [],
+            ),
+            $keyOverride,
+        );
+    }
+
+    /**
+     * @param  array<string, mixed>  $config
+     */
+    protected function routingFromConfig(?AgentDefinition $definition, array $config): ?RoutingConfig
+    {
+        if (array_key_exists('routing_config', $config)) {
+            $raw = $config['routing_config'];
+        } elseif (array_key_exists('routing', $config)) {
+            $raw = $config['routing'];
+        } else {
+            $raw = $definition?->routing_config;
+        }
+
+        if (! is_array($raw)) {
+            return null;
+        }
+
+        return RoutingConfig::fromStored($raw);
     }
 
     /**

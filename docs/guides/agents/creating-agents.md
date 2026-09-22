@@ -26,8 +26,9 @@ Studio is definition-driven: the package ships no domain Agent subclasses. Runti
 | **Provider** | LLM provider (OpenAI, Anthropic, Gemini, Ollama) |
 | **Model** | Model ID for the selected provider |
 | **Instructions** | System prompt — defines agent behavior and constraints. Supports `{{ var.NAME }}` vault vars and Studio datetime placeholders (`{{__studio_now}}`, `{{__studio_timezone}}`, `{{__studio_locale}}`). |
+| **Route by difficulty (JEV)** | Optional. Each turn is scored by the configured System One classifier (TypeSafe or Laya) and sent to an easy, medium, or hard provider/model. TypeSafe needs `TYPESAFE_KEY`. Laya uses `LAYA_URL` and an optional `LAYA_KEY`. Off by default. |
 
-Providers and models come from `config/neuronai-studio.php`. Credentials are read from `config/neuron.php`.
+Providers and models come from `config/neuronai-studio.php`. Chat credentials are read from `config/neuron.php`. The classifier driver is `CLASSIFIER_DRIVER` (see [Configuration](../../reference/configuration.md)).
 
 ## Tool bindings
 

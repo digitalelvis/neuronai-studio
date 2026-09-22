@@ -25,6 +25,8 @@ php artisan neuronai-studio:install
 
 This publishes `config/neuron.php` and `config/neuronai-studio.php`, migrations, and assets. Set provider credentials in `.env` (for example `OPENAI_KEY`).
 
+Optional System One classification (Intent Classifier engine `jev`, and agent difficulty routing). `CLASSIFIER_DRIVER=typesafe` (the default) needs `TYPESAFE_KEY`. `CLASSIFIER_DRIVER=laya` calls `LAYA_URL`, an endpoint the host already operates; `LAYA_KEY` is optional. Studio does not start that process. Leave the TypeSafe key unset to keep single-model agents and LLM intent classification. The router package is already required by Studio.
+
 The install command also performs the following:
 
 | Step | Publish tag | Description |

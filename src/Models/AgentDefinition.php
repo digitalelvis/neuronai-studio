@@ -29,6 +29,7 @@ class AgentDefinition extends Model
         'tool_max_runs',
         'parallel_tool_calls',
         'memory_config',
+        'routing_config',
         'metadata',
     ];
 
@@ -48,6 +49,7 @@ class AgentDefinition extends Model
             'tool_max_runs' => 'integer',
             'parallel_tool_calls' => 'boolean',
             'memory_config' => 'array',
+            'routing_config' => 'array',
             'metadata' => 'array',
         ];
     }

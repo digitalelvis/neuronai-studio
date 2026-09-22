@@ -21,6 +21,7 @@ class ObservabilityManager
      *     parent_run?: StudioRun|null,
      *     session_id?: string|null,
      *     user_id?: string|null,
+     *     routing_decision?: \DigitalElvis\NeuronAIStudio\Runtime\Routing\RoutingDecision|null,
      * }  $meta
      */
     public function attach(object $target, array $meta = []): void
@@ -223,8 +224,11 @@ class ObservabilityManager
             ? $meta['parent_run']
             : null;
         $trackNodes = (bool) ($meta['track_nodes'] ?? true);
+        $routingDecision = ($meta['routing_decision'] ?? null) instanceof \DigitalElvis\NeuronAIStudio\Runtime\Routing\RoutingDecision
+            ? $meta['routing_decision']
+            : null;
 
-        return new TelemetryTracker($run, $trace, $trackNodes, $provider, $model, $parentRun);
+        return new TelemetryTracker($run, $trace, $trackNodes, $provider, $model, $parentRun, null, $routingDecision);
     }
 
     protected function safeObserve(object $target, ObserverInterface $observer): void

@@ -5,8 +5,8 @@
 **Development line (features):** `v3.1.x`  
 **Patch line:** `v3.1.x` (until next minor opens)  
 **Latest published:** `v3.1.0` on Packagist / `main`  
-**Última atualização:** 2026-09-08  
-**Etapa atual:** M23 `shared-plugin-packages` Execute on `feat/shared-plugin-packages` → `v3.1.x`.
+**Última atualização:** 2026-09-22  
+**Etapa atual:** M24 `jev-classifier` P1 implemented on `feat/jev-classifier` → `v3.1.x`. M23 `shared-plugin-packages` still open.
 ---
 
 ## Milestones
@@ -285,6 +285,20 @@ Stop cloning catalog skill bodies per tenant. Global package store + thin instal
 **Critério de conclusão M23 P1:** N tenants × K catalog skills ⇒ O(K) shared skill rows; thin installs; activate_skill from package; custom skills unchanged.
 
 **Linha:** `feat/shared-plugin-packages` → `v3.1.x`.
+
+### M24 — JEV classifier (P1) `implemented`
+
+Opt-in TypeSafe JEV via Neuron `ClassifierInterface`: Intent Classifier engine `jev`, and agent difficulty routing (`RouterProvider` + `DifficultyRule`).
+
+**Escopo:** [jev-classifier](../features/jev-classifier/spec.md) · [design](../features/jev-classifier/design.md) · [tasks](../features/jev-classifier/tasks.md)
+
+| Ordem | Feature | Status | Spec |
+|-------|---------|--------|------|
+| 43 | `jev-classifier` | **implemented** (P1; P2 deferred) | [spec](../features/jev-classifier/spec.md) |
+
+**Critério de conclusão M24 P1:** Intent engine `jev` routes handles with probabilities; agent `routing_config` picks a tier per turn; no key fails closed; LLM/single-model defaults unchanged.
+
+**Linha:** `feat/jev-classifier` → `v3.1.x`.
 
 ---
 

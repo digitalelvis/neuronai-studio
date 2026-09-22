@@ -16,6 +16,7 @@ import { collectLivewireErrors, formatLivewireErrorSummary } from '@/lib/livewir
 import ConnectPanel from '@/components/ConnectPanel';
 import { t } from '@/lib/i18n';
 import VariableInput from './VariableInput';
+import RoutingFields from '@/components/RoutingFields';
 
 const DESCRIPTION_MAX = 120;
 
@@ -122,6 +123,7 @@ export default function AgentForm({ config }) {
             ? ''
             : String(initial.memory_budget_state),
     );
+    const [routing, setRouting] = useState(initial.routing ?? null);
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState('');
     const [toolsSearch, setToolsSearch] = useState('');
@@ -258,6 +260,7 @@ export default function AgentForm({ config }) {
                 memory_budget_rag: memoryBudgetRag === '' ? null : Number(memoryBudgetRag),
                 memory_budget_tool_results: memoryBudgetToolResults === '' ? null : Number(memoryBudgetToolResults),
                 memory_budget_state: memoryBudgetState === '' ? null : Number(memoryBudgetState),
+                routing,
             });
 
             const validationErrors = collectLivewireErrors(config.wireId);
@@ -640,6 +643,15 @@ export default function AgentForm({ config }) {
                                             </div>
                                         </div>
                                     </div>
+                                    <RoutingFields
+                                        value={routing}
+                                        onChange={setRouting}
+                                        providers={config.providers ?? {}}
+                                        providerModels={config.providerModels ?? {}}
+                                        variables={config.variables ?? []}
+                                        fallbackProvider={provider}
+                                        fallbackModel={model}
+                                    />
                                 </CardContent>
                             </Card>
                         </div>

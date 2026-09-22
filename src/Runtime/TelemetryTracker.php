@@ -11,6 +11,7 @@ use NeuronAI\Observability\Events\ToolCalled;
 use DigitalElvis\NeuronAIStudio\Models\StudioRun;
 use DigitalElvis\NeuronAIStudio\Models\StudioTrace;
 use DigitalElvis\NeuronAIStudio\Models\StudioTraceSpan;
+use DigitalElvis\NeuronAIStudio\Runtime\Routing\RoutingDecision;
 use DigitalElvis\NeuronAIStudio\Usage\UsageRecorder;
 
 class TelemetryTracker implements ObserverInterface
@@ -29,6 +30,7 @@ class TelemetryTracker implements ObserverInterface
         protected ?string $model = null,
         protected ?StudioRun $parentRun = null,
         ?UsageRecorder $usageRecorder = null,
+        protected ?RoutingDecision $routingDecision = null,
     ) {
         $this->usageRecorder = $usageRecorder ?? new UsageRecorder;
     }
@@ -74,11 +76,24 @@ class TelemetryTracker implements ObserverInterface
             $promptTokens = $usage ? $usage->inputTokens : 0;
             $completionTokens = $usage ? $usage->outputTokens : 0;
 
+            $provider = $this->provider;
+            $model = $this->model;
+            $decision = $this->routingDecision;
+            if ($decision instanceof RoutingDecision && is_string($decision->tier) && $decision->tier !== '') {
+                if (is_string($decision->provider) && $decision->provider !== '') {
+                    $provider = $decision->provider;
+                }
+                if (is_string($decision->model) && $decision->model !== '') {
+                    $model = $decision->model;
+                }
+                $this->recordRoutingSpan($decision, $parentSpanId ?: null);
+            }
+
             $this->usageRecorder->recordLlmSpan(
                 $this->run,
                 $this->trace,
-                $this->provider,
-                $this->model,
+                $provider,
+                $model,
                 $promptTokens,
                 $completionTokens,
                 $this->parentRun,
@@ -116,6 +131,32 @@ class TelemetryTracker implements ObserverInterface
             }
             array_pop($this->spanStack);
         }
+    }
+
+    protected function recordRoutingSpan(RoutingDecision $decision, ?string $parentSpanId): void
+    {
+        StudioTraceSpan::create([
+            'trace_id' => $this->trace->id,
+            'parent_span_id' => $parentSpanId,
+            'name' => 'model_routing',
+            'type' => 'classifier',
+            'provider' => 'typesafe',
+            'model' => (string) config('neuronai-studio.classifier.model', 'jev-latest'),
+            'status' => 'completed',
+            'output' => [
+                'tier' => $decision->tier,
+                'provider' => $decision->provider,
+                'model' => $decision->model,
+                'classified' => $decision->classified,
+            ],
+            'prompt_tokens' => 0,
+            'completion_tokens' => 0,
+            'total_tokens' => 0,
+            'estimated_cost' => 0,
+            'started_at' => now(),
+            'finished_at' => now(),
+            'duration_ms' => 0,
+        ]);
     }
 
     protected function resolveNodeName(string $nodeClass): string

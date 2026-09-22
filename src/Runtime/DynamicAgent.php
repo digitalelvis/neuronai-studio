@@ -5,6 +5,7 @@ namespace DigitalElvis\NeuronAIStudio\Runtime;
 use DigitalElvis\NeuronAIStudio\Models\AgentDefinition;
 use DigitalElvis\NeuronAIStudio\Models\StudioChatMessage;
 use DigitalElvis\NeuronAIStudio\Runtime\Memory\HistorySummarizer;
+use DigitalElvis\NeuronAIStudio\Runtime\Routing\RoutingDecision;
 use DigitalElvis\NeuronAIStudio\Runtime\Memory\MemoryConfig;
 use DigitalElvis\NeuronAIStudio\Runtime\Memory\StudioEloquentChatHistory;
 use DigitalElvis\NeuronAIStudio\Runtime\Memory\StudioInMemoryChatHistory;
@@ -17,6 +18,8 @@ use NeuronAI\Tools\Toolkits\ToolkitInterface;
 
 class DynamicAgent extends Agent
 {
+    public ?RoutingDecision $routingDecision = null;
+
     /**
      * @param  array<int, ToolInterface|ToolkitInterface|ProviderToolInterface>  $baseTools
      */
