@@ -268,6 +268,7 @@ export default function WorkflowEditorShell({ config }) {
                                     outputClasses={config.outputClasses || []}
                                     providers={config.providers || {}}
                                     providerModels={config.providerModels || {}}
+                                    mediaCatalogs={config.mediaCatalogs || {}}
                                     variables={config.variables || []}
                                     defaultProvider={config.defaultProvider ?? ''}
                                     defaultModel={config.defaultModel ?? ''}

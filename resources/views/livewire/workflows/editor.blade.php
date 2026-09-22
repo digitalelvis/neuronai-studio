@@ -59,6 +59,7 @@
             outputClasses: @json($outputClassesForCanvas),
             providers: @json($providers),
             providerModels: @json($providerModels),
+            mediaCatalogs: @json(config('neuronai-studio.media', [])),
             variables: @json($variablesForCanvas),
             enabledProtocols: @json($enabledProtocols),
             integrateStreamUrls: @json($integrateStreamUrls),

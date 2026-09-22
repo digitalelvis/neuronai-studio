@@ -59,7 +59,8 @@ NEURONAI_STUDIO_CODEGEN_PREVIEW=true
 
 | Key | Env | Default | Description |
 |-----|-----|---------|-------------|
-| `providers` | — | openai, anthropic, gemini, ollama | Provider/model picker options |
+| `providers` | — | openai, openai-responses, anthropic, gemini, ollama, mistral, deepseek, cohere, huggingface | Chat provider/model picker options |
+| `media` | — | image, speech, transcribe, video | Model catalogs for media workflow nodes. Not shown on the Agent form |
 | `default_provider` | `NEURONAI_STUDIO_DEFAULT_PROVIDER` | `openai` | Default provider in forms |
 | `default_model` | `NEURONAI_STUDIO_DEFAULT_MODEL` | `gpt-4o-mini` | Default model in forms |
 | `classifier.driver` | `CLASSIFIER_DRIVER` | `typesafe` | `typesafe` or `laya`. Chooses which System One endpoint the JEV engine and difficulty routing call |
