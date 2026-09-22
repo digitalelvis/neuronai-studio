@@ -136,20 +136,72 @@ return [
     'providers' => [
         'openai' => [
             'label' => 'OpenAI',
-            'models' => ['gpt-4o', 'gpt-4o-mini', 'gpt-4-turbo'],
+            'models' => [
+                'gpt-4o',
+                'gpt-4o-mini',
+                'gpt-4-turbo',
+                'gpt-6-astra',
+                'gpt-5.6-sol',
+                'gpt-5.6-terra',
+                'gpt-5.6-luna',
+                'gpt-5',
+                'gpt-5-mini',
+                'gpt-5-nano',
+                'gpt-4.1',
+                'gpt-4.1-mini',
+                'o3',
+                'o4-mini',
+            ],
+        ],
+        'openai-responses' => [
+            'label' => 'OpenAI Responses',
+            'models' => [
+                'gpt-4o',
+                'gpt-4o-mini',
+                'gpt-4-turbo',
+                'gpt-6-astra',
+                'gpt-5.6-sol',
+                'gpt-5.6-terra',
+                'gpt-5.6-luna',
+                'gpt-5',
+                'gpt-5-mini',
+                'gpt-5-nano',
+                'gpt-4.1',
+                'gpt-4.1-mini',
+                'o3',
+                'o4-mini',
+            ],
         ],
         'anthropic' => [
             'label' => 'Anthropic',
-            'models' => ['claude-sonnet-4-20250514', 'claude-3-5-sonnet-20241022'],
+            'models' => [
+                'claude-sonnet-4-20250514',
+                'claude-3-5-sonnet-20241022',
+                'claude-fable-5-1',
+                'claude-opus-5',
+                'claude-sonnet-5',
+                'claude-haiku-4-5-20251001',
+                'claude-haiku-4-5',
+                'claude-fable-5',
+                'claude-opus-4-8',
+                'claude-opus-4-7',
+                'claude-opus-4-6',
+                'claude-opus-4-5',
+                'claude-sonnet-4-6',
+                'claude-sonnet-4-5',
+            ],
         ],
         'gemini' => [
             'label' => 'Gemini',
             'models' => [
                 'gemini-3.5-flash',
-                'gemini-3.1-pro-preview',
-                'gemini-3.1-pro-preview-customtools',
-                'gemini-3-flash-preview',
+                'gemini-3.8-flash',
+                'gemini-3.7-flash',
+                'gemini-3.6-flash',
+                'gemini-3.5-flash-lite',
                 'gemini-3.1-flash-lite',
+                'gemini-3.1-pro-preview',
+                'gemini-3-flash-preview',
                 'gemini-2.5-pro',
                 'gemini-2.5-flash',
                 'gemini-2.5-flash-lite',
@@ -157,13 +209,163 @@ return [
         ],
         'ollama' => [
             'label' => 'Ollama',
-            'models' => ['llama3.2', 'mistral'],
+            'models' => [
+                'llama3.2',
+                'llama3.3',
+                'llama3.1',
+                'mistral',
+                'mistral-nemo',
+                'qwen2.5',
+                'qwen3',
+                'gemma3',
+                'phi4',
+                'deepseek-r1',
+            ],
+        ],
+        'mistral' => [
+            'label' => 'Mistral',
+            'models' => [
+                'mistral-medium-latest',
+                'mistral-small-latest',
+                'mistral-large-2512',
+                'mistral-large-latest',
+                'ministral-14b-2512',
+                'ministral-8b-2512',
+                'ministral-3b-2512',
+                'codestral-2508',
+                'codestral-latest',
+            ],
+        ],
+        'deepseek' => [
+            'label' => 'DeepSeek',
+            'models' => [
+                'deepseek-v4-pro',
+                'deepseek-flash',
+                'deepseek-v4-flash',
+            ],
+        ],
+        'cohere' => [
+            'label' => 'Cohere',
+            'models' => [
+                'command-a-plus-05-2026',
+                'command-a-03-2025',
+                'command-a-reasoning-08-2025',
+                'command-a-vision-07-2025',
+                'command-a-translate-08-2025',
+                'command-r7b-12-2024',
+                'command-r-plus-08-2024',
+                'command-r-08-2024',
+                'north-mini-code-1-0',
+                'north-small-translate-1-0',
+                'c4ai-aya-expanse-32b',
+                'c4ai-aya-vision-32b',
+                'tiny-aya-global',
+                'tiny-aya-earth',
+                'tiny-aya-fire',
+                'tiny-aya-water',
+            ],
+        ],
+        'huggingface' => [
+            'label' => 'Hugging Face',
+            // Inference API ids are org/repo. This is a short stable set, not the Hub.
+            'models' => [
+                'meta-llama/Llama-3.3-70B-Instruct',
+                'meta-llama/Llama-3.1-8B-Instruct',
+                'Qwen/Qwen2.5-72B-Instruct',
+                'Qwen/Qwen3-32B',
+                'mistralai/Mistral-7B-Instruct-v0.3',
+                'google/gemma-3-27b-it',
+            ],
         ],
     ],
 
     'default_provider' => env('NEURONAI_STUDIO_DEFAULT_PROVIDER', 'openai'),
 
     'default_model' => env('NEURONAI_STUDIO_DEFAULT_MODEL', 'gpt-4o-mini'),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Media catalogs
+    |--------------------------------------------------------------------------
+    |
+    | Separate from chat `providers`. Each entry's `driver` is the key
+    | ProviderRegistry::resolveMedia() instantiates. Agent forms do not read this.
+    |
+    */
+
+    'media' => [
+        'image' => [
+            'openai' => [
+                'label' => 'OpenAI',
+                'driver' => 'openai-image',
+                'models' => [
+                    'gpt-image-2',
+                    'gpt-image-2.5-flare',
+                    'gpt-image-2.5-sunburst',
+                ],
+            ],
+            'gemini' => [
+                'label' => 'Gemini',
+                'driver' => 'gemini-image',
+                'models' => [
+                    'gemini-3.1-flash-image',
+                    'gemini-3.1-flash-lite-image',
+                    'gemini-3-pro-image',
+                    'gemini-2.5-flash-image',
+                ],
+            ],
+        ],
+        'speech' => [
+            'openai' => [
+                'label' => 'OpenAI',
+                'driver' => 'openai-tts',
+                'models' => ['gpt-4o-mini-tts', 'tts-1', 'tts-1-hd'],
+                'voices' => ['alloy', 'ash', 'ballad', 'coral', 'echo', 'fable', 'nova', 'onyx', 'sage', 'shimmer'],
+                'default_voice' => 'alloy',
+            ],
+            'elevenlabs' => [
+                'label' => 'ElevenLabs',
+                'driver' => 'elevenlabs-tts',
+                'models' => ['eleven_multilingual_v2', 'eleven_turbo_v2_5', 'eleven_flash_v2_5'],
+                'default_voice' => '',
+            ],
+            'gemini' => [
+                'label' => 'Gemini',
+                'driver' => 'gemini-tts',
+                'models' => [
+                    'gemini-3.1-flash-tts-preview',
+                    'gemini-2.5-flash-preview-tts',
+                    'gemini-2.5-pro-preview-tts',
+                ],
+                'voices' => ['Kore', 'Puck', 'Charon', 'Zephyr', 'Fenrir', 'Leda', 'Orus', 'Aoede'],
+                'default_voice' => 'Kore',
+            ],
+        ],
+        'transcribe' => [
+            'openai' => [
+                'label' => 'OpenAI',
+                'driver' => 'openai-stt',
+                'models' => ['gpt-4o-transcribe', 'gpt-4o-mini-transcribe', 'whisper-1', 'gpt-4o-transcribe-diarize'],
+            ],
+            'elevenlabs' => [
+                'label' => 'ElevenLabs',
+                'driver' => 'elevenlabs-stt',
+                'models' => ['scribe_v1'],
+            ],
+            'gemini' => [
+                'label' => 'Gemini',
+                'driver' => 'gemini-stt',
+                'models' => ['gemini-3.5-transcribe'],
+            ],
+        ],
+        'video' => [
+            'gemini' => [
+                'label' => 'Gemini',
+                'driver' => 'gemini-video',
+                'models' => ['veo-3.1-generate-preview', 'veo-3.1-lite-generate-preview'],
+            ],
+        ],
+    ],
 
     /*
     |--------------------------------------------------------------------------
@@ -190,15 +392,31 @@ return [
                 'gpt-4o-mini' => ['prompt_per_1k' => 0.00015, 'completion_per_1k' => 0.0006],
                 'gpt-4o' => ['prompt_per_1k' => 0.0025, 'completion_per_1k' => 0.01],
                 'gpt-4-turbo' => ['prompt_per_1k' => 0.01, 'completion_per_1k' => 0.03],
+                // Published short-context rates, USD per 1M converted to per 1k.
+                'gpt-6-astra' => ['prompt_per_1k' => 0.01, 'completion_per_1k' => 0.05],
+                'gpt-5.6-sol' => ['prompt_per_1k' => 0.004, 'completion_per_1k' => 0.02],
+            ],
+            'openai-responses' => [
+                'gpt-4o-mini' => ['prompt_per_1k' => 0.00015, 'completion_per_1k' => 0.0006],
+                'gpt-4o' => ['prompt_per_1k' => 0.0025, 'completion_per_1k' => 0.01],
+                'gpt-4-turbo' => ['prompt_per_1k' => 0.01, 'completion_per_1k' => 0.03],
+                'gpt-6-astra' => ['prompt_per_1k' => 0.01, 'completion_per_1k' => 0.05],
+                'gpt-5.6-sol' => ['prompt_per_1k' => 0.004, 'completion_per_1k' => 0.02],
             ],
             'anthropic' => [
                 'claude-sonnet-4-20250514' => ['prompt_per_1k' => 0.003, 'completion_per_1k' => 0.015],
                 'claude-3-5-sonnet-20241022' => ['prompt_per_1k' => 0.003, 'completion_per_1k' => 0.015],
+                'claude-fable-5-1' => ['prompt_per_1k' => 0.01, 'completion_per_1k' => 0.05],
+                'claude-fable-5' => ['prompt_per_1k' => 0.01, 'completion_per_1k' => 0.05],
+                'claude-opus-5' => ['prompt_per_1k' => 0.005, 'completion_per_1k' => 0.025],
+                'claude-opus-4-8' => ['prompt_per_1k' => 0.005, 'completion_per_1k' => 0.025],
+                'claude-sonnet-5' => ['prompt_per_1k' => 0.002, 'completion_per_1k' => 0.01],
+                'claude-haiku-4-5-20251001' => ['prompt_per_1k' => 0.001, 'completion_per_1k' => 0.005],
+                'claude-haiku-4-5' => ['prompt_per_1k' => 0.001, 'completion_per_1k' => 0.005],
             ],
             'gemini' => [
                 'gemini-3.5-flash' => ['prompt_per_1k' => 0.0015, 'completion_per_1k' => 0.009],
                 'gemini-3.1-pro-preview' => ['prompt_per_1k' => 0.002, 'completion_per_1k' => 0.012],
-                'gemini-3.1-pro-preview-customtools' => ['prompt_per_1k' => 0.002, 'completion_per_1k' => 0.012],
                 'gemini-3-flash-preview' => ['prompt_per_1k' => 0.0005, 'completion_per_1k' => 0.003],
                 'gemini-3.1-flash-lite' => ['prompt_per_1k' => 0.00025, 'completion_per_1k' => 0.0015],
                 'gemini-2.5-pro' => ['prompt_per_1k' => 0.00125, 'completion_per_1k' => 0.01],
@@ -207,7 +425,15 @@ return [
             ],
             'ollama' => [
                 'llama3.2' => ['prompt_per_1k' => 0, 'completion_per_1k' => 0],
+                'llama3.3' => ['prompt_per_1k' => 0, 'completion_per_1k' => 0],
+                'llama3.1' => ['prompt_per_1k' => 0, 'completion_per_1k' => 0],
                 'mistral' => ['prompt_per_1k' => 0, 'completion_per_1k' => 0],
+                'mistral-nemo' => ['prompt_per_1k' => 0, 'completion_per_1k' => 0],
+                'qwen2.5' => ['prompt_per_1k' => 0, 'completion_per_1k' => 0],
+                'qwen3' => ['prompt_per_1k' => 0, 'completion_per_1k' => 0],
+                'gemma3' => ['prompt_per_1k' => 0, 'completion_per_1k' => 0],
+                'phi4' => ['prompt_per_1k' => 0, 'completion_per_1k' => 0],
+                'deepseek-r1' => ['prompt_per_1k' => 0, 'completion_per_1k' => 0],
             ],
         ],
 
@@ -661,6 +887,26 @@ return [
             'icon' => 'search',
             'category' => 'ai',
         ],
+        'image' => [
+            'label' => 'Image',
+            'icon' => 'image',
+            'category' => 'ai',
+        ],
+        'speech' => [
+            'label' => 'Speech',
+            'icon' => 'audio-lines',
+            'category' => 'ai',
+        ],
+        'transcribe' => [
+            'label' => 'Transcribe',
+            'icon' => 'mic',
+            'category' => 'ai',
+        ],
+        'video' => [
+            'label' => 'Video',
+            'icon' => 'video',
+            'category' => 'ai',
+        ],
         'delay' => [
             'label' => 'Delay',
             'icon' => 'clock',
@@ -882,6 +1128,7 @@ return [
                 'models' => [
                     'text-embedding-004',
                     'gemini-embedding-001',
+                    'gemini-embedding-2-preview',
                 ],
             ],
             'ollama' => [
@@ -892,6 +1139,8 @@ return [
                     'nomic-embed-text',
                     'mxbai-embed-large',
                     'all-minilm',
+                    'bge-m3',
+                    'snowflake-arctic-embed',
                 ],
             ],
             'voyage' => [
@@ -902,6 +1151,16 @@ return [
                     'voyage-3',
                     'voyage-3-lite',
                     'voyage-finance-2',
+                    'voyage-4-large',
+                    'voyage-4',
+                    'voyage-4-lite',
+                    'voyage-code-4',
+                    'voyage-law-2',
+                    'voyage-3-large',
+                    'voyage-3.5',
+                    'voyage-3.5-lite',
+                    'voyage-code-3',
+                    'voyage-multilingual-2',
                 ],
             ],
             'cohere' => [
@@ -911,6 +1170,9 @@ return [
                 'models' => [
                     'embed-english-v3.0',
                     'embed-multilingual-v3.0',
+                    'embed-v4.0',
+                    'embed-english-light-v3.0',
+                    'embed-multilingual-light-v3.0',
                 ],
             ],
             'mistral' => [
@@ -919,6 +1181,7 @@ return [
                 'default_model' => 'mistral-embed',
                 'models' => [
                     'mistral-embed',
+                    'codestral-embed',
                 ],
             ],
         ],

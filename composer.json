@@ -40,8 +40,14 @@
     },
     "autoload": {
         "psr-4": {
-            "DigitalElvis\\NeuronAIStudio\\": "src/"
-        }
+            "DigitalElvis\\NeuronAIStudio\\": "src/",
+            "NeuronAI\\Providers\\Gemini\\Image\\": "src/Upstream/neuron-ai/src/Providers/Gemini/Image/",
+            "NeuronAI\\Providers\\Gemini\\Audio\\": "src/Upstream/neuron-ai/src/Providers/Gemini/Audio/",
+            "NeuronAI\\Providers\\Gemini\\Video\\": "src/Upstream/neuron-ai/src/Providers/Gemini/Video/"
+        },
+        "classmap": [
+            "src/Upstream/neuron-ai/src/Providers/Gemini/GeminiMediaProvider.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
