@@ -3,9 +3,14 @@
 return [
     'providers' => [
         'openai' => 'OpenAI',
+        'openai-responses' => 'OpenAI Responses',
         'anthropic' => 'Anthropic',
         'gemini' => 'Gemini',
         'ollama' => 'Ollama',
+        'mistral' => 'Mistral',
+        'deepseek' => 'DeepSeek',
+        'cohere' => 'Cohere',
+        'huggingface' => 'Hugging Face',
     ],
     'tools' => [
         'calculator' => 'Calculadora',

@@ -501,8 +501,23 @@ function WorkflowCanvasInner({
                 };
             }
 
+            const mediaCatalogs = window.__NEURONAI_CANVAS_CONFIG?.mediaCatalogs || {};
+            const mediaEntry = mediaCatalogs[type] || null;
+            const mediaProvider = mediaEntry ? Object.keys(mediaEntry)[0] || '' : '';
+            const mediaModel = mediaProvider ? (mediaEntry[mediaProvider]?.models || [])[0] || '' : '';
+
             const defaultConfig =
-                type === 'llm'
+                type === 'image' || type === 'speech' || type === 'transcribe' || type === 'video'
+                    ? {
+                          provider: mediaProvider,
+                          model: mediaModel,
+                          prompt: '{{input}}',
+                          output_key: type === 'transcribe' ? 'transcript' : `${type}_result`,
+                          ...(type === 'speech' ? { voice: mediaEntry?.[mediaProvider]?.default_voice || '' } : {}),
+                          ...(type === 'transcribe' ? { language: 'en' } : {}),
+                          ...(type === 'video' ? { aspect_ratio: '16:9', duration_seconds: 8 } : {}),
+                      }
+                    : type === 'llm'
                     ? {
                           provider: defaultProvider,
                           model: defaultModel,

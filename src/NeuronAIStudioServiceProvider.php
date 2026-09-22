@@ -41,6 +41,7 @@ use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\JoinNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\LoopNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\IntentClassifierNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\LlmNodeExecutor;
+use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\MediaNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorRegistry;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\McpNodeExecutor;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\RagNodeExecutor;
@@ -293,6 +294,10 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
             'stop' => StopNodeExecutor::class,
             'agent' => AgentNodeExecutor::class,
             'llm' => LlmNodeExecutor::class,
+            'image' => MediaNodeExecutor::class,
+            'speech' => MediaNodeExecutor::class,
+            'transcribe' => MediaNodeExecutor::class,
+            'video' => MediaNodeExecutor::class,
             'intent_classifier' => IntentClassifierNodeExecutor::class,
             'condition' => ConditionNodeExecutor::class,
             'switch' => SwitchNodeExecutor::class,
@@ -312,7 +317,7 @@ class NeuronAIStudioServiceProvider extends ServiceProvider
 
         // Node types whose expensive execution can be skipped on resume when the
         // node opts in via `data.checkpoint: true`.
-        $checkpointable = ['agent', 'llm', 'intent_classifier', 'rag', 'tool'];
+        $checkpointable = ['agent', 'llm', 'intent_classifier', 'rag', 'tool', 'image', 'speech', 'transcribe', 'video'];
         $checkpoints = $this->app->make(CheckpointService::class);
 
         foreach ($types as $type => $executorClass) {
