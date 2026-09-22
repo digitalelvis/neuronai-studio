@@ -53,6 +53,7 @@
                 memory_budget_rag: @json($memory_budget_rag),
                 memory_budget_tool_results: @json($memory_budget_tool_results),
                 memory_budget_state: @json($memory_budget_state),
+                routing: @json($routing_config),
             },
         };
     </script>

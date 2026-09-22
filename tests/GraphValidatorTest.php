@@ -525,6 +525,38 @@ class GraphValidatorTest extends TestCase
         $this->assertStringContainsString('duplicate intent id', strtolower(implode(' ', $result['errors'])));
     }
 
+    public function test_rejects_unknown_intent_classifier_engine_and_invalid_min_probability(): void
+    {
+        $validator = app(GraphValidator::class);
+        $graph = [
+            'nodes' => [
+                ['id' => 'start_1', 'type' => 'start', 'position' => ['x' => 0, 'y' => 0], 'data' => []],
+                [
+                    'id' => 'ic_1',
+                    'type' => 'intent_classifier',
+                    'position' => ['x' => 100, 'y' => 0],
+                    'data' => [
+                        'engine' => 'typesafe-sdk',
+                        'min_probability' => 2,
+                        'intents' => [
+                            ['id' => 'billing', 'name' => 'Billing', 'description' => 'A'],
+                            ['id' => 'other', 'name' => 'Other', 'description' => 'B'],
+                        ],
+                    ],
+                ],
+                ['id' => 'stop_1', 'type' => 'stop', 'position' => ['x' => 200, 'y' => 0], 'data' => []],
+            ],
+            'edges' => [
+                ['id' => 'e1', 'source' => 'start_1', 'target' => 'ic_1', 'sourceHandle' => 'default'],
+                ['id' => 'e2', 'source' => 'ic_1', 'target' => 'stop_1', 'sourceHandle' => 'billing'],
+            ],
+        ];
+
+        $errors = implode(' ', $validator->validate($graph)['errors']);
+        $this->assertStringContainsString('unknown engine', $errors);
+        $this->assertStringContainsString('min_probability', $errors);
+    }
+
     public function test_accepts_valid_intent_classifier_graph(): void
     {
         $validator = app(GraphValidator::class);

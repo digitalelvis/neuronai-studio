@@ -62,8 +62,13 @@ NEURONAI_STUDIO_CODEGEN_PREVIEW=true
 | `providers` | — | openai, anthropic, gemini, ollama | Provider/model picker options |
 | `default_provider` | `NEURONAI_STUDIO_DEFAULT_PROVIDER` | `openai` | Default provider in forms |
 | `default_model` | `NEURONAI_STUDIO_DEFAULT_MODEL` | `gpt-4o-mini` | Default model in forms |
+| `classifier.driver` | `CLASSIFIER_DRIVER` | `typesafe` | `typesafe` or `laya`. Chooses which System One endpoint the JEV engine and difficulty routing call |
+| `classifier.model` | `TYPESAFE_MODEL` | `jev-latest` | Model id sent to that endpoint. `jev-latest` is also a Laya alias |
+| `classifier.key` | `TYPESAFE_KEY` | empty | Required when `driver` is `typesafe`. Empty keeps LLM intent classification and single-model agents |
+| `classifier.url` | `LAYA_URL` | `http://127.0.0.1:8000/v1` | Base URL when `driver` is `laya`, without `/systemone`. The host operates this endpoint |
+| `classifier.laya_key` | `LAYA_KEY` | empty | Optional bearer when the Laya endpoint requires one |
 
-Credentials are **not** stored here — they come from `config/neuron.php`.
+Credentials for chat providers are **not** stored here — they come from `config/neuron.php`. `TYPESAFE_KEY` is the TypeSafe classifier key (early access). `LAYA_URL` points at a System One server you already run; Studio does not start it. Node and agent fields can override either key with a vault `var:NAME`.
 
 ## Usage & cost estimation
 

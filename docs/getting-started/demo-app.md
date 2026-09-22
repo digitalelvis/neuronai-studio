@@ -47,6 +47,13 @@ Add provider keys to `.env`:
 ```env
 OPENAI_KEY=sk-...
 NEURON_AI_PROVIDER=openai
+# Optional. Intent Classifier engine jev and agent difficulty routing.
+# CLASSIFIER_DRIVER=typesafe
+# TYPESAFE_KEY=
+# Laya: point at a System One endpoint you already operate. Studio does not start it.
+# CLASSIFIER_DRIVER=laya
+# LAYA_URL=http://127.0.0.1:8000/v1
+# LAYA_KEY=
 ```
 
 ## Developing the package UI

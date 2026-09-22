@@ -37,6 +37,7 @@ PHP;
             $toolsExpr = $canvasTools['code'] === '[]'
                 ? '$agent->tools ?? []'
                 : 'array_values(array_merge($agent->tools ?? [], '.$canvasTools['code'].'))';
+            $routingLine = $this->routingConfigLine($data, hasDefinition: true);
 
             if ($structured) {
                 $body = <<<PHP
@@ -47,7 +48,7 @@ PHP;
             'provider' => \$agent->provider,
             'model' => \$agent->model,
             'instructions' => \$agent->instructions,
-            'tools' => {$toolsExpr},
+            'tools' => {$toolsExpr},{$routingLine}
         ], \$userMessage, {$shortClass}::class, \$agent, {$threadKey});
 
         \$state->set({$outputKey}, \$response->structured);
@@ -66,7 +67,7 @@ PHP;
             'provider' => \$agent->provider,
             'model' => \$agent->model,
             'instructions' => \$agent->instructions,
-            'tools' => {$toolsExpr},{$approvalLine}{$toolControlLine}{$memoryLine}
+            'tools' => {$toolsExpr},{$approvalLine}{$toolControlLine}{$memoryLine}{$routingLine}
         ], \$userMessage, \$agent, {$threadKey});
 
         \$state->set({$outputKey}, \$response->content);
@@ -92,6 +93,7 @@ PHP;
         $instructions = var_export((string) ($data['instructions'] ?? ''), true);
         $toolsExport = $this->exportToolsExpression(is_array($data['tools'] ?? null) ? $data['tools'] : []);
         $threadKey = 'is_string($state->get(\'__studio_thread_id\')) ? $state->get(\'__studio_thread_id\') : null';
+        $routingLine = $this->routingConfigLine($data, hasDefinition: false);
         $instructionsSetup = <<<PHP
         \$instructionsTemplate = {$instructions};
         \$instructions = \\DigitalElvis\\NeuronAIStudio\\Runtime\\StateTemplateInterpolator::interpolate(\$instructionsTemplate, \$state);
@@ -106,7 +108,7 @@ PHP;
             'provider' => {$this->exportConfigValue($provider)},
             'model' => {$this->exportConfigValue($model)},
             'instructions' => \$instructions,
-            'tools' => {$toolsExport['code']},
+            'tools' => {$toolsExport['code']},{$routingLine}
         ], \$userMessage, {$shortClass}::class, null, {$threadKey});
 
         \$state->set({$outputKey}, \$response->structured);
@@ -137,7 +139,7 @@ PHP;
             'provider' => {$this->exportConfigValue($provider)},
             'model' => {$this->exportConfigValue($model)},
             'instructions' => \$instructions,
-            'tools' => {$toolsExport['code']},{$approvalLine}{$toolControlLine}{$memoryLine}
+            'tools' => {$toolsExport['code']},{$approvalLine}{$toolControlLine}{$memoryLine}{$routingLine}
         ], \$userMessage, null, {$threadKey});
 
         \$state->set({$outputKey}, \$response->content);
@@ -322,5 +324,27 @@ PHP;
         }
 
         return $lines;
+    }
+
+    /**
+     * Inline nodes embed routing_config. Existing agents inherit AgentDefinition at runtime.
+     *
+     * @param  array<string, mixed>  $data
+     */
+    protected function routingConfigLine(array $data, bool $hasDefinition): string
+    {
+        $routing = $data['routing'] ?? $data['routing_config'] ?? null;
+        if (is_array($routing) && ($routing['enabled'] ?? false) === true) {
+            $normalized = \DigitalElvis\NeuronAIStudio\Runtime\Routing\RoutingConfig::normalizeForStorage($routing);
+            if ($normalized !== null) {
+                return "\n            'routing_config' => ".var_export($normalized, true).',';
+            }
+        }
+
+        if ($hasDefinition) {
+            return "\n            'routing_config' => \$agent->routing_config,";
+        }
+
+        return '';
     }
 }

@@ -1,14 +1,20 @@
 # State
 
-**Last Updated:** 2026-09-09
+**Last Updated:** 2026-09-22
 **Development line (features):** `v3.1.x`
 **Patch line:** `v3.1.x`
 **Latest published:** `v3.1.0` on Packagist / `main`
-**Current Work:** M23 `shared-plugin-packages` — Execute on `feat/shared-plugin-packages` → `v3.1.x` (P1 implemented; PR pending).
+**Current Work:** M24 `jev-classifier` P1 implemented on `feat/jev-classifier` → `v3.1.x`. P2 (generic classifier node, guardrails) stays deferred.
 
 ---
 
 ## Recent Decisions (Last 60 days)
+
+### AD-040: JEV via Neuron ClassifierInterface (2026-09-22)
+
+**Decision:** Open M24 **`jev-classifier`**. Intent Classifier gains engine `jev` (default stays `llm`). Agents gain optional `routing_config` using `RouterProvider` + `DifficultyRule` (`neuron-core/router` `1.x-dev#dbef16f7`, because stable `1.2.2` is the old sticky classifier). `neuron-ai` minimum `^3.17`. No vendor TypeSafe SDK. Generic classifier node and guardrails stay P2.
+**Reason:** Closed questions (intent, difficulty) should not pay a generative model on every turn.
+**Impact:** Specs in [.specs/features/jev-classifier/](../features/jev-classifier/). ROADMAP M24. Execute on `v3.1.x`.
 
 ### AD-039: Shared plugin packages — no per-tenant skill clones (2026-09-09)
 

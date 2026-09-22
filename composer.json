@@ -32,7 +32,8 @@
         "illuminate/support": "^11.0|^12.0|^13.0",
         "illuminate/view": "^11.0|^12.0|^13.0",
         "livewire/livewire": "^3.5|^4.0",
-        "neuron-core/neuron-ai": "^3.16"
+        "neuron-core/neuron-ai": "^3.17",
+        "neuron-core/router": "1.x-dev#dbef16f7@dev"
     },
     "require-dev": {
         "orchestra/testbench": "^9.0|^10.0|^11.0",
