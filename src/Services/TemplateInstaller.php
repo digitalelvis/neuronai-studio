@@ -44,6 +44,7 @@ class TemplateInstaller
             'tools' => is_array($definition['tools'] ?? null) ? $definition['tools'] : [],
             'require_tool_approval' => (bool) ($definition['require_tool_approval'] ?? false),
             'memory_config' => is_array($definition['memory_config'] ?? null) ? $definition['memory_config'] : null,
+            'routing_config' => is_array($definition['routing_config'] ?? null) ? $definition['routing_config'] : null,
             'metadata' => is_array($definition['metadata'] ?? null) ? $definition['metadata'] : null,
         ]);
     }

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "5bc3fe8800b0f4a11d885e2fc4c9923e",
+    "content-hash": "d2949ece1ee0279432c00842f714ea3e",
     "packages": [
         {
             "name": "amphp/amp",
@@ -723,22 +723,22 @@
         },
         {
             "name": "guzzlehttp/guzzle",
-            "version": "7.15.3",
+            "version": "7.15.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/guzzle.git",
-                "reference": "ae311b8f045ea93ce7b1c9cdb7cec06c53f944bc"
+                "reference": "ee80339fd9177ba44c49cdb653ff02a4d1106b9a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/ae311b8f045ea93ce7b1c9cdb7cec06c53f944bc",
-                "reference": "ae311b8f045ea93ce7b1c9cdb7cec06c53f944bc",
+                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/ee80339fd9177ba44c49cdb653ff02a4d1106b9a",
+                "reference": "ee80339fd9177ba44c49cdb653ff02a4d1106b9a",
                 "shasum": ""
             },
             "require": {
                 "ext-json": "*",
-                "guzzlehttp/promises": "^2.5.2",
-                "guzzlehttp/psr7": "^2.13",
+                "guzzlehttp/promises": "^2.5.3",
+                "guzzlehttp/psr7": "^2.13.1",
                 "php": "^7.2.5 || ^8.0",
                 "psr/http-client": "^1.0",
                 "symfony/deprecation-contracts": "^2.5 || ^3.0",
@@ -831,7 +831,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/guzzle/issues",
-                "source": "https://github.com/guzzle/guzzle/tree/7.15.3"
+                "source": "https://github.com/guzzle/guzzle/tree/7.15.5"
             },
             "funding": [
                 {
@@ -847,20 +847,20 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-08-05T19:48:21+00:00"
+            "time": "2026-08-24T09:21:06+00:00"
         },
         {
             "name": "guzzlehttp/promises",
-            "version": "2.5.2",
+            "version": "2.5.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/promises.git",
-                "reference": "2823687acff28b2dbe67b2508a6b300e2c3fa4ce"
+                "reference": "cde49999552d185d64715fe9c1f77a2aadd2f9f1"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/promises/zipball/2823687acff28b2dbe67b2508a6b300e2c3fa4ce",
-                "reference": "2823687acff28b2dbe67b2508a6b300e2c3fa4ce",
+                "url": "https://api.github.com/repos/guzzle/promises/zipball/cde49999552d185d64715fe9c1f77a2aadd2f9f1",
+                "reference": "cde49999552d185d64715fe9c1f77a2aadd2f9f1",
                 "shasum": ""
             },
             "require": {
@@ -915,7 +915,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/promises/issues",
-                "source": "https://github.com/guzzle/promises/tree/2.5.2"
+                "source": "https://github.com/guzzle/promises/tree/2.5.3"
             },
             "funding": [
                 {
@@ -931,20 +931,20 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-08-05T19:30:54+00:00"
+            "time": "2026-08-24T09:11:28+00:00"
         },
         {
             "name": "guzzlehttp/psr7",
-            "version": "2.13.0",
+            "version": "2.13.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/psr7.git",
-                "reference": "dad89620b7a6edb60c15858442eb2e408b45d8f4"
+                "reference": "95e7828100de18b4e269fb1703be530082d5166d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/psr7/zipball/dad89620b7a6edb60c15858442eb2e408b45d8f4",
-                "reference": "dad89620b7a6edb60c15858442eb2e408b45d8f4",
+                "url": "https://api.github.com/repos/guzzle/psr7/zipball/95e7828100de18b4e269fb1703be530082d5166d",
+                "reference": "95e7828100de18b4e269fb1703be530082d5166d",
                 "shasum": ""
             },
             "require": {
@@ -1034,7 +1034,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/psr7/issues",
-                "source": "https://github.com/guzzle/psr7/tree/2.13.0"
+                "source": "https://github.com/guzzle/psr7/tree/2.13.1"
             },
             "funding": [
                 {
@@ -1050,7 +1050,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2026-07-16T22:23:49+00:00"
+            "time": "2026-08-24T09:13:11+00:00"
         },
         {
             "name": "guzzlehttp/uri-template",
@@ -1140,16 +1140,16 @@
         },
         {
             "name": "inspector-apm/inspector-php",
-            "version": "3.18.0",
+            "version": "3.18.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/inspector-apm/inspector-php.git",
-                "reference": "0eb86241dc91d34c6d8d84716b6d491997af1443"
+                "reference": "95d46a1ee6c7dc9afb8020d201d6cbd471738965"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/inspector-apm/inspector-php/zipball/0eb86241dc91d34c6d8d84716b6d491997af1443",
-                "reference": "0eb86241dc91d34c6d8d84716b6d491997af1443",
+                "url": "https://api.github.com/repos/inspector-apm/inspector-php/zipball/95d46a1ee6c7dc9afb8020d201d6cbd471738965",
+                "reference": "95d46a1ee6c7dc9afb8020d201d6cbd471738965",
                 "shasum": ""
             },
             "require": {
@@ -1196,9 +1196,9 @@
             ],
             "support": {
                 "issues": "https://github.com/inspector-apm/inspector-php/issues",
-                "source": "https://github.com/inspector-apm/inspector-php/tree/3.18.0"
+                "source": "https://github.com/inspector-apm/inspector-php/tree/3.18.3"
             },
-            "time": "2026-06-19T15:39:04+00:00"
+            "time": "2026-09-09T15:14:33+00:00"
         },
         {
             "name": "laravel/framework",
@@ -2550,16 +2550,16 @@
         },
         {
             "name": "neuron-core/neuron-ai",
-            "version": "3.16.3",
+            "version": "3.17.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/neuron-core/neuron-ai.git",
-                "reference": "06e572ad7919b71f7b8a0829402288ad9aaffbf6"
+                "reference": "f6d4e4507309dbba6c0ecfdd602ddccebbb0bcee"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/neuron-core/neuron-ai/zipball/06e572ad7919b71f7b8a0829402288ad9aaffbf6",
-                "reference": "06e572ad7919b71f7b8a0829402288ad9aaffbf6",
+                "url": "https://api.github.com/repos/neuron-core/neuron-ai/zipball/f6d4e4507309dbba6c0ecfdd602ddccebbb0bcee",
+                "reference": "f6d4e4507309dbba6c0ecfdd602ddccebbb0bcee",
                 "shasum": ""
             },
             "require": {
@@ -2572,7 +2572,7 @@
                 "amphp/amp": "^3.1.1",
                 "amphp/http-client": "^5.3",
                 "aws/aws-sdk-php": "^3.209",
-                "elasticsearch/elasticsearch": "^8.0",
+                "elasticsearch/elasticsearch": "^8.0|^9.0",
                 "ext-pdo": "*",
                 "friendsofphp/php-cs-fixer": "^3.75",
                 "google/auth": "^1.49",
@@ -2610,7 +2610,7 @@
             "description": "The PHP Agentic Framework.",
             "support": {
                 "issues": "https://github.com/neuron-core/neuron-ai/issues",
-                "source": "https://github.com/neuron-core/neuron-ai/tree/3.16.3"
+                "source": "https://github.com/neuron-core/neuron-ai/tree/3.17.0"
             },
             "funding": [
                 {
@@ -2618,7 +2618,59 @@
                     "type": "github"
                 }
             ],
-            "time": "2026-08-06T17:30:36+00:00"
+            "time": "2026-09-19T12:52:41+00:00"
+        },
+        {
+            "name": "neuron-core/router",
+            "version": "1.x-dev",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/neuron-core/router.git",
+                "reference": "dbef16f7a0a8ce1d19e7134b05ec77d9c2b93fb7"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/neuron-core/router/zipball/dbef16f7a0a8ce1d19e7134b05ec77d9c2b93fb7",
+                "reference": "dbef16f7a0a8ce1d19e7134b05ec77d9c2b93fb7",
+                "shasum": ""
+            },
+            "require": {
+                "neuron-core/neuron-ai": "^3.0",
+                "php": "^8.1"
+            },
+            "require-dev": {
+                "friendsofphp/php-cs-fixer": "^3.75",
+                "phpstan/phpstan": "^2.1",
+                "phpunit/phpunit": "^10.0",
+                "rector/rector": "^2.0",
+                "tomasvotruba/type-coverage": "^2.0"
+            },
+            "suggest": {
+                "neuron-core/classifier": "Required to use the DifficultyRule (difficulty-based routing)."
+            },
+            "default-branch": true,
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "NeuronAI\\Router\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Valerio Barbera",
+                    "email": "valerio@inspector.dev"
+                }
+            ],
+            "description": "Route inference calls to different underlying providers based on a routing strategy you define.",
+            "support": {
+                "issues": "https://github.com/neuron-core/router/issues",
+                "source": "https://github.com/neuron-core/router/tree/1.x"
+            },
+            "time": "2026-09-19T13:49:08+00:00"
         },
         {
             "name": "nunomaduro/termwind",
@@ -9190,7 +9242,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "neuron-core/router": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

@@ -8,6 +8,7 @@ import { StateVariableTextField } from '../shared/state-variables';
 import IntentEditor from './editors/IntentEditor';
 import ApiKeyField from './fields/ApiKeyField';
 import OutputKeyField from './fields/OutputKeyField';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function IntentClassifierNodeFields({
     node,
@@ -30,23 +31,54 @@ export default function IntentClassifierNodeFields({
         return null;
     }
 
+    const engine = data.engine === 'jev' ? 'jev' : 'llm';
+
     return (
         <>
-            <ProviderModelFields
-                provider={data.provider}
-                model={data.model}
-                providers={providers}
-                providerModels={providerModels}
-                defaultProvider={defaultProvider}
-                defaultModel={defaultModel}
-                readOnly={readOnly}
-                onChange={(patch) => onUpdate?.({ ...data, ...patch })}
-            />
+            <div className="space-y-2">
+                <Label>Engine</Label>
+                <Select
+                    value={engine}
+                    onValueChange={(value) => updateField('engine', value)}
+                    disabled={readOnly}
+                >
+                    <SelectTrigger>
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="llm">LLM</SelectItem>
+                        <SelectItem value="jev">JEV</SelectItem>
+                    </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                    {engine === 'jev'
+                        ? 'Closed-question classifier (TypeSafe or a Laya endpoint). Returns a probability, not generated text.'
+                        : 'Classify with a generative model and structured output.'}
+                </p>
+            </div>
+            {engine !== 'jev' && (
+                <ProviderModelFields
+                    provider={data.provider}
+                    model={data.model}
+                    providers={providers}
+                    providerModels={providerModels}
+                    defaultProvider={defaultProvider}
+                    defaultModel={defaultModel}
+                    readOnly={readOnly}
+                    onChange={(patch) => onUpdate?.({ ...data, ...patch })}
+                />
+            )}
             <ApiKeyField
                 value={data.api_key}
                 onChange={(value) => updateField('api_key', value)}
                 variables={variables}
                 readOnly={readOnly}
+                label={engine === 'jev' ? 'Classifier API key' : undefined}
+                hint={
+                    engine === 'jev'
+                        ? 'Optional var:NAME. Empty uses TYPESAFE_KEY or LAYA_KEY from the install.'
+                        : undefined
+                }
             />
             <div className="space-y-2">
                 <Label>Message</Label>
@@ -81,18 +113,44 @@ export default function IntentClassifierNodeFields({
                     placeholder="e.g. Prefer how_to when the user asks about features or setup…"
                 />
             </div>
-            <VisionToggleField
-                vision={Boolean(data.vision)}
-                readOnly={readOnly}
-                onChange={(patch) => onUpdate?.({ ...data, ...patch })}
-            />
+            {engine !== 'jev' && (
+                <VisionToggleField
+                    vision={Boolean(data.vision)}
+                    readOnly={readOnly}
+                    onChange={(patch) => onUpdate?.({ ...data, ...patch })}
+                />
+            )}
+            {engine === 'jev' && (
+                <div className="space-y-2">
+                    <Label>Minimum probability</Label>
+                    <Input
+                        type="number"
+                        min={0}
+                        max={1}
+                        step={0.01}
+                        value={data.min_probability ?? ''}
+                        onChange={(e) =>
+                            updateField(
+                                'min_probability',
+                                e.target.value === '' ? null : Number(e.target.value),
+                            )
+                        }
+                        disabled={readOnly}
+                        placeholder="Off"
+                    />
+                    <p className="text-xs text-muted-foreground">
+                        Below this, route to the other intent when it exists.
+                    </p>
+                </div>
+            )}
             <div className="space-y-2 rounded-md border border-border bg-muted/20 p-3">
                 <div className="flex items-center justify-between gap-3">
                     <div className="space-y-0.5">
                         <Label htmlFor="intent-memory-toggle">Memory</Label>
                         <p className="text-xs text-muted-foreground">
-                            Include prior conversation turns when classifying.
-                            Metering always reuses the workflow thread.
+                            {engine === 'jev'
+                                ? 'Include prior thread messages in the classifier input.'
+                                : 'Include prior conversation turns when classifying. Metering always reuses the workflow thread.'}
                         </p>
                     </div>
                     <Checkbox
@@ -104,7 +162,7 @@ export default function IntentClassifierNodeFields({
                         disabled={readOnly}
                     />
                 </div>
-                {Boolean(data.memory) && (
+                {engine !== 'jev' && Boolean(data.memory) && (
                     <div className="space-y-2 pt-2">
                         <Label>Context window (tokens)</Label>
                         <Input

@@ -69,6 +69,9 @@ class Edit extends Component
 
     public ?int $memory_budget_state = null;
 
+    /** @var array<string, mixed>|null */
+    public ?array $routing_config = null;
+
     public function mount(mixed $agent = null): void
     {
         $this->agent = $this->resolveOptionalRouteModel($agent, AgentDefinition::class);
@@ -85,6 +88,7 @@ class Edit extends Component
             $this->tool_max_runs = $agent->tool_max_runs;
             $this->parallel_tool_calls = $agent->parallel_tool_calls;
             $this->hydrateMemoryFromConfig($agent->memory_config);
+            $this->routing_config = is_array($agent->routing_config) ? $agent->routing_config : null;
             $this->loadToolsFromAgent($agent->tools ?? []);
             $this->loadSkillsFromAgent($agent->skills ?? []);
             $this->loadMcpFromAgent($agent);
@@ -224,6 +228,16 @@ class Edit extends Component
             ? (int) $payload['memory_budget_state']
             : null;
 
+        if (array_key_exists('routing', $payload)) {
+            try {
+                $this->routing_config = \DigitalElvis\NeuronAIStudio\Runtime\Routing\RoutingConfig::normalizeForStorage($payload['routing']);
+            } catch (\InvalidArgumentException $exception) {
+                $this->addError('routing', $exception->getMessage());
+
+                return;
+            }
+        }
+
         $this->persistAgent();
     }
 
@@ -270,6 +284,7 @@ class Edit extends Component
             'tool_max_runs' => $this->tool_max_runs,
             'parallel_tool_calls' => $this->parallel_tool_calls,
             'memory_config' => $memoryConfig,
+            'routing_config' => $this->routing_config,
         ];
 
         if ($this->agent?->exists) {

@@ -410,6 +410,18 @@ class GraphValidator
                 $errors[] = "Intent Classifier node {$id} requires at least two intents with valid ids.";
             }
 
+            $engine = (string) ($data['engine'] ?? 'llm');
+            if (! in_array($engine, ['llm', 'jev'], true)) {
+                $errors[] = "Intent Classifier node {$id} has unknown engine [{$engine}]. Use llm or jev.";
+            }
+
+            if (array_key_exists('min_probability', $data) && $data['min_probability'] !== null && $data['min_probability'] !== '') {
+                $min = $data['min_probability'];
+                if (! is_numeric($min) || (float) $min < 0 || (float) $min > 1) {
+                    $errors[] = "Intent Classifier node {$id} min_probability must be a number between 0 and 1.";
+                }
+            }
+
             $raw = is_array($data['intents'] ?? null) ? $data['intents'] : [];
             $seen = [];
             foreach ($raw as $item) {

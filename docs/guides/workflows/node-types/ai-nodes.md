@@ -171,17 +171,19 @@ Use when you need a one-off LLM step without tool bindings.
 
 | Config | Description |
 |--------|-------------|
-| `provider` / `model` | LLM used for classification |
-| `api_key` | Optional Vault credential bind (`var:NAME`) or leave empty for install-time provider config |
+| `engine` | `llm` (default) or `jev`. JEV calls the configured System One endpoint (TypeSafe or Laya) and does not use provider, model, or vision |
+| `provider` / `model` | LLM used when `engine` is `llm` |
+| `api_key` | Optional Vault credential bind (`var:NAME`). For `jev`, overrides `TYPESAFE_KEY` or `LAYA_KEY` |
 | `message` | Input template (default `{{input}}`) |
 | `intents` | List of `{ id, name, description }`. Each `id` becomes a source handle |
 | `instructions` | Optional extra guidance for the classifier |
-| `output_key` | State key for the chosen intent id (default `intent`); also writes `{output_key}_name` |
-| `vision` | When `true`, include run attachments (default `false`) |
-| `memory` | When `true`, load conversation history from the workflow thread (default `false` uses in-memory history only) |
-| `memory_config.context_window` | Optional token budget override when memory is on |
+| `output_key` | State key for the chosen intent id (default `intent`); also writes `{output_key}_name`. JEV also writes `{output_key}_probability` and `{output_key}_distribution` |
+| `min_probability` | JEV only. Winner below this routes to `other` when that intent exists; otherwise the node fails |
+| `vision` | LLM only. When `true`, include run attachments (default `false`) |
+| `memory` | When `true`, include prior turns. LLM loads chat history; JEV sends thread messages in the classifier input |
+| `memory_config.context_window` | LLM only. Optional token budget override when memory is on |
 
-Classification uses Neuron structured output (`IntentClassificationResult`). Unknown ids fall back to `other` / `unknown` when present. Nested classifier runs always reuse `__studio_thread_id` for metering; **Memory** only toggles whether prior turns are sent to the model.
+`engine: llm` uses Neuron structured output (`IntentClassificationResult`). Unknown ids fall back to `other` / `unknown` when present. Nested classifier runs always reuse `__studio_thread_id` for metering; **Memory** only toggles whether prior turns are sent. JEV records a `classifier` span with estimated cost 0. Set `TYPESAFE_KEY` when `CLASSIFIER_DRIVER=typesafe`. Set `LAYA_URL` when `CLASSIFIER_DRIVER=laya`; that URL is an endpoint the host already operates.
 
 ### Handles
 

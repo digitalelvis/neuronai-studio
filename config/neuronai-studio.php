@@ -285,6 +285,28 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Classifier (System One: TypeSafe or Laya)
+    |--------------------------------------------------------------------------
+    |
+    | Opt-in. Used by the Intent Classifier engine "jev" and by agent
+    | difficulty routing. driver=typesafe calls the TypeSafe API and requires
+    | TYPESAFE_KEY. driver=laya calls LAYA_URL (a System One endpoint the host
+    | already operates). Studio does not start that process. LAYA_KEY is
+    | optional. Leave the TypeSafe key empty to keep LLM / single-model
+    | behavior. Vault overrides use var:NAME on the node or agent.
+    |
+    */
+
+    'classifier' => [
+        'driver' => env('CLASSIFIER_DRIVER', 'typesafe'),
+        'model' => env('TYPESAFE_MODEL', 'jev-latest'),
+        'key' => env('TYPESAFE_KEY'),
+        'url' => env('LAYA_URL', 'http://127.0.0.1:8000/v1'),
+        'laya_key' => env('LAYA_KEY'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
     | Media catalogs
     |--------------------------------------------------------------------------
     |

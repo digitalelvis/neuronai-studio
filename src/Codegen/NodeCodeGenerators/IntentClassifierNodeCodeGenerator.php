@@ -47,6 +47,10 @@ class IntentClassifierNodeCodeGenerator implements NodeCodeGeneratorInterface
         $branchPhp = implode("\n\n", $branchBlocks);
         $apiKeyConfigLine = $this->apiKeyConfigLine($data);
 
+        if (($data['engine'] ?? 'llm') === 'jev') {
+            return $this->generateJev($data, $context, $message, $outputKey, $extraInstructions, $memory, $intentsExport, $branchPhp);
+        }
+
         $body = <<<PHP
         \$intentsList = {$intentsExport};
         \$intents = IntentClassifierNodeExecutor::normalizeIntents(\$intentsList);
@@ -96,6 +100,82 @@ PHP;
                 'DigitalElvis\\NeuronAIStudio\\Runtime\\AgentRunner',
                 'DigitalElvis\\NeuronAIStudio\\Runtime\\NodeExecutors\\IntentClassifierNodeExecutor',
                 IntentClassificationResult::class,
+            ],
+        ];
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array{body: string, imports: list<string>}
+     */
+    protected function generateJev(
+        array $data,
+        CodegenContext $context,
+        string $message,
+        string $outputKey,
+        string $extraInstructions,
+        string $memory,
+        string $intentsExport,
+        string $branchPhp,
+    ): array {
+        $apiKey = $data['api_key'] ?? null;
+        $keyExpr = is_string($apiKey) && $apiKey !== '' ? var_export($apiKey, true) : 'null';
+        $min = IntentClassifierNodeExecutor::minProbability($data['min_probability'] ?? null);
+        $minExpr = $min === null ? 'null' : var_export($min, true);
+
+        $body = <<<PHP
+        \$intentsList = {$intentsExport};
+        \$intents = IntentClassifierNodeExecutor::normalizeIntents(\$intentsList);
+        if (count(\$intents) < 2) {
+            throw new \\InvalidArgumentException('Intent Classifier requires at least two intents.');
+        }
+
+        \$template = {$message};
+        \$prompt = {$context->interpolate('$template')};
+        if (\$prompt === '' && \$state->has('input')) {
+            \$prompt = (string) \$state->get('input');
+        }
+
+        \$threadId = \$state->get('__studio_thread_id');
+        \$threadKey = is_string(\$threadId) && \$threadId !== '' ? \$threadId : null;
+        \$input = {$memory}
+            ? IntentClassifierNodeExecutor::classificationInput(\$prompt, \$threadKey)
+            : \$prompt;
+
+        // ClassifierRegistry resolves NeuronAI\\Classifier\\TypeSafeAI\\TypeSafeAI (JEV).
+        \$classifier = app(\\DigitalElvis\\NeuronAIStudio\\Registry\\ClassifierRegistry::class)->resolve({$keyExpr});
+        \$result = \$classifier->classify(new \\NeuronAI\\Classifier\\ClassificationRequest(
+            input: \$input,
+            questions: [
+                'intent' => new \\NeuronAI\\Classifier\\Choice(
+                    instructions: IntentClassifierNodeExecutor::buildJevInstructions(\$intents, {$extraInstructions}),
+                    options: IntentClassifierNodeExecutor::intentOptions(\$intents),
+                ),
+            ],
+        ));
+
+        \$choice = \$result->choice('intent');
+        \$chosenId = IntentClassifierNodeExecutor::resolveJevChoice(\$choice, \$intents, {$minExpr});
+        \$chosen = \$intents[\$chosenId];
+        \$distribution = [];
+        foreach (\$choice->distribution->probabilities as \$id => \$probability) {
+            \$distribution[(string) \$id] = (float) \$probability;
+        }
+        \$state->set({$outputKey}, \$chosenId);
+        \$state->set({$outputKey}.'_name', \$chosen['name']);
+        \$state->set({$outputKey}.'_probability', \$distribution[\$chosenId] ?? 0.0);
+        \$state->set({$outputKey}.'_distribution', \$distribution);
+
+{$branchPhp}
+PHP;
+
+        return [
+            'body' => $body,
+            'imports' => [
+                'DigitalElvis\\NeuronAIStudio\\Registry\\ClassifierRegistry',
+                'DigitalElvis\\NeuronAIStudio\\Runtime\\NodeExecutors\\IntentClassifierNodeExecutor',
+                'NeuronAI\\Classifier\\Choice',
+                'NeuronAI\\Classifier\\ClassificationRequest',
             ],
         ];
     }

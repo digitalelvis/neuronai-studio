@@ -18,6 +18,7 @@ import { StateVariableTextField } from '../shared/state-variables';
 import ApiKeyField from './fields/ApiKeyField';
 import OutputKeyField from './fields/OutputKeyField';
 import ToolModeToggle from './fields/ToolModeToggle';
+import RoutingFields from '@/components/RoutingFields';
 
 export default function AgentNodeFields({
     node,
@@ -195,6 +196,17 @@ export default function AgentNodeFields({
                                     label="Edit agent instructions"
                                 />
                             </div>
+                            <RoutingFields
+                                value={data.routing ?? null}
+                                onChange={(routing) => updateField('routing', routing)}
+                                providers={providers}
+                                providerModels={providerModels}
+                                variables={variables}
+                                fallbackProvider={data.provider || defaultProvider}
+                                fallbackModel={data.model || defaultModel}
+                                readOnly={readOnly}
+                                compact={compact}
+                            />
                             <div className="space-y-1" data-ab-handle-anchor="tools">
                                 <Label>Tools</Label>
                                 <p className="ab-flow-agent-tools-hint">

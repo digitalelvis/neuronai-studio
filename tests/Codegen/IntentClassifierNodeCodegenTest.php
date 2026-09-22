@@ -73,4 +73,38 @@ class IntentClassifierNodeCodegenTest extends TestCase
 
         $this->assertStringContainsString("'api_key' => 'var:OPENAI_KEY'", $result['body']);
     }
+
+    public function test_jev_engine_emits_classification_request_not_structured_output(): void
+    {
+        $generator = new IntentClassifierNodeCodeGenerator;
+        $context = new CodegenContext(new PhpArrayExporter);
+
+        $result = $generator->generate([
+            'data' => [
+                'engine' => 'jev',
+                'api_key' => 'var:TYPESAFE',
+                'message' => '{{input}}',
+                'memory' => true,
+                'min_probability' => 0.4,
+                'intents' => [
+                    ['id' => 'billing', 'name' => 'Billing', 'description' => 'Payment questions'],
+                    ['id' => 'other', 'name' => 'Other', 'description' => 'Fallback'],
+                ],
+            ],
+            'returnType' => 'BillingEvent|OtherEvent',
+            'branchReturns' => [
+                'billing' => 'BillingEvent',
+                'other' => 'OtherEvent',
+            ],
+        ], $context);
+
+        $this->assertStringContainsString('ClassificationRequest', $result['body']);
+        $this->assertStringContainsString('ClassifierRegistry', $result['body']);
+        $this->assertStringContainsString('new \\NeuronAI\\Classifier\\Choice', $result['body']);
+        $this->assertStringContainsString('classificationInput', $result['body']);
+        $this->assertStringContainsString('resolveJevChoice', $result['body']);
+        $this->assertStringContainsString("'_probability'", $result['body']);
+        $this->assertStringNotContainsString('structuredInline(', $result['body']);
+        $this->assertStringContainsString("return new BillingEvent();", $result['body']);
+    }
 }
