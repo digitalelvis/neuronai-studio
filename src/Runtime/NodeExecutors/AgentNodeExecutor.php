@@ -360,6 +360,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
                 'skills' => $skills,
                 'tool_context' => $toolContext,
                 'parameters' => $parameters,
+                'vision' => array_key_exists('vision', $data) ? (bool) $data['vision'] : true,
                 ...$this->toolControlConfig($data, $definition),
                 ...$this->memoryOverrideConfig($data, $definition),
                 ...$extra,

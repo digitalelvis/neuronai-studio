@@ -848,6 +848,10 @@ class AgentRunner
             $memory->contextWindow(),
             $memory,
         );
+
+        $vision = array_key_exists('vision', $config) ? (bool) $config['vision'] : true;
+        $agent->setMediaVisionEnabled($vision);
+
         if ($this->pendingRoutingDecision !== null) {
             $agent->routingDecision = $this->pendingRoutingDecision;
             $this->pendingRoutingDecision = null;
