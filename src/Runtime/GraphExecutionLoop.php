@@ -4,6 +4,7 @@ namespace DigitalElvis\NeuronAIStudio\Runtime;
 
 use DigitalElvis\NeuronAIStudio\Runtime\Exceptions\StructuredOutputValidationException;
 use DigitalElvis\NeuronAIStudio\Runtime\NodeExecutors\NodeExecutorRegistry;
+use DigitalElvis\NeuronAIStudio\Runtime\WorkflowStateSnapshot;
 use RuntimeException;
 
 class GraphExecutionLoop
@@ -118,7 +119,7 @@ class GraphExecutionLoop
             'node_id' => $nodeId,
             'node_type' => $nodeType,
             'node_title' => $nodeTitle,
-            'state_snapshot' => $state->all(),
+            'state_snapshot' => WorkflowStateSnapshot::forTrace($state),
             'duration_ms' => (int) ((microtime(true) - $startedAt) * 1000),
         ] + $usage;
         $state->set('__steps', $steps);

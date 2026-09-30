@@ -147,6 +147,52 @@ class GraphExecutionLoopTest extends TestCase
         $this->assertSame('Qualificador de Lead', $step['node_title'] ?? null);
     }
 
+    public function test_state_snapshots_do_not_nest_steps(): void
+    {
+        $payload = str_repeat('x', 8000);
+
+        $graph = [
+            'nodes' => [
+                ['id' => 'llm_1', 'type' => 'llm', 'data' => []],
+                ['id' => 'llm_2', 'type' => 'llm', 'data' => []],
+                ['id' => 'llm_3', 'type' => 'llm', 'data' => []],
+                ['id' => 'stop_1', 'type' => 'stop', 'data' => []],
+            ],
+            'edges' => [
+                ['source' => 'llm_1', 'target' => 'llm_2', 'sourceHandle' => 'default'],
+                ['source' => 'llm_2', 'target' => 'llm_3', 'sourceHandle' => 'default'],
+                ['source' => 'llm_3', 'target' => 'stop_1', 'sourceHandle' => 'default'],
+            ],
+        ];
+        $context = new GraphContext($graph['nodes'], $graph['edges']);
+        $state = new BuilderWorkflowState($context, 1, ['payload' => $payload]);
+
+        $registry = new NodeExecutorRegistry;
+        $registry->register('llm', new class implements NodeExecutorInterface
+        {
+            public function execute(array $nodeConfig, WorkflowState $state, GraphContext $context): string
+            {
+                return 'default';
+            }
+        });
+        $registry->register('stop', new StopNodeExecutor);
+
+        (new GraphExecutionLoop($registry))->runFromNode('llm_1', $context, $state);
+
+        $steps = $state->get('__steps', []);
+
+        $this->assertCount(4, $steps);
+
+        foreach ($steps as $step) {
+            $this->assertArrayNotHasKey('__steps', $step['state_snapshot'] ?? []);
+        }
+
+        $encoded = json_encode($steps);
+
+        $this->assertIsString($encoded);
+        $this->assertLessThan(120_000, strlen($encoded));
+    }
+
     /** @return array<string, mixed> */
     protected function simpleLoopGraph(): array
     {

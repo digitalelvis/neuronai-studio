@@ -441,4 +441,135 @@ class AgentNodeExecutorTest extends TestCase
 
         $this->assertSame('Help Alice — status active', $config['instructions']);
     }
+
+    public function test_existing_agent_appends_interpolated_context_to_instructions(): void
+    {
+        $agent = AgentDefinition::create([
+            'name' => 'Context Agent',
+            'slug' => 'context-agent-node',
+            'provider' => 'openai',
+            'model' => 'gpt-4o-mini',
+            'instructions' => 'Base instructions.',
+        ]);
+
+        $fakeProvider = new FakeAIProvider(new AssistantMessage('ok'));
+        $executor = $this->makeExecutor($fakeProvider);
+        $context = new GraphContext([], []);
+        $state = new BuilderWorkflowState($context, null, [
+            'input' => 'client text only',
+            'brand' => '123 Multas',
+        ]);
+
+        $method = new \ReflectionMethod(AgentNodeExecutor::class, 'buildAgentConfig');
+        $method->setAccessible(true);
+
+        $config = $method->invoke(
+            $executor,
+            [
+                'config_mode' => 'existing',
+                'agent_id' => $agent->id,
+                'message' => '{{input}}',
+                'context' => 'Brand: {{brand}}',
+            ],
+            $agent,
+            $context,
+            'agent_1',
+            $state,
+        );
+
+        $this->assertSame("Base instructions.\n\nBrand: 123 Multas", $config['instructions']);
+    }
+
+    public function test_existing_agent_merges_metadata_and_node_parameters(): void
+    {
+        $agent = AgentDefinition::create([
+            'name' => 'Param Agent',
+            'slug' => 'param-agent-node',
+            'provider' => 'gemini',
+            'model' => 'gemini-3.5-flash',
+            'instructions' => 'Help.',
+            'metadata' => [
+                'parameters' => [
+                    'temperature' => 0.2,
+                    'thinking_level' => 'LOW',
+                ],
+            ],
+        ]);
+
+        $fakeProvider = new FakeAIProvider(new AssistantMessage('ok'));
+        $executor = $this->makeExecutor($fakeProvider);
+        $context = new GraphContext([], []);
+        $state = new BuilderWorkflowState($context, null, ['input' => 'Hi']);
+
+        $method = new \ReflectionMethod(AgentNodeExecutor::class, 'buildAgentConfig');
+        $method->setAccessible(true);
+
+        $config = $method->invoke(
+            $executor,
+            [
+                'config_mode' => 'existing',
+                'agent_id' => $agent->id,
+                'parameters' => ['temperature' => 0.5],
+            ],
+            $agent,
+            $context,
+            'agent_1',
+            $state,
+        );
+
+        $this->assertSame(0.5, $config['parameters']['temperature']);
+        $this->assertSame('LOW', $config['parameters']['thinking_level']);
+    }
+
+    public function test_execute_skips_attachments_when_vision_false(): void
+    {
+        Storage::fake('local');
+        config(['neuronai-studio.attachments.disk' => 'local']);
+
+        $storageKey = 'neuronai-studio/attachments/test.jpg';
+        Storage::disk('local')->put(
+            $storageKey,
+            base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=='),
+        );
+
+        $agent = AgentDefinition::create([
+            'name' => 'No Vision Agent',
+            'slug' => 'no-vision-agent-node',
+            'provider' => 'openai',
+            'model' => 'gpt-4o',
+            'instructions' => 'You are helpful.',
+        ]);
+
+        $fakeProvider = new FakeAIProvider(new AssistantMessage('text only'));
+        $executor = $this->makeExecutor($fakeProvider);
+        $context = new GraphContext([], []);
+        $state = new BuilderWorkflowState($context, null, [
+            'input' => 'See attachment',
+            'attachments' => [
+                [
+                    'type' => 'image',
+                    'storage_key' => $storageKey,
+                    'mime_type' => 'image/png',
+                    'name' => 'test.jpg',
+                ],
+            ],
+        ]);
+
+        $executor->execute([
+            'data' => [
+                'agent_id' => $agent->id,
+                'message' => '{{input}}',
+                'vision' => false,
+                'output_key' => 'agent_response',
+            ],
+        ], $state, $context);
+
+        $fakeProvider->assertSent(function (RequestRecord $record): bool {
+            $message = $record->messages[0] ?? null;
+
+            return $message !== null
+                && $message->getImage() === null
+                && str_contains((string) $message->getContent(), 'See attachment');
+        });
+    }
 }

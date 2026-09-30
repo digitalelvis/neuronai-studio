@@ -45,7 +45,7 @@ class StudioTraceMiddleware implements WorkflowMiddleware
         $this->steps[] = [
             'node_id' => $nodeId,
             'node_type' => $nodeType,
-            'state_snapshot' => $state->all(),
+            'state_snapshot' => WorkflowStateSnapshot::forTrace($state),
             'duration_ms' => $durationMs,
         ];
 
@@ -54,7 +54,7 @@ class StudioTraceMiddleware implements WorkflowMiddleware
             'node_type' => $nodeType,
             'handle' => 'default',
             'duration_ms' => $durationMs,
-            'state' => $state->all(),
+            'state' => WorkflowStateSnapshot::forTrace($state),
         ]);
     }
 
