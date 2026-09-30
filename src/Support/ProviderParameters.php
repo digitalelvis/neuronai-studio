@@ -85,6 +85,20 @@ class ProviderParameters
             $generationConfig['maxOutputTokens'] = (int) $parameters['max_tokens'];
         }
 
+        $thinkingConfig = [];
+
+        if (array_key_exists('thinking_level', $parameters) && is_string($parameters['thinking_level']) && $parameters['thinking_level'] !== '') {
+            $thinkingConfig['thinkingLevel'] = $parameters['thinking_level'];
+        }
+
+        if (array_key_exists('thinking_budget', $parameters)) {
+            $thinkingConfig['thinkingBudget'] = (int) $parameters['thinking_budget'];
+        }
+
+        if ($thinkingConfig !== []) {
+            $generationConfig['thinkingConfig'] = $thinkingConfig;
+        }
+
         if ($generationConfig === []) {
             return [];
         }
