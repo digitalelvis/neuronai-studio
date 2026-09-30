@@ -20,7 +20,13 @@ class UsageCostEstimator
             return null;
         }
 
-        $entry = config("neuronai-studio.usage.pricing.{$provider}.{$model}");
+        $providerPricing = config("neuronai-studio.usage.pricing.{$provider}");
+
+        if (! is_array($providerPricing)) {
+            return null;
+        }
+
+        $entry = $providerPricing[$model] ?? null;
 
         if (! is_array($entry)) {
             return null;
