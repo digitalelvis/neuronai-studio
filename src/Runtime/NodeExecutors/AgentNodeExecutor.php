@@ -47,7 +47,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
         if ($truncationEvents !== []) {
             $state->set('__studio_context_truncations', $truncationEvents);
         }
-        $attachments = is_array($state->get('attachments')) ? $state->get('attachments') : [];
+        $attachments = $this->messages->resolveAttachmentsForNode($data, $state, true);
         $userMessage = $this->messages->resolveMessageWithAttachments($message, $attachments);
         $threadKey = $state->get('__studio_thread_id');
         $threadKey = is_string($threadKey) && $threadKey !== '' ? $threadKey : null;
@@ -339,15 +339,27 @@ class AgentNodeExecutor implements NodeExecutorInterface
         $tools = array_values(array_merge($definitionTools, $canvasBindings));
         $skills = array_values(array_merge($definitionSkills, $canvasSkillBindings));
         $toolContext = ToolContext::fromWorkflowState($state);
+        $memory = $this->agentRunner->resolveMemoryConfig($definition, $this->memoryOverrideConfig($data, $definition));
+        $contextTruncations = [];
+        $parameters = $this->resolveAgentParameters($data, $definition);
 
         if ($definition !== null) {
+            $instructions = $this->resolveInstructionsWithContext(
+                (string) $definition->instructions,
+                $data,
+                $state,
+                $memory,
+                $contextTruncations,
+            );
+
             return [
                 'provider' => $definition->provider,
                 'model' => $definition->model,
-                'instructions' => $definition->instructions,
+                'instructions' => $instructions,
                 'tools' => $tools,
                 'skills' => $skills,
                 'tool_context' => $toolContext,
+                'parameters' => $parameters,
                 ...$this->toolControlConfig($data, $definition),
                 ...$this->memoryOverrideConfig($data, $definition),
                 ...$extra,
@@ -358,6 +370,7 @@ class AgentNodeExecutor implements NodeExecutorInterface
             'tools' => $tools,
             'skills' => $skills,
             'tool_context' => $toolContext,
+            'parameters' => $parameters,
             ...$this->toolControlConfig($data, null),
             ...$this->memoryOverrideConfig($data, null),
             ...$extra,
@@ -367,7 +380,66 @@ class AgentNodeExecutor implements NodeExecutorInterface
             $config['instructions'] = StateTemplateInterpolator::interpolate($config['instructions'], $state);
         }
 
+        $config['instructions'] = $this->resolveInstructionsWithContext(
+            (string) ($config['instructions'] ?? ''),
+            $data,
+            $state,
+            $memory,
+            $contextTruncations,
+        );
+
         return $config;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @param  array<int, array<string, mixed>>  $truncationEvents
+     */
+    protected function resolveInstructionsWithContext(
+        string $baseInstructions,
+        array $data,
+        WorkflowState $state,
+        \DigitalElvis\NeuronAIStudio\Runtime\Memory\MemoryConfig $memory,
+        array &$truncationEvents = [],
+    ): string {
+        $instructions = trim($baseInstructions);
+
+        if (! isset($data['context']) || ! is_string($data['context']) || trim($data['context']) === '') {
+            return $instructions;
+        }
+
+        $contextBlock = trim(StateTemplateInterpolator::interpolate(
+            $data['context'],
+            $state,
+            $memory,
+            $truncationEvents,
+        ));
+
+        if ($contextBlock === '') {
+            return $instructions;
+        }
+
+        return $instructions !== '' ? $instructions."\n\n".$contextBlock : $contextBlock;
+    }
+
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    protected function resolveAgentParameters(array $data, ?AgentDefinition $definition): array
+    {
+        $fromDefinition = [];
+        if ($definition !== null && is_array($definition->metadata) && is_array($definition->metadata['parameters'] ?? null)) {
+            $fromDefinition = $definition->metadata['parameters'];
+        }
+
+        $fromNode = is_array($data['parameters'] ?? null) ? $data['parameters'] : [];
+
+        if ($fromDefinition === [] && $fromNode === []) {
+            return [];
+        }
+
+        return array_replace_recursive($fromDefinition, $fromNode);
     }
 
     /**
