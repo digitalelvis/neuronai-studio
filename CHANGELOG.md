@@ -1,5 +1,19 @@
 # Changelog
 
+# [3.13.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.12.0...v3.13.0) (2026-09-30)
+
+
+### Bug Fixes
+
+* **runtime:** stop exponential __steps nesting in workflow snapshots ([b0b4a6b](https://github.com/digitalelvis/neuronai-studio/commit/b0b4a6b50c92f824fcf3a1c6596dba91d1b72096))
+* **usage:** look up pricing by full model key ([da6b443](https://github.com/digitalelvis/neuronai-studio/commit/da6b443c741beb3a39a5f6ea783044a91894fdff))
+
+
+### Features
+
+* **gemini:** pass agent parameters and map thinking config ([88c8692](https://github.com/digitalelvis/neuronai-studio/commit/88c8692f17be90e7be152aa6af848d2553d3ccde))
+* **runtime:** add agent node context template and vision gate ([ade4ebf](https://github.com/digitalelvis/neuronai-studio/commit/ade4ebf5627371cc062fda1acfd263520b89e7aa))
+
 # [3.12.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.11.0...v3.12.0) (2026-09-22)
 
 
