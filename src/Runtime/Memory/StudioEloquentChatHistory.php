@@ -3,6 +3,7 @@
 namespace DigitalElvis\NeuronAIStudio\Runtime\Memory;
 
 use NeuronAI\Chat\History\EloquentChatHistory;
+use NeuronAI\Chat\Messages\ContentBlocks\ContentBlockInterface;
 use NeuronAI\Chat\Messages\Message;
 
 /**
@@ -11,6 +12,7 @@ use NeuronAI\Chat\Messages\Message;
  */
 class StudioEloquentChatHistory extends EloquentChatHistory
 {
+    use InteractsWithMediaVisionPolicy;
     use NonDestructiveHistoryTrim;
     use ToolResultBudgeting;
 
@@ -60,11 +62,38 @@ class StudioEloquentChatHistory extends EloquentChatHistory
             $model->newQuery()->create([
                 'thread_id' => $this->threadId,
                 'role' => $message->getRole(),
-                'content' => $message->getContentBlocks(),
+                'content' => $this->serializeMessageContentForStorage($message),
                 'meta' => $this->serializeMessageMeta($message),
             ]);
         }
 
         $this->storageRewritten = true;
+    }
+
+    protected function onNewMessage(Message $message): void
+    {
+        /** @var \Illuminate\Database\Eloquent\Model $model */
+        $model = new $this->modelClass;
+
+        $model->newQuery()->create([
+            'thread_id' => $this->threadId,
+            'role' => $message->getRole(),
+            'content' => $this->serializeMessageContentForStorage($message),
+            'meta' => $this->serializeMessageMeta($message),
+        ]);
+    }
+
+    /**
+     * @param  array<string, mixed>  $block
+     */
+    protected function deserializeContentBlock(array $block): ContentBlockInterface
+    {
+        $studioBlock = $this->deserializeStudioContentBlock($block);
+
+        if ($studioBlock !== null) {
+            return $studioBlock;
+        }
+
+        return parent::deserializeContentBlock($block);
     }
 }

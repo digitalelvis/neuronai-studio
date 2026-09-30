@@ -10,6 +10,7 @@ use NeuronAI\Chat\Messages\Message;
  */
 class StudioInMemoryChatHistory extends InMemoryChatHistory
 {
+    use InteractsWithMediaVisionPolicy;
     use NonDestructiveHistoryTrim;
     use ToolResultBudgeting;
 
