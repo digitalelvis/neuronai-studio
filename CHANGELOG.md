@@ -1,5 +1,12 @@
 # Changelog
 
+# [3.14.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.13.0...v3.14.0) (2026-09-30)
+
+
+### Features
+
+* **memory:** persist attachment storage_key instead of base64 ([359c43c](https://github.com/digitalelvis/neuronai-studio/commit/359c43ce685658c003ee0c575247572314bcf62b))
+
 # [3.13.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.12.0...v3.13.0) (2026-09-30)
 
 
