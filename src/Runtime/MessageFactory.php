@@ -105,6 +105,12 @@ class MessageFactory
     }
 
     /** @param  array<string, mixed>  $attachment */
+    public function attachmentFromStorageReference(array $attachment): ImageContent|AudioContent|VideoContent|FileContent|null
+    {
+        return $this->attachmentBlock($attachment);
+    }
+
+    /** @param  array<string, mixed>  $attachment */
     protected function attachmentBlock(array $attachment): ImageContent|AudioContent|VideoContent|FileContent|null
     {
         $storageKey = (string) ($attachment['storage_key'] ?? '');
@@ -123,10 +129,26 @@ class MessageFactory
         $name = (string) ($attachment['name'] ?? basename($storageKey));
 
         return match ($type) {
-            'image' => new ImageContent($content, SourceType::BASE64, $mimeType),
-            'audio' => new AudioContent($content, SourceType::BASE64, $mimeType),
-            'video' => new VideoContent($content, SourceType::BASE64, $mimeType),
-            default => new FileContent($content, SourceType::BASE64, $mimeType, $name),
+            'image' => tap(new ImageContent($content, SourceType::BASE64, $mimeType), function (ImageContent $block) use ($storageKey, $type, $name): void {
+                $block->addMetadata('storage_key', $storageKey);
+                $block->addMetadata('attachment_type', $type);
+                $block->addMetadata('attachment_name', $name);
+            }),
+            'audio' => tap(new AudioContent($content, SourceType::BASE64, $mimeType), function (AudioContent $block) use ($storageKey, $type, $name): void {
+                $block->addMetadata('storage_key', $storageKey);
+                $block->addMetadata('attachment_type', $type);
+                $block->addMetadata('attachment_name', $name);
+            }),
+            'video' => tap(new VideoContent($content, SourceType::BASE64, $mimeType), function (VideoContent $block) use ($storageKey, $type, $name): void {
+                $block->addMetadata('storage_key', $storageKey);
+                $block->addMetadata('attachment_type', $type);
+                $block->addMetadata('attachment_name', $name);
+            }),
+            default => tap(new FileContent($content, SourceType::BASE64, $mimeType, $name), function (FileContent $block) use ($storageKey, $type, $name): void {
+                $block->addMetadata('storage_key', $storageKey);
+                $block->addMetadata('attachment_type', $type);
+                $block->addMetadata('attachment_name', $name);
+            }),
         };
     }
 }

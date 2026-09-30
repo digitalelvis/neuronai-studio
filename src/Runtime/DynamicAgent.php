@@ -20,6 +20,15 @@ class DynamicAgent extends Agent
 {
     public ?RoutingDecision $routingDecision = null;
 
+    protected bool $mediaVisionEnabled = true;
+
+    public function setMediaVisionEnabled(bool $enabled): static
+    {
+        $this->mediaVisionEnabled = $enabled;
+
+        return $this;
+    }
+
     /**
      * @param  array<int, ToolInterface|ToolkitInterface|ProviderToolInterface>  $baseTools
      */
@@ -78,6 +87,8 @@ class DynamicAgent extends Agent
                 toolResultBudget: $this->memoryConfig->budgetToolResults(),
             );
         }
+
+        $history->setMediaVisionEnabled($this->mediaVisionEnabled);
 
         if ($summarization) {
             $history->enableCompaction(
