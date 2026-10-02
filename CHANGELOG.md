@@ -1,5 +1,12 @@
 # Changelog
 
+## [3.14.1](https://github.com/digitalelvis/neuronai-studio/compare/v3.14.0...v3.14.1) (2026-10-02)
+
+
+### Bug Fixes
+
+* **plugins:** shorten foreign keys that exceed MySQL's identifier limit ([07cbec5](https://github.com/digitalelvis/neuronai-studio/commit/07cbec5525f11e45df72f193ff3031204a0984bc))
+
 # [3.14.0](https://github.com/digitalelvis/neuronai-studio/compare/v3.13.0...v3.14.0) (2026-09-30)
 
 
