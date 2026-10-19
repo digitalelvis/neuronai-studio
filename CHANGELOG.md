@@ -1,5 +1,7 @@
 # Changelog
 
+## [3.14.2](https://github.com/digitalelvis/neuronai-studio/compare/v3.14.1...v3.14.2) (2026-10-19)
+
 ## [3.14.1](https://github.com/digitalelvis/neuronai-studio/compare/v3.14.0...v3.14.1) (2026-10-02)
 
 
